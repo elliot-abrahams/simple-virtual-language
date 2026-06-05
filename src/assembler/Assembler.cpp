@@ -97,7 +97,7 @@ bool Assembler::constructLabelTable() {
     }
 
     this->dataStartLocation = bytecodeHeaderLength + codeSectionLength - 1;
-    this->bytecodeLength = bytecodeHeaderLength + codeSectionLength + dataSectionLength - 2;
+    this->bytecodeLength = bytecodeHeaderLength + codeSectionLength + dataSectionLength - 1;
     return true;
 }
 

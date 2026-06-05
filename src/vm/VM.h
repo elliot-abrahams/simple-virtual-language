@@ -1,11 +1,15 @@
 #ifndef SIMPLE_VM_VM_H
 #define SIMPLE_VM_VM_H
 #include <cstdint>
+#include <limits>
 #include <vector>
 
+#include "memory/MemoryManager.h"
+
+
+constexpr uint32_t MAX_MEMORY_ADDRESS = std::numeric_limits<uint32_t>::max();
 
 class VM {
-
 public:
     VM();
 
@@ -14,13 +18,13 @@ public:
 private:
     void execute();
 
-    uint8_t PC;
-    uint8_t HP;
-    uint8_t FP;
-    uint8_t SP;
+    uint32_t PC;
+    uint32_t HP;
+    uint32_t FP;
+    uint32_t SP;
 
+    MemoryManager memoryManager;
     // operand stack
-    // memory
 };
 
 
