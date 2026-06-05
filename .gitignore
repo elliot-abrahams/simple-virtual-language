@@ -1,0 +1,22 @@
+# Build output
+cmake-build-*/
+*.o
+*.out
+*.exe
+build/
+bin/
+
+# CLion / JetBrains
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+docs/
+examples/
+tests/

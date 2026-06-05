@@ -1,0 +1,58 @@
+#ifndef SIMPLE_VM_ASSEMBLER_H
+#define SIMPLE_VM_ASSEMBLER_H
+
+#include <cstdint>
+#include <map>
+#include <optional>
+#include <string>
+#include <vector>
+
+#pragma once
+#include "Types.h"
+#include "Lexer.h"
+#include "Parser.h"
+
+
+class Assembler {
+
+public:
+    Assembler();
+
+    std::optional<std::vector<uint8_t>> assemble(const std::string &filePath);
+
+private:
+    bool constructLabelTable();
+
+    bool processLabelDef(std::map<std::string, int>& unhandledLabelRefs, uint32_t location, const std::string& label, const int& lineNumber);
+    void processInstruction(std::map<std::string, int>& unhandledLabelRefs, uint32_t& codeSectionLength, const Types::Instruction& instruction);
+    void processData(std::map<std::string, int>& unhandledLabelRefs, uint32_t& dataSectionLength, const Types::Data& data);
+    void processLabelRef(std::map<std::string, int>& unhandledRefs, const std::string& label, const int& lineNumber);
+
+    uint8_t calculateBytesOfData(const Types::Data& data) const;
+    uint8_t calculateBytesFromType(const std::string& type) const;
+
+    std::optional<std::vector<uint8_t>> generateBytecode();
+
+    std::optional<std::vector<uint8_t>> convertInstructionToBytes(const Types::Instruction& instruction) const;
+    std::vector<uint8_t> convertMethodDefToBytes(const Types::MethodDef& methodDef) const;
+    std::optional<std::vector<uint8_t>> convertDataStatementToBytes(const Types::Data& data) const;
+
+    uint8_t convertTypeToByte(const std::string& type) const;
+    uint8_t convertDataTypeToByte(const std::string& dataType) const;
+    std::optional<std::vector<uint8_t>> convertDataToBytes(const std::string& dataType, const std::string& data, const int& lineNumber) const;
+    std::vector<uint8_t> convertLabelRefToBytes(const std::string& label) const;
+    std::vector<uint8_t> convertStringToBytes(const std::string& string) const;
+
+    std::vector<uint8_t> pushBackVector(std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const;
+
+    void handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) const;
+
+    Types::Section section;
+    std::vector<Types::Statement> statements;
+    std::map<std::string, uint32_t> labelTable;
+    uint32_t dataStartLocation;
+    uint32_t bytecodeLength;
+};
+
+
+#endif //SIMPLE_VM_ASSEMBLER_H
