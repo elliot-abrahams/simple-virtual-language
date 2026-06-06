@@ -16,7 +16,7 @@ int main() {
     delete assembler;
 
     // run SVMA
-    vm->run(byteCode.value());
+    vm->run(&byteCode.value());
 
     return 0;
 }

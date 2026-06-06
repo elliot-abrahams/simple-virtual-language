@@ -8,13 +8,17 @@ VM::VM() :
     memoryManager(MemoryManager()),
     running(true) {}
 
-void VM::run(const std::vector<uint8_t> bytecode) {
+void VM::run(const std::vector<uint8_t>* bytecode) {
     // load bytecode into memory
-    this->memoryManager.loadBytecodeIntoMemory(bytecode);
+    this->memoryManager.loadBytecodeIntoMemory(bytecode, this);
 
     while (running) {
         this->execute();
     }
+}
+
+void VM::setHP(const uint32_t hp) {
+    this->HP = hp;
 }
 
 void VM::execute() {

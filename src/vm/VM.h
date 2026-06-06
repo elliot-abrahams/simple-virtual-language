@@ -13,7 +13,9 @@ class VM {
 public:
     VM();
 
-    void run(const std::vector<uint8_t> bytecode);
+    void run(const std::vector<uint8_t>* bytecode);
+
+    void setHP(const uint32_t hp);
 
 private:
     void execute();
