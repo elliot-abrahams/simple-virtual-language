@@ -1,19 +1,29 @@
 #include "VM.h"
 
+#include <ios>
+#include <iostream>
+
 VM::VM() :
     PC(0),
     HP(0),
     FP(MAX_MEMORY_ADDRESS),
     SP(MAX_MEMORY_ADDRESS),
     memoryManager(MemoryManager()),
+    operandStack(OperandStack()),
     running(true) {}
 
 void VM::run(const std::vector<uint8_t>* bytecode) {
     // load bytecode into memory
-    this->memoryManager.loadBytecodeIntoMemory(bytecode, this);
+    this->memoryManager.loadBytecodeIntoMemory(bytecode);
+    // set HP
+    this->HP = bytecode->size() - BYTECODE_HEADER_SIZE;
 
-    while (running) {
-        this->execute();
+    try {
+        while (running) {
+            this->execute();
+        }
+    } catch (VMError& e) {
+        handleVMError(e);
     }
 }
 
@@ -23,7 +33,7 @@ void VM::setHP(const uint32_t hp) {
 
 void VM::execute() {
     // read byte at PC
-    uint8_t opcode = this->memoryManager.read8(PC);
+    uint8_t opcode = this->memoryManager.read8(PC++);
 
     switch (opcode) {
         case 0x00: { // nop
@@ -214,6 +224,33 @@ void VM::executeHalt() {
     this->running = false;
 }
 
-void VM::incrementPC() {
-    this->PC++;
+void VM::handleVMError(const VMError& e) const {
+    std::cerr << "\n=== RUNTIME ERROR ===\n";
+    std::cerr << e.what() << "\n\n";
+
+    this->dumpState();
+
+    std::cerr << "=====================\n";
+}
+
+void VM::dumpState() const {
+    const auto& stack = this->operandStack.getStack();
+
+    std::cerr << "--- VM STATE ---\n";
+
+    std::cerr << "PC: 0x" << std::hex << PC << "\n";
+    std::cerr << "HP: 0x" << std::hex << HP << "\n";
+    std::cerr << "FP: 0x" << std::hex << FP << "\n";
+    std::cerr << "SP: 0x" << std::hex << SP << "\n";
+
+    std::cerr << "\nOperand Stack (top -> bottom):\n";
+    for (int i = 0; i < stack->size(); i++) {
+        std::cerr << "0x" << std::hex << i << ": ";
+
+        std::visit([](auto&& val){
+            std::cerr << std::dec << val << "\n";
+        }, stack->at(i).toTyped());
+    }
+
+    std::cerr << std::dec << std::endl;
 }

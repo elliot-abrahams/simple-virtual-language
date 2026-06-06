@@ -5,11 +5,8 @@
 #include <vector>
 
 
-class VM;
-
 constexpr size_t PAGE_SIZE = 4096;
 constexpr size_t BYTECODE_HEADER_SIZE = 8;
-
 
 struct Page {
     uint8_t data[PAGE_SIZE];
@@ -20,7 +17,7 @@ class MemoryManager {
 public:
     MemoryManager();
 
-    void loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode, VM* vm);
+    void loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode);
 
     void write8(uint32_t address, uint8_t value);
 

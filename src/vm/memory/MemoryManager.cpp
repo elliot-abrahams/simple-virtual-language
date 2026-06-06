@@ -5,7 +5,7 @@
 class VM;
 MemoryManager::MemoryManager() : pageTable(std::unordered_map<uint32_t, Page*>{}) {}
 
-void MemoryManager::loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode, VM* vm) {
+void MemoryManager::loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode) {
     // read header
     uint32_t startOfDataSection = 0;
     uint32_t endOfDataSection = 0;
@@ -22,8 +22,6 @@ void MemoryManager::loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode,
     for (uint32_t i = 0; i <= endOfDataSection - BYTECODE_HEADER_SIZE; i++) {
         write8(i, (*bytecode)[i + BYTECODE_HEADER_SIZE]);
     }
-
-    vm->setHP((endOfDataSection - BYTECODE_HEADER_SIZE) + 1);
 }
 
 void MemoryManager::write8(uint32_t address, uint8_t value) {

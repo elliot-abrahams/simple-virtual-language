@@ -4,6 +4,8 @@
 #include <limits>
 #include <vector>
 
+#include "OperandStack.h"
+#include "VMError.h"
 #include "memory/MemoryManager.h"
 
 
@@ -22,7 +24,8 @@ private:
 
     void executeHalt();
 
-    void incrementPC();
+    void handleVMError(const VMError& e) const;
+    void dumpState() const;
 
     uint32_t PC;
     uint32_t HP;
@@ -30,7 +33,7 @@ private:
     uint32_t SP;
 
     MemoryManager memoryManager;
-    // operand stack
+    OperandStack operandStack;
 
     bool running;
 };
