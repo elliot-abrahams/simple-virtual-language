@@ -7,7 +7,7 @@ int main() {
     VM* vm = new VM();
 
     // assemble SVMA
-    auto byteCode = assembler->assemble("../examples/example1.svma");
+    auto byteCode = assembler->assemble("../examples/vm-test.svma");
 
     if (!byteCode.has_value()) {
         return 500;

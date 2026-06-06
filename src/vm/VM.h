@@ -18,6 +18,11 @@ public:
 private:
     void execute();
 
+    void executeNop();
+    void executeHalt();
+
+    void incrementPC();
+
     uint32_t PC;
     uint32_t HP;
     uint32_t FP;
@@ -25,6 +30,8 @@ private:
 
     MemoryManager memoryManager;
     // operand stack
+
+    bool running;
 };
 
 

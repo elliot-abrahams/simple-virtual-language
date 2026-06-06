@@ -16,7 +16,7 @@ void MemoryManager::loadBytecodeIntoMemory(const std::vector<uint8_t> bytecode) 
     }
 
     // load bytecode
-    for (uint32_t i = 0; i < endOfDataSection - 8; i++) {
+    for (uint32_t i = 0; i < endOfDataSection - 7; i++) {
         write8(i, bytecode[i + 8]);
     }
 }
@@ -24,6 +24,11 @@ void MemoryManager::loadBytecodeIntoMemory(const std::vector<uint8_t> bytecode) 
 void MemoryManager::write8(uint32_t address, uint8_t value) {
     Page* page = getPage(address);
     page->data[getPageOffset(address)] = value;
+}
+
+uint8_t MemoryManager::read8(uint32_t address) {
+    Page* page = getPage(address);
+    return page->data[getPageOffset(address)];
 }
 
 void MemoryManager::allocatePage(uint32_t pageNumber) {
