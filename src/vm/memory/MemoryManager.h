@@ -31,7 +31,9 @@ private:
 
     static uint32_t getPageNumber(const uint32_t address);
     static uint16_t getPageOffset(const uint32_t address);
+    Page* getOrCreatePage(uint32_t address);
     Page* getPage(uint32_t address);
+
 
     std::unordered_map<uint32_t, Page*> pageTable;
 };

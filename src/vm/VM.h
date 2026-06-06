@@ -20,7 +20,6 @@ public:
 private:
     void execute();
 
-    void executeNop();
     void executeHalt();
 
     void incrementPC();

@@ -27,9 +27,9 @@ void VM::execute() {
 
     switch (opcode) {
         case 0x00: { // nop
-            this->executeNop();
             break;
         }
+
         case 0x01: { // halt
             this->executeHalt();
             break;
@@ -209,9 +209,6 @@ void VM::execute() {
     }
 }
 
-void VM::executeNop() {
-    this->incrementPC();
-}
 
 void VM::executeHalt() {
     this->running = false;

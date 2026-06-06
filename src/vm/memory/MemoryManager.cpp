@@ -27,12 +27,16 @@ void MemoryManager::loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode,
 }
 
 void MemoryManager::write8(uint32_t address, uint8_t value) {
-    Page* page = getPage(address);
+    Page* page = getOrCreatePage(address);
     page->data[getPageOffset(address)] = value;
 }
 
 uint8_t MemoryManager::read8(uint32_t address) {
     Page* page = getPage(address);
+    if (page == nullptr) {
+        // page is not currently allocated
+        return 0;
+    }
     return page->data[getPageOffset(address)];
 }
 
@@ -48,8 +52,7 @@ uint16_t MemoryManager::getPageOffset(const uint32_t address) {
     return address % PAGE_SIZE;
 }
 
-Page* MemoryManager::getPage(uint32_t address) {
-
+Page* MemoryManager::getOrCreatePage(uint32_t address) {
     uint32_t pageNumber = getPageNumber(address);
 
     auto it = pageTable.find(pageNumber);
@@ -58,6 +61,17 @@ Page* MemoryManager::getPage(uint32_t address) {
         // allocate new page
         allocatePage(pageNumber);
         it = pageTable.find(pageNumber);
+    }
+    return it->second;
+}
+
+Page* MemoryManager::getPage(uint32_t address) {
+    uint32_t pageNumber = getPageNumber(address);
+
+    auto it = pageTable.find(pageNumber);
+
+    if (it == pageTable.end()) {
+        return nullptr;
     }
     return it->second;
 }
