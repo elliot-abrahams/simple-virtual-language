@@ -15,7 +15,7 @@
 #include <vector>
 #include <cstdint>
 
-namespace Types {
+namespace AssemblerDefs {
 
     enum class Section {
         CODE,

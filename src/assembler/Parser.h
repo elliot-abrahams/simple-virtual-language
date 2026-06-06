@@ -10,7 +10,7 @@
 #include <variant>
 #include <vector>
 
-#include "Types.h"
+#include "AssemblerDefs.h"
 
 
 class Parser {
@@ -18,37 +18,37 @@ class Parser {
 public:
     Parser();
 
-    std::optional<std::vector<Types::Statement>> parse(std::vector<Types::SVMAToken>& tokenStream);
+    std::optional<std::vector<AssemblerDefs::Statement>> parse(std::vector<AssemblerDefs::SVMAToken>& tokenStream);
 
 private:
-    std::optional<Types::Statement> parseToken();
+    std::optional<AssemblerDefs::Statement> parseToken();
 
-    std::optional<Types::Statement> parseInstruction();
-    std::optional<Types::Statement> parseLabelDef();
-    std::optional<Types::Statement> parseData();
-    std::optional<Types::Statement> parseMethodDef();
-    std::optional<Types::Statement> parseSectionStart();
-    std::optional<Types::Operand> parseType();
-    std::optional<Types::Operand> parseDataType();
-    std::optional<Types::Operand> parseImmediate();
-    std::optional<Types::Operand> parseLabelRef();
-    std::optional<Types::Operand> parseOperand(Types::SVMATokenType tokenType);
+    std::optional<AssemblerDefs::Statement> parseInstruction();
+    std::optional<AssemblerDefs::Statement> parseLabelDef();
+    std::optional<AssemblerDefs::Statement> parseData();
+    std::optional<AssemblerDefs::Statement> parseMethodDef();
+    std::optional<AssemblerDefs::Statement> parseSectionStart();
+    std::optional<AssemblerDefs::Operand> parseType();
+    std::optional<AssemblerDefs::Operand> parseDataType();
+    std::optional<AssemblerDefs::Operand> parseImmediate();
+    std::optional<AssemblerDefs::Operand> parseLabelRef();
+    std::optional<AssemblerDefs::Operand> parseOperand(AssemblerDefs::SVMATokenType tokenType);
 
     void next();
-    Types::SVMAToken peek();
-    Types::SVMAToken peekNext();
+    AssemblerDefs::SVMAToken peek();
+    AssemblerDefs::SVMAToken peekNext();
 
-    static bool isNumberInteger(const Types::SVMAToken& token);
-    static bool isNumberSigned(const Types::SVMAToken& token);
+    static bool isNumberInteger(const AssemblerDefs::SVMAToken& token);
+    static bool isNumberSigned(const AssemblerDefs::SVMAToken& token);
 
-    Types::OperandType mapTokenTypeToOperandType(Types::SVMATokenType tokenType);
+    AssemblerDefs::OperandType mapTokenTypeToOperandType(AssemblerDefs::SVMATokenType tokenType);
 
-    void handleUnexpectedTokenError(const std::vector<Types::SVMATokenType> &expectingTypes);
-    static std::string tokenTypeToString(Types::SVMATokenType tokenType);
+    void handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATokenType> &expectingTypes);
+    static std::string tokenTypeToString(AssemblerDefs::SVMATokenType tokenType);
 
-    std::vector<Types::SVMAToken> tokenStream;
+    std::vector<AssemblerDefs::SVMAToken> tokenStream;
     int tokenIdx;
-    Types::Section section;
+    AssemblerDefs::Section section;
 };
 
 

@@ -6,7 +6,7 @@
 #define SIMPLE_VM_LEXER_H
 
 #pragma once
-#include "Types.h"
+#include "AssemblerDefs.h"
 #include <optional>
 #include <string>
 #include <vector>
@@ -17,19 +17,19 @@ class Lexer {
 public:
     Lexer();
 
-    std::optional<std::vector<Types::SVMAToken>> lex(const std::string &filePath);
+    std::optional<std::vector<AssemblerDefs::SVMAToken>> lex(const std::string &filePath);
 
 private:
-    std::optional<std::vector<Types::SVMAToken>> buildTokenStream();
+    std::optional<std::vector<AssemblerDefs::SVMAToken>> buildTokenStream();
 
-    std::optional<Types::SVMAToken> lexToken();
-    std::optional<Types::SVMAToken> lexLabel();
-    std::optional<Types::SVMAToken> lexNumber();
-    std::optional<Types::SVMAToken> lexImmediate();
-    std::optional<Types::SVMAToken> lexDataStart();
-    std::optional<Types::SVMAToken> lexChar();
-    std::optional<Types::SVMAToken> lexString();
-    std::optional<Types::SVMAToken> lexKeyWord();
+    std::optional<AssemblerDefs::SVMAToken> lexToken();
+    std::optional<AssemblerDefs::SVMAToken> lexLabel();
+    std::optional<AssemblerDefs::SVMAToken> lexNumber();
+    std::optional<AssemblerDefs::SVMAToken> lexImmediate();
+    std::optional<AssemblerDefs::SVMAToken> lexDataStart();
+    std::optional<AssemblerDefs::SVMAToken> lexChar();
+    std::optional<AssemblerDefs::SVMAToken> lexString();
+    std::optional<AssemblerDefs::SVMAToken> lexKeyWord();
 
     void next();
     char peek() const;

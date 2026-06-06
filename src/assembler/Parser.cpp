@@ -11,13 +11,13 @@
 
 Parser::Parser() {}
 
-std::optional<std::vector<Types::Statement>> Parser::parse(std::vector<Types::SVMAToken> &tokenStream) {
-    std::vector<Types::Statement> statements;
+std::optional<std::vector<AssemblerDefs::Statement>> Parser::parse(std::vector<AssemblerDefs::SVMAToken> &tokenStream) {
+    std::vector<AssemblerDefs::Statement> statements;
     this->tokenStream = tokenStream;
     this->tokenIdx = 0;
-    this->section = Types::Section::CODE;
+    this->section = AssemblerDefs::Section::CODE;
 
-    while (this->peek().type != Types::SVMATokenType::END_OF_FILE) {
+    while (this->peek().type != AssemblerDefs::SVMATokenType::END_OF_FILE) {
 
         auto statement = this->parseToken();
         if (!statement.has_value()) {
@@ -28,20 +28,20 @@ std::optional<std::vector<Types::Statement>> Parser::parse(std::vector<Types::SV
     return statements;
 }
 
-std::optional<Types::Statement> Parser::parseToken() {
+std::optional<AssemblerDefs::Statement> Parser::parseToken() {
 
     switch (this->peek().type) {
-        case Types::SVMATokenType::INSTRUCTION:
+        case AssemblerDefs::SVMATokenType::INSTRUCTION:
             return this->parseInstruction();
-        case Types::SVMATokenType::LABEL_DEF:
+        case AssemblerDefs::SVMATokenType::LABEL_DEF:
             return this->parseLabelDef();
-        case Types::SVMATokenType::METHOD_DEF:
+        case AssemblerDefs::SVMATokenType::METHOD_DEF:
             return this->parseMethodDef();
-        case Types::SVMATokenType::DATA_START:
+        case AssemblerDefs::SVMATokenType::DATA_START:
             return this->parseSectionStart();
     }
 
-    if (this->section == Types::Section::DATA) {
+    if (this->section == AssemblerDefs::Section::DATA) {
         return this->parseData();
     }
 
@@ -51,15 +51,15 @@ std::optional<Types::Statement> Parser::parseToken() {
     return std::nullopt;
 }
 
-std::optional<Types::Statement> Parser::parseInstruction() {
+std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     std::string instruction = this->peek().value;
     int lineNumber = this->peek().lineNumber;
     this->next();
 
-    Types::Operand dataType;
-    Types::Operand type;
-    Types::Operand labelRef;
-    Types::Operand immediate;
+    AssemblerDefs::Operand dataType;
+    AssemblerDefs::Operand type;
+    AssemblerDefs::Operand labelRef;
+    AssemblerDefs::Operand immediate;
 
     // parse DATA_TYPE Token
     if (instruction == "out" ||
@@ -132,102 +132,102 @@ std::optional<Types::Statement> Parser::parseInstruction() {
         immediate = optionalImmediate.value();
     }
 
-    if (instruction == "nop") return Types::Instruction{instruction, {}, lineNumber};
-    if (instruction == "halt") return Types::Instruction{instruction, {}, lineNumber};
+    if (instruction == "nop") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "halt") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     //========================================================================================================
     // STACK
     //========================================================================================================
 
     if (instruction == "push") {
-        if (this->peek().type == Types::SVMATokenType::LABEL_REF) {
+        if (this->peek().type == AssemblerDefs::SVMATokenType::LABEL_REF) {
             auto labelOperand = this->parseLabelRef().value();
-            return Types::Instruction{instruction, {type, labelOperand}, lineNumber};
+            return AssemblerDefs::Instruction{instruction, {type, labelOperand}, lineNumber};
         }
-        if (this->peek().type == Types::SVMATokenType::IMMEDIATE) {
+        if (this->peek().type == AssemblerDefs::SVMATokenType::IMMEDIATE) {
             auto immediateOperand = this->parseImmediate().value();
-            return Types::Instruction{instruction, {type, immediateOperand}, lineNumber};
+            return AssemblerDefs::Instruction{instruction, {type, immediateOperand}, lineNumber};
         }
-        this->handleUnexpectedTokenError({Types::SVMATokenType::LABEL_REF, Types::SVMATokenType::IMMEDIATE});
+        this->handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::LABEL_REF, AssemblerDefs::SVMATokenType::IMMEDIATE});
         return std::nullopt;
     }
-    if (instruction == "pop") return Types::Instruction{instruction, {}, lineNumber};
-    if (instruction == "dup") return Types::Instruction{instruction, {}, lineNumber};
-    if (instruction == "swap") return Types::Instruction{instruction, {}, lineNumber};
+    if (instruction == "pop") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "dup") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "swap") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     //========================================================================================================
     // MEMORY
     //========================================================================================================
 
-    if (instruction == "load") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "loadG") return Types::Instruction{instruction, {type, labelRef}, lineNumber};
-    if (instruction == "loadL") return Types::Instruction{instruction, {type, immediate}, lineNumber};
-    if (instruction == "store") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "storeG") return Types::Instruction{instruction, {type, labelRef}, lineNumber};
-    if (instruction == "storeL") return Types::Instruction{instruction, {type, immediate}, lineNumber};
-    if (instruction == "alloc") return Types::Instruction{instruction, {}, lineNumber};
-    if (instruction == "free") return Types::Instruction{instruction, {}, lineNumber};
+    if (instruction == "load") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "loadG") return AssemblerDefs::Instruction{instruction, {type, labelRef}, lineNumber};
+    if (instruction == "loadL") return AssemblerDefs::Instruction{instruction, {type, immediate}, lineNumber};
+    if (instruction == "store") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "storeG") return AssemblerDefs::Instruction{instruction, {type, labelRef}, lineNumber};
+    if (instruction == "storeL") return AssemblerDefs::Instruction{instruction, {type, immediate}, lineNumber};
+    if (instruction == "alloc") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "free") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     //========================================================================================================
     // CONTROL
     //========================================================================================================
 
-    if (instruction == "call") return Types::Instruction{instruction, {labelRef}, lineNumber};
-    if (instruction == "ret") return Types::Instruction{instruction, {}, lineNumber};
-    if (instruction == "jmp") return Types::Instruction{instruction, {labelRef}, lineNumber};
-    if (instruction == "jez") return Types::Instruction{instruction, {labelRef}, lineNumber};
-    if (instruction == "jnz") return Types::Instruction{instruction, {labelRef}, lineNumber};
+    if (instruction == "call") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
+    if (instruction == "ret") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "jmp") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
+    if (instruction == "jez") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
+    if (instruction == "jnz") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
 
     //========================================================================================================
     // ARITHMETIC
     //========================================================================================================
 
-    if (instruction == "add") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "sub") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "mul") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "div") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "mod") return Types::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "add") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "sub") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "mul") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "div") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "mod") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
 
-    if (instruction == "not") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "notB") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "and") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "orr") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "xor") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "shl") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "shr") return Types::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "not") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "notB") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "and") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "orr") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "xor") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "shl") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "shr") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
 
-    if (instruction == "ceq") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "cne") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "clt") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "cle") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "cgt") return Types::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "cge") return Types::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "ceq") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "cne") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "clt") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "cle") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "cgt") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "cge") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
 
     //========================================================================================================
     // Other
     //========================================================================================================
 
-    if (instruction == "out") return Types::Instruction{instruction, {dataType}, lineNumber};
-    if (instruction == "in") return Types::Instruction{instruction, {dataType}, lineNumber};
-    if (instruction == "conv") return Types::Instruction{instruction, {}, lineNumber};
+    if (instruction == "out") return AssemblerDefs::Instruction{instruction, {dataType}, lineNumber};
+    if (instruction == "in") return AssemblerDefs::Instruction{instruction, {dataType}, lineNumber};
+    if (instruction == "conv") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     std::cerr << "Error found at Line " << lineNumber << std::endl;
     std::cerr << "Undefined instruction: " << instruction << std::endl;
     return std::nullopt;
 }
 
-std::optional<Types::Statement> Parser::parseLabelDef() {
+std::optional<AssemblerDefs::Statement> Parser::parseLabelDef() {
     auto token = this->peek();
     this->next();
-    return Types::Label{token.value, token.lineNumber};
+    return AssemblerDefs::Label{token.value, token.lineNumber};
 }
 
-std::optional<Types::Statement> Parser::parseData() {
+std::optional<AssemblerDefs::Statement> Parser::parseData() {
     auto dataTypetoken = this->peek();
     this->next();
     auto immediateToken = this->peek();
 
-    if (dataTypetoken.type == Types::SVMATokenType::TYPE) {
+    if (dataTypetoken.type == AssemblerDefs::SVMATokenType::TYPE) {
         if (dataTypetoken.value == "i32" || dataTypetoken.value == "i64") {
             // enforce i32 / i64 is matched with an integer immediate
             if (!this->isNumberInteger(immediateToken)) {
@@ -245,48 +245,48 @@ std::optional<Types::Statement> Parser::parseData() {
 
         } else if (dataTypetoken.value == "ptr") {
             // enforce ptr type is matched with LABEL_REF
-            if (this->peek().type == Types::SVMATokenType::LABEL_REF) {
-                this->handleUnexpectedTokenError({Types::SVMATokenType::LABEL_REF});
+            if (this->peek().type == AssemblerDefs::SVMATokenType::LABEL_REF) {
+                this->handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::LABEL_REF});
                 return std::nullopt;
             }
 
         } else if (dataTypetoken.value == "char") {
             // enforce char type is matched with CHAR
-            if (this->peek().type != Types::SVMATokenType::CHAR) {
-                this->handleUnexpectedTokenError({Types::SVMATokenType::CHAR});
+            if (this->peek().type != AssemblerDefs::SVMATokenType::CHAR) {
+                this->handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::CHAR});
                 return std::nullopt;
             }
         }
-    } else if (dataTypetoken.type == Types::SVMATokenType::DATA_TYPE) {
+    } else if (dataTypetoken.type == AssemblerDefs::SVMATokenType::DATA_TYPE) {
         // enforce str type is matched with STRING
-        if (this->peek().type != Types::SVMATokenType::STRING) {
-            this->handleUnexpectedTokenError({Types::SVMATokenType::STRING});
+        if (this->peek().type != AssemblerDefs::SVMATokenType::STRING) {
+            this->handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::STRING});
             return std::nullopt;
         }
     }
-    auto data = Types::Data{dataTypetoken.value, this->peek().value};
+    auto data = AssemblerDefs::Data{dataTypetoken.value, this->peek().value};
     this->next();
     return data;
 }
 
-std::optional<Types::Statement> Parser::parseMethodDef() {
-    Types::SVMAToken numberOfArgsToken;
-    Types::SVMAToken numberOfLocalsToken;
+std::optional<AssemblerDefs::Statement> Parser::parseMethodDef() {
+    AssemblerDefs::SVMAToken numberOfArgsToken;
+    AssemblerDefs::SVMAToken numberOfLocalsToken;
 
     this->next();
-    if (this->peek().type != Types::SVMATokenType::LABEL_DEF) {
-        this->handleUnexpectedTokenError({Types::SVMATokenType::LABEL_DEF});
+    if (this->peek().type != AssemblerDefs::SVMATokenType::LABEL_DEF) {
+        this->handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::LABEL_DEF});
         return std::nullopt;
     }
     std::string methodName = this->peek().value;
     int lineNumber = this->peek().lineNumber;
     this->next();
-    while (this->peek().type == Types::SVMATokenType::METHOD_METADATA_FIELD) {
+    while (this->peek().type == AssemblerDefs::SVMATokenType::METHOD_METADATA_FIELD) {
         if (this->peek().value == "args") {
             this->next();
             numberOfArgsToken = this->peek();
-            if (numberOfArgsToken.type != Types::SVMATokenType::NUMBER) {
-                this->handleUnexpectedTokenError({Types::SVMATokenType::NUMBER});
+            if (numberOfArgsToken.type != AssemblerDefs::SVMATokenType::NUMBER) {
+                this->handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::NUMBER});
                 return std::nullopt;
             }
             // enforce number of args is an unsigned integer
@@ -307,8 +307,8 @@ std::optional<Types::Statement> Parser::parseMethodDef() {
         if (this->peek().value == "locals") {
             this->next();
             numberOfLocalsToken = this->peek();
-            if (numberOfLocalsToken.type != Types::SVMATokenType::NUMBER) {
-                this->handleUnexpectedTokenError({Types::SVMATokenType::NUMBER});
+            if (numberOfLocalsToken.type != AssemblerDefs::SVMATokenType::NUMBER) {
+                this->handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::NUMBER});
                 return std::nullopt;
             }
             // enforce number of locals is an unsigned integer
@@ -321,7 +321,7 @@ std::optional<Types::Statement> Parser::parseMethodDef() {
         }
     }
 
-    return Types::MethodDef{
+    return AssemblerDefs::MethodDef{
         methodName,
         static_cast<uint8_t>(stoi(numberOfArgsToken.value)),
         static_cast<uint32_t>(stoi(numberOfLocalsToken.value)),
@@ -329,73 +329,73 @@ std::optional<Types::Statement> Parser::parseMethodDef() {
     };
 }
 
-std::optional<Types::Operand> Parser::parseType() {
-    return this->parseOperand(Types::SVMATokenType::TYPE);
+std::optional<AssemblerDefs::Operand> Parser::parseType() {
+    return this->parseOperand(AssemblerDefs::SVMATokenType::TYPE);
 }
 
-std::optional<Types::Operand> Parser::parseDataType() {
-    return this->parseOperand(Types::SVMATokenType::DATA_TYPE);
+std::optional<AssemblerDefs::Operand> Parser::parseDataType() {
+    return this->parseOperand(AssemblerDefs::SVMATokenType::DATA_TYPE);
 }
 
-std::optional<Types::Operand> Parser::parseImmediate() {
-    return this->parseOperand(Types::SVMATokenType::IMMEDIATE);
+std::optional<AssemblerDefs::Operand> Parser::parseImmediate() {
+    return this->parseOperand(AssemblerDefs::SVMATokenType::IMMEDIATE);
 }
 
-std::optional<Types::Operand> Parser::parseLabelRef() {
-    return this->parseOperand(Types::SVMATokenType::LABEL_REF);
+std::optional<AssemblerDefs::Operand> Parser::parseLabelRef() {
+    return this->parseOperand(AssemblerDefs::SVMATokenType::LABEL_REF);
 }
 
-std::optional<Types::Operand> Parser::parseOperand(const Types::SVMATokenType tokenType) {
+std::optional<AssemblerDefs::Operand> Parser::parseOperand(const AssemblerDefs::SVMATokenType tokenType) {
     auto token = this->peek();
     if (this->peek().type != tokenType) {
         return std::nullopt;
     }
     this->next();
-    return Types::Operand{this->mapTokenTypeToOperandType(tokenType), token.value};
+    return AssemblerDefs::Operand{this->mapTokenTypeToOperandType(tokenType), token.value};
 }
 
-std::optional<Types::Statement> Parser::parseSectionStart() {
-    if (this->section == Types::Section::DATA) {
+std::optional<AssemblerDefs::Statement> Parser::parseSectionStart() {
+    if (this->section == AssemblerDefs::Section::DATA) {
         std::cerr << "Error found at Line " << this->peek().lineNumber << std::endl;
         std::cerr << "Duplicate section declaration" << std::endl;
         this->next();
         return std::nullopt;
     }
     this->next();
-    this->section = Types::Section::DATA;
-    return Types::Section::DATA;
+    this->section = AssemblerDefs::Section::DATA;
+    return AssemblerDefs::Section::DATA;
 }
 
 void Parser::next() {
     this->tokenIdx++;
 }
 
-Types::SVMAToken Parser::peek() {
+AssemblerDefs::SVMAToken Parser::peek() {
     return this->tokenStream[this->tokenIdx];
 }
 
-Types::SVMAToken Parser::peekNext() {
+AssemblerDefs::SVMAToken Parser::peekNext() {
     return this->tokenStream[this->tokenIdx + 1];
 }
 
-bool Parser::isNumberInteger(const Types::SVMAToken& token) {
+bool Parser::isNumberInteger(const AssemblerDefs::SVMAToken& token) {
     return std::regex_match(token.value, std::regex("-?[0-9]*"));
 }
 
-bool Parser::isNumberSigned(const Types::SVMAToken& token) {
+bool Parser::isNumberSigned(const AssemblerDefs::SVMAToken& token) {
     return std::regex_match(token.value, std::regex("-[0-9]+(.[0-9]+)?"));
 }
 
-Types::OperandType Parser::mapTokenTypeToOperandType(Types::SVMATokenType tokenType) {
+AssemblerDefs::OperandType Parser::mapTokenTypeToOperandType(AssemblerDefs::SVMATokenType tokenType) {
     switch (tokenType) {
-        case Types::SVMATokenType::IMMEDIATE: return Types::OperandType::IMMEDIATE;
-        case Types::SVMATokenType::TYPE: return Types::OperandType::TYPE;
-        case Types::SVMATokenType::DATA_TYPE: return Types::OperandType::DATA_TYPE;
-        case Types::SVMATokenType::LABEL_REF: return Types::OperandType::LABEL_REF;
+        case AssemblerDefs::SVMATokenType::IMMEDIATE: return AssemblerDefs::OperandType::IMMEDIATE;
+        case AssemblerDefs::SVMATokenType::TYPE: return AssemblerDefs::OperandType::TYPE;
+        case AssemblerDefs::SVMATokenType::DATA_TYPE: return AssemblerDefs::OperandType::DATA_TYPE;
+        case AssemblerDefs::SVMATokenType::LABEL_REF: return AssemblerDefs::OperandType::LABEL_REF;
     }
 }
 
-void Parser::handleUnexpectedTokenError(const std::vector<Types::SVMATokenType> &expectingTypes) {
+void Parser::handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATokenType> &expectingTypes) {
     std::cerr << "Error found at Line " << this->peek().lineNumber << std::endl;
     std::cerr << "Expecting ";
     for (int i = 0; i < expectingTypes.size(); i++) {
@@ -405,21 +405,21 @@ void Parser::handleUnexpectedTokenError(const std::vector<Types::SVMATokenType> 
     std::cerr << ", found " << tokenTypeToString(this->peek().type) << std::endl;
 }
 
-std::string Parser::tokenTypeToString(Types::SVMATokenType tokenType) {
+std::string Parser::tokenTypeToString(AssemblerDefs::SVMATokenType tokenType) {
     std::string s;
     switch (tokenType) {
-        case Types::SVMATokenType::DATA_START: s = "SECTION_START"; break;
-        case Types::SVMATokenType::INSTRUCTION: s = "INSTRUCTION"; break;
-        case Types::SVMATokenType::TYPE: s = "TYPE"; break;
-        case Types::SVMATokenType::DATA_TYPE: s = "DATA_TYPE"; break;
-        case Types::SVMATokenType::NUMBER: s = "NUMBER"; break;
-        case Types::SVMATokenType::IMMEDIATE: s = "IMMEDIATE"; break;
-        case Types::SVMATokenType::CHAR: s = "CHAR"; break;
-        case Types::SVMATokenType::STRING: s = "STRING"; break;
-        case Types::SVMATokenType::LABEL_REF: s = "LABEL_REF"; break;
-        case Types::SVMATokenType::LABEL_DEF: s = "LABEL_DEF"; break;
-        case Types::SVMATokenType::METHOD_DEF: s = "METHOD_DEF"; break;
-        case Types::SVMATokenType::METHOD_METADATA_FIELD : s = "METHOD_METADATA_FIELD"; break;
+        case AssemblerDefs::SVMATokenType::DATA_START: s = "SECTION_START"; break;
+        case AssemblerDefs::SVMATokenType::INSTRUCTION: s = "INSTRUCTION"; break;
+        case AssemblerDefs::SVMATokenType::TYPE: s = "TYPE"; break;
+        case AssemblerDefs::SVMATokenType::DATA_TYPE: s = "DATA_TYPE"; break;
+        case AssemblerDefs::SVMATokenType::NUMBER: s = "NUMBER"; break;
+        case AssemblerDefs::SVMATokenType::IMMEDIATE: s = "IMMEDIATE"; break;
+        case AssemblerDefs::SVMATokenType::CHAR: s = "CHAR"; break;
+        case AssemblerDefs::SVMATokenType::STRING: s = "STRING"; break;
+        case AssemblerDefs::SVMATokenType::LABEL_REF: s = "LABEL_REF"; break;
+        case AssemblerDefs::SVMATokenType::LABEL_DEF: s = "LABEL_DEF"; break;
+        case AssemblerDefs::SVMATokenType::METHOD_DEF: s = "METHOD_DEF"; break;
+        case AssemblerDefs::SVMATokenType::METHOD_METADATA_FIELD : s = "METHOD_METADATA_FIELD"; break;
     }
     return s;
 }

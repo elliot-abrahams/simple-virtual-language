@@ -8,7 +8,7 @@
 #include <vector>
 
 #pragma once
-#include "Types.h"
+#include "AssemblerDefs.h"
 #include "Lexer.h"
 #include "Parser.h"
 
@@ -24,18 +24,18 @@ private:
     bool constructLabelTable();
 
     bool processLabelDef(std::map<std::string, int>& unhandledLabelRefs, uint32_t location, const std::string& label, const int& lineNumber);
-    void processInstruction(std::map<std::string, int>& unhandledLabelRefs, uint32_t& codeSectionLength, const Types::Instruction& instruction);
-    void processData(std::map<std::string, int>& unhandledLabelRefs, uint32_t& dataSectionLength, const Types::Data& data);
+    void processInstruction(std::map<std::string, int>& unhandledLabelRefs, uint32_t& codeSectionLength, const AssemblerDefs::Instruction& instruction);
+    void processData(std::map<std::string, int>& unhandledLabelRefs, uint32_t& dataSectionLength, const AssemblerDefs::Data& data);
     void processLabelRef(std::map<std::string, int>& unhandledRefs, const std::string& label, const int& lineNumber);
 
-    uint8_t calculateBytesOfData(const Types::Data& data) const;
+    uint8_t calculateBytesOfData(const AssemblerDefs::Data& data) const;
     uint8_t calculateBytesFromType(const std::string& type) const;
 
     std::optional<std::vector<uint8_t>> generateBytecode();
 
-    std::optional<std::vector<uint8_t>> convertInstructionToBytes(const Types::Instruction& instruction) const;
-    std::vector<uint8_t> convertMethodDefToBytes(const Types::MethodDef& methodDef) const;
-    std::optional<std::vector<uint8_t>> convertDataStatementToBytes(const Types::Data& data) const;
+    std::optional<std::vector<uint8_t>> convertInstructionToBytes(const AssemblerDefs::Instruction& instruction) const;
+    std::vector<uint8_t> convertMethodDefToBytes(const AssemblerDefs::MethodDef& methodDef) const;
+    std::optional<std::vector<uint8_t>> convertDataStatementToBytes(const AssemblerDefs::Data& data) const;
 
     uint8_t convertTypeToByte(const std::string& type) const;
     uint8_t convertDataTypeToByte(const std::string& dataType) const;
@@ -47,8 +47,8 @@ private:
 
     void handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) const;
 
-    Types::Section section;
-    std::vector<Types::Statement> statements;
+    AssemblerDefs::Section section;
+    std::vector<AssemblerDefs::Statement> statements;
     std::map<std::string, uint32_t> labelTable;
     uint32_t dataStartLocation;
     uint32_t bytecodeLength;

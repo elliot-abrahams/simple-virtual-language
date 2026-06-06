@@ -36,7 +36,7 @@ std::optional<std::vector<uint8_t> > Assembler::assemble(const std::string &file
 }
 
 bool Assembler::constructLabelTable() {
-    this->section = Types::Section::CODE;
+    this->section = AssemblerDefs::Section::CODE;
 
     uint8_t bytecodeHeaderLength = 8;
     uint32_t codeSectionLength = 0;
@@ -52,10 +52,10 @@ bool Assembler::constructLabelTable() {
         // add to label table and track if any label exists that aren't defined
 
         // process LABEL
-        if (std::holds_alternative<Types::Label>(statement)) {
+        if (std::holds_alternative<AssemblerDefs::Label>(statement)) {
             bool isValid;
-            auto label = std::get<Types::Label>(statement);
-            if (this->section == Types::Section::CODE) {
+            auto label = std::get<AssemblerDefs::Label>(statement);
+            if (this->section == AssemblerDefs::Section::CODE) {
                 isValid = this->processLabelDef(unhandledLabels, bytecodeHeaderLength + codeSectionLength, label.name, label.lineNumber);
             } else {
                 isValid = this->processLabelDef(unhandledLabels, bytecodeHeaderLength + codeSectionLength + dataSectionLength, label.name, label.lineNumber);
@@ -66,8 +66,8 @@ bool Assembler::constructLabelTable() {
             }
 
         // process METHOD_DEF
-        } else if (std::holds_alternative<Types::MethodDef>(statement)) {
-            auto methodDef = std::get<Types::MethodDef>(statement);
+        } else if (std::holds_alternative<AssemblerDefs::MethodDef>(statement)) {
+            auto methodDef = std::get<AssemblerDefs::MethodDef>(statement);
             bool isValid = this->processLabelDef(unhandledLabels, bytecodeHeaderLength + codeSectionLength, methodDef.name, methodDef.lineNumber);
             if (!isValid) {
                 return false;
@@ -75,16 +75,16 @@ bool Assembler::constructLabelTable() {
             codeSectionLength += 6; // 4 for label, 1 for number of args, 4 for number of locals
 
         // process INSTRUCTION
-        } else if (std::holds_alternative<Types::Instruction>(statement)) {
-            this->processInstruction(unhandledLabels, codeSectionLength, std::get<Types::Instruction>(statement));
+        } else if (std::holds_alternative<AssemblerDefs::Instruction>(statement)) {
+            this->processInstruction(unhandledLabels, codeSectionLength, std::get<AssemblerDefs::Instruction>(statement));
 
         // process DATA
-        } else if (std::holds_alternative<Types::Data>(statement)) {
-            this->processData(unhandledLabels, dataSectionLength, std::get<Types::Data>(statement));
+        } else if (std::holds_alternative<AssemblerDefs::Data>(statement)) {
+            this->processData(unhandledLabels, dataSectionLength, std::get<AssemblerDefs::Data>(statement));
 
         } else {
             // data section Token
-            this->section = Types::Section::DATA;
+            this->section = AssemblerDefs::Section::DATA;
         }
     }
 
@@ -114,28 +114,28 @@ bool Assembler::processLabelDef(std::map<std::string, int>& unhandledRefs, const
     return true;
 }
 
-void Assembler::processInstruction(std::map<std::string, int>& unhandledLabelRefs, uint32_t& codeSectionLength, const Types::Instruction& instruction) {
+void Assembler::processInstruction(std::map<std::string, int>& unhandledLabelRefs, uint32_t& codeSectionLength, const AssemblerDefs::Instruction& instruction) {
     std::string type;
     codeSectionLength += 1; // 1 for opcode
     // loop through each operand
     for (auto& operand : instruction.operands) {
-        if (operand.type == Types::OperandType::TYPE || operand.type == Types::OperandType::DATA_TYPE) {
+        if (operand.type == AssemblerDefs::OperandType::TYPE || operand.type == AssemblerDefs::OperandType::DATA_TYPE) {
             codeSectionLength++;
             type = operand.value;
-        } else if (operand.type == Types::OperandType::CHAR) {
+        } else if (operand.type == AssemblerDefs::OperandType::CHAR) {
             codeSectionLength++;
-        } else if (operand.type == Types::OperandType::LABEL_REF) {
+        } else if (operand.type == AssemblerDefs::OperandType::LABEL_REF) {
             this->processLabelRef(unhandledLabelRefs, operand.value, instruction.lineNumber);
             codeSectionLength += 4;
-        } else if (operand.type == Types::OperandType::STRING) {
+        } else if (operand.type == AssemblerDefs::OperandType::STRING) {
             codeSectionLength += 4;
-        } else if (operand.type == Types::OperandType::IMMEDIATE) {
+        } else if (operand.type == AssemblerDefs::OperandType::IMMEDIATE) {
             codeSectionLength += this->calculateBytesFromType(type);
         }
     }
 }
 
-void Assembler::processData(std::map<std::string, int> &unhandledLabelRefs, uint32_t& dataSectionLength, const Types::Data& data) {
+void Assembler::processData(std::map<std::string, int> &unhandledLabelRefs, uint32_t& dataSectionLength, const AssemblerDefs::Data& data) {
     // check if data type is ptr
     if (data.type == "ptr") {
         // add label to unhandledLabelRefs
@@ -152,7 +152,7 @@ void Assembler::processLabelRef(std::map<std::string, int> &unhandledRefs, const
     }
 }
 
-uint8_t Assembler::calculateBytesOfData(const Types::Data& data) const {
+uint8_t Assembler::calculateBytesOfData(const AssemblerDefs::Data& data) const {
     uint8_t length = 1; // 1 for data type
     if (data.type == "str") {
         length += 4; // 4 bytes for length of string
@@ -186,24 +186,24 @@ std::optional<std::vector<uint8_t>> Assembler::generateBytecode() {
 
     // loop through each statement
     for (auto& statement : this->statements) {
-        if (std::holds_alternative<Types::Label>(statement) || std::holds_alternative<Types::Section>(statement)) {
+        if (std::holds_alternative<AssemblerDefs::Label>(statement) || std::holds_alternative<AssemblerDefs::Section>(statement)) {
             continue;
         }
         // convert METHOD_DEF
-        if (std::holds_alternative<Types::MethodDef>(statement)) {
-            this->pushBackVector(bytecode, this->convertMethodDefToBytes(std::get<Types::MethodDef>(statement)));
+        if (std::holds_alternative<AssemblerDefs::MethodDef>(statement)) {
+            this->pushBackVector(bytecode, this->convertMethodDefToBytes(std::get<AssemblerDefs::MethodDef>(statement)));
 
         // convert INSTRUCTION
-        } else if (std::holds_alternative<Types::Instruction>(statement)) {
-            auto data = this->convertInstructionToBytes(std::get<Types::Instruction>(statement));
+        } else if (std::holds_alternative<AssemblerDefs::Instruction>(statement)) {
+            auto data = this->convertInstructionToBytes(std::get<AssemblerDefs::Instruction>(statement));
             if (!data.has_value()) {
                 return std::nullopt;
             }
             this->pushBackVector(bytecode, data.value());
 
         // convert DATA
-        } else if (std::holds_alternative<Types::Data>(statement)) {
-            auto data = this->convertDataStatementToBytes(std::get<Types::Data>(statement));
+        } else if (std::holds_alternative<AssemblerDefs::Data>(statement)) {
+            auto data = this->convertDataStatementToBytes(std::get<AssemblerDefs::Data>(statement));
             if (!data.has_value()) {
                 return std::nullopt;
             }
@@ -213,24 +213,24 @@ std::optional<std::vector<uint8_t>> Assembler::generateBytecode() {
     return bytecode;
 }
 
-std::optional<std::vector<uint8_t>> Assembler::convertInstructionToBytes(const Types::Instruction &instruction) const {
+std::optional<std::vector<uint8_t>> Assembler::convertInstructionToBytes(const AssemblerDefs::Instruction &instruction) const {
     std::vector<uint8_t> bytecode;
-    bytecode.push_back(Types::opcode.at(instruction.opcode)); // encode opcode
+    bytecode.push_back(AssemblerDefs::opcode.at(instruction.opcode)); // encode opcode
     std::string dataType;
 
     // loop through each operand
     for (auto& operand : instruction.operands) {
-        if (operand.type == Types::OperandType::TYPE) {
+        if (operand.type == AssemblerDefs::OperandType::TYPE) {
             bytecode.push_back(this->convertTypeToByte(operand.value));
             dataType = operand.value;
-        } else if (operand.type == Types::OperandType::DATA_TYPE) {
+        } else if (operand.type == AssemblerDefs::OperandType::DATA_TYPE) {
             bytecode.push_back(this->convertDataTypeToByte(operand.value));
             dataType = operand.value;
-        } else if (operand.type == Types::OperandType::LABEL_REF) {
+        } else if (operand.type == AssemblerDefs::OperandType::LABEL_REF) {
             this->pushBackVector(bytecode, this->convertLabelRefToBytes(operand.value));
-        } else if (operand.type == Types::OperandType::CHAR ||
-            operand.type == Types::OperandType::STRING ||
-            operand.type == Types::OperandType::IMMEDIATE) {
+        } else if (operand.type == AssemblerDefs::OperandType::CHAR ||
+            operand.type == AssemblerDefs::OperandType::STRING ||
+            operand.type == AssemblerDefs::OperandType::IMMEDIATE) {
             auto data = this->convertDataToBytes(dataType, operand.value, instruction.lineNumber);
             if (!data.has_value()) {
                 return std::nullopt;
@@ -241,7 +241,7 @@ std::optional<std::vector<uint8_t>> Assembler::convertInstructionToBytes(const T
     return bytecode;
 }
 
-std::vector<uint8_t> Assembler::convertMethodDefToBytes(const Types::MethodDef& methodDef) const {
+std::vector<uint8_t> Assembler::convertMethodDefToBytes(const AssemblerDefs::MethodDef& methodDef) const {
     std::vector<uint8_t> bytecode;
     bytecode.push_back(methodDef.numberOfArguments);
     for (int i = 0; i < 4; i++) {
@@ -250,7 +250,7 @@ std::vector<uint8_t> Assembler::convertMethodDefToBytes(const Types::MethodDef& 
     return bytecode;
 }
 
-std::optional<std::vector<uint8_t>> Assembler::convertDataStatementToBytes(const Types::Data& data) const {
+std::optional<std::vector<uint8_t>> Assembler::convertDataStatementToBytes(const AssemblerDefs::Data& data) const {
     std::vector<uint8_t> bytecode;
     // encode data type to bytecode
     bytecode.push_back(this->convertDataTypeToByte(data.type));

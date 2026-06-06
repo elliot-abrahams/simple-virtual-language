@@ -11,7 +11,7 @@
 Lexer::Lexer() : charIdx(0), lineNumber(0), reachedEndOfFile(false) {
 }
 
-std::optional<std::vector<Types::SVMAToken>> Lexer::lex(const std::string &filePath) {
+std::optional<std::vector<AssemblerDefs::SVMAToken>> Lexer::lex(const std::string &filePath) {
     { // validate file extension
         std::filesystem::path path(filePath);
         if (path.extension() != ".svma") {
@@ -39,12 +39,12 @@ std::optional<std::vector<Types::SVMAToken>> Lexer::lex(const std::string &fileP
     return this->buildTokenStream();
 }
 
-std::optional<std::vector<Types::SVMAToken>> Lexer::buildTokenStream() {
+std::optional<std::vector<AssemblerDefs::SVMAToken>> Lexer::buildTokenStream() {
     this->charIdx = 0;
     this->lineNumber = 1;
     this->reachedEndOfFile = false;
 
-    std::vector<Types::SVMAToken> tokensStream;
+    std::vector<AssemblerDefs::SVMAToken> tokensStream;
 
     while (!this->reachedEndOfFile && this->charIdx < this->inputBuffer.size()) {
 
@@ -61,18 +61,18 @@ std::optional<std::vector<Types::SVMAToken>> Lexer::buildTokenStream() {
                 break;
 
             default:
-                std::optional<Types::SVMAToken> token = this->lexToken();
+                std::optional<AssemblerDefs::SVMAToken> token = this->lexToken();
                 if (!token.has_value()) {
                     return std::nullopt;
                 }
                 tokensStream.push_back(token.value());
         }
     }
-    tokensStream.push_back(Types::SVMAToken{Types::SVMATokenType::END_OF_FILE, "", this->lineNumber});
+    tokensStream.push_back(AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::END_OF_FILE, "", this->lineNumber});
     return tokensStream;
 }
 
-std::optional<Types::SVMAToken> Lexer::lexToken() {
+std::optional<AssemblerDefs::SVMAToken> Lexer::lexToken() {
     switch (this->peek()) {
         case '$':
             return this->lexLabel();
@@ -108,7 +108,7 @@ std::optional<char> Lexer::peekNext() {
     return this->inputBuffer[this->charIdx + 1];
 }
 
-std::optional<Types::SVMAToken> Lexer::lexLabel() {
+std::optional<AssemblerDefs::SVMAToken> Lexer::lexLabel() {
     // enforce label does not start with a number
     std::optional<char> nextChar = peekNext();
     if (nextChar.has_value() && std::isdigit(nextChar.value())) {
@@ -122,56 +122,56 @@ std::optional<Types::SVMAToken> Lexer::lexLabel() {
             this->outputInvalidLabelError(label);
             return std::nullopt;
         }
-        return Types::SVMAToken{Types::SVMATokenType::LABEL_DEF, label, this->lineNumber};
+        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::LABEL_DEF, label, this->lineNumber};
     }
     // LABEL_REF
     if (!this->isValidLabel(label)) {
         this->outputInvalidLabelError(label);
         return std::nullopt;
     }
-    return Types::SVMAToken{Types::SVMATokenType::LABEL_REF, label, this->lineNumber};
+    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::LABEL_REF, label, this->lineNumber};
 }
 
-std::optional<Types::SVMAToken> Lexer::lexNumber() {
+std::optional<AssemblerDefs::SVMAToken> Lexer::lexNumber() {
     std::string number = this->readUntilWhitespace();
     if (!this->isValidNumber(number)) {
         this->outputLineNumberOfError();
         std::cerr << "Invalid number \' " << number << "\'" << std::endl;
         return std::nullopt;
     }
-    return Types::SVMAToken{Types::SVMATokenType::NUMBER, number, this->lineNumber};
+    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::NUMBER, number, this->lineNumber};
 }
 
-std::optional<Types::SVMAToken> Lexer::lexImmediate() {
+std::optional<AssemblerDefs::SVMAToken> Lexer::lexImmediate() {
     std::string immediate = this->readUntilWhitespace();
     if (!this->isValidImmediate(immediate)) {
         this->outputLineNumberOfError();
         std::cerr << "Invalid immediate \'" << immediate << "\'" << std::endl;
         return std::nullopt;
     }
-    return Types::SVMAToken{Types::SVMATokenType::IMMEDIATE, immediate, this->lineNumber};
+    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::IMMEDIATE, immediate, this->lineNumber};
 }
 
-std::optional<Types::SVMAToken> Lexer::lexDataStart() {
+std::optional<AssemblerDefs::SVMAToken> Lexer::lexDataStart() {
     std::string dataStart = this->readUntilWhitespace();
     if (dataStart != ".data") {
         this->outputInvalidTokenError(dataStart);
         return std::nullopt;
     }
-    return Types::SVMAToken{Types::SVMATokenType::DATA_START, "", this->lineNumber};
+    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::DATA_START, "", this->lineNumber};
 }
 
-std::optional<Types::SVMAToken> Lexer::lexChar() {
+std::optional<AssemblerDefs::SVMAToken> Lexer::lexChar() {
     std::string character = this->readChar();
     if (!this->isValidChar(character)) {
         this->outputLineNumberOfError();
         std::cerr << "Invalid char \'" << character + this->readUntilWhitespace() << "\'" << std::endl;
         return std::nullopt;
     }
-    return Types::SVMAToken{Types::SVMATokenType::CHAR,  character, this->lineNumber};
+    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::CHAR,  character, this->lineNumber};
 }
 
-std::optional<Types::SVMAToken> Lexer::lexString() {
+std::optional<AssemblerDefs::SVMAToken> Lexer::lexString() {
     std::string string = this->readString();
     if (!this->isValidString(string)) {
         this->outputLineNumberOfError();
@@ -182,31 +182,31 @@ std::optional<Types::SVMAToken> Lexer::lexString() {
         }
         return std::nullopt;
     }
-    return Types::SVMAToken{Types::SVMATokenType::STRING, string, this->lineNumber};
+    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::STRING, string, this->lineNumber};
 }
 
-std::optional<Types::SVMAToken> Lexer::lexKeyWord() {
+std::optional<AssemblerDefs::SVMAToken> Lexer::lexKeyWord() {
     std::string keyword = this->readUntilWhitespace();
 
     // TYPE Token
-    if (Types::type.find(keyword) != Types::type.end()) {
-        return Types::SVMAToken{Types::SVMATokenType::TYPE, keyword, this->lineNumber};
+    if (AssemblerDefs::type.find(keyword) != AssemblerDefs::type.end()) {
+        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::TYPE, keyword, this->lineNumber};
     }
     // DATA_TYPE Token
-    if (Types::dataType.find(keyword) != Types::dataType.end()) {
-        return Types::SVMAToken{Types::SVMATokenType::DATA_TYPE, keyword, this->lineNumber};
+    if (AssemblerDefs::dataType.find(keyword) != AssemblerDefs::dataType.end()) {
+        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::DATA_TYPE, keyword, this->lineNumber};
     }
     // METHOD_DEF Token
     if (keyword == "def") {
-        return Types::SVMAToken{Types::SVMATokenType::METHOD_DEF, "", this->lineNumber};
+        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::METHOD_DEF, "", this->lineNumber};
     }
     // METHOD_METADATA
-    if (Types::method_metadata_fields.find(keyword) != Types::method_metadata_fields.end()) {
-        return Types::SVMAToken{Types::SVMATokenType::METHOD_METADATA_FIELD, keyword, this->lineNumber};
+    if (AssemblerDefs::method_metadata_fields.find(keyword) != AssemblerDefs::method_metadata_fields.end()) {
+        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::METHOD_METADATA_FIELD, keyword, this->lineNumber};
     }
     // INSTRUCTION
-    if (Types::opcode.find(keyword) != Types::opcode.end()) {
-        return Types::SVMAToken{Types::SVMATokenType::INSTRUCTION, keyword, this->lineNumber};
+    if (AssemblerDefs::opcode.find(keyword) != AssemblerDefs::opcode.end()) {
+        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::INSTRUCTION, keyword, this->lineNumber};
     }
     this->outputInvalidTokenError(keyword);
     return std::nullopt;
