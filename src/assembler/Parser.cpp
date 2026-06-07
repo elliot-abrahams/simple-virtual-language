@@ -1,8 +1,3 @@
-//
-// Created by erael on 04/05/2026.
-//
-
-#pragma once
 #include "Parser.h"
 
 #include <iostream>

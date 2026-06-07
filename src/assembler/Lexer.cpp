@@ -1,4 +1,3 @@
-#pragma once
 #include "Lexer.h"
 
 #include <iostream>
@@ -12,14 +11,6 @@ Lexer::Lexer() : charIdx(0), lineNumber(0), reachedEndOfFile(false) {
 }
 
 std::optional<std::vector<AssemblerDefs::SVMAToken>> Lexer::lex(const std::string &filePath) {
-    { // validate file extension
-        std::filesystem::path path(filePath);
-        if (path.extension() != ".svma") {
-            std::cerr << "File extension is not supported" << std::endl;
-            return std::nullopt;
-        }
-    }
-
     std::fstream svmaFile;
     svmaFile.open(filePath, std::ios::in); // read file
 
