@@ -5,18 +5,20 @@
 
 OperandStack::OperandStack() : stack(std::vector<Value>{}) {}
 
-void OperandStack::pop() {
+Value OperandStack::pop() {
     if (stack.empty()) {
         throw VMError("stack underflow (operand stack empty)");
     }
+    Value top = stack.back();
     stack.pop_back();
+    return top;
 }
 
-TypedValue OperandStack::peek() const {
+Value OperandStack::peek() const {
     if (stack.empty()) {
         throw VMError("stack underflow (operand stack empty)");
     }
-    return stack.at(stack.size() - 1).toTyped();
+    return stack.at(stack.size() - 1);
 }
 
 void OperandStack::push(const uint8_t typeOperand, const uint64_t rawValue) {

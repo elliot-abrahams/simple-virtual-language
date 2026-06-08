@@ -11,14 +11,14 @@
 constexpr size_t MAX_OPERAND_STACK_SIZE = 1024;
 
 enum class Type : uint8_t {
-    I32,
-    I64,
-    UI32,
-    UI64,
-    F32,
-    F64,
-    PTR,
-    CHAR
+    I32 = 0x00,
+    UI32 = 0x01,
+    I64 = 0x02,
+    UI64 = 0x03,
+    F32 = 0x04,
+    F64 = 0x05,
+    PTR = 0x06,
+    CHAR = 0x07
 };
 
 using TypedValue = std::variant<int32_t, int64_t, uint32_t, uint64_t, float, double, uint8_t>;
@@ -59,9 +59,9 @@ class OperandStack {
 public:
     OperandStack();
 
-    void pop();
+    Value pop();
 
-    TypedValue peek() const;
+    Value peek() const;
 
     void push(const uint8_t typeOperand, const uint64_t rawValue);
 

@@ -23,6 +23,13 @@ private:
     void execute();
 
     void executeHalt();
+    void executePush();
+    void executePop();
+    void executeDup();
+    void executeSwap();
+
+    uint8_t fetchType();
+    uint64_t fetchOperand(const uint8_t type);
 
     void handleVMError(const VMError& e) const;
     void dumpState() const;
