@@ -18,7 +18,8 @@ enum class Type : uint8_t {
     F32 = 0x04,
     F64 = 0x05,
     PTR = 0x06,
-    CHAR = 0x07
+    CHAR = 0x07,
+    STR = 0x08,
 };
 
 using TypedValue = std::variant<int32_t, int64_t, uint32_t, uint64_t, float, double, uint8_t>;

@@ -8,7 +8,7 @@ VM::VM() :
     HP(0),
     FP(MAX_MEMORY_ADDRESS),
     SP(MAX_MEMORY_ADDRESS),
-    memoryManager(MemoryManager()),
+    memoryManager(MemoryManager(&HP, &SP)),
     operandStack(OperandStack()),
     running(true) {}
 
@@ -34,7 +34,7 @@ void VM::setHP(const uint32_t hp) {
 
 void VM::execute() {
     // read byte at PC
-    const uint8_t opcode = this->memoryManager.read8(MemoryRegion::CODE, this->PC++);
+    const uint8_t opcode = this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
 
     switch (opcode) {
         case 0x00: break; // nop
@@ -53,12 +53,12 @@ void VM::execute() {
         // MEMORY
         // -------------------------------------------------
 
-        case 0x06: break; // load
-        case 0x07: break; // loadG
-        case 0x08: break; // loadL
-        case 0x09: break; // store
-        case 0x0a: break; // storeG
-        case 0x0b: break; // storeL
+        case 0x06: this->executeLoad(); break; // load
+        case 0x07: this->executeLoadG(); break; // loadG
+        case 0x08: this->executeLoadL(); break; // loadL
+        case 0x09: this->executeStore(); break; // store
+        case 0x0a: this->executeStoreG(); break; // storeG
+        case 0x0b: this->executeStoreL(); break; // storeL
         case 0x0c: break; // alloc
         case 0x0d: break; // free
 
@@ -109,32 +109,112 @@ void VM::executeHalt() {
     this->running = false;
 }
 
+// -------------------------------------------------
+// STACK
+// -------------------------------------------------
+
 void VM::executePush() {
-    const uint8_t type = this->fetchType();
-    const uint64_t value = this->fetchOperand(type);
-    operandStack.push(type, value);
+    const uint8_t type = this->fetchType(); // read type operand
+    const uint64_t value = this->fetchOperand(type); // get value from bytecode
+    this->operandStack.push(type, value); // push value onto the operand stack
 }
 
 void VM::executePop() {
-    // remove top of stack
-    operandStack.pop();
+    this->operandStack.pop(); // remove top of stack
 }
 
 void VM::executeDup() {
-    const Value val = operandStack.peek();
-    operandStack.push(static_cast<uint8_t>(val.type), val.rawValue);
+    const Value val = this->operandStack.peek(); // get top value of operand stack
+    this->operandStack.push(static_cast<uint8_t>(val.type), val.rawValue); // push that value onto the operand stack
 }
 
 void VM::executeSwap() {
-    const Value val1 = operandStack.pop();
-    const Value val2 = operandStack.pop();
+    // pop top two values from operand stack
+    const Value val1 = this->operandStack.pop();
+    const Value val2 = this->operandStack.pop();
 
-    operandStack.push(static_cast<uint8_t>(val1.type), val1.rawValue);
-    operandStack.push(static_cast<uint8_t>(val2.type), val2.rawValue);
+    // push the two values onto the operand stack but swapped
+    this->operandStack.push(static_cast<uint8_t>(val1.type), val1.rawValue);
+    this->operandStack.push(static_cast<uint8_t>(val2.type), val2.rawValue);
+}
+
+// -------------------------------------------------
+// Memory
+// -------------------------------------------------
+
+void VM::executeLoad() {
+    const uint8_t type = this->fetchType(); // read type operand
+    const Value address = this->operandStack.pop(); // pop address from operand stack
+    VM::checkType("load", static_cast<uint8_t>(Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+
+    const uint64_t value = this->memoryManager.read64(MemoryAccessScope::PTR, address.rawValue); // read value at address
+    this->operandStack.push(type, value); // push value onto operand stack
+}
+
+void VM::executeLoadG() {
+    const uint32_t address = this->fetchOperand(static_cast<uint8_t>(Type::PTR)); // read label operand
+    const uint8_t valueDataType = this->memoryManager.read8(MemoryAccessScope::DATA, address - 1); // load data type at address
+
+    /*
+     * <data type of global at address>
+     * STR -> push address onto operand stack
+     * NOT STR -> push value at address onto operand stack
+    */
+
+    if (valueDataType != static_cast<uint8_t>(Type::STR)) {
+        const uint64_t value = this->memoryManager.read64(MemoryAccessScope::PTR, address); // read value at address
+        this->operandStack.push(valueDataType, value); // push value onto operand stack
+    } else {
+        // push address (pointer to the string) onto operand stack
+        this->operandStack.push(valueDataType, address);
+    }
+}
+
+void VM::executeLoadL() {
+    const uint8_t type = this->fetchType(); // read type operand
+    const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(Type::I32)); // read immediate operand
+    const int32_t offset = VM::interpretI32(rawOffset);
+
+    const uint32_t address = this->FP + ((static_cast<int32_t>(offset) - 1) * 8); // calculate address from given operand immediate
+
+    const uint64_t local = this->memoryManager.read64(MemoryAccessScope::DATA, address); // get local value from memory
+
+    this->operandStack.push(static_cast<uint8_t>(type), local); // push local value onto operand stack
+}
+
+void VM::executeStore() {
+    const Value value = this->operandStack.pop(); // pop value to store from operand stack
+    const Value address = this->operandStack.pop(); // pop address to store to from operand stack
+    VM::checkType("store", static_cast<uint8_t>(Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+
+    // store value in memory at address
+    const Value* pValue = &value;
+    this->memoryManager.write(MemoryAccessScope::PTR, address.rawValue, pValue);
+}
+
+void VM::executeStoreG() {
+    const uint8_t address = this->fetchOperand(static_cast<uint8_t>(Type::PTR)); // read label operand
+    const Value value = this->operandStack.pop(); // pop value from operand stack to store
+
+    // ensure the value on the operand stack matches the type of the target global
+    const uint8_t valueDataType = this->memoryManager.read8(MemoryAccessScope::DATA, address - 1); // read data type of target global
+    this->checkType("storeG", valueDataType, static_cast<uint8_t>(value.type));
+
+    this->memoryManager.write(MemoryAccessScope::PTR, address, &value); // store val in memory at address
+}
+
+void VM::executeStoreL() {
+    const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(Type::I32)); // read immediate operand
+    const int32_t offset = VM::interpretI32(rawOffset);
+    const Value value = this->operandStack.pop(); // pop value from operand stack to store
+
+    const uint32_t address = this->FP + ((offset - 1) * 8); // calculate address from given operand immediate
+
+    this->memoryManager.write64(MemoryAccessScope::CALL_STACK, address, value.rawValue);
 }
 
 uint8_t VM::fetchType() {
-    return this->memoryManager.read8(MemoryRegion::CODE, this->PC++);
+    return this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
 }
 
 uint64_t VM::fetchOperand(const uint8_t type) {
@@ -145,7 +225,7 @@ uint64_t VM::fetchOperand(const uint8_t type) {
         case 0x04: // f32
         case 0x06: // ptr
         {
-            result = static_cast<uint64_t>(this->memoryManager.read32(MemoryRegion::CODE, this->PC));
+            result = static_cast<uint64_t>(this->memoryManager.read32(MemoryAccessScope::CODE, this->PC));
             this->PC += 4;
             break;
         }
@@ -154,7 +234,7 @@ uint64_t VM::fetchOperand(const uint8_t type) {
         case 0x05: // f64
         case 0x07: // char
         {
-            result = this->memoryManager.read64(MemoryRegion::CODE, this->PC);
+            result = this->memoryManager.read64(MemoryAccessScope::CODE, this->PC);
             this->PC += 8;
             break;
         }
@@ -191,4 +271,34 @@ void VM::dumpState() const {
     }
 
     std::cerr << std::dec << std::endl;
+}
+
+void VM::checkType(const std::string instruction, const uint8_t expectedType, const uint8_t actualType) {
+    if (expectedType != actualType) {
+        throw VMError(
+            std::string("Error: type mismatch") +
+            "\nInstruction: " + instruction +
+            "\nExpected: " + typeToString(expectedType) +
+            "\nActual: " + typeToString(actualType)
+        );
+    }
+}
+
+std::string VM::typeToString(const uint8_t type) {
+    switch (type) {
+        case static_cast<uint8_t>(Type::I32): return "i32";
+        case static_cast<uint8_t>(Type::UI32): return "ui64";
+        case static_cast<uint8_t>(Type::I64): return "i64";
+        case static_cast<uint8_t>(Type::UI64): return "ui64";
+        case static_cast<uint8_t>(Type::F32): return "f32";
+        case static_cast<uint8_t>(Type::F64): return "f64";
+        case static_cast<uint8_t>(Type::PTR): return "ptr";
+        case static_cast<uint8_t>(Type::CHAR): return "char";
+        case static_cast<uint8_t>(Type::STR): return "str";
+        default: return "Unknown";
+    }
+}
+
+int32_t VM::interpretI32(const uint64_t rawValue) {
+    return static_cast<int32_t>(static_cast<uint32_t>(rawValue));
 }

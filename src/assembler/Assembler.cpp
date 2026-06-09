@@ -55,9 +55,9 @@ bool Assembler::constructLabelTable() {
             bool isValid;
             auto label = std::get<AssemblerDefs::Label>(statement);
             if (this->section == AssemblerDefs::Section::CODE) {
-                isValid = this->processLabelDef(unhandledLabels, bytecodeHeaderLength + codeSectionLength, label.name, label.lineNumber);
+                isValid = this->processLabelDef(unhandledLabels, codeSectionLength, label.name, label.lineNumber);
             } else {
-                isValid = this->processLabelDef(unhandledLabels, bytecodeHeaderLength + codeSectionLength + dataSectionLength, label.name, label.lineNumber);
+                isValid = this->processLabelDef(unhandledLabels, codeSectionLength + dataSectionLength + 1, label.name, label.lineNumber);
             }
 
             if (!isValid) {
@@ -67,7 +67,7 @@ bool Assembler::constructLabelTable() {
         // process METHOD_DEF
         } else if (std::holds_alternative<AssemblerDefs::MethodDef>(statement)) {
             auto methodDef = std::get<AssemblerDefs::MethodDef>(statement);
-            bool isValid = this->processLabelDef(unhandledLabels, bytecodeHeaderLength + codeSectionLength, methodDef.name, methodDef.lineNumber);
+            bool isValid = this->processLabelDef(unhandledLabels, codeSectionLength, methodDef.name, methodDef.lineNumber);
             if (!isValid) {
                 return false;
             }
@@ -174,6 +174,7 @@ uint8_t Assembler::calculateBytesFromType(const std::string& type) const {
 
 std::optional<std::vector<uint8_t>> Assembler::generateBytecode() {
     std::vector<uint8_t> bytecode;
+    this->section = AssemblerDefs::Section::CODE;
 
     for (int i = 0; i < 4; i++) {
         bytecode.push_back((this->dataStartLocation >> (i * 8)) & 0xFF);
@@ -185,7 +186,7 @@ std::optional<std::vector<uint8_t>> Assembler::generateBytecode() {
 
     // loop through each statement
     for (auto& statement : this->statements) {
-        if (std::holds_alternative<AssemblerDefs::Label>(statement) || std::holds_alternative<AssemblerDefs::Section>(statement)) {
+        if (std::holds_alternative<AssemblerDefs::Label>(statement)) {
             continue;
         }
         // convert METHOD_DEF
@@ -207,6 +208,8 @@ std::optional<std::vector<uint8_t>> Assembler::generateBytecode() {
                 return std::nullopt;
             }
             this->pushBackVector(bytecode, data.value());
+        } else if (std::holds_alternative<AssemblerDefs::Section>(statement)) {
+            this->section = AssemblerDefs::Section::DATA;
         }
     }
     return bytecode;
@@ -270,7 +273,6 @@ uint8_t Assembler::convertTypeToByte(const std::string &type) const {
     if (type == "f32") return 0x04;
     if (type == "f64") return 0x05;
     if (type == "ptr") return 0x06;
-    //if (type == "char")
     return 0x07;
 }
 
@@ -284,8 +286,14 @@ uint8_t Assembler::convertDataTypeToByte(const std::string &dataType) const {
 std::optional<std::vector<uint8_t>> Assembler::convertDataToBytes(const std::string& dataType, const std::string& data, const int& lineNumber) const {
     std::vector<uint8_t> bytecode;
     try {
-        if (dataType == "i32") {
-            const int64_t parsed = std::stoll(data.substr(1));
+        if (dataType == "i32" || dataType == "") { // "" for loadL and storeL
+            int64_t parsed;
+            if (this->section == AssemblerDefs::Section::CODE) {
+                // remove '#' from data
+                parsed = std::stoll(data.substr(1));
+            } else {
+                 parsed = std::stoll(data);
+            }
 
             if (parsed > std::numeric_limits<int32_t>::max() || parsed < std::numeric_limits<int32_t>::min()) {
                 this->handleValueOutOfRangeError(dataType, data, lineNumber);

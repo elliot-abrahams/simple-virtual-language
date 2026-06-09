@@ -69,11 +69,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     // parse TYPE Token
     if (instruction == "push" ||
         instruction == "load" ||
-        instruction == "loadG" ||
         instruction == "loadL" ||
-        instruction == "store" ||
-        instruction == "storeG" ||
-        instruction == "storeL" ||
         instruction == "add" ||
         instruction == "sub" ||
         instruction == "mul" ||
@@ -155,11 +151,11 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     //========================================================================================================
 
     if (instruction == "load") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "loadG") return AssemblerDefs::Instruction{instruction, {type, labelRef}, lineNumber};
+    if (instruction == "loadG") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
     if (instruction == "loadL") return AssemblerDefs::Instruction{instruction, {type, immediate}, lineNumber};
-    if (instruction == "store") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "storeG") return AssemblerDefs::Instruction{instruction, {type, labelRef}, lineNumber};
-    if (instruction == "storeL") return AssemblerDefs::Instruction{instruction, {type, immediate}, lineNumber};
+    if (instruction == "store") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "storeG") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
+    if (instruction == "storeL") return AssemblerDefs::Instruction{instruction, {immediate}, lineNumber};
     if (instruction == "alloc") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "free") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
