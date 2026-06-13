@@ -1,6 +1,7 @@
 #include "Parser.h"
 
 #include <iostream>
+#include <limits>
 #include <regex>
 
 
@@ -70,24 +71,6 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     if (instruction == "push" ||
         instruction == "load" ||
         instruction == "loadL" ||
-        instruction == "add" ||
-        instruction == "sub" ||
-        instruction == "mul" ||
-        instruction == "div" ||
-        instruction == "mod" ||
-        instruction == "not" ||
-        instruction == "notB" ||
-        instruction == "and" ||
-        instruction == "orr" ||
-        instruction == "xor" ||
-        instruction == "shl" ||
-        instruction == "shr" ||
-        instruction == "ceq" ||
-        instruction == "cne" ||
-        instruction == "clt" ||
-        instruction == "cle" ||
-        instruction == "cgt" ||
-        instruction == "cge" ||
         instruction == "conv") {
 
         auto optionalType = this->parseType();
@@ -121,6 +104,21 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
             return std::nullopt;
         }
         immediate = optionalImmediate.value();
+    }
+
+    // check value is valid with given type (if operand consists of both type and value)
+    if (!immediate.value.empty()) {
+        if (!type.value.empty()) { // type
+            if (!this->isValidFoType(type.value, immediate.value)) {
+                this->handleValueOutOfRangeError(type.value, immediate.value, lineNumber);
+                return std::nullopt;
+            }
+        } else if (!dataType.value.empty()) { // data type
+            if (!this->isValidFoType(dataType.value, immediate.value)) {
+                this->handleValueOutOfRangeError(dataType.value, immediate.value, lineNumber);
+                return std::nullopt;
+            }
+        }
     }
 
     if (instruction == "nop") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
@@ -173,26 +171,26 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     // ARITHMETIC
     //========================================================================================================
 
-    if (instruction == "add") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "sub") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "mul") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "div") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "mod") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "add") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "sub") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "mul") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "div") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "mod") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
-    if (instruction == "not") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "notB") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "and") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "orr") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "xor") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "shl") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "shr") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "not") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "notB") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "and") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "orr") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "xor") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "shl") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "shr") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
-    if (instruction == "ceq") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "cne") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "clt") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "cle") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "cgt") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
-    if (instruction == "cge") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "ceq") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "cne") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "clt") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "cle") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "cgt") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "cge") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     //========================================================================================================
     // Other
@@ -238,13 +236,6 @@ std::optional<AssemblerDefs::Statement> Parser::parseData() {
             // enforce ptr type is matched with LABEL_REF
             if (this->peek().type == AssemblerDefs::SVMATokenType::LABEL_REF) {
                 this->handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::LABEL_REF});
-                return std::nullopt;
-            }
-
-        } else if (dataTypetoken.value == "char") {
-            // enforce char type is matched with CHAR
-            if (this->peek().type != AssemblerDefs::SVMATokenType::CHAR) {
-                this->handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::CHAR});
                 return std::nullopt;
             }
         }
@@ -369,6 +360,40 @@ AssemblerDefs::SVMAToken Parser::peekNext() {
     return this->tokenStream[this->tokenIdx + 1];
 }
 
+bool Parser::isValidFoType(const std::string& type, const std::string& value) {
+    try {
+        std::string valueToCheck;
+        if (value[0] == '#') {
+            valueToCheck = value.substr(1);
+        }
+
+        if (type == "i32") {
+            std::stoi(valueToCheck);
+        } else if (type == "ui32") {
+            std::stoul(valueToCheck);
+        } else if (type == "i64") {
+            std::stoll(valueToCheck);
+        } else if (type == "ui64") {
+            std::stoull(valueToCheck);
+        } else if (type == "f32") {
+            std::stof(valueToCheck);
+        } else if (type == "f64") {
+            std::stod(valueToCheck);
+        }
+
+    } catch (const std::invalid_argument& e) {
+        return false;
+    } catch (const std::out_of_range& e) {
+        return false;
+    }
+    return true;
+}
+
+void Parser::handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) const {
+    std::cerr << "Error found at Line " << lineNumber << std::endl;
+    std::cerr << data << " out of range for " << dataType << std::endl;
+}
+
 bool Parser::isNumberInteger(const AssemblerDefs::SVMAToken& token) {
     return std::regex_match(token.value, std::regex("-?[0-9]*"));
 }
@@ -405,7 +430,6 @@ std::string Parser::tokenTypeToString(AssemblerDefs::SVMATokenType tokenType) {
         case AssemblerDefs::SVMATokenType::DATA_TYPE: s = "DATA_TYPE"; break;
         case AssemblerDefs::SVMATokenType::NUMBER: s = "NUMBER"; break;
         case AssemblerDefs::SVMATokenType::IMMEDIATE: s = "IMMEDIATE"; break;
-        case AssemblerDefs::SVMATokenType::CHAR: s = "CHAR"; break;
         case AssemblerDefs::SVMATokenType::STRING: s = "STRING"; break;
         case AssemblerDefs::SVMATokenType::LABEL_REF: s = "LABEL_REF"; break;
         case AssemblerDefs::SVMATokenType::LABEL_DEF: s = "LABEL_DEF"; break;

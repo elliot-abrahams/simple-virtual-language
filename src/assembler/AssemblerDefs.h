@@ -29,7 +29,6 @@ namespace AssemblerDefs {
         DATA_TYPE,
         NUMBER,
         IMMEDIATE,
-        CHAR,
         STRING,
         LABEL_REF,
         LABEL_DEF,
@@ -114,7 +113,6 @@ namespace AssemblerDefs {
 
     enum class OperandType {
         IMMEDIATE,
-        CHAR,
         STRING,
         TYPE,
         DATA_TYPE,

@@ -39,8 +39,7 @@ void MemoryManager::write(const MemoryAccessScope region, uint32_t address, cons
         }
         case Type::I64:
         case Type::UI64:
-        case Type::F64:
-        case Type::CHAR: {
+        case Type::F64: {
             this->write64(region, address, value->rawValue);
         }
     }
@@ -78,8 +77,7 @@ uint64_t MemoryManager::read(const MemoryAccessScope region, uint32_t address, T
         }
         case Type::I64:
         case Type::UI64:
-        case Type::F64:
-        case Type::CHAR: {
+        case Type::F64: {
             return read64(region, address);
         }
     }

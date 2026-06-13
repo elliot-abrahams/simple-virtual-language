@@ -22,4 +22,8 @@ add_executable(svm
         "src/vm/VMError.h"
         "src/Driver.cpp"
         "src/Driver.h"
+        src/vm/ArithmeticOps.cpp
+        src/vm/ArithmeticOps.h
+        src/vm/TypeConversions.cpp
+        src/vm/TypeConversions.h
 )

@@ -27,7 +27,6 @@ private:
     std::optional<AssemblerDefs::SVMAToken> lexNumber();
     std::optional<AssemblerDefs::SVMAToken> lexImmediate();
     std::optional<AssemblerDefs::SVMAToken> lexDataStart();
-    std::optional<AssemblerDefs::SVMAToken> lexChar();
     std::optional<AssemblerDefs::SVMAToken> lexString();
     std::optional<AssemblerDefs::SVMAToken> lexKeyWord();
 
@@ -43,7 +42,6 @@ private:
     static bool isValidLabel(const std::string& s);
     static bool isValidNumber(const std::string& s);
     static bool isValidImmediate(const std::string& s);
-    static bool isValidChar(const std::string& s);
     static bool isValidString(const std::string& s);
 
     void outputInvalidTokenError(const std::string& word) const;

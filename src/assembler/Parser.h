@@ -38,6 +38,9 @@ private:
     AssemblerDefs::SVMAToken peek();
     AssemblerDefs::SVMAToken peekNext();
 
+    static bool isValidFoType(const std::string& type, const std::string& value);
+    void handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) const;
+
     static bool isNumberInteger(const AssemblerDefs::SVMAToken& token);
     static bool isNumberSigned(const AssemblerDefs::SVMAToken& token);
 

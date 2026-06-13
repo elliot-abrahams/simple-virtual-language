@@ -37,15 +37,13 @@ private:
     std::vector<uint8_t> convertMethodDefToBytes(const AssemblerDefs::MethodDef& methodDef) const;
     std::optional<std::vector<uint8_t>> convertDataStatementToBytes(const AssemblerDefs::Data& data) const;
 
-    uint8_t convertTypeToByte(const std::string& type) const;
+    static uint8_t convertTypeToByte(const std::string& type);
     uint8_t convertDataTypeToByte(const std::string& dataType) const;
     std::optional<std::vector<uint8_t>> convertDataToBytes(const std::string& dataType, const std::string& data, const int& lineNumber) const;
     std::vector<uint8_t> convertLabelRefToBytes(const std::string& label) const;
     std::vector<uint8_t> convertStringToBytes(const std::string& string) const;
 
     std::vector<uint8_t> pushBackVector(std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const;
-
-    void handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) const;
 
     AssemblerDefs::Section section;
     std::vector<AssemblerDefs::Statement> statements;

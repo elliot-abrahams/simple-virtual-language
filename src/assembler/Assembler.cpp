@@ -121,8 +121,6 @@ void Assembler::processInstruction(std::map<std::string, int>& unhandledLabelRef
         if (operand.type == AssemblerDefs::OperandType::TYPE || operand.type == AssemblerDefs::OperandType::DATA_TYPE) {
             codeSectionLength++;
             type = operand.value;
-        } else if (operand.type == AssemblerDefs::OperandType::CHAR) {
-            codeSectionLength++;
         } else if (operand.type == AssemblerDefs::OperandType::LABEL_REF) {
             this->processLabelRef(unhandledLabelRefs, operand.value, instruction.lineNumber);
             codeSectionLength += 4;
@@ -230,8 +228,7 @@ std::optional<std::vector<uint8_t>> Assembler::convertInstructionToBytes(const A
             dataType = operand.value;
         } else if (operand.type == AssemblerDefs::OperandType::LABEL_REF) {
             this->pushBackVector(bytecode, this->convertLabelRefToBytes(operand.value));
-        } else if (operand.type == AssemblerDefs::OperandType::CHAR ||
-            operand.type == AssemblerDefs::OperandType::STRING ||
+        } else if (operand.type == AssemblerDefs::OperandType::STRING ||
             operand.type == AssemblerDefs::OperandType::IMMEDIATE) {
             auto data = this->convertDataToBytes(dataType, operand.value, instruction.lineNumber);
             if (!data.has_value()) {
@@ -265,125 +262,91 @@ std::optional<std::vector<uint8_t>> Assembler::convertDataStatementToBytes(const
     return bytecode;
 }
 
-uint8_t Assembler::convertTypeToByte(const std::string &type) const {
+uint8_t Assembler::convertTypeToByte(const std::string &type) {
     if (type == "i32") return 0x00;
     if (type == "ui32") return 0x01;
     if (type == "i64") return 0x02;
     if (type == "ui64") return 0x03;
     if (type == "f32") return 0x04;
     if (type == "f64") return 0x05;
-    if (type == "ptr") return 0x06;
-    return 0x07;
+    return 0x06;
 }
 
 uint8_t Assembler::convertDataTypeToByte(const std::string &dataType) const {
     if (dataType == "str") {
-        return 0x08;
+        return 0x07;
     }
     return this->convertTypeToByte(dataType);
 }
 
 std::optional<std::vector<uint8_t>> Assembler::convertDataToBytes(const std::string& dataType, const std::string& data, const int& lineNumber) const {
     std::vector<uint8_t> bytecode;
-    try {
-        if (dataType == "i32" || dataType == "") { // "" for loadL and storeL
-            int64_t parsed;
-            if (this->section == AssemblerDefs::Section::CODE) {
-                // remove '#' from data
-                parsed = std::stoll(data.substr(1));
-            } else {
-                 parsed = std::stoll(data);
-            }
 
-            if (parsed > std::numeric_limits<int32_t>::max() || parsed < std::numeric_limits<int32_t>::min()) {
-                this->handleValueOutOfRangeError(dataType, data, lineNumber);
-                return std::nullopt;
-            }
+    std::string dataToConvert = "";
 
-            const int32_t value = static_cast<int32_t>(parsed);
-            const uint32_t raw = static_cast<uint32_t>(value);
+    if (data[0] == '#') {
+        // remove # from immediate
+        dataToConvert = data.substr(1);
+    } else {
+        dataToConvert = data;
+    }
 
-            for (int i = 0; i < 4; i++) {
-                bytecode.push_back((raw >> (i * 8)) & 0xFF);
-            }
+    if (dataType == "i32") {
+        const int64_t parsed = std::stoll(dataToConvert);
 
-        } else if (dataType == "ui32") {
-            if (data[1] == '-') {
-                this->handleValueOutOfRangeError(dataType, data, lineNumber);
-                return std::nullopt;
-            }
+        const int32_t value = static_cast<int32_t>(parsed);
+        const uint32_t raw = static_cast<uint32_t>(value);
 
-            const uint64_t parsed = std::stoull(data);
-            if (parsed > std::numeric_limits<uint32_t>::max()) {
-                this->handleValueOutOfRangeError(dataType, data, lineNumber);
-                return std::nullopt;
-            }
-
-            const uint32_t raw = static_cast<uint32_t>(parsed);
-
-            for (int i = 0; i < 4; i++) {
-                bytecode.push_back((raw >> (i * 8)) & 0xFF);
-            }
-
-        } else if (dataType == "i64") {
-            const int64_t value = std::stoll(data.substr(1));
-            const uint64_t raw = static_cast<uint64_t>(value);
-
-            for (int i = 0; i < 8; i++) {
-                bytecode.push_back((raw >> (i * 8)) & 0xFF);
-            }
-
-        } else if (dataType == "ui64") {
-            if (data[1] == '-') {
-                this->handleValueOutOfRangeError(dataType, data, lineNumber);
-                return std::nullopt;
-            }
-
-            const uint64_t raw = std::stoull(data.substr(1));
-
-            for (int i = 0; i < 8; i++) {
-                bytecode.push_back((raw >> (i * 8)) & 0xFF);
-            }
-
-        } else if (dataType == "f32") {
-            const float value = std::stof(data.substr(1));
-
-            if (!std::isfinite(value)) {
-                this->handleValueOutOfRangeError(dataType, data, lineNumber);
-                return std::nullopt;
-            }
-
-            uint32_t raw;
-            std::memcpy(&raw, &value, sizeof(float));
-
-            for (int i = 0; i < 4; i++) {
-                bytecode.push_back((raw >> (i * 8)) & 0xFF);
-            }
-
-        } else if (dataType == "f64") {
-            const double value = std::stod(data.substr(1));
-
-            if (!std::isfinite(value)) {
-                this->handleValueOutOfRangeError(dataType, data, lineNumber);
-                return std::nullopt;
-            }
-
-            uint64_t raw;
-            std::memcpy(&raw, &value, sizeof(double));
-
-            for (int i = 0; i < 8; i++) {
-                bytecode.push_back((raw >> (i * 8)) & 0xFF);
-            }
-
-        } else if (dataType == "ptr") {
-            this->pushBackVector(bytecode, this->convertLabelRefToBytes(data.substr(1)));
-        } else if (dataType == "char") {
-            bytecode.push_back(data[1]); // encode char to uint8_t
-        } else if (dataType == "str") {
-            this->pushBackVector(bytecode, this->convertStringToBytes(data));
+        for (int i = 0; i < 4; i++) {
+            bytecode.push_back((raw >> (i * 8)) & 0xFF);
         }
-    } catch (const std::out_of_range&) {
-        this->handleValueOutOfRangeError(dataType, data, lineNumber);
+
+    } else if (dataType == "ui32" || dataType == "") { // "" for loadL, storeL
+        const uint32_t raw = static_cast<uint32_t>(std::stoull(dataToConvert));
+
+        for (int i = 0; i < 4; i++) {
+            bytecode.push_back((raw >> (i * 8)) & 0xFF);
+        }
+
+    } else if (dataType == "i64") {
+        const int64_t value = std::stoll(dataToConvert);
+        const uint64_t raw = static_cast<uint64_t>(value);
+
+        for (int i = 0; i < 8; i++) {
+            bytecode.push_back((raw >> (i * 8)) & 0xFF);
+        }
+
+    } else if (dataType == "ui64") {
+        const uint64_t raw = std::stoull(dataToConvert);
+
+        for (int i = 0; i < 8; i++) {
+            bytecode.push_back((raw >> (i * 8)) & 0xFF);
+        }
+
+    } else if (dataType == "f32") {
+        const float value = std::stof(dataToConvert);
+        uint32_t raw;
+
+        std::memcpy(&raw, &value, sizeof(float));
+
+        for (int i = 0; i < 4; i++) {
+            bytecode.push_back((raw >> (i * 8)) & 0xFF);
+        }
+
+    } else if (dataType == "f64") {
+        const double value = std::stod(dataToConvert);
+        uint64_t raw;
+
+        std::memcpy(&raw, &value, sizeof(double));
+
+        for (int i = 0; i < 8; i++) {
+            bytecode.push_back((raw >> (i * 8)) & 0xFF);
+        }
+
+    } else if (dataType == "ptr") {
+        this->pushBackVector(bytecode, this->convertLabelRefToBytes(dataToConvert));
+    } else if (dataType == "str") {
+        this->pushBackVector(bytecode, this->convertStringToBytes(data));
     }
     return bytecode;
 }
@@ -419,9 +382,4 @@ std::vector<uint8_t> Assembler::convertStringToBytes(const std::string &string) 
 std::vector<uint8_t> Assembler::pushBackVector(std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const {
     a.insert(a.end(), b.begin(), b.end());
     return a;
-}
-
-void Assembler::handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) const {
-    std::cerr << "Error found at Line " << lineNumber << std::endl;
-    std::cerr << data << " out of range for " << dataType << std::endl;
 }

@@ -71,8 +71,6 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexToken() {
             return this->lexImmediate();
         case '.':
             return this->lexDataStart();
-        case '\'':
-            return this->lexChar();
         case '"':
             return this->lexString();
         default:
@@ -150,16 +148,6 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexDataStart() {
         return std::nullopt;
     }
     return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::DATA_START, "", this->lineNumber};
-}
-
-std::optional<AssemblerDefs::SVMAToken> Lexer::lexChar() {
-    std::string character = this->readChar();
-    if (!this->isValidChar(character)) {
-        this->outputLineNumberOfError();
-        std::cerr << "Invalid char \'" << character + this->readUntilWhitespace() << "\'" << std::endl;
-        return std::nullopt;
-    }
-    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::CHAR,  character, this->lineNumber};
 }
 
 std::optional<AssemblerDefs::SVMAToken> Lexer::lexString() {
@@ -279,11 +267,6 @@ bool Lexer::isValidNumber(const std::string& s) {
 
 bool Lexer::isValidImmediate(const std::string& s) {
     return std::regex_match(s, std::regex{R"(#-?[0-9]+(\.[0-9]+)?)"});
-}
-
-bool Lexer::isValidChar(const std::string &s) {
-    if (s.size() != 3) return false;
-    return s[2] == '\'';
 }
 
 bool Lexer::isValidString(const std::string &s) {

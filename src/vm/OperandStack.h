@@ -18,8 +18,7 @@ enum class Type : uint8_t {
     F32 = 0x04,
     F64 = 0x05,
     PTR = 0x06,
-    CHAR = 0x07,
-    STR = 0x08,
+    STR = 0x07,
 };
 
 using TypedValue = std::variant<int32_t, int64_t, uint32_t, uint64_t, float, double, uint8_t>;
@@ -47,8 +46,6 @@ struct Value
                 std::memcpy(&d, &rawValue, sizeof(double));
                 return d;
             }
-            case Type::CHAR: return static_cast<uint8_t>(rawValue);
-
             default:
                 throw VMError("Invalid type in operand stack");
         }
@@ -65,6 +62,7 @@ public:
     Value peek() const;
 
     void push(const uint8_t typeOperand, const uint64_t rawValue);
+    void push(const Value value);
 
     const std::vector<Value>* getStack() const;
 

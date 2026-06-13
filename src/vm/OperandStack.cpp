@@ -57,12 +57,12 @@ void OperandStack::push(const uint8_t typeOperand, const uint64_t rawValue) {
             val = Value{Type::PTR, rawValue};
             break;
         }
-        case 0x07: { // char
-            val = Value{Type::CHAR, rawValue};
-            break;
-        }
     }
     this->stack.push_back(val);
+}
+
+void OperandStack::push(const Value value) {
+    this->stack.push_back(value);
 }
 
 const std::vector<Value>* OperandStack::getStack() const {
