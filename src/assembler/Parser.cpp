@@ -178,12 +178,12 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     if (instruction == "mod") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     if (instruction == "not") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
-    if (instruction == "notB") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "and") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "orr") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "xor") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "shl") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "shr") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "sar") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     if (instruction == "ceq") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "cne") return AssemblerDefs::Instruction{instruction, {}, lineNumber};

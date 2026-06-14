@@ -40,6 +40,14 @@ private:
     void executeSub();
     void executeMul();
     void executeDiv();
+    void executeMod();
+    void executeNot();
+    void executeAnd();
+    void executeOrr();
+    void executeXor();
+    void executeShl();
+    void executeShr();
+    void executeSar();
 
     uint8_t fetchType();
     uint64_t fetchOperand(const uint8_t type);

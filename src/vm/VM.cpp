@@ -83,14 +83,14 @@ void VM::execute() {
         case 0x14: this->executeSub(); break; // sub
         case 0x15: this->executeMul(); break; // mul
         case 0x16: this->executeDiv(); break; // div
-        case 0x17: break; // mod
-        case 0x18: break; // not
-        case 0x19: break; // notB
-        case 0x1a: break; // and
-        case 0x1b: break; // orr
-        case 0x1c: break; // xor
-        case 0x1d: break; // shl
-        case 0x1e: break; // shr
+        case 0x17: this->executeMod(); break; // mod
+        case 0x18: this->executeNot(); break; // not
+        case 0x19: this->executeAnd(); break; // and
+        case 0x1a: this->executeOrr(); break; // orr
+        case 0x1b: this->executeXor(); break; // xor
+        case 0x1c: this->executeShl(); break; // shl
+        case 0x1d: this->executeShr(); break; // shr
+        case 0x1e: this->executeSar(); break; // sar
         case 0x1f: break; // ceq
         case 0x20: break; // cne
         case 0x21: break; // clt
@@ -224,7 +224,7 @@ void VM::executeAdd() {
     const Value value1 = this->operandStack.pop();
     const Value value2 = this->operandStack.pop();
 
-    // add those two values and push the result back onto the operand stack
+    // add those two values and push the result onto the operand stack
     this->operandStack.push(ArithmeticOps::add(value2, value1));
 }
 
@@ -233,25 +233,98 @@ void VM::executeSub() {
     const Value value1 = this->operandStack.pop();
     const Value value2 = this->operandStack.pop();
 
-    // subtract those two values and push the result back onto the operand stack
+    // subtract those two values and push the result onto the operand stack
     this->operandStack.push(ArithmeticOps::sub(value2, value1));
 }
 
 void VM::executeMul() {
+    // pop two values off of the operand stack
     const Value value1 = this->operandStack.pop();
     const Value value2 = this->operandStack.pop();
 
-    // multiply those two values and push the result back onto the operand stack
+    // multiply those two values and push the result onto the operand stack
     this->operandStack.push(ArithmeticOps::mul(value2, value1));
 }
 
 void VM::executeDiv() {
+    // pop two values off of the operand stack
     const Value value1 = this->operandStack.pop();
     const Value value2 = this->operandStack.pop();
 
-    // multiply those two values and push the result back onto the operand stack
+    // multiply those two values and push the result onto the operand stack
     this->operandStack.push(ArithmeticOps::div(value2, value1));
 }
+
+void VM::executeMod() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // compute modulo and push the result onto the operand stack
+    this->operandStack.push(ArithmeticOps::mod(value2, value1));
+}
+
+void VM::executeNot() {
+    const Value value = this->operandStack.pop(); // pop value from the operand stack
+
+    // compute bitwise not and push the result onto the operand stack
+    this->operandStack.push(ArithmeticOps::bitwiseNot(value));
+}
+
+void VM::executeAnd() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // compute bitwise and, and push the result onto the operand stack
+    this->operandStack.push(ArithmeticOps::bitwiseAnd(value2, value1));
+}
+
+void VM::executeOrr() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // compute bitwise or, and push the result onto the operand stack
+    this->operandStack.push(ArithmeticOps::bitwiseOr(value2, value1));
+}
+
+void VM::executeXor() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // compute bitwise xor and push the result onto the operand stack
+    this->operandStack.push(ArithmeticOps::bitwiseXor(value2, value1));
+}
+
+void VM::executeShl() {
+    // pop two values off of the operand stack
+    const Value numberOfShifts = this->operandStack.pop();
+    const Value value = this->operandStack.pop();
+
+    // compute logical shift left and push the result onto the operand stack
+    this->operandStack.push(ArithmeticOps::shl(value, numberOfShifts));
+}
+
+void VM::executeShr() {
+    // pop two values off of the operand stack
+    const Value numberOfShifts = this->operandStack.pop();
+    const Value value = this->operandStack.pop();
+
+    // compute logical shift right and push the result onto the operand stack
+    this->operandStack.push(ArithmeticOps::shr(false, value, numberOfShifts));
+}
+
+void VM::executeSar() {
+    // pop two values off of the operand stack
+    const Value numberOfShifts = this->operandStack.pop();
+    const Value value = this->operandStack.pop();
+
+    // compute arithmetic shift right and push the result onto the operand stack
+    this->operandStack.push(ArithmeticOps::shr(true, value, numberOfShifts));
+}
+
 
 uint8_t VM::fetchType() {
     return this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);

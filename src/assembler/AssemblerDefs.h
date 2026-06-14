@@ -73,13 +73,13 @@ namespace AssemblerDefs {
         {"div", 0x16},
         {"mod", 0x17},
         {"not", 0x18},
-        {"notB", 0x19},
-        {"and", 0x1a},
-        {"orr", 0x1b},
-        {"xor", 0x1c},
-        {"shl", 0x1d},
-        {"shr", 0x1e},
-        {"ceq", 0x1f},
+        {"and", 0x19},
+        {"orr", 0x1a},
+        {"xor", 0x1b},
+        {"shl", 0x1c},
+        {"shr", 0x1d},
+        {"sar", 0x1e},
+        {"ceq", 0x2f},
         {"cne", 0x20},
         {"clt", 0x21},
         {"cle", 0x22},
@@ -99,7 +99,6 @@ namespace AssemblerDefs {
         {"f32", 0x04},
         {"f64", 0x05},
         {"ptr", 0x06},
-        {"char", 0x07},
     };
 
     inline std::map<std::string, uint8_t> dataType {
