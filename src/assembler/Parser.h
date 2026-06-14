@@ -47,6 +47,7 @@ private:
     AssemblerDefs::OperandType mapTokenTypeToOperandType(AssemblerDefs::SVMATokenType tokenType);
 
     void handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATokenType> &expectingTypes);
+    void handleIncorrectInstructionOperand(const std::string& instructionMnemonic, const AssemblerDefs::SVMATokenType expectedType, const int& lineNumber);
     static std::string tokenTypeToString(AssemblerDefs::SVMATokenType tokenType);
 
     std::vector<AssemblerDefs::SVMAToken> tokenStream;

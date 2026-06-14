@@ -62,6 +62,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
         instruction == "inn") {
         auto optionalDataType = this->parseDataType();
         if (!optionalDataType.has_value()) {
+            this->handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::DATA_TYPE, lineNumber);
             return std::nullopt;
         }
         dataType = optionalDataType.value();
@@ -75,6 +76,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
 
         auto optionalType = this->parseType();
         if (!optionalType.has_value()) {
+            this->handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::TYPE, lineNumber);
             return std::nullopt;
         }
         type = optionalType.value();
@@ -90,6 +92,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
 
         auto optionalLabelRef = this->parseLabelRef();
         if (!optionalLabelRef.has_value()) {
+            this->handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::LABEL_REF, lineNumber);
             return std::nullopt;
         }
         labelRef = optionalLabelRef.value();
@@ -101,6 +104,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
 
         auto optionalImmediate = this->parseImmediate();
         if (!optionalImmediate.has_value()) {
+            this->handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::IMMEDIATE, lineNumber);
             return std::nullopt;
         }
         immediate = optionalImmediate.value();
@@ -178,12 +182,12 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     if (instruction == "mod") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     if (instruction == "not") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "notB") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "and") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "orr") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "xor") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "shl") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "shr") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
-    if (instruction == "sar") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     if (instruction == "ceq") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "cne") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
@@ -419,6 +423,12 @@ void Parser::handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATok
         else std::cerr << tokenTypeToString(expectingTypes.at(i)) << " / ";
     }
     std::cerr << ", found " << tokenTypeToString(this->peek().type) << std::endl;
+}
+
+void Parser::handleIncorrectInstructionOperand(const std::string &instructionMnemonic, const AssemblerDefs::SVMATokenType expectedType, const int &lineNumber) {
+    std::cerr << "Error found at Line " << this->peek().lineNumber << std::endl;
+    std::cerr << "Incorrect operand for instruction \'" << instructionMnemonic << "\'" << std::endl;
+    std::cerr << "Expecting operand: " << tokenTypeToString(expectedType) << std::endl;
 }
 
 std::string Parser::tokenTypeToString(AssemblerDefs::SVMATokenType tokenType) {
