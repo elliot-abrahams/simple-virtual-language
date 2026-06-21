@@ -7,6 +7,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(Sources
+        vm/runtime/arithmetic/cgeTests.cpp
+        vm/runtime/arithmetic/cgtTests.cpp
+        vm/runtime/arithmetic/cleTests.cpp
+        vm/runtime/arithmetic/cltTests.cpp
+        vm/runtime/arithmetic/cneTests.cpp
+        vm/runtime/arithmetic/ceqTests.cpp
         vm/runtime/arithmetic/sarTests.cpp
         vm/runtime/arithmetic/shrTests.cpp
         vm/runtime/arithmetic/shlTests.cpp

@@ -589,7 +589,7 @@ Value ArithmeticOps::ceq(const Value& value1, const Value& value2) {
 
     int result = 0;
     value1.rawValue == value2.rawValue ? result = 1 : result = 0;
-    return Value{value1.type, TypeConversions::I32ToRaw(result)};
+    return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
 }
 
 Value ArithmeticOps::cne(const Value& value1, const Value& value2) {
@@ -611,7 +611,7 @@ Value ArithmeticOps::cne(const Value& value1, const Value& value2) {
 
     int result = 0;
     value1.rawValue != value2.rawValue ? result = 1 : result = 0;
-    return Value{value1.type, TypeConversions::I32ToRaw(result)};
+    return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
 }
 
 Value ArithmeticOps::clt(const Value& value1, const Value& value2) {
@@ -668,7 +668,7 @@ Value ArithmeticOps::cle(const Value& value1, const Value& value2) {
         case ISA::Type::UI32:
         case ISA::Type::UI64:
         case ISA::Type::PTR:
-            value1.rawValue < value2.rawValue ? result = 1 : result = 0; break;
+            value1.rawValue <= value2.rawValue ? result = 1 : result = 0; break;
 
         case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) <= TypeConversions::I32ToRaw(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::I64: TypeConversions::rawToI64(value1.rawValue) <= TypeConversions::rawToI64(value2.rawValue) ? result = 1 : result = 0; break;
@@ -700,7 +700,7 @@ Value ArithmeticOps::cgt(const Value& value1, const Value& value2) {
         case ISA::Type::UI32:
         case ISA::Type::UI64:
         case ISA::Type::PTR:
-            value1.rawValue < value2.rawValue ? result = 1 : result = 0; break;
+            value1.rawValue > value2.rawValue ? result = 1 : result = 0; break;
 
         case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) > TypeConversions::I32ToRaw(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::I64: TypeConversions::rawToI64(value1.rawValue) > TypeConversions::rawToI64(value2.rawValue) ? result = 1 : result = 0; break;
@@ -732,7 +732,7 @@ Value ArithmeticOps::cge(const Value& value1, const Value& value2) {
         case ISA::Type::UI32:
         case ISA::Type::UI64:
         case ISA::Type::PTR:
-            value1.rawValue < value2.rawValue ? result = 1 : result = 0; break;
+            value1.rawValue >= value2.rawValue ? result = 1 : result = 0; break;
 
         case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) >= TypeConversions::I32ToRaw(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::I64: TypeConversions::rawToI64(value1.rawValue) >= TypeConversions::rawToI64(value2.rawValue) ? result = 1 : result = 0; break;
