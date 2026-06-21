@@ -19,6 +19,12 @@ public:
     static Value bitwiseXor(const Value& value1, const Value& value2);
     static Value shl(const Value& value1, const Value& value2);
     static Value shr(const bool isArithmetic, const Value& value1, const Value& value2);
+    static Value ceq(const Value& value1, const Value& value2);
+    static Value cne(const Value& value1, const Value& value2);
+    static Value clt(const Value& value1, const Value& value2);
+    static Value cle(const Value& value1, const Value& value2);
+    static Value cgt(const Value& value1, const Value& value2);
+    static Value cge(const Value& value1, const Value& value2);
 
 private:
     static uint32_t getBitWidth(const ISA::Type& t);

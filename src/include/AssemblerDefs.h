@@ -73,7 +73,7 @@ namespace AssemblerDefs {
         {"shl", 0x1c},
         {"shr", 0x1d},
         {"sar", 0x1e},
-        {"ceq", 0x2f},
+        {"ceq", 0x1f},
         {"cne", 0x20},
         {"clt", 0x21},
         {"cle", 0x22},

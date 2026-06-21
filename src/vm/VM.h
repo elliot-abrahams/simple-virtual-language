@@ -52,6 +52,12 @@ private:
     void executeShl();
     void executeShr();
     void executeSar();
+    void executeCeq();
+    void executeCne();
+    void executeClt();
+    void executeCle();
+    void executeCgt();
+    void executeCge();
 
     uint8_t fetchType();
     uint64_t fetchOperand(const uint8_t type);

@@ -90,12 +90,12 @@ void VM::execute() {
         case ISA::Opcode::SHL: this->executeShl(); break; // shl
         case ISA::Opcode::SHR: this->executeShr(); break; // shr
         case ISA::Opcode::SAR: this->executeSar(); break; // sar
-        case ISA::Opcode::CEQ: break; // ceq
-        case ISA::Opcode::CNE: break; // cne
-        case ISA::Opcode::CLT: break; // clt
-        case ISA::Opcode::CLE: break; // cle
-        case ISA::Opcode::CGT: break; // cgt
-        case ISA::Opcode::CGE: break; // cge
+        case ISA::Opcode::CEQ: this->executeCeq(); break; // ceq
+        case ISA::Opcode::CNE: this->executeCne(); break; // cne
+        case ISA::Opcode::CLT: this->executeClt(); break; // clt
+        case ISA::Opcode::CLE: this->executeCle(); break; // cle
+        case ISA::Opcode::CGT: this->executeCgt(); break; // cgt
+        case ISA::Opcode::CGE: this->executeCge(); break; // cge
 
         // -------------------------------------------------
         // OTHER
@@ -324,6 +324,59 @@ void VM::executeSar() {
     this->operandStack.push(ArithmeticOps::shr(true, value, numberOfShifts));
 }
 
+void VM::executeCeq() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // push 1 onto the operand stack if x == y, otherwise push 0
+    this->operandStack.push(ArithmeticOps::ceq(value2, value1));
+}
+
+void VM::executeCne() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // push 1 onto the operand stack if x != y, otherwise push 0
+    this->operandStack.push(ArithmeticOps::cne(value2, value1));
+}
+
+void VM::executeClt() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // push 1 onto the operand stack if x < y, otherwise push 0
+    this->operandStack.push(ArithmeticOps::clt(value2, value1));
+}
+
+void VM::executeCle() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // push 1 onto the operand stack if x <= y, otherwise push 0
+    this->operandStack.push(ArithmeticOps::cle(value2, value1));
+}
+
+void VM::executeCgt() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // push 1 onto the operand stack if x > y, otherwise push 0
+    this->operandStack.push(ArithmeticOps::cgt(value2, value1));
+}
+
+void VM::executeCge() {
+    // pop two values off of the operand stack
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
+
+    // push 1 onto the operand stack if x >= y, otherwise push 0
+    this->operandStack.push(ArithmeticOps::cge(value2, value1));
+}
 
 uint8_t VM::fetchType() {
     return this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
