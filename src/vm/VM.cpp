@@ -21,13 +21,8 @@ void VM::run(const std::vector<uint8_t>* bytecode) {
     // set HP
     this->HP = bytecode->size() - BYTECODE_HEADER_SIZE;
 
-    try {
-        while (running) {
-            this->execute();
-        }
-        this->dumpState();
-    } catch (VMError& e) {
-        handleVMError(e);
+    while (running) {
+        this->execute();
     }
 }
 
@@ -35,76 +30,80 @@ void VM::setHP(const uint32_t hp) {
     this->HP = hp;
 }
 
+Value VM::peekOperandStack() const {
+    return this->operandStack.peek();
+}
+
 void VM::execute() {
     // read byte at PC
     const uint8_t opcode = this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
 
-    switch (opcode) {
-        case 0x00: break; // nop
-        case 0x01: this->executeHalt(); break; // halt
+    switch (static_cast<ISA::Opcode>(opcode)) {
+        case ISA::Opcode::NOP: break; // nop
+        case ISA::Opcode::HALT: this->executeHalt(); break; // halt
 
         // -------------------------------------------------
         // STACK
         // -------------------------------------------------
 
-        case 0x02: this->executePush(); break; // push
-        case 0x03: this->executePop(); break; // pop
-        case 0x04: this->executeDup(); break; // dup
-        case 0x05: this->executeSwap(); break; // swap
+        case ISA::Opcode::PUSH: this->executePush(); break; // push
+        case ISA::Opcode::POP: this->executePop(); break; // pop
+        case ISA::Opcode::DUP: this->executeDup(); break; // dup
+        case ISA::Opcode::SWAP: this->executeSwap(); break; // swap
 
         // -------------------------------------------------
         // MEMORY
         // -------------------------------------------------
 
-        case 0x06: this->executeLoad(); break; // load
-        case 0x07: this->executeLoadG(); break; // loadG
-        case 0x08: this->executeLoadL(); break; // loadL
-        case 0x09: this->executeStore(); break; // store
-        case 0x0a: this->executeStoreG(); break; // storeG
-        case 0x0b: this->executeStoreL(); break; // storeL
-        case 0x0c: break; // alloc
-        case 0x0d: break; // free
+        case ISA::Opcode::LOAD: this->executeLoad(); break; // load
+        case ISA::Opcode::LOADG: this->executeLoadG(); break; // loadG
+        case ISA::Opcode::LOADL: this->executeLoadL(); break; // loadL
+        case ISA::Opcode::STORE: this->executeStore(); break; // store
+        case ISA::Opcode::STOREG: this->executeStoreG(); break; // storeG
+        case ISA::Opcode::STOREL: this->executeStoreL(); break; // storeL
+        case ISA::Opcode::ALLOC: break; // alloc
+        case ISA::Opcode::FREE: break; // free
 
         // -------------------------------------------------
         // CONTROL
         // -------------------------------------------------
 
-        case 0x0e: break; // call
-        case 0x0f: break; // ret
-        case 0x10: break; // jmp
-        case 0x11: break; // jez
-        case 0x12: break; // jnz
+        case ISA::Opcode::CALL: break; // call
+        case ISA::Opcode::RET: break; // ret
+        case ISA::Opcode::JMP: break; // jmp
+        case ISA::Opcode::JEZ: break; // jez
+        case ISA::Opcode::JNZ: break; // jnz
 
         // -------------------------------------------------
         // ARITHMETIC
         // -------------------------------------------------
 
-        case 0x13: this->executeAdd(); break; // add
-        case 0x14: this->executeSub(); break; // sub
-        case 0x15: this->executeMul(); break; // mul
-        case 0x16: this->executeDiv(); break; // div
-        case 0x17: this->executeMod(); break; // mod
-        case 0x18: this->executeNot(); break; // not
-        case 0x19: this->executeAnd(); break; // and
-        case 0x1a: this->executeOrr(); break; // orr
-        case 0x1b: this->executeXor(); break; // xor
-        case 0x1c: this->executeShl(); break; // shl
-        case 0x1d: this->executeShr(); break; // shr
-        case 0x1e: this->executeSar(); break; // sar
-        case 0x1f: break; // ceq
-        case 0x20: break; // cne
-        case 0x21: break; // clt
-        case 0x22: break; // cle
-        case 0x23: break; // cgt
-        case 0x24: break; // cge
+        case ISA::Opcode::ADD: this->executeAdd(); break; // add
+        case ISA::Opcode::SUB: this->executeSub(); break; // sub
+        case ISA::Opcode::MUL: this->executeMul(); break; // mul
+        case ISA::Opcode::DIV: this->executeDiv(); break; // div
+        case ISA::Opcode::MOD: this->executeMod(); break; // mod
+        case ISA::Opcode::NOT: this->executeNot(); break; // not
+        case ISA::Opcode::AND: this->executeAnd(); break; // and
+        case ISA::Opcode::ORR: this->executeOrr(); break; // orr
+        case ISA::Opcode::XOR: this->executeXor(); break; // xor
+        case ISA::Opcode::SHL: this->executeShl(); break; // shl
+        case ISA::Opcode::SHR: this->executeShr(); break; // shr
+        case ISA::Opcode::SAR: this->executeSar(); break; // sar
+        case ISA::Opcode::CEQ: break; // ceq
+        case ISA::Opcode::CNE: break; // cne
+        case ISA::Opcode::CLT: break; // clt
+        case ISA::Opcode::CLE: break; // cle
+        case ISA::Opcode::CGT: break; // cgt
+        case ISA::Opcode::CGE: break; // cge
 
         // -------------------------------------------------
         // OTHER
         // -------------------------------------------------
 
-        case 0x25: break; // out
-        case 0x26: break; // inn
-        case 0x27: break; // conv
+        case ISA::Opcode::OUT: break; // out
+        case ISA::Opcode::INN: break; // inn
+        case ISA::Opcode::CONV: break; // conv
     }
 }
 
@@ -148,14 +147,14 @@ void VM::executeSwap() {
 void VM::executeLoad() {
     const uint8_t type = this->fetchType(); // read type operand
     const Value address = this->operandStack.pop(); // pop address from operand stack
-    VM::checkType("load", static_cast<uint8_t>(Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    VM::checkType("load", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
 
     const uint64_t value = this->memoryManager.read64(MemoryAccessScope::PTR, address.rawValue); // read value at address
     this->operandStack.push(type, value); // push value onto operand stack
 }
 
 void VM::executeLoadG() {
-    const uint32_t address = this->fetchOperand(static_cast<uint8_t>(Type::PTR)); // read label operand
+    const uint32_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
     const uint8_t valueDataType = this->memoryManager.read8(MemoryAccessScope::DATA, address - 1); // load data type at address
 
     /*
@@ -164,7 +163,7 @@ void VM::executeLoadG() {
      * NOT STR -> push value at address onto operand stack
     */
 
-    if (valueDataType != static_cast<uint8_t>(Type::STR)) {
+    if (valueDataType != static_cast<uint8_t>(ISA::Type::STR)) {
         const uint64_t value = this->memoryManager.read64(MemoryAccessScope::PTR, address); // read value at address
         this->operandStack.push(valueDataType, value); // push value onto operand stack
     } else {
@@ -175,7 +174,7 @@ void VM::executeLoadG() {
 
 void VM::executeLoadL() {
     const uint8_t type = this->fetchType(); // read type operand
-    const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(Type::I32)); // read immediate operand
+    const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
     const int32_t offset = TypeConversions::rawToI32(rawOffset);
 
     const uint32_t address = this->FP + ((static_cast<int32_t>(offset) - 1) * 8); // calculate address from given operand immediate
@@ -188,14 +187,14 @@ void VM::executeLoadL() {
 void VM::executeStore() {
     const Value value = this->operandStack.pop(); // pop value to store from operand stack
     const Value address = this->operandStack.pop(); // pop address to store to from operand stack
-    VM::checkType("store", static_cast<uint8_t>(Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    VM::checkType("store", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
 
     // store value in memory at address
     this->memoryManager.write(MemoryAccessScope::PTR, address.rawValue, &value);
 }
 
 void VM::executeStoreG() {
-    const uint8_t address = this->fetchOperand(static_cast<uint8_t>(Type::PTR)); // read label operand
+    const uint8_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
     const Value value = this->operandStack.pop(); // pop value from operand stack to store
 
     // ensure the value on the operand stack matches the type of the target global
@@ -206,7 +205,7 @@ void VM::executeStoreG() {
 }
 
 void VM::executeStoreL() {
-    const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(Type::I32)); // read immediate operand
+    const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
     const int32_t offset = TypeConversions::rawToI32(rawOffset);
     const Value value = this->operandStack.pop(); // pop value from operand stack to store
 
@@ -332,19 +331,19 @@ uint8_t VM::fetchType() {
 
 uint64_t VM::fetchOperand(const uint8_t type) {
     uint64_t result = 0;
-    switch (type) {
-        case 0x00: // i32
-        case 0x01: // ui32
-        case 0x04: // f32
-        case 0x06: // ptr
+    switch (static_cast<ISA::Type>(type)) {
+        case ISA::Type::I32: // i32
+        case ISA::Type::UI32: // ui32
+        case ISA::Type::F32: // f32
+        case ISA::Type::PTR: // ptr
         {
             result = static_cast<uint64_t>(this->memoryManager.read32(MemoryAccessScope::CODE, this->PC));
             this->PC += 4;
             break;
         }
-        case 0x02: // i64
-        case 0x03: // ui64
-        case 0x05: // f64
+        case ISA::Type::I64: // i64
+        case ISA::Type::UI64: // ui64
+        case ISA::Type::F64: // f64
         {
             result = this->memoryManager.read64(MemoryAccessScope::CODE, this->PC);
             this->PC += 8;

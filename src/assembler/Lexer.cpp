@@ -30,6 +30,13 @@ std::optional<std::vector<AssemblerDefs::SVMAToken>> Lexer::lex(const std::strin
     return this->buildTokenStream();
 }
 
+std::optional<std::vector<AssemblerDefs::SVMAToken>> Lexer::lexString(const std::string& fileContent) {
+    char character;
+
+    this->inputBuffer.assign(fileContent.begin(), fileContent.end());
+    return this->buildTokenStream();
+}
+
 std::optional<std::vector<AssemblerDefs::SVMAToken>> Lexer::buildTokenStream() {
     this->charIdx = 0;
     this->lineNumber = 1;
@@ -52,11 +59,13 @@ std::optional<std::vector<AssemblerDefs::SVMAToken>> Lexer::buildTokenStream() {
                 break;
 
             default:
-                std::optional<AssemblerDefs::SVMAToken> token = this->lexToken();
-                if (!token.has_value()) {
-                    return std::nullopt;
+                if (!this->reachedEndOfFile) {
+                    std::optional<AssemblerDefs::SVMAToken> token = this->lexToken();
+                    if (!token.has_value()) {
+                        return std::nullopt;
+                    }
+                    tokensStream.push_back(token.value());
                 }
-                tokensStream.push_back(token.value());
         }
     }
     tokensStream.push_back(AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::END_OF_FILE, "", this->lineNumber});

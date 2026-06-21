@@ -7,7 +7,7 @@
 
 Parser::Parser() {}
 
-std::optional<std::vector<AssemblerDefs::Statement>> Parser::parse(std::vector<AssemblerDefs::SVMAToken> &tokenStream) {
+std::optional<std::vector<AssemblerDefs::Statement>> Parser::parse(const std::vector<AssemblerDefs::SVMAToken> &tokenStream) {
     std::vector<AssemblerDefs::Statement> statements;
     this->tokenStream = tokenStream;
     this->tokenIdx = 0;
@@ -182,12 +182,12 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     if (instruction == "mod") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     if (instruction == "not") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
-    if (instruction == "notB") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "and") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "orr") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "xor") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "shl") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "shr") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "sar") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     if (instruction == "ceq") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "cne") return AssemblerDefs::Instruction{instruction, {}, lineNumber};

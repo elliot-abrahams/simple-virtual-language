@@ -6,7 +6,7 @@
 #define SIMPLE_VM_LEXER_H
 
 #pragma once
-#include "AssemblerDefs.h"
+#include "../include/AssemblerDefs.h"
 #include <optional>
 #include <string>
 #include <vector>
@@ -17,7 +17,9 @@ class Lexer {
 public:
     Lexer();
 
-    std::optional<std::vector<AssemblerDefs::SVMAToken>> lex(const std::string &filePath);
+    std::optional<std::vector<AssemblerDefs::SVMAToken>> lex(const std::string& filePath);
+    std::optional<std::vector<AssemblerDefs::SVMAToken>> lexString(const std::string& fileContent);
+
 
 private:
     std::optional<std::vector<AssemblerDefs::SVMAToken>> buildTokenStream();

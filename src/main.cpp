@@ -12,7 +12,12 @@ int main(int argc, char* argv[]) {
     delete assembler;
 
     VM* vm = new VM();
-    vm->run(&bytecode.value());
+    try {
+        vm->run(&bytecode.value());
+    } catch (VMError& e) {
+        vm->handleVMError(e);
+    }
+    vm->dumpState();
     delete vm;
     return 0;
 

@@ -8,7 +8,7 @@
 #include <vector>
 
 #pragma once
-#include "AssemblerDefs.h"
+#include "../include/AssemblerDefs.h"
 #include "Lexer.h"
 #include "Parser.h"
 
@@ -18,9 +18,12 @@ class Assembler {
 public:
     Assembler();
 
-    std::optional<std::vector<uint8_t>> assemble(const std::string &filePath);
+    std::optional<std::vector<uint8_t>> assemble(const std::string& filePath);
+    std::optional<std::vector<uint8_t>> assembleString(const std::string& fileContent);
 
 private:
+    std::optional<std::vector<uint8_t>> assembleFromTokens(const std::vector<AssemblerDefs::SVMAToken>& tokens);
+
     bool constructLabelTable();
 
     bool processLabelDef(std::map<std::string, int>& unhandledLabelRefs, uint32_t location, const std::string& label, const int& lineNumber);

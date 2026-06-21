@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "TypeConversions.h"
+#include "../include/ISA.h"
 
 Value ArithmeticOps::add(const Value& value1, const Value& value2) {
 
@@ -22,69 +23,69 @@ Value ArithmeticOps::add(const Value& value1, const Value& value2) {
      */
 
     switch (value1.type) {
-        case Type::I32: {
+        case ISA::Type::I32: {
             switch (value2.type) {
-                case Type::I32: { // i32 + i32
+                case ISA::Type::I32: { // i32 + i32
                     const int32_t result = TypeConversions::rawToI32(value1.rawValue) + TypeConversions::rawToI32(value2.rawValue);
-                    return Value{Type::I32, TypeConversions::I32ToRaw(result)};
+                    return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
                 }
-                case Type::PTR: { // i32 + ptr
+                case ISA::Type::PTR: { // i32 + ptr
                     const int64_t result =  static_cast<int64_t>(TypeConversions::rawToI32(value1.rawValue)) +  static_cast<int64_t>(TypeConversions::rawToUI32(value2.rawValue));
-                    return Value{Type::PTR, TypeConversions::UI32ToRaw( static_cast<uint32_t>(result))};
+                    return Value{ISA::Type::PTR, TypeConversions::UI32ToRaw( static_cast<uint32_t>(result))};
                 }
                 default: throwInvalidOperationOnTypesVMError("add", value2.type, value1.type);
             }
         }
-        case Type::UI32: {
+        case ISA::Type::UI32: {
             switch (value2.type) {
-                case Type::UI32: { // ui32 + ui32
+                case ISA::Type::UI32: { // ui32 + ui32
                     const uint32_t result = TypeConversions::rawToUI32(value1.rawValue) + TypeConversions::rawToUI32(value2.rawValue);
-                    return Value{Type::UI32, TypeConversions::UI32ToRaw(result)};
+                    return Value{ISA::Type::UI32, TypeConversions::UI32ToRaw(result)};
                 }
-                case Type::PTR: { // ui32 + ptr
+                case ISA::Type::PTR: { // ui32 + ptr
                     const uint32_t result = TypeConversions::rawToUI32(value1.rawValue) + TypeConversions::rawToUI32(value2.rawValue);
-                    return Value{Type::PTR, TypeConversions::UI32ToRaw(result)};
+                    return Value{ISA::Type::PTR, TypeConversions::UI32ToRaw(result)};
                 }
                 default: throwInvalidOperationOnTypesVMError("add", value2.type, value1.type);
             }
         }
-        case Type::I64: {
-            if (value2.type == Type::I64) { // i64 + i64
+        case ISA::Type::I64: {
+            if (value2.type == ISA::Type::I64) { // i64 + i64
                 const int64_t result = TypeConversions::rawToI64(value1.rawValue) + TypeConversions::rawToI64(value2.rawValue);
-                return Value{Type::I64, TypeConversions::I64ToRaw(result)};
+                return Value{ISA::Type::I64, TypeConversions::I64ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("add", value2.type, value1.type);
         }
-        case Type::UI64: {
-            if (value2.type == Type::UI64) { // ui64 + ui64
+        case ISA::Type::UI64: {
+            if (value2.type == ISA::Type::UI64) { // ui64 + ui64
                 const uint64_t result = value1.rawValue + value2.rawValue;
-                return Value{Type::UI64, result};
+                return Value{ISA::Type::UI64, result};
             }
             throwInvalidOperationOnTypesVMError("add", value2.type, value1.type);
         }
-        case Type::F32: {
-            if (value2.type == Type::F32) { // f32 + f32
+        case ISA::Type::F32: {
+            if (value2.type == ISA::Type::F32) { // f32 + f32
                 const float result = TypeConversions::rawToF32(value1.rawValue) + TypeConversions::rawToF32(value2.rawValue);
-                return Value{Type::F32, TypeConversions::F32ToRaw(result)};
+                return Value{ISA::Type::F32, TypeConversions::F32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("add", value2.type, value1.type);
         }
-        case Type::F64: {
-            if (value2.type == Type::F64) { // f64 + f64
+        case ISA::Type::F64: {
+            if (value2.type == ISA::Type::F64) { // f64 + f64
                 const double result = TypeConversions::rawToF64(value1.rawValue) + TypeConversions::rawToF64(value2.rawValue);
-                return Value{Type::F64, TypeConversions::F64ToRaw(result)};
+                return Value{ISA::Type::F64, TypeConversions::F64ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("add", value2.type, value1.type);
         }
-        case Type::PTR: {
+        case ISA::Type::PTR: {
             switch (value2.type) {
-                case Type::I32: { // ptr + i32
+                case ISA::Type::I32: { // ptr + i32
                     const int64_t result = static_cast<int64_t>(TypeConversions::rawToUI32(value1.rawValue)) + static_cast<int64_t>(TypeConversions::rawToI32(value2.rawValue));
-                    return Value{Type::PTR, TypeConversions::I32ToRaw(static_cast<uint32_t>(result))};
+                    return Value{ISA::Type::PTR, TypeConversions::I32ToRaw(static_cast<uint32_t>(result))};
                 }
-                case Type::UI32: { // ptr + ui32
+                case ISA::Type::UI32: { // ptr + ui32
                     const uint32_t result = TypeConversions::rawToUI32(value1.rawValue) + TypeConversions::rawToUI32(value2.rawValue);
-                    return Value{Type::PTR, TypeConversions::UI32ToRaw(result)};
+                    return Value{ISA::Type::PTR, TypeConversions::UI32ToRaw(result)};
                 }
                 default: throwInvalidOperationOnTypesVMError("add", value2.type, value1.type);
             }
@@ -111,61 +112,61 @@ Value ArithmeticOps::sub(const Value& value1, const Value& value2) {
      */
 
     switch (value1.type) {
-        case Type::I32: {
-            if (value2.type == Type::I32) {
+        case ISA::Type::I32: {
+            if (value2.type == ISA::Type::I32) {
                 const int32_t result = TypeConversions::rawToI32(value1.rawValue) - TypeConversions::rawToI32(value2.rawValue);
-                return Value{Type::I32, TypeConversions::I32ToRaw(result)};
+                return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("sub", value2.type, value1.type);
         }
-        case Type::UI32: {
-            if (value2.type == Type::UI32) {
+        case ISA::Type::UI32: {
+            if (value2.type == ISA::Type::UI32) {
                 const uint32_t result = TypeConversions::rawToUI32(value1.rawValue) - TypeConversions::rawToUI32(value2.rawValue);
-                return Value{Type::UI32, TypeConversions::UI32ToRaw(result)};
+                return Value{ISA::Type::UI32, TypeConversions::UI32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("sub", value2.type, value1.type);
         }
-        case Type::I64: { // i64 - i64
-            if (value2.type == Type::I64) {
+        case ISA::Type::I64: { // i64 - i64
+            if (value2.type == ISA::Type::I64) {
                 const int64_t result = TypeConversions::rawToI64(value1.rawValue) - TypeConversions::rawToI64(value2.rawValue);
-                return Value{Type::I64, TypeConversions::I64ToRaw(result)};
+                return Value{ISA::Type::I64, TypeConversions::I64ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("sub", value2.type, value1.type);
         }
-        case Type::UI64: { // ui64 - ui64
-            if (value2.type == Type::UI64) {
+        case ISA::Type::UI64: { // ui64 - ui64
+            if (value2.type == ISA::Type::UI64) {
                 const uint64_t result = value1.rawValue - value2.rawValue;
-                return Value{Type::UI64, result};
+                return Value{ISA::Type::UI64, result};
             }
             throwInvalidOperationOnTypesVMError("sub", value2.type, value1.type);
         }
-        case Type::F32: { // f32 - f32
-            if (value2.type == Type::F32) {
+        case ISA::Type::F32: { // f32 - f32
+            if (value2.type == ISA::Type::F32) {
                 const float result = TypeConversions::rawToF32(value1.rawValue) - TypeConversions::rawToF32(value2.rawValue);
-                return Value{Type::F32, TypeConversions::F32ToRaw(result)};
+                return Value{ISA::Type::F32, TypeConversions::F32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("sub", value2.type, value1.type);
         }
-        case Type::F64: { // f64 - f64
-            if (value2.type == Type::F64) {
+        case ISA::Type::F64: { // f64 - f64
+            if (value2.type == ISA::Type::F64) {
                 const double result = TypeConversions::rawToF64(value1.rawValue) - TypeConversions::rawToF64(value2.rawValue);
-                return Value{Type::F64, TypeConversions::F64ToRaw(result)};
+                return Value{ISA::Type::F64, TypeConversions::F64ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("sub", value2.type, value1.type);
         }
-        case Type::PTR: {
+        case ISA::Type::PTR: {
             switch (value2.type) {
-                case Type::PTR: { // ptr - ptr
+                case ISA::Type::PTR: { // ptr - ptr
                     const int64_t result = static_cast<int64_t>(TypeConversions::rawToUI32(value1.rawValue)) - static_cast<int64_t>(TypeConversions::rawToUI32(value2.rawValue));
-                    return Value{Type::I64, TypeConversions::I64ToRaw(result)};
+                    return Value{ISA::Type::I64, TypeConversions::I64ToRaw(result)};
                 }
-                case Type::I32: { // ptr - i32
+                case ISA::Type::I32: { // ptr - i32
                     const int64_t result = static_cast<int64_t>(TypeConversions::rawToUI32(value1.rawValue)) - static_cast<int64_t>(TypeConversions::rawToI32(value2.rawValue));
-                    return Value{Type::PTR, TypeConversions::UI32ToRaw(static_cast<uint32_t>(result))};
+                    return Value{ISA::Type::PTR, TypeConversions::UI32ToRaw(static_cast<uint32_t>(result))};
                 }
-                case Type::UI32: { // ptr - ui32
+                case ISA::Type::UI32: { // ptr - ui32
                     const uint32_t result = TypeConversions::rawToUI32(value1.rawValue) - TypeConversions::rawToUI32(value2.rawValue);
-                    return Value{Type::PTR, TypeConversions::UI32ToRaw(result)};
+                    return Value{ISA::Type::PTR, TypeConversions::UI32ToRaw(result)};
                 }
                 default: throwInvalidOperationOnTypesVMError("sub", value2.type, value1.type);
             }
@@ -189,45 +190,45 @@ Value ArithmeticOps::mul(const Value &value1, const Value &value2) {
      */
 
     switch (value1.type) {
-        case Type::I32: {
-            if (value2.type == Type::I32) {
+        case ISA::Type::I32: {
+            if (value2.type == ISA::Type::I32) {
                 const int32_t result = TypeConversions::rawToI32(value1.rawValue) * TypeConversions::rawToI32(value2.rawValue);
-                return Value{Type::I32, TypeConversions::I32ToRaw(result)};
+                return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("mul", value2.type, value1.type);
         }
-        case Type::UI32: {
-            if (value2.type == Type::UI32) {
+        case ISA::Type::UI32: {
+            if (value2.type == ISA::Type::UI32) {
                 const uint32_t result = TypeConversions::rawToUI32(value1.rawValue) * TypeConversions::rawToUI32(value2.rawValue);
-                return Value{Type::UI32, TypeConversions::UI32ToRaw(result)};
+                return Value{ISA::Type::UI32, TypeConversions::UI32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("mul", value2.type, value1.type);
         }
-        case Type::I64: {
-            if (value2.type == Type::I64) {
+        case ISA::Type::I64: {
+            if (value2.type == ISA::Type::I64) {
                 const int64_t result = TypeConversions::rawToI64(value1.rawValue) * TypeConversions::rawToI64(value2.rawValue);
-                return Value{Type::I64, TypeConversions::I64ToRaw(result)};
+                return Value{ISA::Type::I64, TypeConversions::I64ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("mul", value2.type, value1.type);
         }
-        case Type::UI64: {
-            if (value2.type == Type::UI64) {
+        case ISA::Type::UI64: {
+            if (value2.type == ISA::Type::UI64) {
                 const uint64_t result = value1.rawValue * value2.rawValue;
-                return Value{Type::UI64, result};
+                return Value{ISA::Type::UI64, result};
             }
             throwInvalidOperationOnTypesVMError("mul", value2.type, value1.type);
         }
-        case Type::F32: {
-            if (value2.type == Type::F32) {
+        case ISA::Type::F32: {
+            if (value2.type == ISA::Type::F32) {
                 const float result = TypeConversions::rawToF32(value1.rawValue) * TypeConversions::rawToF32(value2.rawValue);
-                return Value{Type::F32, TypeConversions::F32ToRaw(result)};
+                return Value{ISA::Type::F32, TypeConversions::F32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("mul", value2.type, value1.type);
         }
-        case Type::F64: {
-            if (value2.type == Type::F64) {
+        case ISA::Type::F64: {
+            if (value2.type == ISA::Type::F64) {
                 const double result = TypeConversions::rawToF64(value1.rawValue) * TypeConversions::rawToF64(value2.rawValue);
-                return Value{Type::F64, TypeConversions::F64ToRaw(result)};
+                return Value{ISA::Type::F64, TypeConversions::F64ToRaw(result)};
             }
         }
         default: throwInvalidOperationOnTypesVMError("mul", value2.type, value1.type);
@@ -249,68 +250,68 @@ Value ArithmeticOps::div(const Value &value1, const Value &value2) {
      */
 
     switch (value1.type) {
-        case Type::I32: {
-            if (value2.type == Type::I32) {
+        case ISA::Type::I32: {
+            if (value2.type == ISA::Type::I32) {
                 const int32_t denominator = TypeConversions::rawToI32(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("div");
                 }
                 const int32_t result = TypeConversions::rawToI32(value1.rawValue) / denominator;
-                return Value{Type::I32, TypeConversions::I32ToRaw(result)};
+                return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("div", value2.type, value1.type);
         }
-        case Type::UI32: {
-            if (value2.type == Type::UI32) {
+        case ISA::Type::UI32: {
+            if (value2.type == ISA::Type::UI32) {
                 const uint32_t denominator = TypeConversions::rawToUI32(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("div");
                 }
                 const uint32_t result = TypeConversions::rawToUI32(value1.rawValue) / denominator;
-                return Value{Type::UI32, TypeConversions::UI32ToRaw(result)};
+                return Value{ISA::Type::UI32, TypeConversions::UI32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("div", value2.type, value1.type);
         }
-        case Type::I64: {
-            if (value2.type == Type::I64) {
+        case ISA::Type::I64: {
+            if (value2.type == ISA::Type::I64) {
                 const int64_t denominator = TypeConversions::rawToI64(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("div");
                 }
                 const int64_t result = TypeConversions::rawToI64(value1.rawValue) / denominator;
-                return Value{Type::I64, TypeConversions::I64ToRaw(result)};
+                return Value{ISA::Type::I64, TypeConversions::I64ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("div", value2.type, value1.type);
         }
-        case Type::UI64: {
-            if (value2.type == Type::UI64) {
+        case ISA::Type::UI64: {
+            if (value2.type == ISA::Type::UI64) {
                 if (value2.rawValue == 0) {
                     throwDivisionByZeroVMError("div");
                 }
                 const uint64_t result = value1.rawValue / value2.rawValue;
-                return Value{Type::UI64, result};
+                return Value{ISA::Type::UI64, result};
             }
             throwInvalidOperationOnTypesVMError("div", value2.type, value1.type);
         }
-        case Type::F32: {
-            if (value2.type == Type::F32) {
+        case ISA::Type::F32: {
+            if (value2.type == ISA::Type::F32) {
                 const float denominator = TypeConversions::rawToF32(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("div");
                 }
                 const float result = TypeConversions::rawToF32(value1.rawValue) / denominator;
-                return Value{Type::F32, TypeConversions::F32ToRaw(result)};
+                return Value{ISA::Type::F32, TypeConversions::F32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("div", value2.type, value1.type);
         }
-        case Type::F64: {
-            if (value2.type == Type::F64) {
+        case ISA::Type::F64: {
+            if (value2.type == ISA::Type::F64) {
                 const double denominator = TypeConversions::rawToF64(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("div");
                 }
                 const double result = TypeConversions::rawToF64(value1.rawValue) / denominator;
-                return Value{Type::F64, TypeConversions::F64ToRaw(result)};
+                return Value{ISA::Type::F64, TypeConversions::F64ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("div", value2.type, value1.type);
         }
@@ -333,68 +334,68 @@ Value ArithmeticOps::mod(const Value &value1, const Value &value2) {
      */
 
     switch (value1.type) {
-        case Type::I32: {
-            if (value2.type == Type::I32) {
+        case ISA::Type::I32: {
+            if (value2.type == ISA::Type::I32) {
                 const int32_t denominator = TypeConversions::rawToI32(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("mod");
                 }
                 const int32_t result = TypeConversions::rawToI32(value1.rawValue) % denominator;
-                return Value{Type::I32, TypeConversions::I32ToRaw(result)};
+                return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("mod", value2.type, value1.type);
         }
-        case Type::UI32: {
-            if (value2.type == Type::UI32) {
+        case ISA::Type::UI32: {
+            if (value2.type == ISA::Type::UI32) {
                 const uint32_t denominator = TypeConversions::rawToUI32(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("mod");
                 }
                 const uint32_t result = TypeConversions::rawToUI32(value1.rawValue) % denominator;
-                return Value{Type::UI32, TypeConversions::UI32ToRaw(result)};
+                return Value{ISA::Type::UI32, TypeConversions::UI32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("mod", value2.type, value1.type);
         }
-        case Type::I64: {
-            if (value2.type == Type::I64) {
+        case ISA::Type::I64: {
+            if (value2.type == ISA::Type::I64) {
                 const int64_t denominator = TypeConversions::rawToI64(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("mod");
                 }
                 const int64_t result = TypeConversions::rawToI64(value1.rawValue) % denominator;
-                return Value{Type::I64, TypeConversions::I64ToRaw(result)};
+                return Value{ISA::Type::I64, TypeConversions::I64ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("mod", value2.type, value1.type);
         }
-        case Type::UI64: {
-            if (value2.type == Type::UI64) {
+        case ISA::Type::UI64: {
+            if (value2.type == ISA::Type::UI64) {
                 if (value2.rawValue == 0) {
                     throwDivisionByZeroVMError("mod");
                 }
                 const uint64_t result = value1.rawValue % value2.rawValue;
-                return Value{Type::UI64, result};
+                return Value{ISA::Type::UI64, result};
             }
             throwInvalidOperationOnTypesVMError("mod", value2.type, value1.type);
         }
-        case Type::F32: {
-            if (value2.type == Type::F32) {
+        case ISA::Type::F32: {
+            if (value2.type == ISA::Type::F32) {
                 const float denominator = TypeConversions::rawToF32(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("mod");
                 }
                 const float result = std::fmod(TypeConversions::rawToF32(value1.rawValue), denominator);
-                return Value{Type::F32, TypeConversions::F32ToRaw(result)};
+                return Value{ISA::Type::F32, TypeConversions::F32ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("mod", value2.type, value1.type);
         }
-        case Type::F64: {
-            if (value2.type == Type::F64) {
+        case ISA::Type::F64: {
+            if (value2.type == ISA::Type::F64) {
                 const double denominator = TypeConversions::rawToF64(value2.rawValue);
                 if (denominator == 0) {
                     throwDivisionByZeroVMError("mod");
                 }
                 const double result = std::fmod(TypeConversions::rawToF64(value1.rawValue), denominator);
-                return Value{Type::F64, TypeConversions::F64ToRaw(result)};
+                return Value{ISA::Type::F64, TypeConversions::F64ToRaw(result)};
             }
             throwInvalidOperationOnTypesVMError("mod", value2.type, value1.type);
         }
@@ -412,12 +413,14 @@ Value ArithmeticOps::bitwiseNot(const Value &value) {
      * ~ui32 -> ui32
      * ~i64 -> i64
      * ~ui64 -> ui64
-     * ~f32 -> f32
-     * ~f64 -> f64
      */
 
-    if (value.type == Type::PTR || value.type == Type::STR) {
-        throwInvalidOperationOnTypesVMError("notB", value.type);
+    if (
+        value.type == ISA::Type::F32 ||
+        value.type == ISA::Type::F64 ||
+        value.type == ISA::Type::PTR ||
+        value.type == ISA::Type::STR) {
+        throwInvalidOperationOnTypesVMError("not", value.type);
     }
 
     return Value{value.type, ~value.rawValue};
@@ -432,11 +435,14 @@ Value ArithmeticOps::bitwiseAnd(const Value &value1, const Value &value2) {
      * ui32 & ui32 -> ui32
      * i64 & i64 -> i64
      * ui64 & ui64 -> ui64
-     * f32 & f32 -> f32
-     * f64 & f64 -> f64
      */
 
-    if (value1.type == Type::PTR || value1.type == Type::STR || value1.type != value2.type) {
+    if (
+        value1.type != value2.type ||
+        value1.type == ISA::Type::F32 ||
+        value1.type == ISA::Type::F64 ||
+        value1.type == ISA::Type::PTR ||
+        value1.type == ISA::Type::STR) {
         throwInvalidOperationOnTypesVMError("and", value1.type, value2.type);
     }
 
@@ -452,13 +458,16 @@ Value ArithmeticOps::bitwiseOr(const Value &value1, const Value &value2) {
      * ui32 | ui32 -> ui32
      * i64 | i64 -> i64
      * ui64 | ui64 -> ui64
-     * f32 | f32 -> f32
-     * f64 | f64 -> f64
      */
 
-    if (value1.type == Type::PTR || value1.type == Type::STR || value1.type != value2.type) {
+    if (
+        value1.type != value2.type ||
+        value1.type == ISA::Type::F32 ||
+        value1.type == ISA::Type::F64 ||
+        value1.type == ISA::Type::PTR ||
+        value1.type == ISA::Type::STR) {
         throwInvalidOperationOnTypesVMError("orr", value1.type, value2.type);
-    }
+        }
 
     return Value{value1.type, value1.rawValue | value2.rawValue};
 }
@@ -472,13 +481,16 @@ Value ArithmeticOps::bitwiseXor(const Value &value1, const Value &value2) {
      * ui32 ^ ui32 -> ui32
      * i64 ^ i64 -> i64
      * ui64 ^ ui64 -> ui64
-     * f32 ^ f32 -> f32
-     * f64 ^ f64 -> f64
      */
 
-    if (value1.type == Type::PTR || value1.type == Type::STR || value1.type != value2.type) {
+    if (
+        value1.type != value2.type ||
+        value1.type == ISA::Type::F32 ||
+        value1.type == ISA::Type::F64 ||
+        value1.type == ISA::Type::PTR ||
+        value1.type == ISA::Type::STR) {
         throwInvalidOperationOnTypesVMError("xor", value1.type, value2.type);
-    }
+        }
 
     return Value{value1.type, value1.rawValue ^ value2.rawValue};
 }
@@ -494,11 +506,11 @@ Value ArithmeticOps::shl(const Value &value1, const Value &value2) {
      * ui64 << R -> ui64
      *
      * R -> (i32 | ui32 | i64 | ui64)
-     * R is converted to u32, then masked by (63)
+     * R is converted to u32, then masked by (bitWidth - 1)
      */
 
-    if (value2.type == Type::F32 || value2.type == Type::F64 || value2.type == Type::PTR ||
-        value1.type == Type::F32 || value1.type == Type::F64 || value2.type == Type::PTR) {
+    if (value2.type == ISA::Type::F32 || value2.type == ISA::Type::F64 || value2.type == ISA::Type::PTR ||
+        value1.type == ISA::Type::F32 || value1.type == ISA::Type::F64 || value1.type == ISA::Type::PTR) {
         throwInvalidOperationOnTypesVMError("shr", value2.type, value1.type);
         }
 
@@ -507,7 +519,7 @@ Value ArithmeticOps::shl(const Value &value1, const Value &value2) {
     uint64_t result = value1.rawValue << shift;
 
     // truncate
-    if (value1.type == Type::I32 || value1.type == Type::UI32) {
+    if (value1.type == ISA::Type::I32 || value1.type == ISA::Type::UI32) {
         result &= 0xFFFFFFFF;
     }
 
@@ -528,8 +540,8 @@ Value ArithmeticOps::shr(const bool isArithmetic, const Value &value1, const Val
      * R is converted to u32, then masked by (bitWidth - 1)
      */
 
-    if (value2.type == Type::F32 || value2.type == Type::F64 || value2.type == Type::PTR ||
-        value1.type == Type::F32 || value1.type == Type::F64 || value2.type == Type::PTR) {
+    if (value2.type == ISA::Type::F32 || value2.type == ISA::Type::F64 || value2.type == ISA::Type::PTR ||
+        value1.type == ISA::Type::F32 || value1.type == ISA::Type::F64 || value1.type == ISA::Type::PTR) {
         throwInvalidOperationOnTypesVMError("shr", value2.type, value1.type);
     }
 
@@ -540,12 +552,12 @@ Value ArithmeticOps::shr(const bool isArithmetic, const Value &value1, const Val
     if (isArithmetic) {
         int64_t signedValue;
 
-        if (value1.type == Type::I32) signedValue = static_cast<int32_t>(value1.rawValue);   // SIGN EXTEND FROM 32-bit
+        if (value1.type == ISA::Type::I32) signedValue = static_cast<int32_t>(value1.rawValue);   // SIGN EXTEND FROM 32-bit
         else signedValue = static_cast<int64_t>(value1.rawValue);
 
         const int64_t shiftedValue = signedValue >> shift;
 
-        if (value1.type == Type::I32) {
+        if (value1.type == ISA::Type::I32) {
             result = static_cast<uint32_t>(shiftedValue);
         } else {
             result = static_cast<uint64_t>(shiftedValue);
@@ -555,30 +567,30 @@ Value ArithmeticOps::shr(const bool isArithmetic, const Value &value1, const Val
         result = value1.rawValue >> shift;
 
         // truncate
-        if (value1.type == Type::I32 || value1.type == Type::UI32) {
+        if (value1.type == ISA::Type::I32 || value1.type == ISA::Type::UI32) {
             result &= 0xFFFFFFFF;
         }
     }
     return Value{value1.type, result};
 }
 
-uint32_t ArithmeticOps::getBitWidth(const Type &t) {
+uint32_t ArithmeticOps::getBitWidth(const ISA::Type& t) {
     switch (t) {
-        case Type::I32:
-        case Type::UI32:
-        case Type::F32: {
+        case ISA::Type::I32:
+        case ISA::Type::UI32:
+        case ISA::Type::F32: {
             return 32;
         }
-        case Type::I64:
-        case Type::UI64:
-        case Type::F64: {
+        case ISA::Type::I64:
+        case ISA::Type::UI64:
+        case ISA::Type::F64: {
             return 64;
         }
     }
     return 0;
 }
 
-void ArithmeticOps::throwInvalidOperationOnTypesVMError(const std::string& instructionMnemonic, const Type &type1, const Type &type2) {
+void ArithmeticOps::throwInvalidOperationOnTypesVMError(const std::string& instructionMnemonic, const ISA::Type &type1, const ISA::Type &type2) {
     throw VMError(
         std::string("Error: Invalid operation on given types") +
             "\nInstruction: " + instructionMnemonic +
@@ -586,7 +598,7 @@ void ArithmeticOps::throwInvalidOperationOnTypesVMError(const std::string& instr
         );
 }
 
-void ArithmeticOps::throwInvalidOperationOnTypesVMError(const std::string &instructionMnemonic, const Type &type1) {
+void ArithmeticOps::throwInvalidOperationOnTypesVMError(const std::string &instructionMnemonic, const ISA::Type &type1) {
     throw VMError(
         std::string("Error: Invalid operation on given type") +
         "Instruction: " + instructionMnemonic +

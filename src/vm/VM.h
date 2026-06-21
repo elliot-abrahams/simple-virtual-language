@@ -19,9 +19,13 @@ public:
 
     void setHP(const uint32_t hp);
 
+    Value peekOperandStack() const;
+
+    void handleVMError(const VMError& e) const;
+    void dumpState() const;
+
 private:
     void execute();
-
     void executeHalt();
 
     void executePush();
@@ -51,9 +55,6 @@ private:
 
     uint8_t fetchType();
     uint64_t fetchOperand(const uint8_t type);
-
-    void handleVMError(const VMError& e) const;
-    void dumpState() const;
 
     static void checkType(const std::string &instructionMnemonic, const uint8_t expectedType, const uint8_t actualType);
 

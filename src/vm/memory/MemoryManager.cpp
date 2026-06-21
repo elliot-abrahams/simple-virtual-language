@@ -1,8 +1,6 @@
 #include "MemoryManager.h"
 
-#include "../VM.h"
 
-class VM;
 MemoryManager::MemoryManager(const uint32_t* endOfHeapRegion, const uint32_t* startOfCallStackRegion) :
     pageTable(std::unordered_map<uint32_t, Page*>{}),
     startOfDataRegion(0),
@@ -31,15 +29,15 @@ void MemoryManager::loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode)
 
 void MemoryManager::write(const MemoryAccessScope region, uint32_t address, const Value* value) {
     switch (value->type) {
-        case Type::I32:
-        case Type::UI32:
-        case Type::F32:
-        case Type::PTR: {
+        case ISA::Type::I32:
+        case ISA::Type::UI32:
+        case ISA::Type::F32:
+        case ISA::Type::PTR: {
             this->write32(region, address, value->rawValue);
         }
-        case Type::I64:
-        case Type::UI64:
-        case Type::F64: {
+        case ISA::Type::I64:
+        case ISA::Type::UI64:
+        case ISA::Type::F64: {
             this->write64(region, address, value->rawValue);
         }
     }
@@ -67,17 +65,17 @@ void MemoryManager::write64(const MemoryAccessScope region, uint32_t address, ui
     }
 }
 
-uint64_t MemoryManager::read(const MemoryAccessScope region, uint32_t address, Type type) const {
+uint64_t MemoryManager::read(const MemoryAccessScope region, uint32_t address, ISA::Type type) const {
     switch (type) {
-        case Type::I32:
-        case Type::UI32:
-        case Type::F32:
-        case Type::PTR: {
+        case ISA::Type::I32:
+        case ISA::Type::UI32:
+        case ISA::Type::F32:
+        case ISA::Type::PTR: {
             return read32(region, address);
         }
-        case Type::I64:
-        case Type::UI64:
-        case Type::F64: {
+        case ISA::Type::I64:
+        case ISA::Type::UI64:
+        case ISA::Type::F64: {
             return read64(region, address);
         }
     }
@@ -116,7 +114,7 @@ uint64_t MemoryManager::read64(const MemoryAccessScope region, uint32_t address)
     }
     uint64_t result = 0;
     for (int i = 0; i < 8; i++) {
-        result = result | static_cast<uint32_t>(page->data[getPageOffset(address + i)]) << (i * 8);
+        result = result | static_cast<uint64_t>(page->data[getPageOffset(address + i)]) << (i * 8);
     }
     return result;
 }

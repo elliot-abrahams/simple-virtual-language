@@ -4,6 +4,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../OperandStack.h"
+#include "../../include/ISA.h"
+
 
 enum class Type : uint8_t;
 struct Value;
@@ -36,7 +39,7 @@ public:
     void write32(const MemoryAccessScope region, uint32_t address, uint32_t value);
     void write64(const MemoryAccessScope region, uint32_t address, uint64_t value);
 
-    uint64_t read(const MemoryAccessScope region, uint32_t address, Type type) const;
+    uint64_t read(const MemoryAccessScope region, uint32_t address, ISA::Type type) const;
     uint8_t read8(const MemoryAccessScope region, uint32_t address) const;
     uint32_t read32(const MemoryAccessScope region, uint32_t address) const;
     uint64_t read64(const MemoryAccessScope region, uint32_t address) const;

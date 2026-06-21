@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "OperandStack.h"
+#include "../include/ISA.h"
 
 
 class ArithmeticOps {
@@ -20,10 +21,10 @@ public:
     static Value shr(const bool isArithmetic, const Value& value1, const Value& value2);
 
 private:
-    static uint32_t getBitWidth(const Type& t);
+    static uint32_t getBitWidth(const ISA::Type& t);
 
-    static void throwInvalidOperationOnTypesVMError(const std::string& instructionMnemonic, const Type& type1, const Type& type2);
-    static void throwInvalidOperationOnTypesVMError(const std::string& instructionMnemonic, const Type& type1);
+    static void throwInvalidOperationOnTypesVMError(const std::string& instructionMnemonic, const ISA::Type& type1, const ISA::Type& type2);
+    static void throwInvalidOperationOnTypesVMError(const std::string& instructionMnemonic, const ISA::Type& type1);
     static void throwDivisionByZeroVMError(const std::string& instructionMnemonic);
 };
 

@@ -7,7 +7,7 @@
 
 Assembler::Assembler() {}
 
-std::optional<std::vector<uint8_t> > Assembler::assemble(const std::string &filePath) {
+std::optional<std::vector<uint8_t> > Assembler::assemble(const std::string& filePath) {
     // STEP 1 -> lex source file
     Lexer lexer;
     auto tokenStream = lexer.lex(filePath);
@@ -15,17 +15,31 @@ std::optional<std::vector<uint8_t> > Assembler::assemble(const std::string &file
     if (!tokenStream.has_value()) {
         return std::nullopt;
     }
+    return this->assembleFromTokens(tokenStream.value());
+}
 
+std::optional<std::vector<uint8_t> > Assembler::assembleString(const std::string& fileContent) {
+    // STEP 1 -> lex source file
+    Lexer lexer;
+    auto tokenStream = lexer.lexString(fileContent);
+
+    if (!tokenStream.has_value()) {
+        return std::nullopt;
+    }
+    return this->assembleFromTokens(tokenStream.value());
+}
+
+std::optional<std::vector<uint8_t>> Assembler::assembleFromTokens(const std::vector<AssemblerDefs::SVMAToken>& tokenStream) {
     // STEP 2 -> parse the stream of tokens
     Parser parser;
-    auto parsedStatements = parser.parse(tokenStream.value());
+    const auto parsedStatements = parser.parse(tokenStream);
     if (!parsedStatements.has_value()) {
         return std::nullopt;
     }
     this->statements = parsedStatements.value();
 
     // STEP 3 -> construct the label table
-    bool valid = this->constructLabelTable();
+    const bool valid = this->constructLabelTable();
     if (!valid) {
         return std::nullopt;
     }

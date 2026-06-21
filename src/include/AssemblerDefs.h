@@ -1,15 +1,9 @@
-//
-// Created by erael on 05/05/2026.
-//
-
 #ifndef SIMPLE_VM_TYPES_H
 #define SIMPLE_VM_TYPES_H
+
+
 #include <map>
 #include <set>
-
-#endif //SIMPLE_VM_TYPES_H
-
-#pragma once
 #include <variant>
 #include <string>
 #include <vector>
@@ -149,3 +143,6 @@ namespace AssemblerDefs {
 
     using Statement = std::variant<Instruction, Label, MethodDef, Data, Section>;
 }
+
+
+#endif //SIMPLE_VM_TYPES_H

@@ -10,7 +10,7 @@
 #include <variant>
 #include <vector>
 
-#include "AssemblerDefs.h"
+#include "../include/AssemblerDefs.h"
 
 
 class Parser {
@@ -18,7 +18,7 @@ class Parser {
 public:
     Parser();
 
-    std::optional<std::vector<AssemblerDefs::Statement>> parse(std::vector<AssemblerDefs::SVMAToken>& tokenStream);
+    std::optional<std::vector<AssemblerDefs::Statement>> parse(const std::vector<AssemblerDefs::SVMAToken>& tokenStream);
 
 private:
     std::optional<AssemblerDefs::Statement> parseToken();
