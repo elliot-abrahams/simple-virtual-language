@@ -38,21 +38,25 @@ private:
     AssemblerDefs::SVMAToken peek();
     AssemblerDefs::SVMAToken peekNext();
 
-    static bool isValidFoType(const std::string& type, const std::string& value);
-    void handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) const;
+    static bool checkAndHandleValueIsValidAsType(const std::string type, const std::string& value, const int& lineNumber);
+    static bool checkAndHandleValueIsValidAsDataType(const std::string type, const std::string& value, const int& lineNumber);
+    static void handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber);
 
-    static bool isNumberInteger(const AssemblerDefs::SVMAToken& token);
-    static bool isNumberSigned(const AssemblerDefs::SVMAToken& token);
+    static bool isNumberInteger(const std::string& value);
+    static bool isNumberDecimal(const std::string& value);
+    static bool isNumberSigned(const std::string& value);
 
     AssemblerDefs::OperandType mapTokenTypeToOperandType(AssemblerDefs::SVMATokenType tokenType);
 
-    void handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATokenType> &expectingTypes);
-    void handleIncorrectInstructionOperand(const std::string& instructionMnemonic, const AssemblerDefs::SVMATokenType expectedType, const int& lineNumber);
+    static void printError(const std::string& msg, const int& lineNumber);
+    static void handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATokenType> &expectingTypes, const AssemblerDefs::SVMAToken& actualType, const int& lineNumber);
+    static void handleIncorrectInstructionOperand(const std::string& instructionMnemonic, const AssemblerDefs::SVMATokenType expectedType, const int& lineNumber);
     static std::string tokenTypeToString(AssemblerDefs::SVMATokenType tokenType);
 
     std::vector<AssemblerDefs::SVMAToken> tokenStream;
     int tokenIdx;
     AssemblerDefs::Section section;
+    bool validateImmediateAsType;
 };
 
 
