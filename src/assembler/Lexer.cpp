@@ -249,7 +249,7 @@ void Lexer::skipWhitespace() {
         this->next();
     }
     // reached end of file
-    if (this->charIdx == this->inputBuffer.size() - 1) {
+    if (this->charIdx == this->inputBuffer.size()) {
         this->reachedEndOfFile = true;
     }
 }

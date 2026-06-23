@@ -70,9 +70,9 @@ void VM::execute() {
 
         case ISA::Opcode::CALL: break; // call
         case ISA::Opcode::RET: break; // ret
-        case ISA::Opcode::JMP: break; // jmp
-        case ISA::Opcode::JEZ: break; // jez
-        case ISA::Opcode::JNZ: break; // jnz
+        case ISA::Opcode::JMP: this->executeJmp(); break; // jmp
+        case ISA::Opcode::JEZ: this->executeJez(); break; // jez
+        case ISA::Opcode::JNZ: this->executeJnz(); break; // jnz
 
         // -------------------------------------------------
         // ARITHMETIC
@@ -106,6 +106,10 @@ void VM::execute() {
         case ISA::Opcode::CONV: break; // conv
     }
 }
+
+// -------------------------------------------------
+// CORE
+// -------------------------------------------------
 
 void VM::executeHalt() {
     this->running = false;
@@ -141,7 +145,7 @@ void VM::executeSwap() {
 }
 
 // -------------------------------------------------
-// Memory
+// MEMORY
 // -------------------------------------------------
 
 void VM::executeLoad() {
@@ -149,7 +153,7 @@ void VM::executeLoad() {
     const Value address = this->operandStack.pop(); // pop address from operand stack
     VM::checkType("load", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
 
-    const uint64_t value = this->memoryManager.read64(MemoryAccessScope::PTR, address.rawValue); // read value at address
+    const uint64_t value = this->memoryManager.read(MemoryAccessScope::DATA, address.rawValue, static_cast<ISA::Type>(type)); // read value at address
     this->operandStack.push(type, value); // push value onto operand stack
 }
 
@@ -164,7 +168,7 @@ void VM::executeLoadG() {
     */
 
     if (valueDataType != static_cast<uint8_t>(ISA::Type::STR)) {
-        const uint64_t value = this->memoryManager.read64(MemoryAccessScope::PTR, address); // read value at address
+        const uint64_t value = this->memoryManager.read(MemoryAccessScope::DATA, address, static_cast<ISA::Type>(valueDataType)); // read value at address
         this->operandStack.push(valueDataType, value); // push value onto operand stack
     } else {
         // push address (pointer to the string) onto operand stack
@@ -201,7 +205,7 @@ void VM::executeStoreG() {
     const uint8_t valueDataType = this->memoryManager.read8(MemoryAccessScope::DATA, address - 1); // read data type of target global
     this->checkType("storeG", valueDataType, static_cast<uint8_t>(value.type)); // ensure type of target global matches type of value from operand stack
 
-    this->memoryManager.write(MemoryAccessScope::PTR, address, &value); // store val in memory at address
+    this->memoryManager.write(MemoryAccessScope::DATA, address, &value); // store val in memory at address
 }
 
 void VM::executeStoreL() {
@@ -214,8 +218,36 @@ void VM::executeStoreL() {
     this->memoryManager.write64(MemoryAccessScope::CALL_STACK, address, value.rawValue); // store value from operand stack to memory
 }
 
+
 // -------------------------------------------------
-// Memory
+// CONTROL
+// -------------------------------------------------
+
+void VM::executeJmp() {
+    const uint32_t jumpAddress = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
+    this->PC = jumpAddress;
+}
+
+void VM::executeJez() {
+    const uint32_t jumpAddress = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
+    const Value value = this->operandStack.pop(); // pop value off of the operand stack
+
+    if (value.isZero()) {
+        this->PC = jumpAddress;
+    }
+}
+
+void VM::executeJnz() {
+    const uint32_t jumpAddress = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
+    const Value value = this->operandStack.pop(); // pop value off of the operand stack
+
+    if (!value.isZero()) {
+        this->PC = jumpAddress;
+    }
+}
+
+// -------------------------------------------------
+// ARITHMETIC
 // -------------------------------------------------
 
 void VM::executeAdd() {

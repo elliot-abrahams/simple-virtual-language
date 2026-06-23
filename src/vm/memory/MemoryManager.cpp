@@ -34,6 +34,7 @@ void MemoryManager::write(const MemoryAccessScope region, uint32_t address, cons
         case ISA::Type::F32:
         case ISA::Type::PTR: {
             this->write32(region, address, value->rawValue);
+            return;
         }
         case ISA::Type::I64:
         case ISA::Type::UI64:

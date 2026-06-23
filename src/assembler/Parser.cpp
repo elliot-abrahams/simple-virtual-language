@@ -234,7 +234,13 @@ std::optional<AssemblerDefs::Statement> Parser::parseLabelDef() {
 }
 
 std::optional<AssemblerDefs::Statement> Parser::parseData() {
-    this->parseLabelDef();
+    if (this->peek().type != AssemblerDefs::SVMATokenType::LABEL_DEF) {
+        handleUnexpectedTokenError({this->peek().type}, this->peek(), this->peek().lineNumber);
+        return std::nullopt;
+    }
+
+    const auto labelDef = this->peek();
+    this->next();
     const auto dataTypeToken = this->peek();
     this->next();
     const auto valueToken = this->peek();
@@ -249,7 +255,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseData() {
             return std::nullopt;
         }
     }
-    auto data = AssemblerDefs::Data{dataTypeToken.value, this->peek().value};
+    auto data = AssemblerDefs::Data{labelDef.value, dataTypeToken.value, this->peek().value};
     this->next();
     return data;
 }

@@ -40,6 +40,10 @@ private:
     void executeStoreG();
     void executeStoreL();
 
+    void executeJmp();
+    void executeJez();
+    void executeJnz();
+
     void executeAdd();
     void executeSub();
     void executeMul();

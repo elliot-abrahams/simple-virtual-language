@@ -55,7 +55,7 @@ bool Assembler::constructLabelTable() {
     uint32_t codeSectionLength = 0;
     uint32_t dataSectionLength = 0;
 
-    std::map<std::string, int> unhandledLabels;
+    std::map<std::string, uint32_t> unhandledLabelRefs;
 
     // loop through list of statements
     for (auto& statement : this->statements) {
@@ -68,12 +68,7 @@ bool Assembler::constructLabelTable() {
         if (std::holds_alternative<AssemblerDefs::Label>(statement)) {
             bool isValid;
             auto label = std::get<AssemblerDefs::Label>(statement);
-            if (this->section == AssemblerDefs::Section::CODE) {
-                isValid = this->processLabelDef(unhandledLabels, codeSectionLength, label.name, label.lineNumber);
-            } else {
-                isValid = this->processLabelDef(unhandledLabels, codeSectionLength + dataSectionLength + 1, label.name, label.lineNumber);
-            }
-
+            isValid = this->processLabelDef(unhandledLabelRefs, codeSectionLength, Label{label.name.substr(0, label.name.size() - 1), LabelType::CODE}, label.lineNumber);
             if (!isValid) {
                 return false;
             }
@@ -81,7 +76,7 @@ bool Assembler::constructLabelTable() {
         // process METHOD_DEF
         } else if (std::holds_alternative<AssemblerDefs::MethodDef>(statement)) {
             auto methodDef = std::get<AssemblerDefs::MethodDef>(statement);
-            bool isValid = this->processLabelDef(unhandledLabels, codeSectionLength, methodDef.name, methodDef.lineNumber);
+            bool isValid = this->processLabelDef(unhandledLabelRefs, codeSectionLength, Label{methodDef.name.substr(0, methodDef.name.size() - 1), LabelType::METHOD}, methodDef.lineNumber);
             if (!isValid) {
                 return false;
             }
@@ -89,11 +84,11 @@ bool Assembler::constructLabelTable() {
 
         // process INSTRUCTION
         } else if (std::holds_alternative<AssemblerDefs::Instruction>(statement)) {
-            this->processInstruction(unhandledLabels, codeSectionLength, std::get<AssemblerDefs::Instruction>(statement));
+            this->processInstruction(unhandledLabelRefs, codeSectionLength, std::get<AssemblerDefs::Instruction>(statement));
 
         // process DATA
         } else if (std::holds_alternative<AssemblerDefs::Data>(statement)) {
-            this->processData(unhandledLabels, dataSectionLength, std::get<AssemblerDefs::Data>(statement));
+            this->processData(unhandledLabelRefs, codeSectionLength + dataSectionLength + 1, dataSectionLength, std::get<AssemblerDefs::Data>(statement));
 
         } else {
             // data section Token
@@ -101,10 +96,10 @@ bool Assembler::constructLabelTable() {
         }
     }
 
-    if (!unhandledLabels.empty()) {
+    if (!unhandledLabelRefs.empty()) {
         std::cerr << "Undefined label(s):" << std::endl;
-        for (auto& label : unhandledLabels) {
-            std::cerr << "Line " << label.second << " -> " << label.first << std::endl;
+        for (auto& label : unhandledLabelRefs) {
+            std::cerr << "Line " << label.second << " -> " << label.first.substr(0, label.first.size() - 4) << " (" << label.first.substr(label.first.size() - 4, label.first.size()) << ")" << std::endl;
         }
         return false;
     }
@@ -114,20 +109,20 @@ bool Assembler::constructLabelTable() {
     return true;
 }
 
-bool Assembler::processLabelDef(std::map<std::string, int>& unhandledRefs, const uint32_t location, const std::string& label, const int& lineNumber) {
+bool Assembler::processLabelDef(std::map<std::string, uint32_t>& unhandledLabelRefs, const uint32_t location, const Label& label, const int& lineNumber) {
     // check if def already exists
-    if (labelTable.find(label.substr(0, label.size() - 1)) != labelTable.end()) {
+    if (labelTable.find(label.getKey()) != labelTable.end()) {
         std::cerr << "Error found at Line " << lineNumber << std::endl;
-        std::cerr << "Duplicate label " << label << std::endl;
+        std::cerr << "Duplicate label " << label.name << std::endl;
         return false;
     }
 
-    unhandledRefs.erase(label.substr(0, label.size() - 1));
-    this->labelTable.insert({label.substr(0, label.size() - 1), location});
+    unhandledLabelRefs.erase(label.getKey());
+    this->labelTable.insert({label.getKey(), location});
     return true;
 }
 
-void Assembler::processInstruction(std::map<std::string, int>& unhandledLabelRefs, uint32_t& codeSectionLength, const AssemblerDefs::Instruction& instruction) {
+void Assembler::processInstruction(std::map<std::string, uint32_t>& unhandledLabelRefs, uint32_t& codeSectionLength, const AssemblerDefs::Instruction& instruction) {
     std::string type;
     codeSectionLength += 1; // 1 for opcode
     // loop through each operand
@@ -136,7 +131,8 @@ void Assembler::processInstruction(std::map<std::string, int>& unhandledLabelRef
             codeSectionLength++;
             type = operand.value;
         } else if (operand.type == AssemblerDefs::OperandType::LABEL_REF) {
-            this->processLabelRef(unhandledLabelRefs, operand.value, instruction.lineNumber);
+            // process label ref depending on required label type for this instruction
+            this->processLabelRef(unhandledLabelRefs, Label{operand.value, getOperandLabelType(instruction.opcode)}, instruction.lineNumber);
             codeSectionLength += 4;
         } else if (operand.type == AssemblerDefs::OperandType::STRING) {
             codeSectionLength += 4;
@@ -146,7 +142,10 @@ void Assembler::processInstruction(std::map<std::string, int>& unhandledLabelRef
     }
 }
 
-void Assembler::processData(std::map<std::string, int> &unhandledLabelRefs, uint32_t& dataSectionLength, const AssemblerDefs::Data& data) {
+void Assembler::processData(std::map<std::string, uint32_t> &unhandledLabelRefs, const uint32_t location, uint32_t& dataSectionLength, const AssemblerDefs::Data& data) {
+    // process label Def
+    this->processLabelDef(unhandledLabelRefs, location, Label{data.name.substr(0, data.name.size() - 1), LabelType::DATA}, data.lineNumber);
+
     // check if data type is ptr
     if (data.type == "ptr") {
         // add label to unhandledLabelRefs
@@ -156,11 +155,29 @@ void Assembler::processData(std::map<std::string, int> &unhandledLabelRefs, uint
     dataSectionLength += this->calculateBytesOfData(data);
 }
 
-void Assembler::processLabelRef(std::map<std::string, int> &unhandledRefs, const std::string& label, const int &lineNumber) {
-    if (this->labelTable.find(label) == this->labelTable.end()) {
+void Assembler::processLabelRef(std::map<std::string, uint32_t> &unhandledLabelRefs, const Label& label, const int &lineNumber) {
+    if (this->labelTable.find(label.getKey()) == this->labelTable.end()) {
         // label is not in labelTable
-        unhandledRefs.insert({label, lineNumber});
+        unhandledLabelRefs.insert({label.getKey(), lineNumber});
     }
+}
+
+LabelType Assembler::getOperandLabelType(const std::string &instructionMnemonic) {
+    if (
+        instructionMnemonic == "push" ||
+        instructionMnemonic == "loadG" ||
+        instructionMnemonic == "storeG"
+    ) {
+        return LabelType::DATA;
+
+    } else if (
+        instructionMnemonic == "jmp" ||
+        instructionMnemonic == "jez" ||
+        instructionMnemonic == "jnz"
+    ) {
+        return LabelType::CODE;
+    }
+    return LabelType::METHOD;
 }
 
 uint8_t Assembler::calculateBytesOfData(const AssemblerDefs::Data& data) const {
@@ -241,7 +258,7 @@ std::optional<std::vector<uint8_t>> Assembler::convertInstructionToBytes(const A
             bytecode.push_back(this->convertDataTypeToByte(operand.value));
             dataType = operand.value;
         } else if (operand.type == AssemblerDefs::OperandType::LABEL_REF) {
-            this->pushBackVector(bytecode, this->convertLabelRefToBytes(operand.value));
+            this->pushBackVector(bytecode, this->convertLabelRefToBytes(Label{operand.value, getOperandLabelType(instruction.opcode)}));
         } else if (operand.type == AssemblerDefs::OperandType::STRING ||
             operand.type == AssemblerDefs::OperandType::IMMEDIATE) {
             auto data = this->convertDataToBytes(dataType, operand.value, instruction.lineNumber);
@@ -358,19 +375,19 @@ std::optional<std::vector<uint8_t>> Assembler::convertDataToBytes(const std::str
         }
 
     } else if (dataType == "ptr") {
-        this->pushBackVector(bytecode, this->convertLabelRefToBytes(dataToConvert));
+        this->pushBackVector(bytecode, this->convertLabelRefToBytes(Label{dataToConvert, LabelType::DATA}));
     } else if (dataType == "str") {
         this->pushBackVector(bytecode, this->convertStringToBytes(data));
     }
     return bytecode;
 }
 
-std::vector<uint8_t> Assembler::convertLabelRefToBytes(const std::string& label) const {
+std::vector<uint8_t> Assembler::convertLabelRefToBytes(const Label& label) const {
     std::vector<uint8_t> bytecode;
 
     // resolve label ref to memory address
     for (int i = 0; i < 4; i++) {
-        bytecode.push_back((this->labelTable.at(label) >> (i * 8)) & 0xFF);
+        bytecode.push_back((this->labelTable.at(label.getKey()) >> (i * 8)) & 0xFF);
     }
     return bytecode;
 }

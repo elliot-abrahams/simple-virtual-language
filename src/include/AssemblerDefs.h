@@ -136,6 +136,7 @@ namespace AssemblerDefs {
     };
 
     struct Data {
+        std::string name;
         std::string type;
         std::string value;
         int lineNumber;

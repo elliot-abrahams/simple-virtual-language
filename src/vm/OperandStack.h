@@ -40,6 +40,19 @@ struct Value
                 throw VMError("Invalid type in operand stack");
         }
     }
+
+    bool isZero() const {
+        switch (type) {
+            case ISA::Type::UI32:
+            case ISA::Type::UI64:
+            case ISA::Type::PTR:
+                return rawValue == 0;
+            case ISA::Type::I32: return std::get<int32_t>(this->toTyped()) == static_cast<int32_t>(0);
+            case ISA::Type::I64: return std::get<int64_t>(this->toTyped()) == static_cast<int64_t>(0);
+            case ISA::Type::F32: return std::get<float>(this->toTyped()) == 0.0f;
+            case ISA::Type::F64: return std::get<double>(this->toTyped()) == 0.0;
+        }
+    }
 };
 
 class OperandStack {
