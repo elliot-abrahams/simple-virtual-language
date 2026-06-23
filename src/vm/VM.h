@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "OperandStack.h"
-#include "VMError.h"
+#include "memory/CallStack.h"
 #include "memory/MemoryManager.h"
 
 
@@ -40,6 +40,8 @@ private:
     void executeStoreG();
     void executeStoreL();
 
+    void executeCall();
+    void executeRet();
     void executeJmp();
     void executeJez();
     void executeJnz();
@@ -74,6 +76,7 @@ private:
     uint32_t SP;
 
     MemoryManager memoryManager;
+    CallStack callStack;
     OperandStack operandStack;
 
     bool running;

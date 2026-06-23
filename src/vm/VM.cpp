@@ -4,7 +4,8 @@
 #include <iostream>
 
 #include "TypeConversions.h"
-#include  "ArithmeticOps.h"
+#include "ArithmeticOps.h"
+#include "VMError.h"
 
 VM::VM() :
     PC(0),
@@ -12,6 +13,7 @@ VM::VM() :
     FP(MAX_MEMORY_ADDRESS),
     SP(MAX_MEMORY_ADDRESS),
     memoryManager(MemoryManager(&HP, &SP)),
+    callStack(CallStack(&memoryManager)),
     operandStack(OperandStack()),
     running(true) {}
 
@@ -68,8 +70,8 @@ void VM::execute() {
         // CONTROL
         // -------------------------------------------------
 
-        case ISA::Opcode::CALL: break; // call
-        case ISA::Opcode::RET: break; // ret
+        case ISA::Opcode::CALL: this->executeCall(); break; // call
+        case ISA::Opcode::RET: this->executeRet(); break; // ret
         case ISA::Opcode::JMP: this->executeJmp(); break; // jmp
         case ISA::Opcode::JEZ: this->executeJez(); break; // jez
         case ISA::Opcode::JNZ: this->executeJnz(); break; // jnz
@@ -181,7 +183,7 @@ void VM::executeLoadL() {
     const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
     const int32_t offset = TypeConversions::rawToI32(rawOffset);
 
-    const uint32_t address = this->FP + ((static_cast<int32_t>(offset) - 1) * 8); // calculate address from given operand immediate
+    const uint32_t address = this->FP + (static_cast<int32_t>(offset) * 8); // calculate address from given operand immediate
 
     const uint64_t local = this->memoryManager.read64(MemoryAccessScope::DATA, address); // get local value from memory
 
@@ -198,7 +200,7 @@ void VM::executeStore() {
 }
 
 void VM::executeStoreG() {
-    const uint8_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
+    const uint32_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
     const Value value = this->operandStack.pop(); // pop value from operand stack to store
 
     // ensure the value on the operand stack matches the type of the target global
@@ -213,7 +215,7 @@ void VM::executeStoreL() {
     const int32_t offset = TypeConversions::rawToI32(rawOffset);
     const Value value = this->operandStack.pop(); // pop value from operand stack to store
 
-    const uint32_t address = this->FP + ((offset - 1) * 8); // calculate address from given operand immediate
+    const uint32_t address = this->FP + (offset * 8); // calculate address from given operand immediate
 
     this->memoryManager.write64(MemoryAccessScope::CALL_STACK, address, value.rawValue); // store value from operand stack to memory
 }
@@ -222,6 +224,28 @@ void VM::executeStoreL() {
 // -------------------------------------------------
 // CONTROL
 // -------------------------------------------------
+
+void VM::executeCall() {
+    const uint32_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
+    // read method metadata
+    const uint8_t numberOfArguments = this->memoryManager.read8(MemoryAccessScope::CODE, address);
+    const uint32_t numberOfLocals = this->memoryManager.read32(MemoryAccessScope::DATA, address + 1);
+
+    // read arguments from operand stack
+    std::vector<Value> arguments;
+    for (int i = 0; i < numberOfArguments; i++) {
+        arguments.push_back(this->operandStack.pop());
+    }
+    // push stack frame onto call stack
+    this->callStack.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments);
+    // set PC to start of called method
+    this->PC = address + 5; // (5 for length of method metadata)
+}
+
+void VM::executeRet() {
+    // pop stack frame off of call stack
+    this->callStack.pop(this->FP, this->SP, this->PC);
+}
 
 void VM::executeJmp() {
     const uint32_t jumpAddress = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand

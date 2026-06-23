@@ -42,7 +42,9 @@ set(Sources
     src/Driver.cpp
     src/vm/ArithmeticOps.cpp
     src/vm/TypeConversions.cpp
-        src/include/ISA.h
+    src/include/ISA.h
+    src/vm/memory/CallStack.cpp
+    src/vm/memory/CallStack.h
 )
 
 add_library(${This} STATIC ${Sources} ${Headers})
