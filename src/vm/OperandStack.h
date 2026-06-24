@@ -5,6 +5,7 @@
 #include <variant>
 #include <vector>
 
+#include "TypeConversions.h"
 #include "VMError.h"
 #include "../include/ISA.h"
 
@@ -52,6 +53,37 @@ struct Value
             case ISA::Type::F32: return std::get<float>(this->toTyped()) == 0.0f;
             case ISA::Type::F64: return std::get<double>(this->toTyped()) == 0.0;
         }
+    }
+
+    void convertToType(const ISA::Type& newType) {
+        if (type == newType) return;
+
+        TypedValue typedValue = this->toTyped();
+
+        rawValue = std::visit(
+            [&](auto value) -> uint64_t {
+
+                switch (newType) {
+                    case ISA::Type::I32:
+                        return TypeConversions::I32ToRaw(static_cast<int32_t>(value));
+                    case ISA::Type::UI32:
+                    case ISA::Type::PTR:
+                        return TypeConversions::UI32ToRaw(static_cast<uint32_t>(value));
+                    case ISA::Type::I64:
+                        return TypeConversions::I64ToRaw(static_cast<int64_t>(value));
+                    case ISA::Type::UI64:
+                        return static_cast<uint64_t>(value);
+                    case ISA::Type::F32:
+                        return TypeConversions::F32ToRaw(static_cast<float>(value));
+                    case ISA::Type::F64:
+                        return TypeConversions::F64ToRaw(static_cast<double>(value));
+                    default:
+                        throw VMError("Invalid conversion type");
+                }
+
+            }, typedValue);
+
+        type = newType;
     }
 };
 

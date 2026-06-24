@@ -56,7 +56,6 @@ private:
     std::vector<AssemblerDefs::SVMAToken> tokenStream;
     int tokenIdx;
     AssemblerDefs::Section section;
-    bool validateImmediateAsType;
 };
 
 

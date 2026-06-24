@@ -12,7 +12,6 @@ std::optional<std::vector<AssemblerDefs::Statement>> Parser::parse(const std::ve
     this->tokenStream = tokenStream;
     this->tokenIdx = 0;
     this->section = AssemblerDefs::Section::CODE;
-    this->validateImmediateAsType = false;
 
     while (this->peek().type != AssemblerDefs::SVMATokenType::END_OF_FILE) {
 
@@ -73,7 +72,6 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
         instruction == "conv") {
 
         auto optionalType = this->parseType();
-        this->validateImmediateAsType = true;
         if (!optionalType.has_value()) {
             handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::TYPE, lineNumber);
             return std::nullopt;
@@ -110,14 +108,14 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     }
 
     if (instruction == "push") {
-        if (type.type == AssemblerDefs::OperandType::TYPE) {
+        if (type.value != "ptr") {
             auto optionalImmediate = this->parseImmediate();
             if (!optionalImmediate.has_value()) {
                 handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::IMMEDIATE, lineNumber);
                 return std::nullopt;
             }
             immediate = optionalImmediate.value();
-        } else if (type.type == AssemblerDefs::OperandType::DATA_TYPE) {
+        } else {
             auto optionalLabelRef = this->parseLabelRef();
             if (!optionalLabelRef.has_value()) {
                 handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::LABEL_REF, lineNumber);
@@ -220,8 +218,8 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     //========================================================================================================
 
     if (instruction == "out") return AssemblerDefs::Instruction{instruction, {dataType}, lineNumber};
-    if (instruction == "in") return AssemblerDefs::Instruction{instruction, {dataType}, lineNumber};
-    if (instruction == "conv") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "inn") return AssemblerDefs::Instruction{instruction, {dataType}, lineNumber};
+    if (instruction == "conv") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
 
     printError(std::string("Undefined instruction: " + instruction), lineNumber);
     return std::nullopt;
@@ -322,7 +320,11 @@ std::optional<AssemblerDefs::Operand> Parser::parseType() {
 }
 
 std::optional<AssemblerDefs::Operand> Parser::parseDataType() {
-    return this->parseOperand(AssemblerDefs::SVMATokenType::DATA_TYPE);
+    auto dataType = this->parseOperand(AssemblerDefs::SVMATokenType::DATA_TYPE);
+    if (dataType.has_value()) {
+        return dataType;
+    }
+    return this->parseOperand(AssemblerDefs::SVMATokenType::TYPE);
 }
 
 std::optional<AssemblerDefs::Operand> Parser::parseImmediate() {
@@ -374,7 +376,7 @@ bool Parser::checkAndHandleValueIsValidAsType(const std::string type, const std:
         }
         return true;
     }
-    if (type == "ui32" || type == "u64") {
+    if (type == "ui32" || type == "ui64") {
         // enforce ui32 / ui64 is matched with an unsigned integer
         if (!isNumberInteger(value) || isNumberSigned(value)) {
             printError("Expecting unsigned integer", lineNumber);

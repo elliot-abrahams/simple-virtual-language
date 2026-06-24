@@ -123,24 +123,27 @@ TEST(CEQ, F64_F64_FALSE) {
 
 TEST(CEQ, PTR_PTR_TRUE) {
     const auto assembly = R"(
-    $x:
         push ptr $x
         push ptr $x
         ceq
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
 }
 
 TEST(CEQ, PTR_PTR_FALSE) {
     const auto assembly = R"(
-    $x:
-        nop
-    $y:
         push ptr $x
         push ptr $y
         ceq
         halt
+
+    .data
+    $x: i32 5
+    $y: i32 5
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
 }
@@ -177,11 +180,13 @@ TEST(CEQ, INVALID_F32_F64) {
 
 TEST(CEQ, INVALID_I32_PTR) {
     const auto assembly = R"(
-    $x:
         push i32 #5
         push ptr $x
         ceq
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }

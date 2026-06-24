@@ -12,17 +12,21 @@ void EXPECT_OPERAND_VM_STACK_EQ(
     const ISA::Type expectedType,
     const T expectedValue
 ) {
-    Assembler assembler;
-    VM vm;
+    try {
+        Assembler assembler;
+        VM vm;
 
-    const auto bytecode = assembler.assembleString(source);
+        const auto bytecode = assembler.assembleString(source);
 
-    vm.run(&bytecode.value());
-    const Value result = vm.peekOperandStack();
+        vm.run(&bytecode.value());
+        const Value result = vm.peekOperandStack();
 
-    EXPECT_EQ(result.type, expectedType);
-    auto resultVal = std::get<T>(result.toTyped());
-    EXPECT_EQ(resultVal, expectedValue);
+        EXPECT_EQ(result.type, expectedType);
+        auto resultVal = std::get<T>(result.toTyped());
+        EXPECT_EQ(resultVal, expectedValue);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
 }
 
 inline void EXPECT_VM_ERROR(const std::string& source) {

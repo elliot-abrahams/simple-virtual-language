@@ -13,14 +13,15 @@ TEST(ADD, I32_I32) {
 
 TEST(ADD, I32_PTR) {
     const auto assembly = R"(
-        nop
-    $x:
         push i32 #5
         push ptr $x
         add
         halt
+
+    .data
+    $x: i32 5
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(6));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(20));
 }
 
 TEST(ADD, UI32_UI32) {
@@ -35,14 +36,15 @@ TEST(ADD, UI32_UI32) {
 
 TEST(ADD, UI32_PTR) {
     const auto assembly = R"(
-        nop
-    $x:
         push ui32 #5
         push ptr $x
         add
         halt
+
+    .data
+    $x: i32 5
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(6));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(20));
 }
 
 TEST(ADD, I64_I64) {
@@ -87,26 +89,28 @@ TEST(ADD, F64_F64) {
 
 TEST(ADD, PTR_I32) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push i32 #5
         add
         halt
+
+    .data
+    $x: i32 5
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(6));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(20));
 }
 
 TEST(ADD, PTR_UI32) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push ui32 #5
         add
         halt
+
+    .data
+    $x: i32 5
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(6));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(20));
 }
 
 TEST(ADD, I32_0_0) {
@@ -191,24 +195,26 @@ TEST(ADD, INVALID_I32_F32) {
 
 TEST(ADD, INVALID_PTR_PTR) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push ptr $x
         add
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }
 
 TEST(ADD, INVALID_PTR_I64) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push i64 #5
         add
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }

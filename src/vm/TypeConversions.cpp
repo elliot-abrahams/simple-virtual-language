@@ -30,13 +30,13 @@ double TypeConversions::rawToF64(const uint64_t rawValue) {
     return value;
 }
 
-uint64_t TypeConversions::I32ToRaw(const int32_t value) {
+uint32_t TypeConversions::I32ToRaw(const int32_t value) {
     uint32_t bits;
     std::memcpy(&bits, &value, sizeof(uint32_t));
     return static_cast<uint64_t>(bits);
 }
 
-uint64_t TypeConversions::UI32ToRaw(const uint32_t value) {
+uint32_t TypeConversions::UI32ToRaw(const uint32_t value) {
     return static_cast<uint64_t>(value);
 }
 
@@ -46,7 +46,7 @@ uint64_t TypeConversions::I64ToRaw(const int64_t value) {
     return bits;
 }
 
-uint64_t TypeConversions::F32ToRaw(const float value) {
+uint32_t TypeConversions::F32ToRaw(const float value) {
     uint32_t bits;
     std::memcpy(&bits, &value, sizeof(uint32_t));
     return static_cast<uint64_t>(bits);

@@ -35,7 +35,7 @@ void CallStack::pop(uint32_t &FP, uint32_t &SP, uint32_t &PC) {
     FP = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP - 4);
 
     // increase SP by current stack frame size
-    FrameInfo frameInfo = this->frameInfoStack.top();
+    const FrameInfo frameInfo = this->frameInfoStack.top();
     SP += (frameInfo.numberOfArguments + 8 + frameInfo.numberOfLocals);
 
     // pop frame info off of stack

@@ -133,11 +133,13 @@ TEST(SAR, INVALID_F64_I32) {
 
 TEST(SAR, INVALID_PTR_I32) {
     const auto assembly = R"(
-    $x:
         push ptr $x
         push i32 #5
         sar
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }
@@ -164,11 +166,13 @@ TEST(SAR, INVALID_I32_F64) {
 
 TEST(SAR, INVALID_I32_PTR) {
     const auto assembly = R"(
-    $x:
         push i32 #5
         push ptr $x
         sar
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }

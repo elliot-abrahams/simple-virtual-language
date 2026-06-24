@@ -133,11 +133,13 @@ TEST(SHL, INVALID_F64_I32) {
 
 TEST(SHL, INVALID_PTR_I32) {
     const auto assembly = R"(
-    $x:
         push ptr $x
         push i32 #5
         shl
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }
@@ -164,11 +166,13 @@ TEST(SHL, INVALID_I32_F64) {
 
 TEST(SHL, INVALID_I32_PTR) {
     const auto assembly = R"(
-    $x:
         push i32 #5
         push ptr $x
         shl
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }

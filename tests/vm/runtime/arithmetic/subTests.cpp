@@ -64,38 +64,41 @@ TEST(SUB, F64_F64) {
 
 TEST(SUB, PTR_PTR) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push ptr $x
         sub
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I64, int64_t(0));
 }
 
 TEST(SUB, PTR_I32) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push i32 #1
         sub
         halt
+
+    .data
+    $x: i32 5
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(0));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(14));
 }
 
 TEST(SUB, PTR_UI32) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push ui32 #1
         sub
         halt
+
+    .data
+    $x: i32 5
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(0));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(14));
 }
 
 TEST(SUB, I32_NEGATIVE) {
@@ -170,12 +173,13 @@ TEST(SUB, INVALID_UI64_F64) {
 
 TEST(SUB, INVALID_PTR_I64) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push i64 #5
         sub
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }

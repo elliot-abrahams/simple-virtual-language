@@ -48,6 +48,10 @@ std::optional<std::vector<AssemblerDefs::SVMAToken>> Lexer::buildTokenStream() {
 
         this->skipWhitespace();
 
+        if (this->charIdx >= this->inputBuffer.size() || this->peek() == ' ') {
+            break;
+        }
+
         switch (this->peek()) {
             case '\n':
                 this->lineNumber++;
@@ -59,7 +63,7 @@ std::optional<std::vector<AssemblerDefs::SVMAToken>> Lexer::buildTokenStream() {
                 break;
 
             default:
-                if (!this->reachedEndOfFile) {
+                if (this->charIdx < this->inputBuffer.size()) {
                     std::optional<AssemblerDefs::SVMAToken> token = this->lexToken();
                     if (!token.has_value()) {
                         return std::nullopt;
@@ -92,6 +96,9 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexToken() {
 
 void Lexer::next() {
     this->charIdx++;
+    if (this->charIdx >= this->inputBuffer.size()) {
+        this->reachedEndOfFile = true;
+    }
 }
 
 char Lexer::peek() const {
@@ -100,7 +107,6 @@ char Lexer::peek() const {
 
 std::optional<char> Lexer::peekNext() {
     if (this->charIdx + 1 == this->inputBuffer.size() - 1) {
-        this->reachedEndOfFile = true;
         return std::nullopt;
     }
     return this->inputBuffer[this->charIdx + 1];
@@ -116,14 +122,14 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexLabel() {
     const std::string label = this->readUntilWhitespace();
     // LABEL_DEF
     if (label[label.size() - 1] == ':') {
-        if (!this->isValidLabel(label.substr(0, label.size() - 1))) {
+        if (!isValidLabel(label.substr(0, label.size() - 1))) {
             this->outputInvalidLabelError(label);
             return std::nullopt;
         }
         return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::LABEL_DEF, label, this->lineNumber};
     }
     // LABEL_REF
-    if (!this->isValidLabel(label)) {
+    if (!isValidLabel(label)) {
         this->outputInvalidLabelError(label);
         return std::nullopt;
     }
@@ -132,7 +138,7 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexLabel() {
 
 std::optional<AssemblerDefs::SVMAToken> Lexer::lexNumber() {
     std::string number = this->readUntilWhitespace();
-    if (!this->isValidNumber(number)) {
+    if (!isValidNumber(number)) {
         this->outputLineNumberOfError();
         std::cerr << "Invalid number \' " << number << "\'" << std::endl;
         return std::nullopt;
@@ -141,8 +147,8 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexNumber() {
 }
 
 std::optional<AssemblerDefs::SVMAToken> Lexer::lexImmediate() {
-    std::string immediate = this->readUntilWhitespace();
-    if (!this->isValidImmediate(immediate)) {
+    const std::string immediate = this->readUntilWhitespace();
+    if (!isValidImmediate(immediate)) {
         this->outputLineNumberOfError();
         std::cerr << "Invalid immediate \'" << immediate << "\'" << std::endl;
         return std::nullopt;
@@ -151,7 +157,7 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexImmediate() {
 }
 
 std::optional<AssemblerDefs::SVMAToken> Lexer::lexDataStart() {
-    std::string dataStart = this->readUntilWhitespace();
+    const std::string dataStart = this->readUntilWhitespace();
     if (dataStart != ".data") {
         this->outputInvalidTokenError(dataStart);
         return std::nullopt;
@@ -160,10 +166,10 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexDataStart() {
 }
 
 std::optional<AssemblerDefs::SVMAToken> Lexer::lexString() {
-    std::string string = this->readString();
-    if (!this->isValidString(string)) {
+    const std::string string = this->readString();
+    if (!isValidString(string)) {
         this->outputLineNumberOfError();
-        if (this->reachedEndOfFile) {
+        if (this->charIdx >= this->inputBuffer.size()) {
             std::cerr << "Unterminated string" << std::endl;
         } else {
             std::cerr << "Invalid string \'" << string << "\'" << std::endl;
@@ -174,7 +180,7 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexString() {
 }
 
 std::optional<AssemblerDefs::SVMAToken> Lexer::lexKeyWord() {
-    std::string keyword = this->readUntilWhitespace();
+    const std::string keyword = this->readUntilWhitespace();
 
     // TYPE Token
     if (AssemblerDefs::type.find(keyword) != AssemblerDefs::type.end()) {
@@ -202,12 +208,13 @@ std::optional<AssemblerDefs::SVMAToken> Lexer::lexKeyWord() {
 
 std::string Lexer::readUntilWhitespace() {
     std::string word;
-    while (this->peek() != ' ' && this->peek() != '\n') {
+
+    if (this->reachedEndOfFile || this->charIdx >= this->inputBuffer.size()) {
+        return word;
+    }
+
+    while (this->charIdx < this->inputBuffer.size() && !std::isspace(this->peek())) {
         word += this->peek();
-        if (this->charIdx == this->inputBuffer.size() - 1) {
-            this->reachedEndOfFile = true;
-            break;
-        }
         this->next();
     }
     return word;
@@ -219,8 +226,7 @@ std::string Lexer::readChar() {
     for (int i = 0; i < 2; i++) {
         character += this->peek();
         this->next();
-        if (this->charIdx == this->inputBuffer.size()) {
-            this->reachedEndOfFile = true;
+        if (this->reachedEndOfFile) {
             break;
         }
     }
@@ -248,19 +254,11 @@ void Lexer::skipWhitespace() {
     while (this->charIdx + 1 < this->inputBuffer.size() && this->inputBuffer[this->charIdx] == ' ') {
         this->next();
     }
-    // reached end of file
-    if (this->charIdx == this->inputBuffer.size()) {
-        this->reachedEndOfFile = true;
-    }
 }
 
 void Lexer::skipComment() {
-    while (this->charIdx + 1 < this->inputBuffer.size() && this->inputBuffer[this->charIdx] != '\n') {
+    while (!this->reachedEndOfFile && this->peek() != '\n') {
         this->next();
-    }
-    // reached end of file
-    if (this->charIdx == this->inputBuffer.size() - 1) {
-        this->reachedEndOfFile = true;
     }
     this->lineNumber++;
     this->next();

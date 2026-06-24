@@ -65,6 +65,12 @@ private:
     void executeCgt();
     void executeCge();
 
+    void executeOut();
+    void executeInn();
+    void executeConv();
+
+    std::string readStringFromMemory(const uint32_t address) const;
+
     uint8_t fetchType();
     uint64_t fetchOperand(const uint8_t type);
 

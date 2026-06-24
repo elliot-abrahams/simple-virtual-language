@@ -62,18 +62,6 @@ TEST(DIV, F64_F64) {
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::F64, 2.0);
 }
 
-TEST(DIV, PTR_PTR) {
-    const auto assembly = R"(
-        nop
-    $x:
-        push ptr $x
-        push ptr $x
-        div
-        halt
-    )";
-    EXPECT_VM_ERROR(assembly);
-}
-
 TEST(DIV, I32_NEGATIVE) {
     const auto assembly = R"(
         push i32 #-8
@@ -82,6 +70,19 @@ TEST(DIV, I32_NEGATIVE) {
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(-4));
+}
+
+TEST(DIV, INVALID_PTR_PTR) {
+    const auto assembly = R"(
+        push ptr $x
+        push ptr $x
+        div
+        halt
+
+    .data
+    $x: i32 5
+    )";
+    EXPECT_VM_ERROR(assembly);
 }
 
 TEST(DIV, INVALID_I32_ZERO) {
@@ -116,12 +117,13 @@ TEST(DIV, INVALID_UI64_F64) {
 
 TEST(DIV, INVALID_PTR_I64) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push i64 #5
         div
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }

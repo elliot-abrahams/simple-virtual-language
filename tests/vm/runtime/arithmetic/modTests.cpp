@@ -84,12 +84,13 @@ TEST(MOD, INVALID_I32_ZERO) {
 
 TEST(MOD, INVALID_PTR_PTR) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push ptr $x
         mod
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }
@@ -116,12 +117,13 @@ TEST(MOD, INVALID_UI64_F64) {
 
 TEST(MOD, INVALID_PTR_I64) {
     const auto assembly = R"(
-        nop
-    $x:
         push ptr $x
         push i64 #5
         mod
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }

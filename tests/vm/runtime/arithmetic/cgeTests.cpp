@@ -123,26 +123,28 @@ TEST(CGE, F64_F64_FALSE) {
 
 TEST(CGE, PTR_PTR_TRUE) {
     const auto assembly = R"(
-    $x:
-        nop
-    $y:
         push ptr $y
         push ptr $x
         cge
         halt
+
+    .data
+    $x: i32 5
+    $y: i32 5
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
 }
 
 TEST(CGE, PTR_PTR_FALSE) {
     const auto assembly = R"(
-    $x:
-        nop
-    $y:
         push ptr $x
         push ptr $y
         cge
         halt
+
+    .data
+    $x: i32 5
+    $y: i32 5
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
 }
@@ -179,11 +181,13 @@ TEST(CGE, INVALID_F32_F64) {
 
 TEST(CGE, INVALID_I32_PTR) {
     const auto assembly = R"(
-    $x:
         push i32 #5
         push ptr $x
         cge
         halt
+
+    .data
+    $x: i32 5
     )";
     EXPECT_VM_ERROR(assembly);
 }
