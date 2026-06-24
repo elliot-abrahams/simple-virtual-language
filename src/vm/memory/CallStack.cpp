@@ -13,6 +13,11 @@ void CallStack::push(uint32_t& FP, uint32_t& SP, const uint32_t returnAddress, c
         this->memoryManager->write64(MemoryAccessScope::CALL_STACK, SP - ((i + 1) * 8), arguments[i].rawValue);
     }
 
+    // write zero into locals
+    for (int i = 0; i < numberLocals; i++) {
+        this->memoryManager->write64(MemoryAccessScope::CALL_STACK, SP - (sizeOfArguments + i + 2) * 8, 0);
+    }
+
     // load previous frame pointer value into memory
     this->memoryManager->write32(MemoryAccessScope::CALL_STACK, SP - (sizeOfArguments + 4), FP);
 
