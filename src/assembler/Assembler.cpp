@@ -148,8 +148,7 @@ void Assembler::processData(std::map<std::string, uint32_t> &unhandledLabelRefs,
 
     // check if data type is ptr
     if (data.type == "ptr") {
-        // add label to unhandledLabelRefs
-        unhandledLabelRefs.insert({data.value, data.lineNumber});
+        this->processLabelRef(unhandledLabelRefs, Label{data.value, LabelType::DATA}, data.lineNumber);
     }
     // add length of data to dataSectionLength
     dataSectionLength += this->calculateBytesOfData(data);

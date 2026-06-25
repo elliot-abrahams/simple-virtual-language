@@ -233,15 +233,37 @@ std::optional<AssemblerDefs::Statement> Parser::parseLabelDef() {
 
 std::optional<AssemblerDefs::Statement> Parser::parseData() {
     if (this->peek().type != AssemblerDefs::SVMATokenType::LABEL_DEF) {
-        handleUnexpectedTokenError({this->peek().type}, this->peek(), this->peek().lineNumber);
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::LABEL_DEF}, this->peek(), this->peek().lineNumber);
         return std::nullopt;
     }
 
     const auto labelDef = this->peek();
     this->next();
     const auto dataTypeToken = this->peek();
+
     this->next();
     const auto valueToken = this->peek();
+
+    if (dataTypeToken.type != AssemblerDefs::SVMATokenType::DATA_TYPE &&
+        dataTypeToken.type != AssemblerDefs::SVMATokenType::TYPE) {
+
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::DATA_TYPE}, dataTypeToken, dataTypeToken.lineNumber);
+        return std::nullopt;
+    }
+
+    if (valueToken.type != AssemblerDefs::SVMATokenType::NUMBER &&
+        valueToken.type != AssemblerDefs::SVMATokenType::LABEL_REF &&
+        valueToken.type != AssemblerDefs::SVMATokenType::STRING) {
+
+        handleUnexpectedTokenError({
+            AssemblerDefs::SVMATokenType::NUMBER,
+            AssemblerDefs::SVMATokenType::LABEL_REF,
+            AssemblerDefs::SVMATokenType::STRING,
+        },
+        valueToken, valueToken.lineNumber);
+
+        return std::nullopt;
+    }
 
     if (dataTypeToken.type == AssemblerDefs::SVMATokenType::TYPE) {
         if (!checkAndHandleValueIsValidAsType(dataTypeToken.value, valueToken.value, valueToken.lineNumber)) {
@@ -445,12 +467,12 @@ void Parser::printError(const std::string &msg, const int &lineNumber) {
 }
 
 void Parser::handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATokenType> &expectingTypes, const AssemblerDefs::SVMAToken& actualType, const int& lineNumber) {
-    printError("Expecting ", lineNumber);
+    printError("Expecting: ", lineNumber);
     for (int i = 0; i < expectingTypes.size(); i++) {
         if (i + 1 == expectingTypes.size()) std::cerr << tokenTypeToString(expectingTypes.at(i));
         else std::cerr << tokenTypeToString(expectingTypes.at(i)) << " / ";
     }
-    std::cerr << ", found " << tokenTypeToString(actualType.type) << std::endl;
+    std::cerr << ",\nfound:\n" << tokenTypeToString(actualType.type) << std::endl;
 }
 
 void Parser::handleIncorrectInstructionOperand(const std::string &instructionMnemonic, const AssemblerDefs::SVMATokenType expectedType, const int &lineNumber) {
