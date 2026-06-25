@@ -9,14 +9,14 @@
 
 
 struct FrameInfo {
-    uint8_t numberOfArguments;
-    uint32_t numberOfLocals;
+    uint32_t sizeOfArguments;
+    uint32_t sizeOfLocals;
 };
 
-class CallStack {
+class CallStackManager {
 
 public:
-    CallStack(MemoryManager* memoryManager);
+    CallStackManager(MemoryManager* memoryManager);
 
     void push(
         uint32_t& FP,
@@ -24,7 +24,8 @@ public:
         const uint32_t returnAddress,
         const uint8_t numberOfArguments,
         const uint32_t numberLocals,
-        const std::vector<Value>& arguments
+        const std::vector<Value>& arguments,
+        const uint32_t maxHeapAddress
         );
 
     void pop(

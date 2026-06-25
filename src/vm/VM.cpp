@@ -14,7 +14,8 @@ VM::VM() :
     FP(MAX_MEMORY_ADDRESS),
     SP(MAX_MEMORY_ADDRESS),
     memoryManager(MemoryManager(&HP, &SP)),
-    callStack(CallStack(&memoryManager)),
+    callStack(&memoryManager),
+    heap(&memoryManager),
     operandStack(OperandStack()),
     running(true) {}
 
@@ -23,6 +24,8 @@ void VM::run(const std::vector<uint8_t>* bytecode) {
     this->memoryManager.loadBytecodeIntoMemory(bytecode);
     // set HP
     this->HP = bytecode->size() - BYTECODE_HEADER_SIZE;
+
+    this->heap.initialiseHeap(this->HP);
 
     while (running) {
         this->execute();
@@ -64,8 +67,8 @@ void VM::execute() {
         case ISA::Opcode::STORE: this->executeStore(); break; // store
         case ISA::Opcode::STOREG: this->executeStoreG(); break; // storeG
         case ISA::Opcode::STOREL: this->executeStoreL(); break; // storeL
-        case ISA::Opcode::ALLOC: break; // alloc
-        case ISA::Opcode::FREE: break; // free
+        case ISA::Opcode::ALLOC: this->executeAlloc(); break; // alloc
+        case ISA::Opcode::FREE: this->executeFree(); break; // free
 
         // -------------------------------------------------
         // CONTROL
@@ -154,7 +157,7 @@ void VM::executeSwap() {
 void VM::executeLoad() {
     const uint8_t type = this->fetchType(); // read type operand
     const Value address = this->operandStack.pop(); // pop address from operand stack
-    VM::checkType("load", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    checkType("load", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
 
     const uint64_t value = this->memoryManager.read(MemoryAccessScope::DATA, address.rawValue, static_cast<ISA::Type>(type)); // read value at address
     this->operandStack.push(type, value); // push value onto operand stack
@@ -194,7 +197,7 @@ void VM::executeLoadL() {
 void VM::executeStore() {
     const Value value = this->operandStack.pop(); // pop value to store from operand stack
     const Value address = this->operandStack.pop(); // pop address to store to from operand stack
-    VM::checkType("store", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    checkType("store", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
 
     // store value in memory at address
     this->memoryManager.write(MemoryAccessScope::PTR, address.rawValue, &value);
@@ -206,7 +209,7 @@ void VM::executeStoreG() {
 
     // ensure the value on the operand stack matches the type of the target global
     const uint8_t valueDataType = this->memoryManager.read8(MemoryAccessScope::DATA, address - 1); // read data type of target global
-    this->checkType("storeG", valueDataType, static_cast<uint8_t>(value.type)); // ensure type of target global matches type of value from operand stack
+    checkType("storeG", valueDataType, static_cast<uint8_t>(value.type)); // ensure type of target global matches type of value from operand stack
 
     this->memoryManager.write(MemoryAccessScope::DATA, address, &value); // store val in memory at address
 }
@@ -221,6 +224,23 @@ void VM::executeStoreL() {
     this->memoryManager.write64(MemoryAccessScope::CALL_STACK, address, value.rawValue); // store value from operand stack to memory
 }
 
+void VM::executeAlloc() {
+    const Value value = this->operandStack.pop(); // pop value to store from operand stack
+    checkType("alloc", static_cast<uint8_t>(ISA::Type::UI32), static_cast<uint8_t>(value.type));
+
+    // allocate space on heap
+    const uint32_t allocatedAddress = this->heap.allocateBlock(value.rawValue, this->SP);
+
+    // push pointer onto the operand stack
+    this->operandStack.push(static_cast<uint8_t>(ISA::Type::PTR), allocatedAddress);
+}
+
+void VM::executeFree() {
+    const Value value = this->operandStack.pop(); // pop value to store from operand stack
+    checkType("free", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(value.type));
+    // deallocate heap at address
+    heap.deallocateBlock(value.rawValue);
+}
 
 // -------------------------------------------------
 // CONTROL
@@ -238,7 +258,7 @@ void VM::executeCall() {
         arguments.push_back(this->operandStack.pop());
     }
     // push stack frame onto call stack
-    this->callStack.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments);
+    this->callStack.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, this->heap.getHighestAllocatedAddress());
     // set PC to start of called method
     this->PC = address + 5; // (5 for length of method metadata)
 }

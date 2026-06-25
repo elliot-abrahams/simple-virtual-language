@@ -43,8 +43,10 @@ set(Sources
     src/vm/ArithmeticOps.cpp
     src/vm/TypeConversions.cpp
     src/include/ISA.h
-    src/vm/memory/CallStack.cpp
-    src/vm/memory/CallStack.h
+        src/vm/memory/CallStackManager.cpp
+        src/vm/memory/CallStackManager.h
+        src/vm/memory/HeapManager.cpp
+        src/vm/memory/HeapManager.h
 )
 
 add_library(${This} STATIC ${Sources} ${Headers})
