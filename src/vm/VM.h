@@ -20,7 +20,7 @@ public:
 
     void setHP(const uint32_t hp);
 
-    Value peekOperandStack() const;
+    Value popOperandStack();
 
     void handleVMError(const VMError& e) const;
     void dumpState() const;
@@ -77,7 +77,8 @@ private:
     uint8_t fetchType();
     uint64_t fetchOperand(const uint8_t type);
 
-    static void checkType(const std::string &instructionMnemonic, const uint8_t expectedType, const uint8_t actualType);
+    static void checkType(const std::string &instructionMnemonic, const std::vector<uint8_t> expectedTypes, const uint8_t actualType);
+    void validateFrameAccess(const int32_t offset) const;
 
     uint32_t PC;
     uint32_t HP;
@@ -85,8 +86,8 @@ private:
     uint32_t SP;
 
     MemoryManager memoryManager;
-    CallStackManager callStack;
-    HeapManager heap;
+    CallStackManager callStackManager;
+    HeapManager heapManager;
     OperandStack operandStack;
 
     bool running;

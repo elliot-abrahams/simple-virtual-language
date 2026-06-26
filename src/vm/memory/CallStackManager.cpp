@@ -35,7 +35,7 @@ void CallStackManager::push(uint32_t& FP, uint32_t& SP, const uint32_t returnAdd
     SP = SP - sizeOfFrame;
 
     // add frame info to stack
-    this->frameInfoStack.push(FrameInfo{sizeOfArguments, sizeOfLocals});
+    this->frameInfoStack.push(FrameInfo{numberOfArguments, numberLocals});
 }
 
 void CallStackManager::pop(uint32_t &FP, uint32_t &SP, uint32_t &PC) {
@@ -49,13 +49,23 @@ void CallStackManager::pop(uint32_t &FP, uint32_t &SP, uint32_t &PC) {
     PC = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP);
 
     // set FP to previous frame pointer value read from memory
-    FP = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP - 4);
+    FP = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP + 4);
 
     // increase SP by current stack frame size
     const FrameInfo frameInfo = this->frameInfoStack.top();
-    SP += (frameInfo.sizeOfArguments + 8 + frameInfo.sizeOfLocals);
+    SP += (
+        (frameInfo.numberOfArguments * 8) +
+        8 +
+        (frameInfo.numberOfLocals * 8)
+    );
 
     // pop frame info off of stack
     this->frameInfoStack.pop();
 }
 
+const FrameInfo* CallStackManager::peekFrameInfo() const {
+    if (this->frameInfoStack.empty()) {
+        return nullptr;
+    }
+    return &this->frameInfoStack.top();
+}

@@ -9,8 +9,8 @@
 
 
 struct FrameInfo {
-    uint32_t sizeOfArguments;
-    uint32_t sizeOfLocals;
+    uint8_t numberOfArguments;
+    uint32_t numberOfLocals;
 };
 
 class CallStackManager {
@@ -33,6 +33,8 @@ public:
         uint32_t& SP,
         uint32_t& PC
     );
+
+    const FrameInfo* peekFrameInfo() const;
 
 private:
     MemoryManager *memoryManager;

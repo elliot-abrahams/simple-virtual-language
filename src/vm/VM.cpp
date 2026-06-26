@@ -1,11 +1,13 @@
 #include "VM.h"
 
+#include <algorithm>
 #include <ios>
 #include <iostream>
 
 #include "TypeConversions.h"
 #include "ArithmeticOps.h"
 #include "VMError.h"
+#include "memory/MemoryManager.h"
 #include "memory/MemoryManager.h"
 
 VM::VM() :
@@ -14,8 +16,8 @@ VM::VM() :
     FP(MAX_MEMORY_ADDRESS),
     SP(MAX_MEMORY_ADDRESS),
     memoryManager(MemoryManager(&HP, &SP)),
-    callStack(&memoryManager),
-    heap(&memoryManager),
+    callStackManager(&memoryManager),
+    heapManager(&memoryManager),
     operandStack(OperandStack()),
     running(true) {}
 
@@ -25,7 +27,7 @@ void VM::run(const std::vector<uint8_t>* bytecode) {
     // set HP
     this->HP = bytecode->size() - BYTECODE_HEADER_SIZE;
 
-    this->heap.initialiseHeap(this->HP);
+    this->heapManager.initialiseHeap(this->HP);
 
     while (running) {
         this->execute();
@@ -36,8 +38,8 @@ void VM::setHP(const uint32_t hp) {
     this->HP = hp;
 }
 
-Value VM::peekOperandStack() const {
-    return this->operandStack.peek();
+Value VM::popOperandStack() {
+    return this->operandStack.pop();
 }
 
 void VM::execute() {
@@ -157,7 +159,7 @@ void VM::executeSwap() {
 void VM::executeLoad() {
     const uint8_t type = this->fetchType(); // read type operand
     const Value address = this->operandStack.pop(); // pop address from operand stack
-    checkType("load", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    checkType("load", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
 
     const uint64_t value = this->memoryManager.read(MemoryAccessScope::DATA, address.rawValue, static_cast<ISA::Type>(type)); // read value at address
     this->operandStack.push(type, value); // push value onto operand stack
@@ -187,6 +189,9 @@ void VM::executeLoadL() {
     const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
     const int32_t offset = TypeConversions::rawToI32(rawOffset);
 
+    // enforce offset is within current frame's bounds
+    this->validateFrameAccess(offset);
+
     const uint32_t address = this->FP + (static_cast<int32_t>(offset) * 8); // calculate address from given operand immediate
 
     const uint64_t local = this->memoryManager.read64(MemoryAccessScope::DATA, address); // get local value from memory
@@ -197,7 +202,7 @@ void VM::executeLoadL() {
 void VM::executeStore() {
     const Value value = this->operandStack.pop(); // pop value to store from operand stack
     const Value address = this->operandStack.pop(); // pop address to store to from operand stack
-    checkType("store", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    checkType("store", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
 
     // store value in memory at address
     this->memoryManager.write(MemoryAccessScope::PTR, address.rawValue, &value);
@@ -209,7 +214,7 @@ void VM::executeStoreG() {
 
     // ensure the value on the operand stack matches the type of the target global
     const uint8_t valueDataType = this->memoryManager.read8(MemoryAccessScope::DATA, address - 1); // read data type of target global
-    checkType("storeG", valueDataType, static_cast<uint8_t>(value.type)); // ensure type of target global matches type of value from operand stack
+    checkType("storeG", {valueDataType}, static_cast<uint8_t>(value.type)); // ensure type of target global matches type of value from operand stack
 
     this->memoryManager.write(MemoryAccessScope::DATA, address, &value); // store val in memory at address
 }
@@ -217,6 +222,10 @@ void VM::executeStoreG() {
 void VM::executeStoreL() {
     const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
     const int32_t offset = TypeConversions::rawToI32(rawOffset);
+
+    // enforce offset is within current frame's bounds
+    this->validateFrameAccess(offset);
+
     const Value value = this->operandStack.pop(); // pop value from operand stack to store
 
     const uint32_t address = this->FP + (offset * 8); // calculate address from given operand immediate
@@ -226,10 +235,10 @@ void VM::executeStoreL() {
 
 void VM::executeAlloc() {
     const Value value = this->operandStack.pop(); // pop value to store from operand stack
-    checkType("alloc", static_cast<uint8_t>(ISA::Type::UI32), static_cast<uint8_t>(value.type));
+    checkType("alloc", {static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(value.type));
 
     // allocate space on heap
-    const uint32_t allocatedAddress = this->heap.allocateBlock(value.rawValue, this->SP);
+    const uint32_t allocatedAddress = this->heapManager.allocateBlock(value.rawValue, this->SP);
 
     // push pointer onto the operand stack
     this->operandStack.push(static_cast<uint8_t>(ISA::Type::PTR), allocatedAddress);
@@ -237,9 +246,9 @@ void VM::executeAlloc() {
 
 void VM::executeFree() {
     const Value value = this->operandStack.pop(); // pop value to store from operand stack
-    checkType("free", static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(value.type));
+    checkType("free", {static_cast<uint8_t>(ISA::Type::PTR)}, static_cast<uint8_t>(value.type));
     // deallocate heap at address
-    heap.deallocateBlock(value.rawValue);
+    heapManager.deallocateBlock(value.rawValue);
 }
 
 // -------------------------------------------------
@@ -258,14 +267,14 @@ void VM::executeCall() {
         arguments.push_back(this->operandStack.pop());
     }
     // push stack frame onto call stack
-    this->callStack.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, this->heap.getHighestAllocatedAddress());
+    this->callStackManager.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, this->heapManager.getHighestAllocatedAddress());
     // set PC to start of called method
     this->PC = address + 5; // (5 for length of method metadata)
 }
 
 void VM::executeRet() {
     // pop stack frame off of call stack
-    this->callStack.pop(this->FP, this->SP, this->PC);
+    this->callStackManager.pop(this->FP, this->SP, this->PC);
 }
 
 void VM::executeJmp() {
@@ -602,13 +611,30 @@ void VM::dumpState() const {
     std::cerr << std::dec << std::endl;
 }
 
-void VM::checkType(const std::string &instructionMnemonic, const uint8_t expectedType, const uint8_t actualType) {
-    if (expectedType != actualType) {
-        throw VMError(
-            std::string("Error: type mismatch") +
-            "\nInstruction: " + instructionMnemonic +
-            "\nExpected: " + TypeConversions::typeToString(expectedType) +
-            "\nActual: " + TypeConversions::typeToString(actualType)
-        );
+void VM::checkType(const std::string &instructionMnemonic, const std::vector<uint8_t> expectedTypes, const uint8_t actualType) {
+    if (std::count(expectedTypes.begin(), expectedTypes.end(), actualType) == 0) {
+
+        std::string string = "";
+
+        string += "Error: type mismatch";
+        string += "\nInstruction: " + instructionMnemonic;
+        string += "\nExpected: ";
+        for (uint8_t expectedType : expectedTypes) {
+            string += TypeConversions::typeToString(expectedType)  + " ";
+        }
+        string += "\nActual: " + TypeConversions::typeToString(actualType);
+
+        throw VMError(string);
     }
 }
+
+void VM::validateFrameAccess(const int32_t offset) const {
+    const FrameInfo* frameInfo = this->callStackManager.peekFrameInfo();
+    if (frameInfo == nullptr ||
+        (offset > 0 && offset > static_cast<int32_t>(frameInfo->numberOfArguments)) ||
+        -offset > static_cast<int32_t>(frameInfo->numberOfLocals)) {
+
+        throw VMError("ERROR: Invalid call stack access");
+    }
+}
+
