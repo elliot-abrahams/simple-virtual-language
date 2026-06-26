@@ -13,7 +13,7 @@ void HeapManager::initialiseHeap(const uint32_t HP) {
 
 uint32_t HeapManager::allocateBlock(const uint32_t size, const uint32_t SP) {
     if (size == 0) {
-        return 0;
+        throw VMError("ERROR: attempted to allocate 0 bytes");
     }
 
     const uint32_t bytesToAllocate = size + BLOCK_HEADER_SIZE;
