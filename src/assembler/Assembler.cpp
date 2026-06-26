@@ -80,7 +80,7 @@ bool Assembler::constructLabelTable() {
             if (!isValid) {
                 return false;
             }
-            codeSectionLength += 6; // 4 for label, 1 for number of args, 4 for number of locals
+            codeSectionLength += 5; // 1 for number of args, 4 for number of locals
 
         // process INSTRUCTION
         } else if (std::holds_alternative<AssemblerDefs::Instruction>(statement)) {
@@ -260,7 +260,13 @@ std::optional<std::vector<uint8_t>> Assembler::convertInstructionToBytes(const A
             this->pushBackVector(bytecode, this->convertLabelRefToBytes(Label{operand.value, getOperandLabelType(instruction.opcode)}));
         } else if (operand.type == AssemblerDefs::OperandType::STRING ||
             operand.type == AssemblerDefs::OperandType::IMMEDIATE) {
-            auto data = this->convertDataToBytes(dataType, operand.value, instruction.lineNumber);
+            std::string typeToCheckAgainstImmediate = "";
+            if (instruction.opcode == "loadL") {
+                typeToCheckAgainstImmediate = "i32"; // immediate of loadL is type i32
+            } else {
+                typeToCheckAgainstImmediate = dataType;
+            }
+            auto data = this->convertDataToBytes(typeToCheckAgainstImmediate, operand.value, instruction.lineNumber);
             if (!data.has_value()) {
                 return std::nullopt;
             }
