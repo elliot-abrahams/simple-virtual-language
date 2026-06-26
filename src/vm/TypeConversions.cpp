@@ -61,7 +61,7 @@ uint64_t TypeConversions::F64ToRaw(const double value) {
 std::string TypeConversions::typeToString(const uint8_t type) {
     switch (type) {
         case static_cast<uint8_t>(ISA::Type::I32): return "i32";
-        case static_cast<uint8_t>(ISA::Type::UI32): return "ui64";
+        case static_cast<uint8_t>(ISA::Type::UI32): return "ui32";
         case static_cast<uint8_t>(ISA::Type::I64): return "i64";
         case static_cast<uint8_t>(ISA::Type::UI64): return "ui64";
         case static_cast<uint8_t>(ISA::Type::F32): return "f32";
