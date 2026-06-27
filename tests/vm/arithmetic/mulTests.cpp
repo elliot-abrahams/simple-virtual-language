@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../../vmTestUtils.h"
+#include "../vmTestUtils.h"
 
 TEST(MUL, I32_I32) {
     const auto assembly = R"(
@@ -44,7 +44,7 @@ TEST(MUL, UI64_UI64) {
 TEST(MUL, F32_F32) {
     const auto assembly = R"(
         push f32 #5.5
-        push f32 #2
+        push f32 #2.0
         mul
         halt
     )";
@@ -54,7 +54,7 @@ TEST(MUL, F32_F32) {
 TEST(MUL, F64_F64) {
     const auto assembly = R"(
         push f64 #5.5
-        push f64 #2
+        push f64 #2.0
         mul
         halt
     )";
@@ -69,4 +69,21 @@ TEST(MUL, I32_NEGATIVE) {
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(-6));
+}
+
+TEST(MUL, INVALID_UNDERFLOW_BY_ONE) {
+    const auto assembly = R"(
+        push i32 #5
+        mul
+        halt
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(MUL, INVALID_UNDERFLOW_BY_TWO) {
+    const auto assembly = R"(
+        mul
+        halt
+    )";
+    EXPECT_VM_ERROR(assembly);
 }

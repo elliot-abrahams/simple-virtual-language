@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../../vmTestUtils.h"
+#include "../vmTestUtils.h"
 
 TEST(ADD, I32_I32) {
     const auto assembly = R"(
@@ -175,8 +175,8 @@ TEST(ADD, UI64_WRAP) {
 
 TEST(ADD, F32_PRECISION_LOSS) {
     const auto assembly = R"(
-        push f32 #16777216
-        push f32 #1
+        push f32 #16777216.0
+        push f32 #1.0
         add
         halt
     )";
@@ -223,6 +223,23 @@ TEST(ADD, INVALID_UI64_F64) {
     const auto assembly = R"(
         push ui64 #10
         push f64 #2.0
+        add
+        halt
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(ADD, INVALID_UNDERFLOW_BY_ONE) {
+    const auto assembly = R"(
+        push i32 #5
+        add
+        halt
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(ADD, INVALID_UNDERFLOW_BY_TWO) {
+    const auto assembly = R"(
         add
         halt
     )";

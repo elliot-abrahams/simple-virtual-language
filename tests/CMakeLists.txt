@@ -7,26 +7,48 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(Sources
-        vm/runtime/arithmetic/cgeTests.cpp
-        vm/runtime/arithmetic/cgtTests.cpp
-        vm/runtime/arithmetic/cleTests.cpp
-        vm/runtime/arithmetic/cltTests.cpp
-        vm/runtime/arithmetic/cneTests.cpp
-        vm/runtime/arithmetic/ceqTests.cpp
-        vm/runtime/arithmetic/sarTests.cpp
-        vm/runtime/arithmetic/shrTests.cpp
-        vm/runtime/arithmetic/shlTests.cpp
-        vm/runtime/arithmetic/xorTests.cpp
-        vm/runtime/arithmetic/orrTests.cpp
-        vm/runtime/arithmetic/andTests.cpp
-        vm/runtime/arithmetic/notTests.cpp
-        vm/runtime/arithmetic/modTests.cpp
-        vm/runtime/arithmetic/divTests.cpp
-        vm/runtime/arithmetic/mulTests.cpp
-        vm/runtime/arithmetic/subTests.cpp
-        vm/runtime/arithmetic/addTests.cpp
+        vm/other/convTests.cpp
+        vm/other/innTests.cpp
+        vm/other/outTests.cpp
+
+        vm/arithmetic/cgeTests.cpp
+        vm/arithmetic/cgtTests.cpp
+        vm/arithmetic/cleTests.cpp
+        vm/arithmetic/cltTests.cpp
+        vm/arithmetic/cneTests.cpp
+        vm/arithmetic/ceqTests.cpp
+        vm/arithmetic/sarTests.cpp
+        vm/arithmetic/shrTests.cpp
+        vm/arithmetic/shlTests.cpp
+        vm/arithmetic/xorTests.cpp
+        vm/arithmetic/orrTests.cpp
+        vm/arithmetic/andTests.cpp
+        vm/arithmetic/notTests.cpp
+        vm/arithmetic/modTests.cpp
+        vm/arithmetic/divTests.cpp
+        vm/arithmetic/mulTests.cpp
+        vm/arithmetic/subTests.cpp
+        vm/arithmetic/addTests.cpp
+
+        vm/control/jnzTests.cpp
+        vm/control/jezTests.cpp
+        vm/control/jmpTests.cpp
+        vm/control/callRetTests.cpp
+
+        vm/memory/allocFreeTests.cpp
+        vm/memory/loadLStoreLTests.cpp
+        vm/memory/loadGStoreGTests.cpp
+        vm/memory/loadStoreTests.cpp
+
+        vm/Stack/swapTests.cpp
+        vm/Stack/dupTests.cpp
+        vm/Stack/popTests.cpp
+        vm/Stack/pushTests.cpp
+
+        vm/core/haltTests.cpp
+
         vm/vmTestUtils.h
-        vm/vm_Tests.cpp
+        vm/vmTests.cpp
 )
 
 add_executable(${This} ${Sources})

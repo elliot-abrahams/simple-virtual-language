@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../../vmTestUtils.h"
+#include "../vmTestUtils.h"
 
 TEST(CEQ, I32_I32_TRUE) {
     const auto assembly = R"(
@@ -187,6 +187,23 @@ TEST(CEQ, INVALID_I32_PTR) {
 
     .data
     $x: i32 5
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(CEQ, INVALID_UNDERFLOW_BY_ONE) {
+    const auto assembly = R"(
+        push i32 #5
+        ceq
+        halt
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(CEQ, INVALID_UNDERFLOW_BY_TWO) {
+    const auto assembly = R"(
+        ceq
+        halt
     )";
     EXPECT_VM_ERROR(assembly);
 }

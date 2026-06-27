@@ -1,6 +1,6 @@
 #include <filesystem>
 #include <gtest/gtest.h>
-#include "../../vmTestUtils.h"
+#include "../vmTestUtils.h"
 
 TEST(SUB, I32_I32) {
     const auto assembly = R"(
@@ -180,6 +180,23 @@ TEST(SUB, INVALID_PTR_I64) {
 
     .data
     $x: i32 5
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(SUB, INVALID_UNDERFLOW_BY_ONE) {
+    const auto assembly = R"(
+        push i32 #5
+        sub
+        halt
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(SUB, INVALID_UNDERFLOW_BY_TWO) {
+    const auto assembly = R"(
+        sub
+        halt
     )";
     EXPECT_VM_ERROR(assembly);
 }

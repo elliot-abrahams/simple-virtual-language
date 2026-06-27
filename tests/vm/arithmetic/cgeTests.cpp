@@ -1,131 +1,131 @@
 #include <gtest/gtest.h>
-#include "../../vmTestUtils.h"
+#include "../vmTestUtils.h"
 
-TEST(CGT, I32_I32_TRUE) {
+TEST(CGE, I32_I32_TRUE) {
     const auto assembly = R"(
         push i32 #1
         push i32 #0
-        cgt
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
 }
 
-TEST(CGT, I32_I32_FALSE) {
+TEST(CGE, I32_I32_FALSE) {
     const auto assembly = R"(
         push i32 #0
-        push i32 #0
-        cgt
+        push i32 #1
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
 }
 
-TEST(CGT, UI32_UI32_TRUE) {
+TEST(CGE, UI32_UI32_TRUE) {
     const auto assembly = R"(
-        push ui32 #100
         push ui32 #10
-        cgt
+        push ui32 #10
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
 }
 
-TEST(CGT, UI32_UI32_FALSE) {
+TEST(CGE, UI32_UI32_FALSE) {
     const auto assembly = R"(
         push ui32 #10
         push ui32 #100
-        cgt
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
 }
 
-TEST(CGT, I64_I64_TRUE) {
+TEST(CGE, I64_I64_TRUE) {
     const auto assembly = R"(
         push i64 #-10
         push i64 #-100
-        cgt
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
 }
 
-TEST(CGT, I64_I64_FALSE) {
+TEST(CGE, I64_I64_FALSE) {
     const auto assembly = R"(
         push i64 #-100
         push i64 #-10
-        cgt
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
 }
 
-TEST(CGT, UI64_UI64_TRUE) {
+TEST(CGE, UI64_UI64_TRUE) {
     const auto assembly = R"(
         push ui64 #1
         push ui64 #0
-        cgt
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
 }
 
-TEST(CGT, UI64_UI64_FALSE) {
+TEST(CGE, UI64_UI64_FALSE) {
     const auto assembly = R"(
         push ui64 #0
         push ui64 #1
-        cgt
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
 }
 
-TEST(CGT, F32_F32_TRUE) {
+TEST(CGE, F32_F32_TRUE) {
     const auto assembly = R"(
         push f32 #0.5
         push f32 #-0.5
-        cgt
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
 }
 
-TEST(CGT, F32_F32_FALSE) {
+TEST(CGE, F32_F32_FALSE) {
     const auto assembly = R"(
         push f32 #-0.5
         push f32 #0.5
-        cgt
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
 }
 
-TEST(CGT, F64_F64_TRUE) {
+TEST(CGE, F64_F64_TRUE) {
     const auto assembly = R"(
+        push f64 #0.0
+        push f64 #0.0
+        cge
+        halt
+    )";
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
+}
+
+TEST(CGE, F64_F64_FALSE) {
+    const auto assembly = R"(
+        push f64 #0.0
         push f64 #100.5
-        push f64 #0.0
-        cgt
-        halt
-    )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
-}
-
-TEST(CGT, F64_F64_FALSE) {
-    const auto assembly = R"(
-        push f64 #0.0
-        push f64 #0.0
-        cgt
+        cge
         halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
 }
 
-TEST(CGT, PTR_PTR_TRUE) {
+TEST(CGE, PTR_PTR_TRUE) {
     const auto assembly = R"(
         push ptr $y
         push ptr $x
-        cgt
+        cge
         halt
 
     .data
@@ -135,11 +135,11 @@ TEST(CGT, PTR_PTR_TRUE) {
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
 }
 
-TEST(CGT, PTR_PTR_FALSE) {
+TEST(CGE, PTR_PTR_FALSE) {
     const auto assembly = R"(
         push ptr $x
         push ptr $y
-        cgt
+        cge
         halt
 
     .data
@@ -149,45 +149,62 @@ TEST(CGT, PTR_PTR_FALSE) {
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
 }
 
-TEST(CGT, INVALID_I32_UI32) {
+TEST(CGE, INVALID_I32_UI32) {
     const auto assembly = R"(
         push i32 #5
         push ui32 #5
-        cgt
+        cge
         halt
     )";
     EXPECT_VM_ERROR(assembly);
 }
 
-TEST(CGT, INVALID_I64_UI64) {
+TEST(CGE, INVALID_I64_UI64) {
     const auto assembly = R"(
         push i64 #5
         push ui64 #5
-        cgt
+        cge
         halt
     )";
     EXPECT_VM_ERROR(assembly);
 }
 
-TEST(CGT, INVALID_F32_F64) {
+TEST(CGE, INVALID_F32_F64) {
     const auto assembly = R"(
         push f32 #5.0
         push f64 #5.0
-        cgt
+        cge
         halt
     )";
     EXPECT_VM_ERROR(assembly);
 }
 
-TEST(CGT, INVALID_I32_PTR) {
+TEST(CGE, INVALID_I32_PTR) {
     const auto assembly = R"(
         push i32 #5
         push ptr $x
-        cgt
+        cge
         halt
 
     .data
     $x: i32 5
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(CGE, INVALID_UNDERFLOW_BY_ONE) {
+    const auto assembly = R"(
+        push i32 #5
+        cge
+        halt
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(CGE, INVALID_UNDERFLOW_BY_TWO) {
+    const auto assembly = R"(
+        cge
+        halt
     )";
     EXPECT_VM_ERROR(assembly);
 }

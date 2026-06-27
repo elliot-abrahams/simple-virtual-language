@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../../vmTestUtils.h"
+#include "../vmTestUtils.h"
 
 TEST(NOT, I32) {
     const auto assembly = R"(
@@ -49,6 +49,14 @@ TEST(NOT, INVALID_F32) {
 TEST(NOT, INVALID_F64) {
     const auto assembly = R"(
         push f64 #5.0
+        not
+        halt
+    )";
+    EXPECT_VM_ERROR(assembly);
+}
+
+TEST(NOT, INVALID_UNDERFLOW) {
+    const auto assembly = R"(
         not
         halt
     )";
