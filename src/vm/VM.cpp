@@ -1,6 +1,7 @@
 #include "VM.h"
 
 #include <algorithm>
+#include <cmath>
 #include <ios>
 #include <iostream>
 
@@ -228,7 +229,7 @@ void VM::executeStoreL() {
 
     const Value value = this->operandStack.pop(); // pop value from operand stack to store
 
-    const uint32_t address = this->FP + (offset * 8); // calculate address from given operand immediate
+    const uint32_t address = this->FP + (static_cast<int32_t>(offset) * 8); // calculate address from given operand immediate
 
     this->memoryManager.write64(MemoryAccessScope::CALL_STACK, address, value.rawValue); // store value from operand stack to memory
 }
@@ -466,6 +467,20 @@ void VM::executeCge() {
 
 void VM::executeOut() {
     const uint8_t type = this->fetchType(); // read type operand
+
+    checkType("out",
+        {
+            static_cast<uint8_t>(ISA::Type::I32),
+            static_cast<uint8_t>(ISA::Type::UI32),
+            static_cast<uint8_t>(ISA::Type::I64),
+            static_cast<uint8_t>(ISA::Type::UI64),
+            static_cast<uint8_t>(ISA::Type::F32),
+            static_cast<uint8_t>(ISA::Type::F64),
+            static_cast<uint8_t>(ISA::Type::STR),
+        },
+        type
+    );
+
     const Value value = this->operandStack.pop(); // pop value off of the operand stack
 
     // print value
@@ -480,55 +495,101 @@ void VM::executeOut() {
         case ISA::Type::I64: std::cout << TypeConversions::rawToI64(value.rawValue) << std::endl; break;
         case ISA::Type::F32: std::cout << TypeConversions::rawToF32(value.rawValue) << std::endl; break;
         case ISA::Type::F64: std::cout << TypeConversions::rawToF64(value.rawValue) << std::endl; break;
-        case ISA::Type::STR: std::cout << this->readStringFromMemory(value.rawValue) << std::endl; break;
+        case ISA::Type::STR: {
+            // check value from operand stack is type ptr
+            checkType("out",
+                {static_cast<uint32_t>(ISA::Type::PTR)},
+                static_cast<uint8_t>(value.type)
+            );
+            std::cout << this->readStringFromMemory(value.rawValue) << std::endl;
+            break;
+        }
     }
 }
 
 void VM::executeInn() {
     const uint8_t type = this->fetchType(); // read type operand
     Value value = Value{};
+    checkType("inn",
+        {
+            static_cast<uint8_t>(ISA::Type::I32),
+            static_cast<uint8_t>(ISA::Type::UI32),
+            static_cast<uint8_t>(ISA::Type::I64),
+            static_cast<uint8_t>(ISA::Type::UI64),
+            static_cast<uint8_t>(ISA::Type::F32),
+            static_cast<uint8_t>(ISA::Type::F64),
+            static_cast<uint8_t>(ISA::Type::STR),
+        },
+        type);
 
     switch (static_cast<ISA::Type>(type)) {
         case ISA::Type::I32: {
             int32_t input;
-            std::cin >> input;
+            if (!(std::cin >> input)) {
+                throw VMError("Invalid i32 input");
+            }
             value = Value{ISA::Type::I32, TypeConversions::I32ToRaw(input)};
             break;
         }
         case ISA::Type::UI32: {
             uint32_t input;
-            std::cin >> input;
-            value = Value{ISA::Type::I32, input};
+            if (!(std::cin >> input)) {
+                throw VMError("Invalid ui32 input");
+            }
+            value = Value{ISA::Type::UI32, input};
             break;
         }
         case ISA::Type::I64: {
             int64_t input;
-            std::cin >> input;
+            if (!(std::cin >> input)) {
+                throw VMError("Invalid i64 input");
+            }
             value = Value{ISA::Type::I64, TypeConversions::I64ToRaw(input)};
             break;
         }
         case ISA::Type::UI64: {
             uint64_t input;
-            std::cin >> input;
-            value = Value{ISA::Type::I64, input};
+            if (!(std::cin >> input)) {
+                throw VMError("Invalid ui64 input");
+            }
+            value = Value{ISA::Type::UI64, input};
             break;
         }
         case ISA::Type::F32: {
-            float input;
-            std::cin >> input;
-            value = Value{ISA::Type::F32, TypeConversions::F32ToRaw(input)};
+            std::string token;
+            std::cin >> token;
+
+            char* end;
+            float input = std::strtof(token.c_str(), &end);
+
+            if (end != token.c_str() + token.size() || std::isnan(input) || std::isinf(input)) {
+                throw VMError("Invalid f32 input");
+            }
+
+            value = Value{
+                ISA::Type::F32,
+                TypeConversions::F32ToRaw(input)
+            };
             break;
         }
         case ISA::Type::F64: {
-            double input;
-            std::cin >> input;
-            value = Value{ISA::Type::F64, TypeConversions::I64ToRaw(input)};
+            std::string token;
+            std::cin >> token;
+
+            char* end;
+            double input = std::strtod(token.c_str(), &end);
+
+            if (end != token.c_str() + token.size() || std::isnan(input) || std::isinf(input)) {
+                throw VMError("Invalid f64 input");
+            }
+
+            value = Value{ISA::Type::F64, TypeConversions::F64ToRaw(input)};
             break;
         }
         // TODO:
         // case for str
         // allocate space on heap for input string
-        // push ptr onot operand stack
+        // push ptr onto operand stack
     }
     this->operandStack.push(value);
 }
