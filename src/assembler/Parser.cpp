@@ -126,7 +126,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     }
 
     // check value is valid with given type (if operand consists of both type and value)
-    if (!immediate.value.empty() && !type.value.empty()) {
+    if (!immediate.value.empty() && !type.value.empty() && instruction != "loadL") {
         std::string value = immediate.value;
         if (value[0] == '#') {
             value = value.substr(1);
@@ -297,7 +297,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseMethodDef() {
             this->next();
             numberOfArgsToken = this->peek();
             if (numberOfArgsToken.type != AssemblerDefs::SVMATokenType::NUMBER) {
-                handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::NUMBER}, numberOfLocalsToken, lineNumber);
+                handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::NUMBER}, numberOfArgsToken, lineNumber);
                 return std::nullopt;
             }
             // enforce number of args is an unsigned integer
@@ -331,8 +331,8 @@ std::optional<AssemblerDefs::Statement> Parser::parseMethodDef() {
 
     return AssemblerDefs::MethodDef{
         methodName,
-        static_cast<uint8_t>(stoi(numberOfArgsToken.value)),
-        static_cast<uint32_t>(stoi(numberOfLocalsToken.value)),
+        static_cast<uint8_t>(stoul(numberOfArgsToken.value)),
+        static_cast<uint32_t>(stoul(numberOfLocalsToken.value)),
         lineNumber
     };
 }
