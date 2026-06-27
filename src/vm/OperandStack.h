@@ -2,6 +2,7 @@
 #define SIMPLE_VM_OPERANDSTACK_H
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <variant>
 #include <vector>
 
@@ -56,34 +57,143 @@ struct Value
     }
 
     void convertToType(const ISA::Type& newType) {
-        if (type == newType) return;
+        if (this->type == newType) return;
 
         TypedValue typedValue = this->toTyped();
 
-        rawValue = std::visit(
-            [&](auto value) -> uint64_t {
+        // type and value check if either current or new type is ptr
+        if (this->type == ISA::Type::PTR || newType == ISA::Type::PTR) {
+            ISA::Type nonPtrType;
+            if (this->type == ISA::Type::PTR) {
+                nonPtrType = newType;
+            } else {
+                nonPtrType = this->type;
+            }
+
+            // block conversions between ptr and f32 / f64
+            if (nonPtrType == ISA::Type::F32 || nonPtrType == ISA::Type::F64) {
+                throw VMError(std::string("ERROR: Invalid types for instruction: conv") +
+                    "\nTypes: " + TypeConversions::typeToString(static_cast<uint8_t>(this->type)) +
+                    ", " + TypeConversions::typeToString(static_cast<uint8_t>(newType))
+                );
+            }
+
+            if (this->type != ISA::Type::PTR) {
+                // check conversions from i32/ui32/i64/ui64 to ptr are in the correct range for ptr (ui32)
+                switch (nonPtrType) {
+                    case ISA::Type::UI32:
+                        break;
+
+                    case ISA::Type::I32:
+                        std::visit([&](auto value) {
+                            auto v = static_cast<int64_t>(value);
+
+                            if (v < 0 || v > std::numeric_limits<uint32_t>::max())
+                                this->handleOutOfRangeConversionError(newType);
+                        }, typedValue);
+                        break;
+
+                    case ISA::Type::I64:
+                        std::visit([&](auto value) {
+                            auto v = static_cast<int64_t>(value);
+
+                            if (v < 0 || v > std::numeric_limits<uint32_t>::max())
+                                this->handleOutOfRangeConversionError(newType);
+                        }, typedValue);
+                        break;
+
+                    case ISA::Type::UI64:
+                        std::visit([&](auto value) {
+                            auto v = static_cast<uint64_t>(value);
+
+                            if (v > std::numeric_limits<uint32_t>::max())
+                                this->handleOutOfRangeConversionError(newType);
+                        }, typedValue);
+                        break;
+
+                    default:
+                        throw VMError("Invalid conversion");
+                }
+            }
+        }
+
+        // check value is in range for conversions from f32 / f64 to i32/ui32/i64/ui64
+        if (this->type == ISA::Type::F32 || this->type == ISA::Type::F64) {
+            std::visit([&](auto value) {
 
                 switch (newType) {
                     case ISA::Type::I32:
-                        return TypeConversions::I32ToRaw(static_cast<int32_t>(value));
+                        if (value < static_cast<double>(std::numeric_limits<int32_t>::min()) ||
+                            value > static_cast<double>(std::numeric_limits<int32_t>::max())) {
+                            handleOutOfRangeConversionError(newType);
+                        }
+                        break;
+
                     case ISA::Type::UI32:
-                    case ISA::Type::PTR:
-                        return TypeConversions::UI32ToRaw(static_cast<uint32_t>(value));
+                        if (value < 0.0 ||
+                            value > static_cast<double>(std::numeric_limits<uint32_t>::max())) {
+                            handleOutOfRangeConversionError(newType);
+                        }
+                        break;
+
                     case ISA::Type::I64:
-                        return TypeConversions::I64ToRaw(static_cast<int64_t>(value));
+                        if (value < static_cast<double>(std::numeric_limits<int64_t>::min()) ||
+                            value > static_cast<double>(std::numeric_limits<int64_t>::max())) {
+                            handleOutOfRangeConversionError(newType);
+                        }
+                        break;
+
                     case ISA::Type::UI64:
-                        return static_cast<uint64_t>(value);
-                    case ISA::Type::F32:
-                        return TypeConversions::F32ToRaw(static_cast<float>(value));
-                    case ISA::Type::F64:
-                        return TypeConversions::F64ToRaw(static_cast<double>(value));
+                        if (value < 0.0 ||
+                            value > static_cast<double>(std::numeric_limits<uint64_t>::max())) {
+                            handleOutOfRangeConversionError(newType);
+                        }
+                        break;
+
                     default:
-                        throw VMError("Invalid conversion type");
+                        break;
                 }
 
             }, typedValue);
+        }
+
+        try {
+            this->rawValue = std::visit(
+                [&](auto value) -> uint64_t {
+
+                    switch (newType) {
+                        case ISA::Type::I32:
+                            return TypeConversions::I32ToRaw(static_cast<int32_t>(value));
+                        case ISA::Type::UI32:
+                        case ISA::Type::PTR:
+                            return TypeConversions::UI32ToRaw(static_cast<uint32_t>(value));
+                        case ISA::Type::I64:
+                            return TypeConversions::I64ToRaw(static_cast<int64_t>(value));
+                        case ISA::Type::UI64:
+                            return static_cast<uint64_t>(value);
+                        case ISA::Type::F32:
+                            return TypeConversions::F32ToRaw(static_cast<float>(value));
+                        case ISA::Type::F64:
+                            return TypeConversions::F64ToRaw(static_cast<double>(value));
+                        default:
+                            throw VMError("Invalid conversion type");
+                    }
+
+                }, typedValue);
+        } catch (std::out_of_range) {
+            throw VMError("ERROR: Out of range during conversion");
+        }
 
         type = newType;
+    }
+
+    void handleOutOfRangeConversionError(const ISA::Type& newType) {
+        std::string errorMessage = "";
+        errorMessage += "ERROR: Out of range during conversion from " +
+            TypeConversions::typeToString(static_cast<uint8_t>(this->type)) +
+            " to " +
+            TypeConversions::typeToString(static_cast<uint8_t>(newType));
+        throw VMError(errorMessage);
     }
 };
 
