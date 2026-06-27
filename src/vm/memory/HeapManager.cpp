@@ -32,12 +32,12 @@ uint32_t HeapManager::allocateBlock(const uint32_t size, const uint32_t SP) {
 
     // if no sufficiently sized free block was found
     if (currBlock == nullptr) {
-        return 0;
+        throw VMError("ERROR: Heap exhausted");
     }
 
     // if allocated space would collide with call stack
     if (currBlock->address + bytesToAllocate >= SP) {
-        return 0;
+        throw VMError("ERROR: Heap exhausted");
     }
 
     const uint32_t allocatedAddress = currBlock->address + BLOCK_HEADER_SIZE;
