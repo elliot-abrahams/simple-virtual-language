@@ -35,9 +35,11 @@ private:
     void executeSwap();
 
     void executeLoad();
+    void executeLoadB();
     void executeLoadG();
     void executeLoadL();
     void executeStore();
+    void executeStoreB();
     void executeStoreG();
     void executeStoreL();
     void executeAlloc();

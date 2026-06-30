@@ -170,9 +170,11 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     //========================================================================================================
 
     if (instruction == "load") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "loadB") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "loadG") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
     if (instruction == "loadL") return AssemblerDefs::Instruction{instruction, {type, immediate}, lineNumber};
     if (instruction == "store") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "storeB") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "storeG") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
     if (instruction == "storeL") return AssemblerDefs::Instruction{instruction, {immediate}, lineNumber};
     if (instruction == "alloc") return AssemblerDefs::Instruction{instruction, {}, lineNumber};

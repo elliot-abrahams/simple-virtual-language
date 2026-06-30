@@ -65,9 +65,11 @@ void VM::execute() {
         // -------------------------------------------------
 
         case ISA::Opcode::LOAD: this->executeLoad(); break; // load
+        case ISA::Opcode::LOADB: this->executeLoadB(); break; // loadB
         case ISA::Opcode::LOADG: this->executeLoadG(); break; // loadG
         case ISA::Opcode::LOADL: this->executeLoadL(); break; // loadL
         case ISA::Opcode::STORE: this->executeStore(); break; // store
+        case ISA::Opcode::STOREB: this->executeStoreB(); break; // storeB
         case ISA::Opcode::STOREG: this->executeStoreG(); break; // storeG
         case ISA::Opcode::STOREL: this->executeStoreL(); break; // storeL
         case ISA::Opcode::ALLOC: this->executeAlloc(); break; // alloc
@@ -162,8 +164,17 @@ void VM::executeLoad() {
     const Value address = this->operandStack.pop(); // pop address from operand stack
     checkType("load", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
 
-    const uint64_t value = this->memoryManager.read(MemoryAccessScope::DATA, address.rawValue, static_cast<ISA::Type>(type)); // read value at address
+    const uint64_t value = this->memoryManager.read(MemoryAccessScope::PTR, address.rawValue, static_cast<ISA::Type>(type)); // read value at address
     this->operandStack.push(type, value); // push value onto operand stack
+}
+
+void VM::executeLoadB() {
+    const Value address = this->operandStack.pop(); // pop address from operand stack
+    checkType("loadB", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    // read byte at address
+    const uint8_t value = this->memoryManager.read8(MemoryAccessScope::PTR, address.rawValue);
+    // push byte as ui32 onto the operand stack
+    this->operandStack.push(static_cast<uint8_t>(ISA::Type::UI32), value);
 }
 
 void VM::executeLoadG() {
@@ -195,7 +206,7 @@ void VM::executeLoadL() {
 
     const uint32_t address = this->FP + (static_cast<int32_t>(offset) * 8); // calculate address from given operand immediate
 
-    const uint64_t local = this->memoryManager.read64(MemoryAccessScope::DATA, address); // get local value from memory
+    const uint64_t local = this->memoryManager.read64(MemoryAccessScope::CALL_STACK, address); // get local value from memory
 
     this->operandStack.push(static_cast<uint8_t>(type), local); // push local value onto operand stack
 }
@@ -207,6 +218,27 @@ void VM::executeStore() {
 
     // store value in memory at address
     this->memoryManager.write(MemoryAccessScope::PTR, address.rawValue, &value);
+}
+
+void VM::executeStoreB() {
+    const Value value = this->operandStack.pop(); // pop value to store from operand stack
+
+    // enforce type of value is either i32, ui32, i64, or ui64
+    checkType("storeB",
+        {
+        static_cast<uint8_t>(ISA::Type::I32),
+        static_cast<uint8_t>(ISA::Type::UI32),
+        static_cast<uint8_t>(ISA::Type::I64),
+        static_cast<uint8_t>(ISA::Type::UI64),
+        },
+        static_cast<uint8_t>(value.type)
+    );
+
+    const Value address = this->operandStack.pop(); // pop address to store to from operand stack
+    checkType("storeB", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+
+    // store 8 least significant bytes of value in memory at address
+    this->memoryManager.write8(MemoryAccessScope::PTR, address.rawValue, value.rawValue & 0xFF);
 }
 
 void VM::executeStoreG() {

@@ -38,6 +38,7 @@ set(Sources
         vm/memory/allocFreeTests.cpp
         vm/memory/loadLStoreLTests.cpp
         vm/memory/loadGStoreGTests.cpp
+        vm/memory/loadBStoreBTests.cpp
         vm/memory/loadStoreTests.cpp
 
         vm/Stack/swapTests.cpp
