@@ -1,8 +1,13 @@
 #include "Driver.h"
 #include "assembler/Assembler.h"
 #include "vm/VM.h"
+#include <windows.h>
 
 int main(int argc, char* argv[]) {
+
+    // set output to UTF-8
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
 
     Assembler* assembler = new Assembler();
     auto bytecode = assembler->assemble("../examples/vm-test.svma");

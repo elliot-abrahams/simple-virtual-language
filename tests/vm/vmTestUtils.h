@@ -116,7 +116,7 @@ inline void EXPECT_VM_ERROR_WITH_CONSOLE_INPUT(
 
 inline void EXPECT_CONSOLE_OUTPUT(
     const std::string& source,
-    const std::string& output
+    const std::string& expectedOutput
 ) {
     std::stringstream buffer;
     std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
@@ -129,7 +129,31 @@ inline void EXPECT_CONSOLE_OUTPUT(
     vm.run(&bytecode.value());
 
     std::cout.rdbuf(old);
-    EXPECT_EQ(buffer.str(), output);
+    EXPECT_EQ(buffer.str(), expectedOutput);
+}
+
+inline void EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(
+    const std::string& source,
+    const std::string& consoleInput,
+    const std::string& expectedOutput
+) {
+
+    std::stringstream input(consoleInput);
+    std::stringstream output;
+
+    std::streambuf* oldCin = std::cin.rdbuf(input.rdbuf());
+    std::streambuf* oldCout = std::cout.rdbuf(output.rdbuf());
+
+    Assembler assembler;
+    VM vm;
+
+    const auto bytecode = assembler.assembleString(source);
+
+    vm.run(&bytecode.value());
+
+    std::cout.rdbuf(oldCin);
+    std::cout.rdbuf(oldCout);
+    EXPECT_EQ(output.str(), expectedOutput);
 }
 
 #endif //SVM_VMTESTUTILS_H

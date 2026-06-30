@@ -157,6 +157,46 @@ TEST(INN, READ_F64_NEGATIVE) {
     );
 }
 
+TEST(INN, READ_STR) {
+    const auto assembly = R"(
+        inn str
+        halt
+    )";
+    EXPECT_OPERAND_VM_STACK_EQ_WITH_CONSOLE_INPUT(
+        assembly,
+        "hello\n",
+        ISA::Type::PTR,
+        uint32_t(7)
+    );
+}
+
+TEST(INN, READ_WRITE_STR) {
+    const auto assembly = R"(
+        inn str
+        out str
+        halt
+    )";
+    EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(
+        assembly,
+        "hello\n",
+        "hello\n"
+    );
+}
+
+TEST(INN, READ_WRITE_STR_UTF_8) {
+    const auto assembly = R"(
+        inn str
+        out str
+        halt
+    )";
+    EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(
+        assembly,
+        "hello😀\n",
+        "hello😀\n"
+    );
+}
+
+
 TEST(INN, INVALID_READ_I32_OUT_OF_RANGE) {
     const auto assembly = R"(
         inn i32

@@ -586,10 +586,25 @@ void VM::executeInn() {
             value = Value{ISA::Type::F64, TypeConversions::F64ToRaw(input)};
             break;
         }
-        // TODO:
-        // case for str
-        // allocate space on heap for input string
-        // push ptr onto operand stack
+        case ISA::Type::STR: {
+            std::string input;
+            std::getline(std::cin >> std::ws, input);
+
+            // allocate space in heap
+            const uint32_t address = this->heapManager.allocateBlock(input.size() + 4, this->SP);
+
+            // write string length in heap
+            this->memoryManager.write32(MemoryAccessScope::HEAP, address, input.size());
+
+            // store string in heap
+            for (int i = 0; i < input.size(); i++) {
+                this->memoryManager.write8(MemoryAccessScope::HEAP, address + 4 + i, input[i]);
+            }
+
+            // return address of string
+            value = Value{ISA::Type::PTR, address};
+            break;
+        }
     }
     this->operandStack.push(value);
 }
@@ -603,12 +618,14 @@ void VM::executeConv() {
 }
 
 std::string VM::readStringFromMemory(const uint32_t address) const {
-    std::string string;
+    // read number of bytes of string
+    const uint32_t size = this->memoryManager.read32(MemoryAccessScope::DATA, address);
 
-    // read length of string from memory
-    const uint32_t length = this->memoryManager.read32(MemoryAccessScope::DATA, address);
-    for (int i = 0; i < length; i++) {
-        string += this->memoryManager.read8(MemoryAccessScope::DATA, address + 4 + i);
+    std::string string;
+    string.resize(size);
+
+    for (int i = 0; i < size; i++) {
+        string[i] = static_cast<char>(this->memoryManager.read8(MemoryAccessScope::DATA, address + 4 + i));
     }
     return string;
 }

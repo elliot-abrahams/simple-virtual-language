@@ -183,7 +183,11 @@ uint8_t Assembler::calculateBytesOfData(const AssemblerDefs::Data& data) const {
     uint8_t length = 1; // 1 for data type
     if (data.type == "str") {
         length += 4; // 4 bytes for length of string
-        length += data.value.size() - 2; // 1 byte per character
+
+        const std::string rawString = data.value.substr(1, data.value.size() - 2); // remove quptation marks
+
+        length += static_cast<uint32_t>(rawString.size()); // number of bytes of encoded string (UTF-8)
+
     } else {
         length += this->calculateBytesFromType(data.type);
     }
@@ -401,17 +405,16 @@ std::vector<uint8_t> Assembler::convertStringToBytes(const std::string &string) 
     std::vector<uint8_t> bytecode;
 
     std::string str = string.substr(1, string.size() - 2);
-    uint32_t size = str.size();
+    uint32_t numberOfBytes = str.size();
 
     // encode string length (4 bytes)
     for (int i = 0; i < 4; i++) {
-        bytecode.push_back((size >> (i * 8)) & 0xFF);
+        bytecode.push_back((numberOfBytes >> (i * 8)) & 0xFF);
     }
 
-    // encode string (1 byte per char)
-    for (auto it = str.begin(); it != str.end(); ++it) {
-        bytecode.push_back(static_cast<uint8_t>(*it));
-    }
+    // encode string as UTF-8
+    bytecode.insert(bytecode.end(), str.begin(), str.end());
+
     return bytecode;
 }
 
