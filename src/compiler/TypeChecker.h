@@ -10,13 +10,16 @@ namespace compiler {
     public:
         TypeChecker(SymbolTable* symbolTable, const std::filesystem::path* filePath);
 
-        void checkProgram(const ast::Program& program) const;
+        void processProgram(const ast::Program& program);
 
     private:
-        void checkStm(const ast::Stm& stm) const;
-        void checkStmVarDecl(const ast::StmVarDecl& varDecl) const;
+        void processStm(const ast::Stm& stm);
+        void processStmVarDecl(const ast::StmVarDecl& varDecl) const;
+        void processAssignment(const ast::StmAssignment& assignment);
 
         ast::Type getTypeOfExpr(const ast::Expr& expr) const;
+
+        static std::string typeToString(const ast::Type& type);
 
         SymbolTable* symbolTable;
         const std::filesystem::path *path;

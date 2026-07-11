@@ -27,8 +27,8 @@ void compiler::Compiler::compile(const std::filesystem::path& path) {
         const auto symbolTable = new SymbolTable();
 
         // build symbol table and type check the program
-        const auto typeChecker = TypeChecker(symbolTable, &path);
-        typeChecker.checkProgram(*program);
+        auto typeChecker = TypeChecker(symbolTable, &path);
+        typeChecker.processProgram(*program);
 
         // generate assembly code
         const auto codeGenerator = new CodeGenerator(symbolTable);

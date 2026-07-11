@@ -1,8 +1,8 @@
 NOTATION:
 
-[] → zero or one
+[] → optional (zero or one)
 {} → zero or more
-|  → optional
+|  → alternative
 
 
 GRAMMAR RULES
@@ -10,18 +10,25 @@ GRAMMAR RULES
 
 program             = { statement } ;
 
-statement           = var_decl ;
+statement           = var_decl
+                    | assignment ;
 
 var_decl            = type, IDENTIFIER, [ EQUAL, expression ], SEMI ;
 
-expression          = primary
+assignment          = var_access, assignment_operator, expression, SEMI ;
+
+expression          = primary ;
 
 primary             = literal
-                    | IDENTIFIER ;
+                    | var_access ;
+
+var_access          = IDENTIFIER ;
 
 type                = INTEGER_TYPE ;
 
 literal             = INTEGER_LITERAL ;
+
+assignment_operator = EQUAL ;
 
 
 TOKENS

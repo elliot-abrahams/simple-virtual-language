@@ -8,8 +8,8 @@
 namespace compiler {
 
     struct Symbol {
-        ast::Type type;
-        bool isInitialised;
+        const ast::Type type;
+        mutable bool isInitialised;
     };
 
     class SymbolTable {
@@ -18,7 +18,7 @@ namespace compiler {
 
         void declareGlobalVariable(const std::string& identifier, const ast::Type& type, const bool isInitialised);
 
-        std::unordered_map<std::string, Symbol> getGlobalVariables();
+        std::unordered_map<std::string, Symbol>& getGlobalVariables();
 
     private:
         std::unordered_map<std::string, Symbol> globals;

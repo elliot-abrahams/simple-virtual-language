@@ -17,12 +17,19 @@ namespace compiler {
     private:
         std::unique_ptr<ast::Stm> parseStm() const;
         std::unique_ptr<ast::StmVarDecl> parseVarDecl() const;
+        std::unique_ptr<ast::StmAssignment> parseAssignment() const;
+
+        std::unique_ptr<ast::Expr> parseExpr() const;
+        std::unique_ptr<ast::ExprIdentifier> parseExprIdentifier() const;
+        std::unique_ptr<ast::Expr> parsePrimary() const;
+        std::unique_ptr<ast::VarAccess> parseVarAccess() const;
 
         ast::Identifier parseIdentifier() const;
         ast::TypeInfo parseType() const;
+        std::unique_ptr<ast::Expr> parseLiteral() const;
+        ast::AssignmentOperator parseAssignmentOperator() const;
 
-        std::unique_ptr<ast::Expr> parseExpr() const;
-
+        void handleUnexpectedToken(const Token& token) const;
 
         Tokeniser* tokeniser;
         const std::filesystem::path* path;

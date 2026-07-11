@@ -6,6 +6,6 @@ void compiler::SymbolTable::declareGlobalVariable(const std::string& identifier,
     this->globals.insert(std::make_pair(identifier, Symbol{type, isInitialised}));
 }
 
-std::unordered_map<std::string, compiler::Symbol> compiler::SymbolTable::getGlobalVariables() {
+std::unordered_map<std::string, compiler::Symbol>& compiler::SymbolTable::getGlobalVariables() {
     return this->globals;
 }

@@ -12,17 +12,20 @@ namespace compiler {
         std::vector<std::string> generateCode(const ast::Program& program);
 
     private:
-        void processProgram(const ast::Program& program);
-        void processStm(const ast::Stm& stm);
-        void processStmVarDecl(const ast::StmVarDecl& varDecl);
+        void compileProgram(const ast::Program& program);
+        void compileStm(const ast::Stm& stm);
+        void compileStmVarDecl(const ast::StmVarDecl& varDecl);
+        void compileStmAssignment(const ast::StmAssignment& assignment);
 
-        void processExpr(const ast::Expr& expr);
-        void processExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
-        void processExprIdentifier(const ast::ExprIdentifier& identifier);
+        void compileExpr(const ast::Expr& expr);
+        void compileExprIdentifier(const ast::ExprIdentifier& identifier);
+        void compileVarAccess(const ast::VarAccess& varAccess);
 
-        void processGlobalVariables();
+        void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
 
-        static std::string typeToString(ast::Type type);
+        void compileGlobalVariables();
+
+        static std::string typeToString(const ast::Type& type);
 
         void emit(const std::string& code);
 
