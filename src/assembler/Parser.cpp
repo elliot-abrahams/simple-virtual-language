@@ -5,9 +5,9 @@
 #include <regex>
 
 
-Parser::Parser() {}
+assembler::Parser::Parser() {}
 
-std::optional<std::vector<AssemblerDefs::Statement>> Parser::parse(const std::vector<AssemblerDefs::SVMAToken> &tokenStream) {
+std::optional<std::vector<AssemblerDefs::Statement>> assembler::Parser::parse(const std::vector<AssemblerDefs::SVMAToken> &tokenStream) {
     std::vector<AssemblerDefs::Statement> statements;
     this->tokenStream = tokenStream;
     this->tokenIdx = 0;
@@ -24,7 +24,7 @@ std::optional<std::vector<AssemblerDefs::Statement>> Parser::parse(const std::ve
     return statements;
 }
 
-std::optional<AssemblerDefs::Statement> Parser::parseToken() {
+std::optional<AssemblerDefs::Statement> assembler::Parser::parseToken() {
 
     switch (this->peek().type) {
         case AssemblerDefs::SVMATokenType::INSTRUCTION:
@@ -44,7 +44,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseToken() {
     return std::nullopt;
 }
 
-std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
+std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     std::string instruction = this->peek().value;
     int lineNumber = this->peek().lineNumber;
     this->next();
@@ -227,13 +227,13 @@ std::optional<AssemblerDefs::Statement> Parser::parseInstruction() {
     return std::nullopt;
 }
 
-std::optional<AssemblerDefs::Statement> Parser::parseLabelDef() {
+std::optional<AssemblerDefs::Statement> assembler::Parser::parseLabelDef() {
     auto token = this->peek();
     this->next();
     return AssemblerDefs::Label{token.value, token.lineNumber};
 }
 
-std::optional<AssemblerDefs::Statement> Parser::parseData() {
+std::optional<AssemblerDefs::Statement> assembler::Parser::parseData() {
     if (this->peek().type != AssemblerDefs::SVMATokenType::LABEL_DEF) {
         handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::LABEL_DEF}, this->peek(), this->peek().lineNumber);
         return std::nullopt;
@@ -282,7 +282,7 @@ std::optional<AssemblerDefs::Statement> Parser::parseData() {
     return data;
 }
 
-std::optional<AssemblerDefs::Statement> Parser::parseMethodDef() {
+std::optional<AssemblerDefs::Statement> assembler::Parser::parseMethodDef() {
     AssemblerDefs::SVMAToken numberOfArgsToken;
     AssemblerDefs::SVMAToken numberOfLocalsToken;
 
@@ -339,11 +339,11 @@ std::optional<AssemblerDefs::Statement> Parser::parseMethodDef() {
     };
 }
 
-std::optional<AssemblerDefs::Operand> Parser::parseType() {
+std::optional<AssemblerDefs::Operand> assembler::Parser::parseType() {
     return this->parseOperand(AssemblerDefs::SVMATokenType::TYPE);
 }
 
-std::optional<AssemblerDefs::Operand> Parser::parseDataType() {
+std::optional<AssemblerDefs::Operand> assembler::Parser::parseDataType() {
     auto dataType = this->parseOperand(AssemblerDefs::SVMATokenType::DATA_TYPE);
     if (dataType.has_value()) {
         return dataType;
@@ -351,15 +351,15 @@ std::optional<AssemblerDefs::Operand> Parser::parseDataType() {
     return this->parseOperand(AssemblerDefs::SVMATokenType::TYPE);
 }
 
-std::optional<AssemblerDefs::Operand> Parser::parseImmediate() {
+std::optional<AssemblerDefs::Operand> assembler::Parser::parseImmediate() {
     return this->parseOperand(AssemblerDefs::SVMATokenType::IMMEDIATE);
 }
 
-std::optional<AssemblerDefs::Operand> Parser::parseLabelRef() {
+std::optional<AssemblerDefs::Operand> assembler::Parser::parseLabelRef() {
     return this->parseOperand(AssemblerDefs::SVMATokenType::LABEL_REF);
 }
 
-std::optional<AssemblerDefs::Operand> Parser::parseOperand(const AssemblerDefs::SVMATokenType tokenType) {
+std::optional<AssemblerDefs::Operand> assembler::Parser::parseOperand(const AssemblerDefs::SVMATokenType tokenType) {
     auto token = this->peek();
     if (this->peek().type != tokenType) {
         return std::nullopt;
@@ -368,7 +368,7 @@ std::optional<AssemblerDefs::Operand> Parser::parseOperand(const AssemblerDefs::
     return AssemblerDefs::Operand{mapTokenTypeToOperandType(tokenType), token.value};
 }
 
-std::optional<AssemblerDefs::Statement> Parser::parseSectionStart() {
+std::optional<AssemblerDefs::Statement> assembler::Parser::parseSectionStart() {
     if (this->section == AssemblerDefs::Section::DATA) {
         printError("Duplicate section declaration", this->peek().lineNumber);
         this->next();
@@ -379,19 +379,19 @@ std::optional<AssemblerDefs::Statement> Parser::parseSectionStart() {
     return AssemblerDefs::Section::DATA;
 }
 
-void Parser::next() {
+void assembler::Parser::next() {
     this->tokenIdx++;
 }
 
-AssemblerDefs::SVMAToken Parser::peek() {
+AssemblerDefs::SVMAToken assembler::Parser::peek() {
     return this->tokenStream[this->tokenIdx];
 }
 
-AssemblerDefs::SVMAToken Parser::peekNext() {
+AssemblerDefs::SVMAToken assembler::Parser::peekNext() {
     return this->tokenStream[this->tokenIdx + 1];
 }
 
-bool Parser::checkAndHandleValueIsValidAsType(const std::string type, const std::string &value, const int& lineNumber) {
+bool assembler::Parser::checkAndHandleValueIsValidAsType(const std::string type, const std::string &value, const int& lineNumber) {
     if (type == "i32" || type == "i64") {
         // enforce i32 / i64 is matched with an integer
         if (!isNumberInteger(value)) {
@@ -427,7 +427,7 @@ bool Parser::checkAndHandleValueIsValidAsType(const std::string type, const std:
     return false;
 }
 
-bool Parser::checkAndHandleValueIsValidAsDataType(const std::string type, const std::string &value, const int &lineNumber) {
+bool assembler::Parser::checkAndHandleValueIsValidAsDataType(const std::string type, const std::string &value, const int &lineNumber) {
     if (type == "str") {
         if (value[0] != '"' || value[value.size() - 1] != '"') {
             printError("Expecting String", lineNumber);
@@ -438,23 +438,23 @@ bool Parser::checkAndHandleValueIsValidAsDataType(const std::string type, const 
     return false;
 }
 
-void Parser::handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) {
+void assembler::Parser::handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) {
     printError(std::string(data + " out of range for " + dataType), lineNumber);
 }
 
-bool Parser::isNumberInteger(const std::string& value) {
+bool assembler::Parser::isNumberInteger(const std::string& value) {
     return std::regex_match(value, std::regex("-?[0-9]*"));
 }
 
-bool Parser::isNumberDecimal(const std::string& value) {
+bool assembler::Parser::isNumberDecimal(const std::string& value) {
     return std::regex_match(value, std::regex(R"(-?[0-9]+\.[0-9]+)"));
 }
 
-bool Parser::isNumberSigned(const std::string& value) {
+bool assembler::Parser::isNumberSigned(const std::string& value) {
     return std::regex_match(value, std::regex("-[0-9]+(.[0-9]+)?"));
 }
 
-AssemblerDefs::OperandType Parser::mapTokenTypeToOperandType(const AssemblerDefs::SVMATokenType tokenType) {
+AssemblerDefs::OperandType assembler::Parser::mapTokenTypeToOperandType(const AssemblerDefs::SVMATokenType tokenType) {
     switch (tokenType) {
         case AssemblerDefs::SVMATokenType::IMMEDIATE: return AssemblerDefs::OperandType::IMMEDIATE;
         case AssemblerDefs::SVMATokenType::TYPE: return AssemblerDefs::OperandType::TYPE;
@@ -463,12 +463,12 @@ AssemblerDefs::OperandType Parser::mapTokenTypeToOperandType(const AssemblerDefs
     }
 }
 
-void Parser::printError(const std::string &msg, const int &lineNumber) {
+void assembler::Parser::printError(const std::string &msg, const int &lineNumber) {
     std::cerr << "Error found at Line " << lineNumber << std::endl;
     std::cerr << msg << std::endl;
 }
 
-void Parser::handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATokenType> &expectingTypes, const AssemblerDefs::SVMAToken& actualType, const int& lineNumber) {
+void assembler::Parser::handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATokenType> &expectingTypes, const AssemblerDefs::SVMAToken& actualType, const int& lineNumber) {
     printError("Expecting: ", lineNumber);
     for (int i = 0; i < expectingTypes.size(); i++) {
         if (i + 1 == expectingTypes.size()) std::cerr << tokenTypeToString(expectingTypes.at(i));
@@ -477,12 +477,12 @@ void Parser::handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATok
     std::cerr << ",\nfound:\n" << tokenTypeToString(actualType.type) << std::endl;
 }
 
-void Parser::handleIncorrectInstructionOperand(const std::string &instructionMnemonic, const AssemblerDefs::SVMATokenType expectedType, const int &lineNumber) {
+void assembler::Parser::handleIncorrectInstructionOperand(const std::string &instructionMnemonic, const AssemblerDefs::SVMATokenType expectedType, const int &lineNumber) {
     printError(std::string("Incorrect operand for instruction \'" + instructionMnemonic + "\'"), lineNumber);
     std::cerr << "Expecting operand: " << tokenTypeToString(expectedType) << std::endl;
 }
 
-std::string Parser::tokenTypeToString(const AssemblerDefs::SVMATokenType tokenType) {
+std::string assembler::Parser::tokenTypeToString(const AssemblerDefs::SVMATokenType tokenType) {
     std::string s;
     switch (tokenType) {
         case AssemblerDefs::SVMATokenType::DATA_START: s = "SECTION_START"; break;

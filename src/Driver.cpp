@@ -45,7 +45,7 @@ int Driver::assemble(const char* filePath) {
         }
     }
 
-    Assembler* assembler = new Assembler();
+    assembler::Assembler* assembler = new assembler::Assembler();
 
     // assemble bytecode assembly
     auto bytecode = assembler->assemble(std::string(filePath));

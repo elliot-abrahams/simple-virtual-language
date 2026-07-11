@@ -1,0 +1,38 @@
+NOTATION:
+
+[] → zero or one
+{} → zero or more
+|  → optional
+
+
+GRAMMAR RULES
+=================================================
+
+program             = { statement } ;
+
+statement           = var_decl ;
+
+var_decl            = type, IDENTIFIER, [ EQUAL, expression ], SEMI ;
+
+expression          = primary
+
+primary             = literal
+                    | IDENTIFIER ;
+
+type                = INTEGER_TYPE ;
+
+literal             = INTEGER_LITERAL ;
+
+
+TOKENS
+=================================================
+
+SEMI                = ";"
+
+EQUAL               = "="
+
+INTEGER_TYPE        = "int"
+
+IDENTIFIER          = "[a-zA-z_][a-zA-Z0-9_]*"
+
+INTEGER_LITERAL     = "[0-9]+"

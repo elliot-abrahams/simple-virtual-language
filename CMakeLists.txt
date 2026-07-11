@@ -22,7 +22,7 @@ set(Headers
     src/assembler/Lexer.h
     src/assembler/Parser.h
     src/assembler/Assembler.h
-        src/include/AssemblerDefs.h
+    src/include/AssemblerDefs.h
     src/vm/VM.h
     src/vm/memory/MemoryManager.h
     src/vm/OperandStack.h
@@ -30,6 +30,19 @@ set(Headers
     src/Driver.h
     src/vm/ArithmeticOps.h
     src/vm/TypeConversions.h
+    src/include/ISA.h
+    src/vm/memory/CallStackManager.h
+    src/vm/memory/HeapManager.h
+    src/compiler/Compiler.h
+    src/compiler/Token.h
+    src/compiler/Tokeniser.h
+    src/compiler/Token.h
+    src/compiler/Parser.h
+    src/compiler/AST.h
+    src/include/Error.h
+    src/compiler/SymbolTable.h
+    src/compiler/TypeChecker.h
+    src/compiler/CodeGenerator.h
 )
 
 set(Sources
@@ -42,11 +55,14 @@ set(Sources
     src/Driver.cpp
     src/vm/ArithmeticOps.cpp
     src/vm/TypeConversions.cpp
-    src/include/ISA.h
-        src/vm/memory/CallStackManager.cpp
-        src/vm/memory/CallStackManager.h
-        src/vm/memory/HeapManager.cpp
-        src/vm/memory/HeapManager.h
+    src/vm/memory/CallStackManager.cpp
+    src/vm/memory/HeapManager.cpp
+    src/compiler/Compiler.cpp
+    src/compiler/Tokeniser.cpp
+    src/compiler/Parser.cpp
+    src/compiler/SymbolTable.cpp
+    src/compiler/TypeChecker.cpp
+    src/compiler/CodeGenerator.cpp
 )
 
 add_library(${This} STATIC ${Sources} ${Headers})

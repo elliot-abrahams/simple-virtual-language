@@ -3,13 +3,12 @@
 #include <cstring>
 #include <variant>
 #include <iostream>
-#include <cmath>
 
-Assembler::Assembler() {}
+assembler::Assembler::Assembler() {}
 
-std::optional<std::vector<uint8_t> > Assembler::assemble(const std::string& filePath) {
+std::optional<std::vector<uint8_t> > assembler::Assembler::assemble(const std::string& filePath) {
     // STEP 1 -> lex source file
-    Lexer lexer;
+    assembler::Lexer lexer;
     auto tokenStream = lexer.lex(filePath);
 
     if (!tokenStream.has_value()) {
@@ -18,9 +17,9 @@ std::optional<std::vector<uint8_t> > Assembler::assemble(const std::string& file
     return this->assembleFromTokens(tokenStream.value());
 }
 
-std::optional<std::vector<uint8_t> > Assembler::assembleString(const std::string& fileContent) {
+std::optional<std::vector<uint8_t> > assembler::Assembler::assembleString(const std::string& fileContent) {
     // STEP 1 -> lex source file
-    Lexer lexer;
+    assembler::Lexer lexer;
     auto tokenStream = lexer.lexString(fileContent);
 
     if (!tokenStream.has_value()) {
@@ -29,9 +28,9 @@ std::optional<std::vector<uint8_t> > Assembler::assembleString(const std::string
     return this->assembleFromTokens(tokenStream.value());
 }
 
-std::optional<std::vector<uint8_t>> Assembler::assembleFromTokens(const std::vector<AssemblerDefs::SVMAToken>& tokenStream) {
+std::optional<std::vector<uint8_t>> assembler::Assembler::assembleFromTokens(const std::vector<AssemblerDefs::SVMAToken>& tokenStream) {
     // STEP 2 -> parse the stream of tokens
-    Parser parser;
+    assembler::Parser parser;
     const auto parsedStatements = parser.parse(tokenStream);
     if (!parsedStatements.has_value()) {
         return std::nullopt;
@@ -48,7 +47,7 @@ std::optional<std::vector<uint8_t>> Assembler::assembleFromTokens(const std::vec
     return this->generateBytecode();
 }
 
-bool Assembler::constructLabelTable() {
+bool assembler::Assembler::constructLabelTable() {
     this->section = AssemblerDefs::Section::CODE;
 
     uint8_t bytecodeHeaderLength = 8;
@@ -109,7 +108,7 @@ bool Assembler::constructLabelTable() {
     return true;
 }
 
-bool Assembler::processLabelDef(std::map<std::string, uint32_t>& unhandledLabelRefs, const uint32_t location, const Label& label, const int& lineNumber) {
+bool assembler::Assembler::processLabelDef(std::map<std::string, uint32_t>& unhandledLabelRefs, const uint32_t location, const Label& label, const int& lineNumber) {
     // check if def already exists
     if (labelTable.find(label.getKey()) != labelTable.end()) {
         std::cerr << "Error found at Line " << lineNumber << std::endl;
@@ -122,7 +121,7 @@ bool Assembler::processLabelDef(std::map<std::string, uint32_t>& unhandledLabelR
     return true;
 }
 
-void Assembler::processInstruction(std::map<std::string, uint32_t>& unhandledLabelRefs, uint32_t& codeSectionLength, const AssemblerDefs::Instruction& instruction) {
+void assembler::Assembler::processInstruction(std::map<std::string, uint32_t>& unhandledLabelRefs, uint32_t& codeSectionLength, const AssemblerDefs::Instruction& instruction) {
     std::string type;
     codeSectionLength += 1; // 1 for opcode
     // loop through each operand
@@ -142,7 +141,7 @@ void Assembler::processInstruction(std::map<std::string, uint32_t>& unhandledLab
     }
 }
 
-void Assembler::processData(std::map<std::string, uint32_t> &unhandledLabelRefs, const uint32_t location, uint32_t& dataSectionLength, const AssemblerDefs::Data& data) {
+void assembler::Assembler::processData(std::map<std::string, uint32_t> &unhandledLabelRefs, const uint32_t location, uint32_t& dataSectionLength, const AssemblerDefs::Data& data) {
     // process label Def
     this->processLabelDef(unhandledLabelRefs, location, Label{data.name.substr(0, data.name.size() - 1), LabelType::DATA}, data.lineNumber);
 
@@ -154,14 +153,14 @@ void Assembler::processData(std::map<std::string, uint32_t> &unhandledLabelRefs,
     dataSectionLength += this->calculateBytesOfData(data);
 }
 
-void Assembler::processLabelRef(std::map<std::string, uint32_t> &unhandledLabelRefs, const Label& label, const int &lineNumber) {
+void assembler::Assembler::processLabelRef(std::map<std::string, uint32_t> &unhandledLabelRefs, const Label& label, const int &lineNumber) {
     if (this->labelTable.find(label.getKey()) == this->labelTable.end()) {
         // label is not in labelTable
         unhandledLabelRefs.insert({label.getKey(), lineNumber});
     }
 }
 
-LabelType Assembler::getOperandLabelType(const std::string &instructionMnemonic) {
+assembler::LabelType assembler::Assembler::getOperandLabelType(const std::string &instructionMnemonic) {
     if (
         instructionMnemonic == "push" ||
         instructionMnemonic == "loadG" ||
@@ -179,7 +178,7 @@ LabelType Assembler::getOperandLabelType(const std::string &instructionMnemonic)
     return LabelType::METHOD;
 }
 
-uint8_t Assembler::calculateBytesOfData(const AssemblerDefs::Data& data) const {
+uint8_t assembler::Assembler::calculateBytesOfData(const AssemblerDefs::Data& data) const {
     uint8_t length = 1; // 1 for data type
     if (data.type == "str") {
         length += 4; // 4 bytes for length of string
@@ -194,7 +193,7 @@ uint8_t Assembler::calculateBytesOfData(const AssemblerDefs::Data& data) const {
     return length;
 }
 
-uint8_t Assembler::calculateBytesFromType(const std::string& type) const {
+uint8_t assembler::Assembler::calculateBytesFromType(const std::string& type) const {
     if (type == "i64" || type == "ui64" || type == "f64") {
         return 8;
     }
@@ -204,7 +203,7 @@ uint8_t Assembler::calculateBytesFromType(const std::string& type) const {
     return 4;
 }
 
-std::optional<std::vector<uint8_t>> Assembler::generateBytecode() {
+std::optional<std::vector<uint8_t>> assembler::Assembler::generateBytecode() {
     std::vector<uint8_t> bytecode;
     this->section = AssemblerDefs::Section::CODE;
 
@@ -247,7 +246,7 @@ std::optional<std::vector<uint8_t>> Assembler::generateBytecode() {
     return bytecode;
 }
 
-std::optional<std::vector<uint8_t>> Assembler::convertInstructionToBytes(const AssemblerDefs::Instruction &instruction) const {
+std::optional<std::vector<uint8_t>> assembler::Assembler::convertInstructionToBytes(const AssemblerDefs::Instruction &instruction) const {
     std::vector<uint8_t> bytecode;
     bytecode.push_back(AssemblerDefs::opcode.at(instruction.opcode)); // encode opcode
     std::string dataType;
@@ -280,7 +279,7 @@ std::optional<std::vector<uint8_t>> Assembler::convertInstructionToBytes(const A
     return bytecode;
 }
 
-std::vector<uint8_t> Assembler::convertMethodDefToBytes(const AssemblerDefs::MethodDef& methodDef) const {
+std::vector<uint8_t> assembler::Assembler::convertMethodDefToBytes(const AssemblerDefs::MethodDef& methodDef) const {
     std::vector<uint8_t> bytecode;
     bytecode.push_back(methodDef.numberOfArguments);
     for (int i = 0; i < 4; i++) {
@@ -289,7 +288,7 @@ std::vector<uint8_t> Assembler::convertMethodDefToBytes(const AssemblerDefs::Met
     return bytecode;
 }
 
-std::optional<std::vector<uint8_t>> Assembler::convertDataStatementToBytes(const AssemblerDefs::Data& data) const {
+std::optional<std::vector<uint8_t>> assembler::Assembler::convertDataStatementToBytes(const AssemblerDefs::Data& data) const {
     std::vector<uint8_t> bytecode;
     // encode data type to bytecode
     bytecode.push_back(this->convertDataTypeToByte(data.type));
@@ -302,7 +301,7 @@ std::optional<std::vector<uint8_t>> Assembler::convertDataStatementToBytes(const
     return bytecode;
 }
 
-uint8_t Assembler::convertTypeToByte(const std::string &type) {
+uint8_t assembler::Assembler::convertTypeToByte(const std::string &type) {
     if (type == "i32") return 0x00;
     if (type == "ui32") return 0x01;
     if (type == "i64") return 0x02;
@@ -312,14 +311,14 @@ uint8_t Assembler::convertTypeToByte(const std::string &type) {
     return 0x06;
 }
 
-uint8_t Assembler::convertDataTypeToByte(const std::string &dataType) const {
+uint8_t assembler::Assembler::convertDataTypeToByte(const std::string &dataType) const {
     if (dataType == "str") {
         return 0x07;
     }
     return this->convertTypeToByte(dataType);
 }
 
-std::optional<std::vector<uint8_t>> Assembler::convertDataToBytes(const std::string& dataType, const std::string& data, const int& lineNumber) const {
+std::optional<std::vector<uint8_t>> assembler::Assembler::convertDataToBytes(const std::string& dataType, const std::string& data, const int& lineNumber) const {
     std::vector<uint8_t> bytecode;
 
     std::string dataToConvert = "";
@@ -391,7 +390,7 @@ std::optional<std::vector<uint8_t>> Assembler::convertDataToBytes(const std::str
     return bytecode;
 }
 
-std::vector<uint8_t> Assembler::convertLabelRefToBytes(const Label& label) const {
+std::vector<uint8_t> assembler::Assembler::convertLabelRefToBytes(const Label& label) const {
     std::vector<uint8_t> bytecode;
 
     // resolve label ref to memory address
@@ -401,7 +400,7 @@ std::vector<uint8_t> Assembler::convertLabelRefToBytes(const Label& label) const
     return bytecode;
 }
 
-std::vector<uint8_t> Assembler::convertStringToBytes(const std::string &string) const {
+std::vector<uint8_t> assembler::Assembler::convertStringToBytes(const std::string &string) const {
     std::vector<uint8_t> bytecode;
 
     std::string str = string.substr(1, string.size() - 2);
@@ -418,7 +417,7 @@ std::vector<uint8_t> Assembler::convertStringToBytes(const std::string &string) 
     return bytecode;
 }
 
-std::vector<uint8_t> Assembler::pushBackVector(std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const {
+std::vector<uint8_t> assembler::Assembler::pushBackVector(std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const {
     a.insert(a.end(), b.begin(), b.end());
     return a;
 }

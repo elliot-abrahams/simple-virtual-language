@@ -13,7 +13,7 @@ void EXPECT_OPERAND_VM_STACK_EQ(
     const T expectedValue
 ) {
     try {
-        Assembler assembler;
+        assembler::Assembler assembler;
         VM vm;
 
         const auto bytecode = assembler.assembleString(source);
@@ -36,7 +36,7 @@ void EXPECT_N_OPERANDS_OF_SAME_TYPE_VM_STACK_EQ(
     const std::vector<T> expectedValues
 ) {
     try {
-        Assembler assembler;
+        assembler::Assembler assembler;
         VM vm;
 
         const auto bytecode = assembler.assembleString(source);
@@ -55,7 +55,7 @@ void EXPECT_N_OPERANDS_OF_SAME_TYPE_VM_STACK_EQ(
 }
 
 inline void EXPECT_VM_ERROR(const std::string& source) {
-    Assembler assembler;
+    assembler::Assembler assembler;
     VM vm;
 
     const auto bytecode = assembler.assembleString(source);
@@ -76,7 +76,7 @@ void EXPECT_OPERAND_VM_STACK_EQ_WITH_CONSOLE_INPUT(
         std::stringstream input(consoleInput);
         std::streambuf* oldCin = std::cin.rdbuf(input.rdbuf());
 
-        Assembler assembler;
+        assembler::Assembler assembler;
         VM vm;
 
         const auto bytecode = assembler.assembleString(source);
@@ -102,7 +102,7 @@ inline void EXPECT_VM_ERROR_WITH_CONSOLE_INPUT(
     std::stringstream input(consoleInput);
     std::streambuf* oldCin = std::cin.rdbuf(input.rdbuf());
 
-    Assembler assembler;
+    assembler::Assembler assembler;
     VM vm;
 
     const auto bytecode = assembler.assembleString(source);
@@ -121,7 +121,7 @@ inline void EXPECT_CONSOLE_OUTPUT(
     std::stringstream buffer;
     std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
 
-    Assembler assembler;
+    assembler::Assembler assembler;
     VM vm;
 
     const auto bytecode = assembler.assembleString(source);
@@ -144,7 +144,7 @@ inline void EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(
     std::streambuf* oldCin = std::cin.rdbuf(input.rdbuf());
     std::streambuf* oldCout = std::cout.rdbuf(output.rdbuf());
 
-    Assembler assembler;
+    assembler::Assembler assembler;
     VM vm;
 
     const auto bytecode = assembler.assembleString(source);
