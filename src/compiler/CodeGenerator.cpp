@@ -13,6 +13,7 @@ void compiler::CodeGenerator::processProgram(const ast::Program& program) {
     for (auto& stm : program.statements) {
         this->processStm(*stm);
     }
+    emit("halt");
 }
 
 void compiler::CodeGenerator::processStm(const ast::Stm& stm) {
@@ -50,7 +51,7 @@ void compiler::CodeGenerator::processGlobalVariables() {
 
     auto globalVariables = this->symbolTable->getGlobalVariables();
     for (auto it = globalVariables.begin(); it != globalVariables.end(); ++it) {
-        this->emit("$" + it->first + ": i32 #0");
+        this->emit("$" + it->first + ": i32 0");
     }
 }
 
