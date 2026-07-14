@@ -14,6 +14,14 @@ namespace ast {
         EQUAL
     };
 
+    enum class ArithmeticOperator {
+        PLUS,
+        MINUS,
+        MULTIPLY,
+        DIVIDE,
+        MODULO
+    };
+
     struct ASTNode {
         const size_t line;
         const size_t column;
@@ -34,11 +42,33 @@ namespace ast {
         virtual ~Expr() = default;
     };
 
+    struct ExprIntegerLiteral final : Expr {
+        const int value;
+
+        ExprIntegerLiteral(const size_t line, const size_t column, const int value) :
+            Expr(line, column),
+            value(value) {}
+    };
+
     struct TypeInfo final : ASTNode {
         const Type type;
 
         TypeInfo(const size_t line, const size_t column, const Type type) :
             ASTNode(line, column), type(type) {}
+    };
+
+    struct AssignmentOperatorInfo final : ASTNode {
+        const AssignmentOperator assignmentOperator;
+
+        AssignmentOperatorInfo(const size_t line, const size_t column, const AssignmentOperator assignmentOperator) :
+            ASTNode(line, column), assignmentOperator(assignmentOperator) {}
+    };
+
+    struct ArithmeticOperatorInfo final : ASTNode {
+        const ArithmeticOperator arithmeticOperator;
+
+        ArithmeticOperatorInfo(const size_t line, const size_t column, const ArithmeticOperator arithmeticOperator) :
+            ASTNode(line, column), arithmeticOperator(arithmeticOperator) {}
     };
 
     struct Identifier final : ASTNode {
@@ -49,14 +79,6 @@ namespace ast {
             name(std::move(name)) {}
     };
 
-    struct VarAccess final : ASTNode {
-        const Identifier identifier;
-
-        VarAccess(const size_t line, const size_t column, const Identifier &identifier) :
-            ASTNode(line, column),
-            identifier(std::move(identifier)) {}
-    };
-
     struct ExprIdentifier final : Expr {
         const std::string name;
 
@@ -65,44 +87,73 @@ namespace ast {
             name(std::move(name)) {}
     };
 
-    struct ExprIntegerLiteral final : Expr {
-        const int value;
+    struct VarAccess final : ASTNode {
+        const Identifier identifier;
 
-        ExprIntegerLiteral(const size_t line, const size_t column, const int value) :
-            Expr(line, column),
-            value(value) {}
+        VarAccess(const size_t line, const size_t column, const Identifier& identifier) :
+            ASTNode(line, column),
+            identifier(identifier) {}
     };
 
-    struct StmVarDecl final : Stm {
-        const TypeInfo typeInfo;
-        const Identifier identifier;
-        const std::unique_ptr<Expr> optionalInitializer;
+    struct ExprUnaryOperator final : Expr {
+        const std::unique_ptr<ArithmeticOperatorInfo> arithmeticOperatorInfo;
+        const std::unique_ptr<Expr> expr;
 
-        StmVarDecl(const size_t line,
+        ExprUnaryOperator(const size_t line,
                     const size_t column,
-                    TypeInfo typeInfo,
-                    Identifier identifier,
-                    std::unique_ptr<Expr> optionalInitializer) :
-            Stm(line, column),
-            typeInfo(std::move(typeInfo)),
-            identifier(std::move(identifier)),
-            optionalInitializer(std::move(optionalInitializer)) {}
+                    std::unique_ptr<ArithmeticOperatorInfo> arithmeticOperatorInfo,
+                    std::unique_ptr<Expr> expr) :
+            Expr(line, column),
+            arithmeticOperatorInfo(std::move(arithmeticOperatorInfo)),
+            expr(std::move(expr)) {}
+    };
+
+    struct ExprBinaryOperator final : Expr {
+        const std::unique_ptr<Expr> left;
+        const std::unique_ptr<ArithmeticOperatorInfo> arithmeticOperatorInfo;
+        const std::unique_ptr<Expr> right;
+
+        ExprBinaryOperator(const size_t line,
+                    const size_t column,
+                    std::unique_ptr<Expr> left,
+                    std::unique_ptr<ArithmeticOperatorInfo> arithmeticOperatorInfo,
+                    std::unique_ptr<Expr> right) :
+            Expr(line, column),
+            left(std::move(left)),
+            arithmeticOperatorInfo(std::move(arithmeticOperatorInfo)),
+            right(std::move(right)) {}
     };
 
     struct StmAssignment final : Stm {
         const std::unique_ptr<VarAccess> varAccess;
-        const AssignmentOperator assignmentOperator;
+        const std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo;
         const std::unique_ptr<Expr> expression;
 
         StmAssignment(const size_t line,
                     const size_t column,
                     std::unique_ptr<VarAccess> varAccess,
-                    const AssignmentOperator assignmentOperator,
+                    std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo,
                     std::unique_ptr<Expr> expression) :
             Stm(line, column),
             varAccess(std::move(varAccess)),
-            assignmentOperator(assignmentOperator),
+            assignmentOperatorInfo(std::move(assignmentOperatorInfo)),
             expression(std::move(expression)) {}
+    };
+
+    struct StmVarDecl final : Stm {
+        const TypeInfo typeInfo;
+        const Identifier identifier;
+        const std::unique_ptr<Expr> optionalInitialiser;
+
+        StmVarDecl(const size_t line,
+                    const size_t column,
+                    TypeInfo typeInfo,
+                    Identifier identifier,
+                    std::unique_ptr<Expr> optionalInitialiser) :
+            Stm(line, column),
+            typeInfo(std::move(typeInfo)),
+            identifier(std::move(identifier)),
+            optionalInitialiser(std::move(optionalInitialiser)) {}
     };
 
     struct Program {

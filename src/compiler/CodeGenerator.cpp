@@ -26,19 +26,19 @@ void compiler::CodeGenerator::compileStm(const ast::Stm& stm) {
 }
 
 void compiler::CodeGenerator::compileStmVarDecl(const ast::StmVarDecl& varDecl) {
-    if (varDecl.optionalInitializer != nullptr) {
-        this->compileExpr(*varDecl.optionalInitializer);
+    if (varDecl.optionalInitialiser != nullptr) {
+        this->compileExpr(*varDecl.optionalInitialiser);
         emit("storeG $" + varDecl.identifier.name);
     }
 }
 
 void compiler::CodeGenerator::compileStmAssignment(const ast::StmAssignment& assignment) {
-    this->compileVarAccess(*assignment.varAccess);
+    //this->compileVarAccess(*assignment.varAccess);
     this->compileExpr(*assignment.expression);
 
-    switch (assignment.assignmentOperator) {
+    switch (assignment.assignmentOperatorInfo->assignmentOperator) {
         case ast::AssignmentOperator::EQUAL : {
-            emit("store");
+            emit("storeG $" + assignment.varAccess->identifier.name);
             break;
         }
     }
@@ -51,6 +51,23 @@ void compiler::CodeGenerator::compileExpr(const ast::Expr& expr) {
     if (auto* identifier = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
         this->compileExprIdentifier(*identifier);
     }
+    if (auto* binaryExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
+        this->compileBinaryExpr(*binaryExpr);
+    }
+    if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
+        this->compileUnaryExpr(*unaryExpr);
+    }
+}
+
+void compiler::CodeGenerator::compileBinaryExpr(const ast::ExprBinaryOperator &expr) {
+    this->compileExpr(*expr.left);
+    this->compileExpr(*expr.right);
+    this->compileArithmeticOperator(expr.arithmeticOperatorInfo->arithmeticOperator);
+}
+
+void compiler::CodeGenerator::compileUnaryExpr(const ast::ExprUnaryOperator& expr) {
+    this->compileExpr(*expr.expr);
+    this->compileArithmeticOperator(expr.arithmeticOperatorInfo->arithmeticOperator);
 }
 
 void compiler::CodeGenerator::compileExprIdentifier(const ast::ExprIdentifier& identifier) {
@@ -64,6 +81,32 @@ void compiler::CodeGenerator::compileVarAccess(const ast::VarAccess &varAccess) 
 void compiler::CodeGenerator::compileExprIntegerLiteral(const ast::ExprIntegerLiteral& integerLiteral) {
     emit("push i32 #" + std::to_string(integerLiteral.value));
 }
+
+void compiler::CodeGenerator::compileArithmeticOperator(const ast::ArithmeticOperator &arithmeticOperator) {
+    switch (arithmeticOperator) {
+        case ast::ArithmeticOperator::PLUS: {
+            emit("add");
+            break;
+        }
+        case ast::ArithmeticOperator::MINUS: {
+            emit("sub");
+            break;
+        }
+        case ast::ArithmeticOperator::MULTIPLY: {
+            emit("mul");
+            break;
+        }
+        case ast::ArithmeticOperator::DIVIDE: {
+            emit("div");
+            break;
+        }
+        case ast::ArithmeticOperator::MODULO: {
+            emit("mod");
+            break;
+        }
+    }
+}
+
 
 void compiler::CodeGenerator::compileGlobalVariables() {
     emit(".data");

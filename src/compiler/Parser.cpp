@@ -1,5 +1,8 @@
 #include "Parser.h"
 
+#include <cmath>
+#include <math.h>
+
 #include "../include/Error.h"
 
 compiler::Parser::Parser(Tokeniser *tokeniser, const std::filesystem::path* path) :
@@ -71,7 +74,7 @@ std::unique_ptr<ast::StmVarDecl> compiler::Parser::parseVarDecl() const {
  */
 std::unique_ptr<ast::StmAssignment> compiler::Parser::parseAssignment() const {
     std::unique_ptr<ast::VarAccess> varAccess = this->parseVarAccess();
-    ast::AssignmentOperator assignmentOperator = this->parseAssignmentOperator();
+    std::unique_ptr<ast::AssignmentOperatorInfo> assignmentOperatorInfo = this->parseAssignmentOperator();
     std::unique_ptr<ast::Expr> expression = this->parseExpr();
     this->tokeniser->eat(TokenKind::SEMI);
 
@@ -79,16 +82,192 @@ std::unique_ptr<ast::StmAssignment> compiler::Parser::parseAssignment() const {
         varAccess->line,
         varAccess->column,
         std::move(varAccess),
-        assignmentOperator,
+        std::move(assignmentOperatorInfo),
         std::move(expression)
     );
 }
 
 /*
- *  expression          = primary ;
+ *  expression          = additive_expression ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseExpr() const {
-    return this->parsePrimary();
+    return this->parseAdditiveExpression();
+}
+
+/*
+ *  additive_expression         = multiplicative_expression, { ( PLUS | MINUS ), multiplicative_expression } ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
+    auto left = this->parseMultiplicativeExpression();
+    const auto line = left->line;
+    const auto column = left->column;
+
+    Token token = this->tokeniser->tok();
+
+    while (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS) {
+
+        // parse arithmetic operator
+        std::unique_ptr<ast::ArithmeticOperatorInfo> arithmeticOperatorInfo = nullptr;
+        switch (token.kind) {
+            case TokenKind::PLUS:
+                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                    token.line,
+                    token.column,
+                    ast::ArithmeticOperator::PLUS
+                );
+                break;
+            case TokenKind::MINUS:
+                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                    token.line,
+                    token.column,
+                    ast::ArithmeticOperator::MINUS
+                );
+                break;
+            default:
+                this->handleUnexpectedToken(this->tokeniser->tok());
+        }
+        this->tokeniser->next();
+
+        // parse right expression
+        std::unique_ptr<ast::Expr> right = this->parseMultiplicativeExpression();
+
+        left = std::make_unique<ast::ExprBinaryOperator>(
+            line,
+            column,
+            std::move(left),
+            std::move(arithmeticOperatorInfo),
+            std::move(right)
+        );
+        token = this->tokeniser->tok();
+    }
+    return left;
+}
+
+/*
+ *  multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | MODULO ), unary_expression } ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() const {
+    auto left = this->parseUnaryExpression();
+    const auto line = left->line;
+    const auto column = left->column;
+
+    Token token = this->tokeniser->tok();
+
+    while (token.kind == TokenKind::MULTIPLY || token.kind == TokenKind::DIVIDE || token.kind == TokenKind::MODULO) {
+
+        // parse arithmetic operator
+        std::unique_ptr<ast::ArithmeticOperatorInfo> arithmeticOperatorInfo = nullptr;
+        switch (token.kind) {
+            case TokenKind::MULTIPLY:
+                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                    token.line,
+                    token.column,
+                    ast::ArithmeticOperator::MULTIPLY
+                );
+                break;
+            case TokenKind::DIVIDE:
+                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                    token.line,
+                    token.column,
+                    ast::ArithmeticOperator::DIVIDE
+                );
+                break;
+            case TokenKind::MODULO:
+                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                    token.line,
+                    token.column,
+                    ast::ArithmeticOperator::MODULO
+                );
+                break;
+            default:
+                this->handleUnexpectedToken(this->tokeniser->tok());
+        }
+        this->tokeniser->next();
+
+        // parse right expression
+        std::unique_ptr<ast::Expr> right = this->parseUnaryExpression();
+
+        left = std::make_unique<ast::ExprBinaryOperator>(
+            line,
+            column,
+            std::move(left),
+            std::move(arithmeticOperatorInfo),
+            std::move(right)
+        );
+        token = this->tokeniser->tok();
+    }
+    return left;
+}
+
+/*
+ *  unary_expression            = ( PLUS | MINUS ), unary_expression
+ *                              | primary_expression ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
+    const auto token = this->tokeniser->tok();
+
+    if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS) {
+        std::unique_ptr<ast::ArithmeticOperatorInfo> arithmeticOperatorInfo = nullptr;
+
+        if (token.kind == TokenKind::PLUS) {
+            arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                token.line,
+                token.column,
+                ast::ArithmeticOperator::PLUS
+            );
+        } else if (token.kind == TokenKind::MINUS) {
+            arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                token.line,
+                token.column,
+                ast::ArithmeticOperator::MINUS
+            );
+        }
+        this->tokeniser->next();
+        auto expr = this->parseUnaryExpression();
+
+        return std::make_unique<ast::ExprUnaryOperator>(
+            expr->line,
+            expr->column,
+            std::move(arithmeticOperatorInfo),
+            std::move(expr)
+        );
+    } else {
+        return this->parsePrimaryExpression();
+    }
+}
+
+/*
+ *  primary_expression          = literal
+ *                              | var_access
+ *                              | LBR, expression, RBR ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
+    const Token primaryExpression = this->tokeniser->tok();
+    if (primaryExpression.kind == TokenKind::INTEGER_LITERAL) {
+        return this->parseLiteral();
+    }
+    if (primaryExpression.kind == TokenKind::IDENTIFIER) {
+        return this->parseExprIdentifier();
+    }
+    if (primaryExpression.kind == TokenKind::LBR) {
+        this->tokeniser->next();
+        auto expr = this->parseExpr();
+        this->tokeniser->eat(TokenKind::RBR);
+        return expr;
+    }
+    this->handleUnexpectedToken(primaryExpression);
+}
+
+/*
+ * IDENTIFIER
+ */
+std::unique_ptr<ast::VarAccess> compiler::Parser::parseVarAccess() const {
+    const ast::Identifier identifier = this->parseIdentifier();
+    return std::make_unique<ast::VarAccess>(
+        identifier.line,
+        identifier.column,
+        identifier
+    );
 }
 
 /*
@@ -102,32 +281,6 @@ std::unique_ptr<ast::ExprIdentifier> compiler::Parser::parseExprIdentifier() con
         exprIdentifier.line,
         exprIdentifier.column,
         std::string(exprIdentifier.image)
-    );
-}
-
-/*
- *  primary             = literal
- *                      | var_access ;
- */
-std::unique_ptr<ast::Expr> compiler::Parser::parsePrimary() const {
-    const Token primary = this->tokeniser->tok();
-    if (primary.kind == TokenKind::INTEGER_LITERAL) {
-        return this->parseLiteral();
-    }
-    if (primary.kind == TokenKind::IDENTIFIER) {
-        return this->parseExprIdentifier();
-    }
-}
-
-/*
- * IDENTIFIER
- */
-std::unique_ptr<ast::VarAccess> compiler::Parser::parseVarAccess() const {
-    const ast::Identifier identifier = this->parseIdentifier();
-    return std::make_unique<ast::VarAccess>(
-        identifier.line,
-        identifier.column,
-        identifier
     );
 }
 
@@ -182,11 +335,15 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
 /*
  * assignment_operator = EQUAL ;
  */
-ast::AssignmentOperator compiler::Parser::parseAssignmentOperator() const {
+std::unique_ptr<ast::AssignmentOperatorInfo> compiler::Parser::parseAssignmentOperator() const {
     const Token assignmentOperator = this->tokeniser->tok();
     if (assignmentOperator.kind == TokenKind::EQUAL) {
         this->tokeniser->next();
-        return ast::AssignmentOperator::EQUAL;
+        return std::make_unique<ast::AssignmentOperatorInfo>(
+            assignmentOperator.line,
+            assignmentOperator.column,
+            ast::AssignmentOperator::EQUAL
+        );
     }
     this->handleUnexpectedToken(assignmentOperator);
 }

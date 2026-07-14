@@ -17,9 +17,10 @@ namespace compiler {
         void processStmVarDecl(const ast::StmVarDecl& varDecl) const;
         void processAssignment(const ast::StmAssignment& assignment);
 
-        ast::Type getTypeOfExpr(const ast::Expr& expr) const;
+        ast::Type checkExprType(const ast::Expr& expr) const;
 
         static std::string typeToString(const ast::Type& type);
+        static std::string arithmeticOperatorToString(const ast::ArithmeticOperator& arithmeticOperator);
 
         SymbolTable* symbolTable;
         const std::filesystem::path *path;

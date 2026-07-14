@@ -8,38 +8,53 @@ NOTATION:
 GRAMMAR RULES
 =================================================
 
-program             = { statement } ;
+program                     = { statement } ;
 
-statement           = var_decl
-                    | assignment ;
+statement                   = var_decl
+                            | assignment ;
 
-var_decl            = type, IDENTIFIER, [ EQUAL, expression ], SEMI ;
+var_decl                    = type, IDENTIFIER, [ EQUAL, expression ], SEMI ;
 
-assignment          = var_access, assignment_operator, expression, SEMI ;
+assignment                  = var_access, assignment_operator, expression, SEMI ;
 
-expression          = primary ;
+expression                  = additive_expression ;
 
-primary             = literal
-                    | var_access ;
+additive_expression         = multiplicative_expression, { ( PLUS | MINUS ), multiplicative_expression } ;
 
-var_access          = IDENTIFIER ;
+multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | MODULO ), unary_expression } ;
 
-type                = INTEGER_TYPE ;
+unary_expression            = ( PLUS | MINUS ), unary_expression
+                            | primary_expression ;
 
-literal             = INTEGER_LITERAL ;
+primary_expression          = literal
+                            | var_access
+                            | LBR, expression, RBR ;
 
-assignment_operator = EQUAL ;
+var_access                  = IDENTIFIER ;
+
+type                        = INTEGER_TYPE ;
+
+literal                     = INTEGER_LITERAL ;
+
+assignment_operator         = EQUAL ;
 
 
 TOKENS
 =================================================
 
-SEMI                = ";"
+SEMI                        = ";"
+LBR                         = "("
+RBR                         = ")"
 
-EQUAL               = "="
+EQUAL                       = "="
+PLUS                        = "+"
+MINUS                       = "-"
+MULTIPLY                    = "*"
+DIVIDE                      = "/"
+MODULO                      = "%"
 
-INTEGER_TYPE        = "int"
+INTEGER_TYPE                = "int"
 
-IDENTIFIER          = "[a-zA-z_][a-zA-Z0-9_]*"
+IDENTIFIER                  = "[a-zA-z_][a-zA-Z0-9_]*"
 
-INTEGER_LITERAL     = "[0-9]+"
+INTEGER_LITERAL             = "[0-9]+"

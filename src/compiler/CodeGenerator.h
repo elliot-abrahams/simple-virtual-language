@@ -18,10 +18,15 @@ namespace compiler {
         void compileStmAssignment(const ast::StmAssignment& assignment);
 
         void compileExpr(const ast::Expr& expr);
+        void compileBinaryExpr(const ast::ExprBinaryOperator& expr);
+        void compileUnaryExpr(const ast::ExprUnaryOperator& expr);
+
         void compileExprIdentifier(const ast::ExprIdentifier& identifier);
         void compileVarAccess(const ast::VarAccess& varAccess);
 
         void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
+        void compileArithmeticOperator(const ast::ArithmeticOperator& arithmeticOperator);
+
 
         void compileGlobalVariables();
 

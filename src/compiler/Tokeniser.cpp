@@ -62,8 +62,50 @@ Token compiler::Tokeniser::readToken() {
             this->setHead(token);
             return token;
         }
+        case '(': {
+            const Token token = Token{TokenKind::LBR, "(", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case ')': {
+            const Token token = Token{TokenKind::RBR, ")", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
         case '=': {
             const Token token = Token{TokenKind::EQUAL, "=", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case '+': {
+            const Token token = Token{TokenKind::PLUS, "+", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case '-': {
+            const Token token = Token{TokenKind::MINUS, "-", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case '*': {
+            const Token token = Token{TokenKind::MULTIPLY, "*", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case '/': {
+            const Token token = Token{TokenKind::DIVIDE, "/", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case '%': {
+            const Token token = Token{TokenKind::MODULO, "%", this->line, this->column};
             this->advance();
             this->setHead(token);
             return token;

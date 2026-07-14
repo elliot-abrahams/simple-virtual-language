@@ -20,14 +20,17 @@ namespace compiler {
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
 
         std::unique_ptr<ast::Expr> parseExpr() const;
-        std::unique_ptr<ast::ExprIdentifier> parseExprIdentifier() const;
-        std::unique_ptr<ast::Expr> parsePrimary() const;
+        std::unique_ptr<ast::Expr> parseAdditiveExpression() const;
+        std::unique_ptr<ast::Expr> parseMultiplicativeExpression() const;
+        std::unique_ptr<ast::Expr> parseUnaryExpression() const;
+        std::unique_ptr<ast::Expr> parsePrimaryExpression() const;
         std::unique_ptr<ast::VarAccess> parseVarAccess() const;
+        std::unique_ptr<ast::ExprIdentifier> parseExprIdentifier() const;
 
         ast::Identifier parseIdentifier() const;
         ast::TypeInfo parseType() const;
         std::unique_ptr<ast::Expr> parseLiteral() const;
-        ast::AssignmentOperator parseAssignmentOperator() const;
+        std::unique_ptr<ast::AssignmentOperatorInfo> parseAssignmentOperator() const;
 
         void handleUnexpectedToken(const Token& token) const;
 

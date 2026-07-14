@@ -4,7 +4,14 @@
 
 enum class TokenKind {
     SEMI,
+    LBR,
+    RBR,
     EQUAL,
+    PLUS,
+    MINUS,
+    MULTIPLY,
+    DIVIDE,
+    MODULO,
     INTEGER_TYPE,
     IDENTIFIER,
     INTEGER_LITERAL,
