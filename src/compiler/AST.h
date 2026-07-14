@@ -14,7 +14,7 @@ namespace ast {
         EQUAL
     };
 
-    enum class ArithmeticOperator {
+    enum class BinaryOperator {
         PLUS,
         MINUS,
         MULTIPLY,
@@ -64,11 +64,11 @@ namespace ast {
             ASTNode(line, column), assignmentOperator(assignmentOperator) {}
     };
 
-    struct ArithmeticOperatorInfo final : ASTNode {
-        const ArithmeticOperator arithmeticOperator;
+    struct BinaryOperatorInfo final : ASTNode {
+        const BinaryOperator binaryOperator;
 
-        ArithmeticOperatorInfo(const size_t line, const size_t column, const ArithmeticOperator arithmeticOperator) :
-            ASTNode(line, column), arithmeticOperator(arithmeticOperator) {}
+        BinaryOperatorInfo(const size_t line, const size_t column, const BinaryOperator binaryOperator) :
+            ASTNode(line, column), binaryOperator(binaryOperator) {}
     };
 
     struct Identifier final : ASTNode {
@@ -96,31 +96,31 @@ namespace ast {
     };
 
     struct ExprUnaryOperator final : Expr {
-        const std::unique_ptr<ArithmeticOperatorInfo> arithmeticOperatorInfo;
+        const std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo;
         const std::unique_ptr<Expr> expr;
 
         ExprUnaryOperator(const size_t line,
                     const size_t column,
-                    std::unique_ptr<ArithmeticOperatorInfo> arithmeticOperatorInfo,
+                    std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo,
                     std::unique_ptr<Expr> expr) :
             Expr(line, column),
-            arithmeticOperatorInfo(std::move(arithmeticOperatorInfo)),
+            binaryOperatorInfo(std::move(binaryOperatorInfo)),
             expr(std::move(expr)) {}
     };
 
     struct ExprBinaryOperator final : Expr {
         const std::unique_ptr<Expr> left;
-        const std::unique_ptr<ArithmeticOperatorInfo> arithmeticOperatorInfo;
+        const std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo;
         const std::unique_ptr<Expr> right;
 
         ExprBinaryOperator(const size_t line,
                     const size_t column,
                     std::unique_ptr<Expr> left,
-                    std::unique_ptr<ArithmeticOperatorInfo> arithmeticOperatorInfo,
+                    std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo,
                     std::unique_ptr<Expr> right) :
             Expr(line, column),
             left(std::move(left)),
-            arithmeticOperatorInfo(std::move(arithmeticOperatorInfo)),
+            binaryOperatorInfo(std::move(binaryOperatorInfo)),
             right(std::move(right)) {}
     };
 

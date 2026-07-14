@@ -25,7 +25,7 @@ namespace compiler {
         void compileVarAccess(const ast::VarAccess& varAccess);
 
         void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
-        void compileArithmeticOperator(const ast::ArithmeticOperator& arithmeticOperator);
+        void compileBinaryOperator(const ast::BinaryOperator& binaryOperator);
 
 
         void compileGlobalVariables();

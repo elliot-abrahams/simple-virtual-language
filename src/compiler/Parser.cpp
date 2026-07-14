@@ -107,20 +107,20 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
     while (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS) {
 
         // parse arithmetic operator
-        std::unique_ptr<ast::ArithmeticOperatorInfo> arithmeticOperatorInfo = nullptr;
+        std::unique_ptr<ast::BinaryOperatorInfo> binaryOperatorInfo = nullptr;
         switch (token.kind) {
             case TokenKind::PLUS:
-                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::ArithmeticOperator::PLUS
+                    ast::BinaryOperator::PLUS
                 );
                 break;
             case TokenKind::MINUS:
-                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::ArithmeticOperator::MINUS
+                    ast::BinaryOperator::MINUS
                 );
                 break;
             default:
@@ -135,7 +135,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
             line,
             column,
             std::move(left),
-            std::move(arithmeticOperatorInfo),
+            std::move(binaryOperatorInfo),
             std::move(right)
         );
         token = this->tokeniser->tok();
@@ -156,27 +156,27 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
     while (token.kind == TokenKind::MULTIPLY || token.kind == TokenKind::DIVIDE || token.kind == TokenKind::MODULO) {
 
         // parse arithmetic operator
-        std::unique_ptr<ast::ArithmeticOperatorInfo> arithmeticOperatorInfo = nullptr;
+        std::unique_ptr<ast::BinaryOperatorInfo> binaryOperatorInfo = nullptr;
         switch (token.kind) {
             case TokenKind::MULTIPLY:
-                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::ArithmeticOperator::MULTIPLY
+                    ast::BinaryOperator::MULTIPLY
                 );
                 break;
             case TokenKind::DIVIDE:
-                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::ArithmeticOperator::DIVIDE
+                    ast::BinaryOperator::DIVIDE
                 );
                 break;
             case TokenKind::MODULO:
-                arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::ArithmeticOperator::MODULO
+                    ast::BinaryOperator::MODULO
                 );
                 break;
             default:
@@ -191,7 +191,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
             line,
             column,
             std::move(left),
-            std::move(arithmeticOperatorInfo),
+            std::move(binaryOperatorInfo),
             std::move(right)
         );
         token = this->tokeniser->tok();
@@ -207,19 +207,19 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
     const auto token = this->tokeniser->tok();
 
     if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS) {
-        std::unique_ptr<ast::ArithmeticOperatorInfo> arithmeticOperatorInfo = nullptr;
+        std::unique_ptr<ast::BinaryOperatorInfo> binaryOperatorInfo = nullptr;
 
         if (token.kind == TokenKind::PLUS) {
-            arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+            binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                 token.line,
                 token.column,
-                ast::ArithmeticOperator::PLUS
+                ast::BinaryOperator::PLUS
             );
         } else if (token.kind == TokenKind::MINUS) {
-            arithmeticOperatorInfo = std::make_unique<ast::ArithmeticOperatorInfo>(
+            binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                 token.line,
                 token.column,
-                ast::ArithmeticOperator::MINUS
+                ast::BinaryOperator::MINUS
             );
         }
         this->tokeniser->next();
@@ -228,7 +228,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
         return std::make_unique<ast::ExprUnaryOperator>(
             expr->line,
             expr->column,
-            std::move(arithmeticOperatorInfo),
+            std::move(binaryOperatorInfo),
             std::move(expr)
         );
     } else {
@@ -323,11 +323,20 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
     const Token literal = this->tokeniser->tok();
     if (literal.kind == TokenKind::INTEGER_LITERAL) {
         this->tokeniser->next();
-        return std::make_unique<ast::ExprIntegerLiteral>(
-            literal.line,
-            literal.column,
-            std::stoi(literal.image)
-        );
+        try {
+            return std::make_unique<ast::ExprIntegerLiteral>(
+                literal.line,
+                literal.column,
+                std::stoi(literal.image)
+            );
+        } catch (std::out_of_range& e) {
+            throw SyntaxError(
+                this->path->string(),
+                literal.line,
+                literal.column,
+                literal.image + " is out of range for type 'int'."
+            );
+        }
     }
     this->handleUnexpectedToken(literal);
 }

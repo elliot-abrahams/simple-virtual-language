@@ -62,12 +62,12 @@ void compiler::CodeGenerator::compileExpr(const ast::Expr& expr) {
 void compiler::CodeGenerator::compileBinaryExpr(const ast::ExprBinaryOperator &expr) {
     this->compileExpr(*expr.left);
     this->compileExpr(*expr.right);
-    this->compileArithmeticOperator(expr.arithmeticOperatorInfo->arithmeticOperator);
+    this->compileBinaryOperator(expr.binaryOperatorInfo->binaryOperator);
 }
 
 void compiler::CodeGenerator::compileUnaryExpr(const ast::ExprUnaryOperator& expr) {
     this->compileExpr(*expr.expr);
-    this->compileArithmeticOperator(expr.arithmeticOperatorInfo->arithmeticOperator);
+    this->compileBinaryOperator(expr.binaryOperatorInfo->binaryOperator);
 }
 
 void compiler::CodeGenerator::compileExprIdentifier(const ast::ExprIdentifier& identifier) {
@@ -82,25 +82,25 @@ void compiler::CodeGenerator::compileExprIntegerLiteral(const ast::ExprIntegerLi
     emit("push i32 #" + std::to_string(integerLiteral.value));
 }
 
-void compiler::CodeGenerator::compileArithmeticOperator(const ast::ArithmeticOperator &arithmeticOperator) {
-    switch (arithmeticOperator) {
-        case ast::ArithmeticOperator::PLUS: {
+void compiler::CodeGenerator::compileBinaryOperator(const ast::BinaryOperator &binaryOperator) {
+    switch (binaryOperator) {
+        case ast::BinaryOperator::PLUS: {
             emit("add");
             break;
         }
-        case ast::ArithmeticOperator::MINUS: {
+        case ast::BinaryOperator::MINUS: {
             emit("sub");
             break;
         }
-        case ast::ArithmeticOperator::MULTIPLY: {
+        case ast::BinaryOperator::MULTIPLY: {
             emit("mul");
             break;
         }
-        case ast::ArithmeticOperator::DIVIDE: {
+        case ast::BinaryOperator::DIVIDE: {
             emit("div");
             break;
         }
-        case ast::ArithmeticOperator::MODULO: {
+        case ast::BinaryOperator::MODULO: {
             emit("mod");
             break;
         }

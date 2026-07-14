@@ -20,7 +20,7 @@ namespace compiler {
         ast::Type checkExprType(const ast::Expr& expr) const;
 
         static std::string typeToString(const ast::Type& type);
-        static std::string arithmeticOperatorToString(const ast::ArithmeticOperator& arithmeticOperator);
+        static std::string binaryOperatorToString(const ast::BinaryOperator& arithmeticOperator);
 
         SymbolTable* symbolTable;
         const std::filesystem::path *path;

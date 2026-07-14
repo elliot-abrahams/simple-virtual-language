@@ -86,7 +86,7 @@ ast::Type compiler::TypeChecker::checkExprType(const ast::Expr& expr) const {
                 this->path->string(),
                 binaryOperator->line,
                 binaryOperator->column,
-                "cannot apply operator '" + arithmeticOperatorToString(binaryOperator->arithmeticOperatorInfo->arithmeticOperator) +
+                "cannot apply operator '" + binaryOperatorToString(binaryOperator->binaryOperatorInfo->binaryOperator) +
                 "' to types " + typeToString(leftType) + " and " + typeToString(rightType)
             );
         }
@@ -104,13 +104,13 @@ std::string compiler::TypeChecker::typeToString(const ast::Type& type) {
     }
 }
 
-std::string compiler::TypeChecker::arithmeticOperatorToString(const ast::ArithmeticOperator &arithmeticOperator) {
+std::string compiler::TypeChecker::binaryOperatorToString(const ast::BinaryOperator &arithmeticOperator) {
     switch (arithmeticOperator) {
-        case ast::ArithmeticOperator::PLUS: return "+";
-        case ast::ArithmeticOperator::MINUS: return "-";
-        case ast::ArithmeticOperator::MULTIPLY: return "*";
-        case ast::ArithmeticOperator::DIVIDE: return "/";
-        case ast::ArithmeticOperator::MODULO: return "%";
+        case ast::BinaryOperator::PLUS: return "+";
+        case ast::BinaryOperator::MINUS: return "-";
+        case ast::BinaryOperator::MULTIPLY: return "*";
+        case ast::BinaryOperator::DIVIDE: return "/";
+        case ast::BinaryOperator::MODULO: return "%";
     }
 }
 
