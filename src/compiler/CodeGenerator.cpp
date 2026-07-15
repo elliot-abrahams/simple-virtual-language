@@ -48,6 +48,12 @@ void compiler::CodeGenerator::compileExpr(const ast::Expr& expr) {
     if (auto* integerLiteral = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
         this->compileExprIntegerLiteral(*integerLiteral);
     }
+    if (auto* floatLiteral = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
+        this->compileExprFloatLiteral(*floatLiteral);
+    }
+    if (auto* boolLiteral = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
+        this->compileExprBoolLiteral(*boolLiteral);
+    }
     if (auto* identifier = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
         this->compileExprIdentifier(*identifier);
     }
@@ -80,6 +86,16 @@ void compiler::CodeGenerator::compileVarAccess(const ast::VarAccess &varAccess) 
 
 void compiler::CodeGenerator::compileExprIntegerLiteral(const ast::ExprIntegerLiteral& integerLiteral) {
     emit("push i32 #" + std::to_string(integerLiteral.value));
+}
+
+void compiler::CodeGenerator::compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral) {
+    emit("push f32 #" + std::to_string(floatLiteral.value));
+}
+
+void compiler::CodeGenerator::compileExprBoolLiteral(const ast::ExprBoolLiteral& boolLiteral) {
+    std::string emittedCode = "push ui32 #";
+    emittedCode.append(boolLiteral.value ? "1" : "0");
+    emit(emittedCode);
 }
 
 void compiler::CodeGenerator::compileBinaryOperator(const ast::BinaryOperator &binaryOperator) {
@@ -120,6 +136,8 @@ void compiler::CodeGenerator::compileGlobalVariables() {
 std::string compiler::CodeGenerator::typeToString(const ast::Type& type) {
     switch (type) {
         case ast::Type::INT : return "i32";
+        case ast::Type::FLOAT: return "f32";
+        case ast::Type::BOOL: return "ui32";
     }
 }
 

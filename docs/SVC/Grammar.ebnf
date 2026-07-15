@@ -32,9 +32,13 @@ primary_expression          = literal
 
 var_access                  = IDENTIFIER ;
 
-type                        = INTEGER_TYPE ;
+type                        = INTEGER_TYPE
+                            | FLOAT_TYPE
+                            | BOOL_TYPE ;
 
-literal                     = INTEGER_LITERAL ;
+literal                     = INTEGER_LITERAL
+                            | FLOAT_LITERAL
+                            | BOOL_LITERAL ;
 
 assignment_operator         = EQUAL ;
 
@@ -54,7 +58,11 @@ DIVIDE                      = "/"
 MODULO                      = "%"
 
 INTEGER_TYPE                = "int"
-
-IDENTIFIER                  = "[a-zA-z_][a-zA-Z0-9_]*"
+FLOAT_TYPE                  = "float"
+BOOL_TYPE                   = "bool"
 
 INTEGER_LITERAL             = "[0-9]+"
+FLOAT_LITERAL               = "[0-9]+\.[0-9]+f"
+BOOL_LITERAL                = "true|false"
+
+IDENTIFIER                  = "[a-zA-z_][a-zA-Z0-9_]*"

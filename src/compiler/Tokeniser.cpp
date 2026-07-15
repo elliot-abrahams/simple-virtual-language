@@ -122,7 +122,24 @@ Token compiler::Tokeniser::readToken() {
 
                 if (image == "int") {
                     const Token token = Token{TokenKind::INTEGER_TYPE, image, this->line, this->column};
-                    this->advance();
+                    this->setHead(token);
+                    return token;
+                }
+
+                if (image == "float") {
+                    const Token token = Token{TokenKind::FLOAT_TYPE, image, this->line, this->column};
+                    this->setHead(token);
+                    return token;
+                }
+
+                if (image == "bool") {
+                    const Token token = Token{TokenKind::BOOL_TYPE, image, this->line, this->column};
+                    this->setHead(token);
+                    return token;
+                }
+
+                if (image == "true" || image == "false") {
+                    const Token token = Token{TokenKind::BOOL_LITERAL, image, this->line, this->column};
                     this->setHead(token);
                     return token;
                 }
@@ -133,8 +150,45 @@ Token compiler::Tokeniser::readToken() {
             }
 
             if (std::isdigit(currentChar)) {
+                // consume integer part
                 while (this->current < this->source.size() && std::isdigit(this->source[this->current])) {
                     this->advance();
+                }
+
+                // check for a float
+                if (this->current < this->source.size() && this->source[this->current] == '.') {
+                    size_t decimalPosition = this->current;
+                    this->advance();
+
+                    // enforce digits after '.'
+                    if (this->current >= this->source.size() || !std::isdigit(this->source[this->current])) {
+                        throw LexicalError(
+                            this->path->string(),
+                            this->line,
+                            this->column,
+                            "expected digit after '.' in float literal"
+                        );
+                    }
+
+                    // consume decimal part
+                    while (this->current < this->source.size() && std::isdigit(this->source[this->current])) {
+                        this->advance();
+                    }
+
+                    // enforce float literal ends with 'f'
+                    if (this->current >= this->source.size() || this->source[this->current] != 'f') {
+                        throw LexicalError(
+                            this->path->string(),
+                            this->line,
+                            this->column,
+                            "float literal must end with 'f'"
+                        );
+                    }
+
+                    this->advance();
+                    auto token = Token{TokenKind::FLOAT_LITERAL, std::string(source.substr(this->start, this->current - this->start - 1)), this->line, this->column};
+                    this->setHead(token);
+                    return token;
                 }
 
                 auto token = Token{TokenKind::INTEGER_LITERAL, std::string(source.substr(this->start, this->current - this->start)), this->line, this->column};

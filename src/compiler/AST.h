@@ -7,7 +7,9 @@
 namespace ast {
 
     enum class Type {
-        INT
+        INT,
+        FLOAT,
+        BOOL
     };
 
     enum class AssignmentOperator {
@@ -46,6 +48,22 @@ namespace ast {
         const int value;
 
         ExprIntegerLiteral(const size_t line, const size_t column, const int value) :
+            Expr(line, column),
+            value(value) {}
+    };
+
+    struct ExprFloatLiteral final : Expr {
+        const float value;
+
+        ExprFloatLiteral(const size_t line, const size_t column, const float value) :
+            Expr(line, column),
+            value(value) {}
+    };
+
+    struct ExprBoolLiteral final : Expr {
+        const bool value;
+
+        ExprBoolLiteral(const size_t line, const size_t column, const bool value) :
             Expr(line, column),
             value(value) {}
     };

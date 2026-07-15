@@ -43,25 +43,36 @@ void compiler::TypeChecker::processStmVarDecl(const ast::StmVarDecl& varDecl) co
 }
 
 void compiler::TypeChecker::processAssignment(const ast::StmAssignment& assignment) {
-    auto& identifierSymbol = this->symbolTable->getGlobalVariables().at(assignment.varAccess->identifier.name);
+    auto identifierSymbol = this->checkSymbolIsDefined(
+        assignment.varAccess->identifier.name,
+        assignment.varAccess->identifier.line,
+        assignment.varAccess->identifier.column
+    );
+
     const auto exprType = this->checkExprType(*assignment.expression);
 
-    if (identifierSymbol.type != exprType) {
+    if (identifierSymbol->type != exprType) {
         throw TypeError(
             this->path->string(),
             assignment.line,
             assignment.column,
-            "cannot assign " + typeToString(exprType) + " to " + typeToString(identifierSymbol.type)
+            "cannot assign " + typeToString(exprType) + " to " + typeToString(identifierSymbol->type)
         );
     }
 
     // update isInitialised of identifier in symbol table
-    identifierSymbol.isInitialised = true;
+    identifierSymbol->isInitialised = true;
 }
 
 ast::Type compiler::TypeChecker::checkExprType(const ast::Expr& expr) const {
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
         return ast::Type::INT;
+    }
+    if (auto* floatLit = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
+        return ast::Type::FLOAT;
+    }
+    if (auto* boolLit = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
+        return ast::Type::BOOL;
     }
     if (auto* exprIdent = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
         // check if symbol has been initialised
@@ -98,9 +109,24 @@ ast::Type compiler::TypeChecker::checkExprType(const ast::Expr& expr) const {
     throw std::runtime_error("Unknown expression type");
 }
 
+compiler::Symbol* compiler::TypeChecker::checkSymbolIsDefined(const std::string& identifier, const size_t line, const size_t column) const {
+    auto symbol = this->symbolTable->getGlobalVariable(identifier);
+    if (!symbol.has_value()) {
+        throw TypeError(
+            this->path->string(),
+            line,
+            column,
+            "undefined label '" + identifier + "'"
+        );
+    }
+    return symbol.value();
+}
+
 std::string compiler::TypeChecker::typeToString(const ast::Type& type) {
     switch (type) {
         case ast::Type::INT: return "integer";
+        case ast::Type::FLOAT: return "float";
+        case ast::Type::BOOL: return "bool";
     }
 }
 

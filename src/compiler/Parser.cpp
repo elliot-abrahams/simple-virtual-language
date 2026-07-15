@@ -27,7 +27,9 @@ std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
  */
 std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
     const Token stm = tokeniser->tok();
-    if (stm.kind == TokenKind::INTEGER_TYPE) {
+    if (stm.kind == TokenKind::INTEGER_TYPE ||
+        stm.kind == TokenKind::FLOAT_TYPE ||
+        stm.kind == TokenKind::BOOL_TYPE) {
         return this->parseVarDecl();
     }
     if (stm.kind == TokenKind::IDENTIFIER) {
@@ -231,9 +233,8 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
             std::move(binaryOperatorInfo),
             std::move(expr)
         );
-    } else {
-        return this->parsePrimaryExpression();
     }
+    return this->parsePrimaryExpression();
 }
 
 /*
@@ -243,7 +244,9 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
     const Token primaryExpression = this->tokeniser->tok();
-    if (primaryExpression.kind == TokenKind::INTEGER_LITERAL) {
+    if (primaryExpression.kind == TokenKind::INTEGER_LITERAL ||
+        primaryExpression.kind == TokenKind::FLOAT_LITERAL ||
+        primaryExpression.kind == TokenKind::BOOL_LITERAL) {
         return this->parseLiteral();
     }
     if (primaryExpression.kind == TokenKind::IDENTIFIER) {
@@ -301,44 +304,85 @@ ast::Identifier compiler::Parser::parseIdentifier() const {
 }
 
 /*
- *  type                = INTEGER_TYPE ;
+ *  type                = INTEGER_TYPE
+ *                      | FLOAT_TYPE
+ *                      | BOOL_TYPE ;
  */
 ast::TypeInfo compiler::Parser::parseType() const {
     const Token type = this->tokeniser->tok();
-    if (type.kind == TokenKind::INTEGER_TYPE) {
-        this->tokeniser->next();
-        return ast::TypeInfo{
-            type.line,
-            type.column,
-            ast::Type::INT
-        };
+    switch (type.kind) {
+        case TokenKind::INTEGER_TYPE : {
+            this->tokeniser->next();
+            return ast::TypeInfo{
+                type.line,
+                type.column,
+                ast::Type::INT
+            };
+        }
+        case TokenKind::FLOAT_TYPE : {
+            this->tokeniser->next();
+            return ast::TypeInfo{
+                type.line,
+                type.column,
+                ast::Type::FLOAT
+            };
+        }
+        case TokenKind::BOOL_TYPE : {
+            this->tokeniser->next();
+            return ast::TypeInfo{
+                type.line,
+                type.column,
+                ast::Type::BOOL
+            };
+        }
+        default:
+            this->handleUnexpectedToken(type);
     }
-    this->handleUnexpectedToken(type);
 }
 
 /*
- *  literal             = INTEGER_LITERAL ;
+ *  literal             = INTEGER_LITERAL
+ *                      | FLOAT_LITERAL
+ *                      | BOOL_LITERAL;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
     const Token literal = this->tokeniser->tok();
-    if (literal.kind == TokenKind::INTEGER_LITERAL) {
-        this->tokeniser->next();
-        try {
-            return std::make_unique<ast::ExprIntegerLiteral>(
+    switch (literal.kind) {
+        case TokenKind::INTEGER_LITERAL : {
+            this->tokeniser->next();
+            try {
+                return std::make_unique<ast::ExprIntegerLiteral>(
+                    literal.line,
+                    literal.column,
+                    std::stoi(literal.image)
+                );
+            } catch (std::out_of_range& e) {
+                handleLiteralOutOfRangeError(literal, "int");
+            }
+        }
+        case TokenKind::FLOAT_LITERAL : {
+            this->tokeniser->next();
+            try {
+                return std::make_unique<ast::ExprFloatLiteral>(
+                    literal.line,
+                    literal.column,
+                    std::stof(literal.image)
+                );
+            } catch (std::out_of_range& e) {
+                this->handleLiteralOutOfRangeError(literal, "float");
+            }
+        }
+        case TokenKind::BOOL_LITERAL : {
+            this->tokeniser->next();
+            return std::make_unique<ast::ExprBoolLiteral>(
                 literal.line,
                 literal.column,
-                std::stoi(literal.image)
-            );
-        } catch (std::out_of_range& e) {
-            throw SyntaxError(
-                this->path->string(),
-                literal.line,
-                literal.column,
-                literal.image + " is out of range for type 'int'."
+                literal.image == "true"
             );
         }
+        default:
+            this->handleUnexpectedToken(literal);
     }
-    this->handleUnexpectedToken(literal);
 }
 
 /*
@@ -363,5 +407,14 @@ void compiler::Parser::handleUnexpectedToken(const Token& token) const {
         token.line,
         token.column,
         "unexpected token '" + token.image + "'"
+    );
+}
+
+void compiler::Parser::handleLiteralOutOfRangeError(const Token& token, const std::string& type) const {
+    throw SyntaxError(
+        this->path->string(),
+        token.line,
+        token.column,
+        token.image + " is out of range for type '" + type + "'"
     );
 }

@@ -19,6 +19,8 @@ namespace compiler {
 
         ast::Type checkExprType(const ast::Expr& expr) const;
 
+        Symbol* checkSymbolIsDefined(const std::string& identifier, const size_t line, const size_t column) const;
+
         static std::string typeToString(const ast::Type& type);
         static std::string binaryOperatorToString(const ast::BinaryOperator& arithmeticOperator);
 

@@ -33,6 +33,7 @@ namespace compiler {
         std::unique_ptr<ast::AssignmentOperatorInfo> parseAssignmentOperator() const;
 
         void handleUnexpectedToken(const Token& token) const;
+        void handleLiteralOutOfRangeError(const Token& token, const std::string& type) const;
 
         Tokeniser* tokeniser;
         const std::filesystem::path* path;
