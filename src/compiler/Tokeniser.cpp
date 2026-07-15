@@ -130,7 +130,7 @@ Token compiler::Tokeniser::readToken() {
                 this->setHead(token);
                 return token;
             }
-            throw SyntaxError(
+            throw LexicalError(
                 this->path->string(),
                 this->line,
                 this->column,
@@ -147,7 +147,7 @@ Token compiler::Tokeniser::readToken() {
                 this->setHead(token);
                 return token;
             }
-            throw SyntaxError(
+            throw LexicalError(
                 this->path->string(),
                 this->line,
                 this->column,
@@ -254,7 +254,7 @@ Token compiler::Tokeniser::readToken() {
 
                     // enforce digits after '.'
                     if (this->current >= this->source.size() || !std::isdigit(this->source[this->current])) {
-                        throw SyntaxError(
+                        throw LexicalError(
                             this->path->string(),
                             this->line,
                             this->column,
@@ -269,7 +269,7 @@ Token compiler::Tokeniser::readToken() {
 
                     // enforce float literal ends with 'f'
                     if (this->current >= this->source.size() || this->source[this->current] != 'f') {
-                        throw SyntaxError(
+                        throw LexicalError(
                             this->path->string(),
                             this->line,
                             this->column,
@@ -288,7 +288,7 @@ Token compiler::Tokeniser::readToken() {
                 return token;
             }
 
-            throw SyntaxError(
+            throw LexicalError(
                 this->path->string(),
                 this->line,
                 this->column,
