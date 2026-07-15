@@ -20,6 +20,10 @@ namespace compiler {
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
 
         std::unique_ptr<ast::Expr> parseExpr() const;
+        std::unique_ptr<ast::Expr> parseLogicalOrExpression() const;
+        std::unique_ptr<ast::Expr> parseLogicalAndExpression() const;
+        std::unique_ptr<ast::Expr> parseEqualityExpression() const;
+        std::unique_ptr<ast::Expr> parseComparisonExpression() const;
         std::unique_ptr<ast::Expr> parseAdditiveExpression() const;
         std::unique_ptr<ast::Expr> parseMultiplicativeExpression() const;
         std::unique_ptr<ast::Expr> parseUnaryExpression() const;

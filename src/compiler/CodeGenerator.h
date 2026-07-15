@@ -28,17 +28,19 @@ namespace compiler {
         void compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);
         void compileExprBoolLiteral(const ast::ExprBoolLiteral& boolLiteral);
 
-        void compileBinaryOperator(const ast::BinaryOperator& binaryOperator);
-
-
         void compileGlobalVariables();
 
         static std::string typeToString(const ast::Type& type);
 
+        std::string generateLabel(const std::string& label);
+
         void emit(const std::string& code);
+        void emitStartOfDataRegion();
+        void emitLabelDef(const std::string& label);
 
         std::vector<std::string> generatedCode;
         SymbolTable* symbolTable;
+        uint32_t labelCounter;
     };
 }
 

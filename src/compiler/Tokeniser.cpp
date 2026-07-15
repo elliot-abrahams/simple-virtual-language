@@ -75,6 +75,16 @@ Token compiler::Tokeniser::readToken() {
             return token;
         }
         case '=': {
+            if (this->current + 1 < this->source.size() &&
+                this->source[this->current + 1] == '=') {
+
+                const Token token = Token{TokenKind::EQUAL_EQUAL, "==", this->line, this->column};
+                this->advance();
+                this->advance();
+                this->setHead(token);
+                return token;
+            }
+
             const Token token = Token{TokenKind::EQUAL, "=", this->line, this->column};
             this->advance();
             this->setHead(token);
@@ -106,6 +116,88 @@ Token compiler::Tokeniser::readToken() {
         }
         case '%': {
             const Token token = Token{TokenKind::MODULO, "%", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case '|': {
+            if (this->current + 1 < this->source.size() &&
+                this->source[this->current + 1] == '|') {
+
+                const Token token = Token{TokenKind::LOGICAL_OR, "||", this->line, this->column};
+                this->advance();
+                this->advance();
+                this->setHead(token);
+                return token;
+            }
+            throw SyntaxError(
+                this->path->string(),
+                this->line,
+                this->column,
+                "invalid character '" + std::string(1, currentChar) + "'"
+            );
+        }
+        case '&': {
+            if (this->current + 1 < this->source.size() &&
+                this->source[this->current + 1] == '&') {
+
+                const Token token = Token{TokenKind::LOGICAL_AND, "&&", this->line, this->column};
+                this->advance();
+                this->advance();
+                this->setHead(token);
+                return token;
+            }
+            throw SyntaxError(
+                this->path->string(),
+                this->line,
+                this->column,
+                "invalid character '" + std::string(1, currentChar) + "'"
+            );
+        }
+        case '!': {
+            if (this->current + 1 < this->source.size() &&
+                this->source[this->current + 1] == '=') {
+
+                const Token token = Token{TokenKind::NOT_EQUAL, "!=", this->line, this->column};
+                this->advance();
+                this->advance();
+                this->setHead(token);
+                return token;
+            }
+
+            const Token token = Token{TokenKind::LOGICAL_NOT, "!", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case '<': {
+            if (this->current + 1 < this->source.size() &&
+                this->source[this->current + 1] == '=') {
+
+                const Token token = Token{TokenKind::LESS_THAN_OR_EQUAL, "<=", this->line, this->column};
+                this->advance();
+                this->advance();
+                this->setHead(token);
+                return token;
+                }
+
+            const Token token = Token{TokenKind::LESS_THAN, "<", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case '>': {
+            if (this->current + 1 < this->source.size() &&
+                this->source[this->current + 1] == '=') {
+
+                const Token token = Token{TokenKind::GREATER_THAN_OR_EQUAL, ">=", this->line, this->column};
+                this->advance();
+                this->advance();
+                this->setHead(token);
+                return token;
+                }
+
+            const Token token = Token{TokenKind::GREATER_THAN, ">", this->line, this->column};
             this->advance();
             this->setHead(token);
             return token;
@@ -162,7 +254,7 @@ Token compiler::Tokeniser::readToken() {
 
                     // enforce digits after '.'
                     if (this->current >= this->source.size() || !std::isdigit(this->source[this->current])) {
-                        throw LexicalError(
+                        throw SyntaxError(
                             this->path->string(),
                             this->line,
                             this->column,
@@ -177,7 +269,7 @@ Token compiler::Tokeniser::readToken() {
 
                     // enforce float literal ends with 'f'
                     if (this->current >= this->source.size() || this->source[this->current] != 'f') {
-                        throw LexicalError(
+                        throw SyntaxError(
                             this->path->string(),
                             this->line,
                             this->column,

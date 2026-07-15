@@ -17,13 +17,21 @@ var_decl                    = type, IDENTIFIER, [ EQUAL, expression ], SEMI ;
 
 assignment                  = var_access, assignment_operator, expression, SEMI ;
 
-expression                  = additive_expression ;
+expression                  = logical_or_expression ;
+
+logical_or_expression       = logical_and_expression, { LOGICAL_OR, logical_and_expression } ;
+
+logical_and_expression      = equality_expression, { LOGICAL_AND, equality_expression } ;
+
+equality_expression         = comparison_expression, { ( EQUAL_EQUAL | NOT_EQUAL ), comparison_expression } ;
+
+comparison_expression       = additive_expression, { ( LESS_THAN | LESS_THAN_OR_EQUAL | GREATER_THAN | GREATER_THAN_OR_EQUAL ), additive_expression } ;
 
 additive_expression         = multiplicative_expression, { ( PLUS | MINUS ), multiplicative_expression } ;
 
 multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | MODULO ), unary_expression } ;
 
-unary_expression            = ( PLUS | MINUS ), unary_expression
+unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
                             | primary_expression ;
 
 primary_expression          = literal
@@ -56,6 +64,16 @@ MINUS                       = "-"
 MULTIPLY                    = "*"
 DIVIDE                      = "/"
 MODULO                      = "%"
+
+LOGICAL_OR                  = "||"
+LOGICAL_AND                 = "&&"
+LOGICAL_NOT                 = "!"
+EQUAL_EQUAL                 = "=="
+NOT_EQUAL                   = "!="
+LESS_THAN                   = "<"
+LESS_THAN_OR_EQUAL          = "<="
+GREATER_THAN                = ">"
+GREATER_THAN_OR_EQUAL       = ">="
 
 INTEGER_TYPE                = "int"
 FLOAT_TYPE                  = "float"

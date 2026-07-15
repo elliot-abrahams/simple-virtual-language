@@ -13,7 +13,7 @@ void compiler::CodeGenerator::compileProgram(const ast::Program& program) {
     for (auto& stm : program.statements) {
         this->compileStm(*stm);
     }
-    emit("halt");
+    this->emit("halt");
 }
 
 void compiler::CodeGenerator::compileStm(const ast::Stm& stm) {
@@ -28,7 +28,7 @@ void compiler::CodeGenerator::compileStm(const ast::Stm& stm) {
 void compiler::CodeGenerator::compileStmVarDecl(const ast::StmVarDecl& varDecl) {
     if (varDecl.optionalInitialiser != nullptr) {
         this->compileExpr(*varDecl.optionalInitialiser);
-        emit("storeG $" + varDecl.identifier.name);
+        this->emit("storeG $" + varDecl.identifier.name);
     }
 }
 
@@ -38,7 +38,7 @@ void compiler::CodeGenerator::compileStmAssignment(const ast::StmAssignment& ass
 
     switch (assignment.assignmentOperatorInfo->assignmentOperator) {
         case ast::AssignmentOperator::EQUAL : {
-            emit("storeG $" + assignment.varAccess->identifier.name);
+            this->emit("storeG $" + assignment.varAccess->identifier.name);
             break;
         }
     }
@@ -67,65 +67,145 @@ void compiler::CodeGenerator::compileExpr(const ast::Expr& expr) {
 
 void compiler::CodeGenerator::compileBinaryExpr(const ast::ExprBinaryOperator &expr) {
     this->compileExpr(*expr.left);
-    this->compileExpr(*expr.right);
-    this->compileBinaryOperator(expr.binaryOperatorInfo->binaryOperator);
-}
-
-void compiler::CodeGenerator::compileUnaryExpr(const ast::ExprUnaryOperator& expr) {
-    this->compileExpr(*expr.expr);
-    this->compileBinaryOperator(expr.binaryOperatorInfo->binaryOperator);
-}
-
-void compiler::CodeGenerator::compileExprIdentifier(const ast::ExprIdentifier& identifier) {
-    emit("loadG $" + identifier.name);
-}
-
-void compiler::CodeGenerator::compileVarAccess(const ast::VarAccess &varAccess) {
-    emit("push ptr $" + varAccess.identifier.name);
-}
-
-void compiler::CodeGenerator::compileExprIntegerLiteral(const ast::ExprIntegerLiteral& integerLiteral) {
-    emit("push i32 #" + std::to_string(integerLiteral.value));
-}
-
-void compiler::CodeGenerator::compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral) {
-    emit("push f32 #" + std::to_string(floatLiteral.value));
-}
-
-void compiler::CodeGenerator::compileExprBoolLiteral(const ast::ExprBoolLiteral& boolLiteral) {
-    std::string emittedCode = "push ui32 #";
-    emittedCode.append(boolLiteral.value ? "1" : "0");
-    emit(emittedCode);
-}
-
-void compiler::CodeGenerator::compileBinaryOperator(const ast::BinaryOperator &binaryOperator) {
-    switch (binaryOperator) {
+    switch (expr.binaryOperatorInfo->binaryOperator) {
         case ast::BinaryOperator::PLUS: {
-            emit("add");
+            this->compileExpr(*expr.right);
+            this->emit("add");
             break;
         }
         case ast::BinaryOperator::MINUS: {
-            emit("sub");
+            this->compileExpr(*expr.right);
+            this->emit("sub");
             break;
         }
         case ast::BinaryOperator::MULTIPLY: {
-            emit("mul");
+            this->compileExpr(*expr.right);
+            this->emit("mul");
             break;
         }
         case ast::BinaryOperator::DIVIDE: {
-            emit("div");
+            this->compileExpr(*expr.right);
+            this->emit("div");
             break;
         }
         case ast::BinaryOperator::MODULO: {
-            emit("mod");
+            this->compileExpr(*expr.right);
+            this->emit("mod");
+            break;
+        }
+        case ast::BinaryOperator::LOGICAL_OR: {
+            const std::string evaluateToTrueLabel = this->generateLabel("evaluate_to_true");
+            const std::string endOrLabel = this->generateLabel("end_or");
+
+            // skip right expression if left expression results to true
+            this->emit("jnz $" + evaluateToTrueLabel); // evaluate to true if left expression is true
+
+            this->compileExpr(*expr.right);
+            this->emit("jnz $" + evaluateToTrueLabel); // evaluate to true if right expression is true
+
+            this->emit("push ui32 #0"); // evaluate to false
+            this->emit ("jmp $" + endOrLabel);
+
+            this->emitLabelDef(evaluateToTrueLabel);
+            this->emit("push ui32 #1"); // evaluate to true
+
+            this->emitLabelDef(endOrLabel);
+            break;
+        }
+        case ast::BinaryOperator::LOGICAL_AND: {
+            const std::string evaluateToFalseLabel = this->generateLabel("evaluate_to_false");
+            const std::string endAndLabel = this->generateLabel("end_and");
+
+            // skip right expression if left expression results to false
+            this->emit("jez $" + evaluateToFalseLabel); // evaluate to false if left expression is false
+
+            this->compileExpr(*expr.right);
+            this->emit("jez $" + evaluateToFalseLabel); // evaluate to false if right expression is false
+
+            this->emit("push ui32 #1"); // evaluate to true
+            this->emit("jmp $" + endAndLabel);
+
+            this->emitLabelDef(evaluateToFalseLabel);
+            this->emit("push ui32 #0"); // evaluate to false
+
+            this->emitLabelDef(endAndLabel);
+            break;
+        }
+        case ast::BinaryOperator::EQUAL_EQUAL: {
+            this->compileExpr(*expr.right);
+            this->emit("ceq");
+            break;
+        }
+        case ast::BinaryOperator::NOT_EQUAL: {
+            this->compileExpr(*expr.right);
+            this->emit("cne");
+            break;
+        }
+        case ast::BinaryOperator::LESS_THAN: {
+            this->compileExpr(*expr.right);
+            this->emit("clt");
+            break;
+        }
+        case ast::BinaryOperator::LESS_THAN_OR_EQUAL: {
+            this->compileExpr(*expr.right);
+            this->emit("cle");
+            break;
+        }
+        case ast::BinaryOperator::GREATER_THAN: {
+            this->compileExpr(*expr.right);
+            this->emit("cgt");
+            break;
+        }
+        case ast::BinaryOperator::GREATER_THAN_OR_EQUAL: {
+            this->compileExpr(*expr.right);
+            this->emit("cge");
             break;
         }
     }
 }
 
+void compiler::CodeGenerator::compileUnaryExpr(const ast::ExprUnaryOperator& expr) {
+    this->compileExpr(*expr.expr);
+    switch (expr.unaryOperatorInfo->unaryOperator) {
+        case ast::UnaryOperator::PLUS: {
+            this->emit("add");
+            break;
+        }
+        case ast::UnaryOperator::MINUS: {
+            this->emit("sub");
+            break;
+        }
+        case ast::UnaryOperator::LOGICAL_NOT: {
+            this->emit("not");
+            break;
+        }
+    }
+}
+
+void compiler::CodeGenerator::compileExprIdentifier(const ast::ExprIdentifier& identifier) {
+    this->emit("loadG $" + identifier.name);
+}
+
+void compiler::CodeGenerator::compileVarAccess(const ast::VarAccess &varAccess) {
+    this->emit("push ptr $" + varAccess.identifier.name);
+}
+
+void compiler::CodeGenerator::compileExprIntegerLiteral(const ast::ExprIntegerLiteral& integerLiteral) {
+    this->emit("push i32 #" + std::to_string(integerLiteral.value));
+}
+
+void compiler::CodeGenerator::compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral) {
+    this->emit("push f32 #" + std::to_string(floatLiteral.value));
+}
+
+void compiler::CodeGenerator::compileExprBoolLiteral(const ast::ExprBoolLiteral& boolLiteral) {
+    std::string emittedCode = "push ui32 #";
+    emittedCode.append(boolLiteral.value ? "1" : "0");
+    this->emit(emittedCode);
+}
 
 void compiler::CodeGenerator::compileGlobalVariables() {
-    emit(".data");
+    this->emitStartOfDataRegion();
 
     auto globalVariables = this->symbolTable->getGlobalVariables();
     for (auto it = globalVariables.begin(); it != globalVariables.end(); ++it) {
@@ -141,7 +221,21 @@ std::string compiler::CodeGenerator::typeToString(const ast::Type& type) {
     }
 }
 
+std::string compiler::CodeGenerator::generateLabel(const std::string& label) {
+    std::string newLabel = label + "_" + std::to_string(this->labelCounter);
+    this->labelCounter++;
+    return newLabel;
+}
+
 void compiler::CodeGenerator::emit(const std::string& code) {
-    this->generatedCode.push_back(code);
+    this->generatedCode.push_back("        " + code);
+}
+
+void compiler::CodeGenerator::emitStartOfDataRegion() {
+    this->generatedCode.push_back(".data");
+}
+
+void compiler::CodeGenerator::emitLabelDef(const std::string& label) {
+    this->generatedCode.push_back("$" + label + ":");
 }
 

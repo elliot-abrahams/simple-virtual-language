@@ -21,7 +21,24 @@ namespace ast {
         MINUS,
         MULTIPLY,
         DIVIDE,
-        MODULO
+        MODULO,
+
+        LOGICAL_OR,
+        LOGICAL_AND,
+
+        EQUAL_EQUAL,
+        NOT_EQUAL,
+
+        LESS_THAN,
+        LESS_THAN_OR_EQUAL,
+        GREATER_THAN,
+        GREATER_THAN_OR_EQUAL,
+    };
+
+    enum class UnaryOperator {
+        PLUS,
+        MINUS,
+        LOGICAL_NOT
     };
 
     struct ASTNode {
@@ -89,6 +106,13 @@ namespace ast {
             ASTNode(line, column), binaryOperator(binaryOperator) {}
     };
 
+    struct UnaryOperatorInfo final : ASTNode {
+        const UnaryOperator unaryOperator;
+
+        UnaryOperatorInfo(const size_t line, const size_t column, const UnaryOperator unaryOperator) :
+            ASTNode(line, column), unaryOperator(unaryOperator) {}
+    };
+
     struct Identifier final : ASTNode {
         const std::string name;
 
@@ -114,15 +138,15 @@ namespace ast {
     };
 
     struct ExprUnaryOperator final : Expr {
-        const std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo;
+        const std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo;
         const std::unique_ptr<Expr> expr;
 
         ExprUnaryOperator(const size_t line,
                     const size_t column,
-                    std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo,
+                    std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo,
                     std::unique_ptr<Expr> expr) :
             Expr(line, column),
-            binaryOperatorInfo(std::move(binaryOperatorInfo)),
+            unaryOperatorInfo(std::move(unaryOperatorInfo)),
             expr(std::move(expr)) {}
     };
 

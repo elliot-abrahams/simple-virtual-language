@@ -130,13 +130,24 @@ std::string compiler::TypeChecker::typeToString(const ast::Type& type) {
     }
 }
 
-std::string compiler::TypeChecker::binaryOperatorToString(const ast::BinaryOperator &arithmeticOperator) {
-    switch (arithmeticOperator) {
+std::string compiler::TypeChecker::binaryOperatorToString(const ast::BinaryOperator &binaryOperator) {
+    switch (binaryOperator) {
         case ast::BinaryOperator::PLUS: return "+";
         case ast::BinaryOperator::MINUS: return "-";
         case ast::BinaryOperator::MULTIPLY: return "*";
         case ast::BinaryOperator::DIVIDE: return "/";
         case ast::BinaryOperator::MODULO: return "%";
+
+        case ast::BinaryOperator::LOGICAL_OR: return "||";
+        case ast::BinaryOperator::LOGICAL_AND: return "&&";
+
+        case ast::BinaryOperator::EQUAL_EQUAL: return "==";
+        case ast::BinaryOperator::NOT_EQUAL: return "!=";
+
+        case ast::BinaryOperator::LESS_THAN: return "<";
+        case ast::BinaryOperator::LESS_THAN_OR_EQUAL: return "<=";
+        case ast::BinaryOperator::GREATER_THAN: return ">";
+        case ast::BinaryOperator::GREATER_THAN_OR_EQUAL: return ">=";
     }
 }
 
