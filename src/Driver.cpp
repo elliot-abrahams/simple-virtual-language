@@ -122,7 +122,7 @@ int Driver::assemble(const char* filePath) {
     outputFilePath.replace_extension(BYTECODE_FILE_EXTENSION);
 
     // generate output file from bytecode stored in vector
-    std::ofstream outputFile(outputFilePath);
+    std::ofstream outputFile(outputFilePath, std::ios::binary);
     if (!outputFile.is_open()) {
         std::cerr << "Error: could not create and open " << outputFilePath << std::endl;
         return 1;
@@ -143,7 +143,7 @@ int Driver::execute(const char* filePath) {
         return 1;
     }
 
-    std::ifstream inputFile(filePath);
+    std::ifstream inputFile(filePath, std::ios::binary);
     if (!inputFile.is_open()) {
         std::cerr << "Error: could not open " << filePath << std::endl;
         return 1;
