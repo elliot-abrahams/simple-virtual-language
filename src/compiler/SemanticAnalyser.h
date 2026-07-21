@@ -7,9 +7,9 @@
 
 
 namespace compiler {
-    class TypeChecker {
+    class SemanticAnalyser {
     public:
-        TypeChecker(SymbolTable* symbolTable, const std::filesystem::path* filePath);
+        SemanticAnalyser(SymbolTable* symbolTable, const std::filesystem::path* filePath);
 
         void processProgram(const ast::Program& program);
 
@@ -18,6 +18,7 @@ namespace compiler {
         void processBlock(const ast::Block& block);
         void processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
         void processAssignment(Scope* scope, const ast::StmAssignment& assignment);
+        void processIfStatement(Scope* scope, const ast::IfStm& ifStm);
 
         Type checkExprType(Scope* scope, const ast::Expr& expr);
 

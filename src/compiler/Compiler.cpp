@@ -5,7 +5,7 @@
 
 #include "../include/Error.h"
 #include "Parser.h"
-#include "TypeChecker.h"
+#include "SemanticAnalyser.h"
 #include "CodeGenerator.h"
 #include "../Driver.h"
 
@@ -27,7 +27,7 @@ void compiler::Compiler::compile(const std::filesystem::path& path) {
         const auto symbolTable = new SymbolTable();
 
         // build symbol table and type check the program
-        auto typeChecker = TypeChecker(symbolTable, &path);
+        auto typeChecker = SemanticAnalyser(symbolTable, &path);
         typeChecker.processProgram(*program);
 
         // assign slots to local symbols

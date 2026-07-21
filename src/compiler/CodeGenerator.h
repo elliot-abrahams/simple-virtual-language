@@ -21,6 +21,7 @@ namespace compiler {
         void compileBlock(const ast::Block& block);
         void compileStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
         void compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment);
+        void compileIfStatement(Scope* scope, const ast::IfStm& ifStm);
 
         void compileExpr(const ast::Expr& expr);
         void compileBinaryExpr(const ast::ExprBinaryOperator& expr);
@@ -37,7 +38,7 @@ namespace compiler {
         static std::string typeToString(const Type& type);
 
         std::string generateLabel(const std::string& label);
-        static std::string generateLabelDef(const std::string& label);
+        static std::string generateLabelDefFromLabel(const std::string& label);
         static std::string generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber);
 
         void emitWithIndent(const std::string& code);

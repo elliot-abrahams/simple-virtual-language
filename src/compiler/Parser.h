@@ -19,6 +19,7 @@ namespace compiler {
         std::unique_ptr<ast::Block> parseBlock() const;
         std::unique_ptr<ast::StmVarDecl> parseVarDecl() const;
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
+        std::unique_ptr<ast::IfStm> parseIfStatement() const;
 
         std::unique_ptr<ast::Expr> parseExpr() const;
         std::unique_ptr<ast::Expr> parseLogicalOrExpression() const;

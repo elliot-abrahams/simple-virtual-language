@@ -1,30 +1,33 @@
-#include "TypeChecker.h"
+#include "SemanticAnalyser.h"
 
 #include "../include/Error.h"
 
-compiler::TypeChecker::TypeChecker(SymbolTable* symbolTable, const std::filesystem::path* path) :
+compiler::SemanticAnalyser::SemanticAnalyser(SymbolTable* symbolTable, const std::filesystem::path* path) :
     symbolTable(symbolTable), path(path) {}
 
-void compiler::TypeChecker::processProgram(const ast::Program& program) {
+void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
     Scope* globalScope = this->symbolTable->enterScope(); // generate global scope
     for (auto& stm : program.statements) {
         this->processStm(globalScope, *stm);
     }
 }
 
-void compiler::TypeChecker::processStm(Scope* scope, const ast::Stm& stm) {
+void compiler::SemanticAnalyser::processStm(Scope* scope, const ast::Stm& stm) {
     if (auto* varDecl = dynamic_cast<const ast::StmVarDecl*>(&stm)) {
         this->processStmVarDecl(scope, *varDecl);
     }
-    if (auto* assignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
+    else if (auto* assignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
         this->processAssignment(scope, *assignment);
     }
-    if (auto* block = dynamic_cast<const ast::Block*>(&stm)) {
+    else if (auto* block = dynamic_cast<const ast::Block*>(&stm)) {
         this->processBlock(*block);
+    }
+    else if (auto* ifStm = dynamic_cast<const ast::IfStm*>(&stm)) {
+        this->processIfStatement(scope, *ifStm);
     }
 }
 
-void compiler::TypeChecker::processBlock(const ast::Block& block) {
+void compiler::SemanticAnalyser::processBlock(const ast::Block& block) {
     const auto newScope = this->symbolTable->enterScope();
     block.scope = newScope;
 
@@ -34,7 +37,7 @@ void compiler::TypeChecker::processBlock(const ast::Block& block) {
     this->symbolTable->leaveScope();
 }
 
-void compiler::TypeChecker::processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
+void compiler::SemanticAnalyser::processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
     if (varDecl.optionalInitialiser == nullptr) {
        scope->declareSymbol(varDecl.identifier.name, varDecl.typeInfo.type, 0, false);
         return;
@@ -56,7 +59,7 @@ void compiler::TypeChecker::processStmVarDecl(Scope* scope, const ast::StmVarDec
     }
 }
 
-void compiler::TypeChecker::processAssignment(Scope* scope, const ast::StmAssignment& assignment) {
+void compiler::SemanticAnalyser::processAssignment(Scope* scope, const ast::StmAssignment& assignment) {
     auto identifierSymbol = this->checkSymbolIsDefined(
         scope,
         assignment.varAccess->identifier.name,
@@ -79,7 +82,26 @@ void compiler::TypeChecker::processAssignment(Scope* scope, const ast::StmAssign
     identifierSymbol->isInitialised = true;
 }
 
-compiler::Type compiler::TypeChecker::checkExprType(Scope* scope, const ast::Expr& expr) {
+void compiler::SemanticAnalyser::processIfStatement(Scope *scope, const ast::IfStm &ifStm) {
+    const auto conditionType = this->checkExprType(scope, *ifStm.condition);
+
+    // ensure condition type is bool
+    if (conditionType != Type::BOOL) {
+        throw TypeError(
+            this->path->string(),
+            ifStm.condition->line,
+            ifStm.condition->column,
+            "Expecting type " + typeToString(Type::BOOL) + " but found " + typeToString(conditionType)
+        );
+    }
+
+    this->processBlock(*ifStm.ifBlock);
+    if (ifStm.condition != nullptr) {
+        this->processStm(scope, *ifStm.elseStm);
+    }
+}
+
+compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
         return Type::INT;
     }
@@ -125,7 +147,7 @@ compiler::Type compiler::TypeChecker::checkExprType(Scope* scope, const ast::Exp
     throw std::runtime_error("Unknown expression type");
 }
 
-compiler::Symbol* compiler::TypeChecker::checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) {
+compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) {
     auto symbol = scope->lookup(identifier);
     if (!symbol.has_value()) {
         throw TypeError(
@@ -138,7 +160,7 @@ compiler::Symbol* compiler::TypeChecker::checkSymbolIsDefined(Scope* scope, cons
     return symbol.value();
 }
 
-std::string compiler::TypeChecker::typeToString(const Type& type) {
+std::string compiler::SemanticAnalyser::typeToString(const Type& type) {
     switch (type) {
         case Type::INT: return "integer";
         case Type::FLOAT: return "float";
@@ -146,7 +168,7 @@ std::string compiler::TypeChecker::typeToString(const Type& type) {
     }
 }
 
-std::string compiler::TypeChecker::binaryOperatorToString(const BinaryOperator &binaryOperator) {
+std::string compiler::SemanticAnalyser::binaryOperatorToString(const BinaryOperator &binaryOperator) {
     switch (binaryOperator) {
         case BinaryOperator::PLUS: return "+";
         case BinaryOperator::MINUS: return "-";

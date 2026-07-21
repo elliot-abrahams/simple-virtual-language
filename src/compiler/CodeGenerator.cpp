@@ -31,7 +31,9 @@ void compiler::CodeGenerator::compilePendingScopeFunctions() {
         // compile a function declaration for this scope
         this->compileFunctionDeclaration(generateScopeFunctionIdentifier(scopeCounter), 0, block->scope->calculateNumberOfLocalSlots());
 
-        this->compileBlock(*block);
+        for (const auto& stm : block->statements) {
+            this->compileStm(this->symbolTable->globalScope, *stm);
+        }
 
         emitWithIndent("ret");
         emit("");
@@ -42,23 +44,26 @@ void compiler::CodeGenerator::compileStm(Scope* scope, const ast::Stm& stm) {
     if (auto* varDecl = dynamic_cast<const ast::StmVarDecl*>(&stm)) {
         this->compileStmVarDecl(scope, *varDecl);
     }
-    if (auto* assignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
+    else if (auto* assignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
         this->compileStmAssignment(scope, *assignment);
     }
-    if (auto* block = dynamic_cast<const ast::Block*>(&stm)) {
-        // if scope declared in global scope and not a scope within a function
-        if (block->scope->parent->isGlobalScope()) {
-            this->pendingScopeFunctions.push_back(block);
-            emitWithIndent("call $" + generateScopeFunctionIdentifier(this->scopeFunctionCounter++));
-        } else {
-            this->compileBlock(*block);
-        }
+    else if (auto* block = dynamic_cast<const ast::Block*>(&stm)) {
+        this->compileBlock(*block);
+    }
+    else if (auto* ifStm = dynamic_cast<const ast::IfStm*>(&stm)) {
+        this->compileIfStatement(scope, *ifStm);
     }
 }
 
 void compiler::CodeGenerator::compileBlock(const ast::Block& block) {
-    for (auto& stm : block.statements) {
-        this->compileStm(block.scope, *stm);
+    // if scope declared in global scope and not a scope within a function
+    if (block.scope->parent->isGlobalScope()) {
+        this->pendingScopeFunctions.push_back(&block);
+        emitWithIndent("call $" + generateScopeFunctionIdentifier(this->scopeFunctionCounter++));
+    } else {
+        for (auto& stm : block.statements) {
+            this->compileStm(block.scope, *stm);
+        }
     }
 }
 
@@ -85,6 +90,27 @@ void compiler::CodeGenerator::compileStmAssignment(Scope* scope, const ast::StmA
         this->emitWithIndent("storeG $" + assignment.varAccess->identifier.name);
     } else {
         this->emitWithIndent("storeL #" + std::to_string(symbol->localSlot));
+    }
+}
+
+void compiler::CodeGenerator::compileIfStatement(Scope* scope, const ast::IfStm& ifStm) {
+    const std::string endIfLabel = generateLabel("end_if");
+
+    this->compileExpr(*ifStm.condition);
+
+    if (ifStm.elseStm == nullptr) { // if statement without else
+        emitWithIndent("jez " + endIfLabel); // skip if block when condition is false
+        this->compileBlock(*ifStm.ifBlock);
+        emit(generateLabelDefFromLabel(endIfLabel));
+
+    } else { // if statement with else
+        const std::string elseLabel = generateLabel("else");
+        emitWithIndent("jez " + elseLabel); // skip if block when condition is false
+        this->compileBlock(*ifStm.ifBlock);
+        emitWithIndent("jmp " + endIfLabel);
+        emit(generateLabelDefFromLabel(elseLabel));
+        this->compileStm(scope, *ifStm.elseStm);
+        emit(generateLabelDefFromLabel(endIfLabel));
     }
 }
 
@@ -142,18 +168,18 @@ void compiler::CodeGenerator::compileBinaryExpr(const ast::ExprBinaryOperator &e
             const std::string endOrLabel = this->generateLabel("end_or");
 
             // skip right expression if left expression results to true
-            this->emitWithIndent("jnz $" + evaluateToTrueLabel); // evaluate to true if left expression is true
+            this->emitWithIndent("jnz " + evaluateToTrueLabel); // evaluate to true if left expression is true
 
             this->compileExpr(*expr.right);
-            this->emitWithIndent("jnz $" + evaluateToTrueLabel); // evaluate to true if right expression is true
+            this->emitWithIndent("jnz " + evaluateToTrueLabel); // evaluate to true if right expression is true
 
             this->emitWithIndent("push ui32 #0"); // evaluate to false
-            this->emitWithIndent ("jmp $" + endOrLabel);
+            this->emitWithIndent ("jmp " + endOrLabel);
 
-            this->emit(generateLabelDef(evaluateToTrueLabel));
+            this->emit(generateLabelDefFromLabel(evaluateToTrueLabel));
             this->emitWithIndent("push ui32 #1"); // evaluate to true
 
-            this->emit(generateLabelDef(endOrLabel));
+            this->emit(generateLabelDefFromLabel(endOrLabel));
             break;
         }
         case BinaryOperator::LOGICAL_AND: {
@@ -161,18 +187,18 @@ void compiler::CodeGenerator::compileBinaryExpr(const ast::ExprBinaryOperator &e
             const std::string endAndLabel = this->generateLabel("end_and");
 
             // skip right expression if left expression results to false
-            this->emitWithIndent("jez $" + evaluateToFalseLabel); // evaluate to false if left expression is false
+            this->emitWithIndent("jez " + evaluateToFalseLabel); // evaluate to false if left expression is false
 
             this->compileExpr(*expr.right);
-            this->emitWithIndent("jez $" + evaluateToFalseLabel); // evaluate to false if right expression is false
+            this->emitWithIndent("jez " + evaluateToFalseLabel); // evaluate to false if right expression is false
 
             this->emitWithIndent("push ui32 #1"); // evaluate to true
-            this->emitWithIndent("jmp $" + endAndLabel);
+            this->emitWithIndent("jmp " + endAndLabel);
 
-            this->emit(generateLabelDef(evaluateToFalseLabel));
+            this->emit(generateLabelDefFromLabel(evaluateToFalseLabel));
             this->emitWithIndent("push ui32 #0"); // evaluate to false
 
-            this->emit(generateLabelDef(endAndLabel));
+            this->emit(generateLabelDefFromLabel(endAndLabel));
             break;
         }
         case BinaryOperator::EQUAL_EQUAL: {
@@ -273,13 +299,13 @@ std::string compiler::CodeGenerator::typeToString(const Type& type) {
 }
 
 std::string compiler::CodeGenerator::generateLabel(const std::string& label) {
-    std::string newLabel = label + "_" + std::to_string(this->labelCounter);
+    std::string newLabel = "$" + label + "_" + std::to_string(this->labelCounter);
     this->labelCounter++;
     return newLabel;
 }
 
-std::string compiler::CodeGenerator::generateLabelDef(const std::string& label) {
-    return "$" + label + ":";
+std::string compiler::CodeGenerator::generateLabelDefFromLabel(const std::string& label) {
+    return label + ":";
 }
 
 std::string compiler::CodeGenerator::generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber) {

@@ -41,7 +41,7 @@ set(Headers
     src/compiler/AST.h
     src/include/Error.h
     src/compiler/SymbolTable.h
-    src/compiler/TypeChecker.h
+        src/compiler/SemanticAnalyser.h
     src/compiler/CodeGenerator.h
     src/compiler/LanguageTypes.h
 )
@@ -62,7 +62,7 @@ set(Sources
     src/compiler/Tokeniser.cpp
     src/compiler/Parser.cpp
     src/compiler/SymbolTable.cpp
-    src/compiler/TypeChecker.cpp
+        src/compiler/SemanticAnalyser.cpp
     src/compiler/CodeGenerator.cpp
 )
 

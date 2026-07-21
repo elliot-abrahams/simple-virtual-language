@@ -224,6 +224,18 @@ Token compiler::Tokeniser::readToken() {
 
                 const std::string image(this->source.substr(this->start, this->current - this->start));
 
+                if (image == "if") {
+                    const Token token = Token{TokenKind::IF, image, this->line, this->column};
+                    this->setHead(token);
+                    return token;
+                }
+
+                if (image == "else") {
+                    const Token token = Token{TokenKind::ELSE, image, this->line, this->column};
+                    this->setHead(token);
+                    return token;
+                }
+
                 if (image == "int") {
                     const Token token = Token{TokenKind::INTEGER_TYPE, image, this->line, this->column};
                     this->setHead(token);

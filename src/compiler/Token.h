@@ -28,6 +28,9 @@ enum class TokenKind {
     GREATER_THAN,
     GREATER_THAN_OR_EQUAL,
 
+    IF,
+    ELSE,
+
     INTEGER_TYPE,
     FLOAT_TYPE,
     BOOL_TYPE,
@@ -73,6 +76,9 @@ struct Token {
             case TokenKind::GREATER_THAN: return ">";
             case TokenKind::GREATER_THAN_OR_EQUAL: return ">=";
 
+            case TokenKind::IF: return "if";
+            case TokenKind::ELSE: return "else";
+
             case TokenKind::INTEGER_TYPE: return "int";
             case TokenKind::FLOAT_TYPE: return "float";
             case TokenKind::BOOL_TYPE: return "bool";
@@ -87,7 +93,5 @@ struct Token {
         }
     };
 };
-
-
 
 #endif //SVM_TOKEN_H

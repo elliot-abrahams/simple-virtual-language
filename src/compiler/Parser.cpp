@@ -24,7 +24,8 @@ std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
 /*
  *  statement           = block
  *                      | var_decl
- *                      | assignment ;
+ *                      | assignment
+ *                      | if_statement ;
  */
 std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
     const Token stm = tokeniser->tok();
@@ -37,6 +38,7 @@ std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
             return this->parseVarDecl();
 
         case TokenKind::IDENTIFIER: return this->parseAssignment();
+        case TokenKind::IF: return this->parseIfStatement();
 
         default:
             this->handleUnexpectedToken(stm);
@@ -121,6 +123,36 @@ std::unique_ptr<ast::StmAssignment> compiler::Parser::parseAssignment() const {
         std::move(varAccess),
         std::move(assignmentOperatorInfo),
         std::move(expression)
+    );
+}
+
+/*
+ *  if_statement                = IF, LBR, expression, RBR, block, [ ELSE, ( block | if_statement ) ] ;
+ */
+std::unique_ptr<ast::IfStm> compiler::Parser::parseIfStatement() const {
+    const auto token = this->tokeniser->tok();
+    this->tokeniser->next();
+    this->tokeniser->eat(TokenKind::LBR);
+    std::unique_ptr<ast::Expr> condition = this->parseExpr();
+    this->tokeniser->eat(TokenKind::RBR);
+    std::unique_ptr<ast::Block> ifBlock = this->parseBlock();
+
+    std::unique_ptr<ast::Stm> elseStm = nullptr;
+    if (this->tokeniser->tok().kind == TokenKind::ELSE) {
+        this->tokeniser->next();
+
+        if (this->tokeniser->tok().kind == TokenKind::IF) {
+            elseStm = this->parseIfStatement();
+        } else {
+            elseStm = this->parseBlock();
+        }
+    }
+    return std::make_unique<ast::IfStm>(
+        token.line,
+        token.column,
+        std::move(condition),
+        std::move(ifBlock),
+        std::move(elseStm)
     );
 }
 

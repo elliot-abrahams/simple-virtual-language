@@ -8,6 +8,7 @@
 #include "LanguageTypes.h"
 
 namespace ast {
+    struct Block;
 
     struct ASTNode {
         const size_t line;
@@ -132,6 +133,22 @@ namespace ast {
             left(std::move(left)),
             binaryOperatorInfo(std::move(binaryOperatorInfo)),
             right(std::move(right)) {}
+    };
+
+    struct IfStm final : Stm {
+        const std::unique_ptr<Expr> condition;
+        const std::unique_ptr<Block> ifBlock;
+        const std::unique_ptr<Stm> elseStm;
+
+        IfStm(const size_t line,
+                const size_t column,
+                std::unique_ptr<Expr> condition,
+                std::unique_ptr<Block> ifBlock,
+                std::unique_ptr<Stm> elseStm) :
+            Stm(line, column),
+            condition(std::move(condition)),
+            ifBlock(std::move(ifBlock)),
+            elseStm(std::move(elseStm)) {}
     };
 
     struct StmAssignment final : Stm {
