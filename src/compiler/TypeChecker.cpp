@@ -6,31 +6,45 @@ compiler::TypeChecker::TypeChecker(SymbolTable* symbolTable, const std::filesyst
     symbolTable(symbolTable), path(path) {}
 
 void compiler::TypeChecker::processProgram(const ast::Program& program) {
+    Scope* globalScope = this->symbolTable->enterScope(); // generate global scope
     for (auto& stm : program.statements) {
-        this->processStm(*stm);
+        this->processStm(globalScope, *stm);
     }
 }
 
-void compiler::TypeChecker::processStm(const ast::Stm& stm) {
+void compiler::TypeChecker::processStm(Scope* scope, const ast::Stm& stm) {
     if (auto* varDecl = dynamic_cast<const ast::StmVarDecl*>(&stm)) {
-        this->processStmVarDecl(*varDecl);
+        this->processStmVarDecl(scope, *varDecl);
     }
     if (auto* assignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
-        this->processAssignment(*assignment);
+        this->processAssignment(scope, *assignment);
+    }
+    if (auto* block = dynamic_cast<const ast::Block*>(&stm)) {
+        this->processBlock(*block);
     }
 }
 
-void compiler::TypeChecker::processStmVarDecl(const ast::StmVarDecl& varDecl) const {
+void compiler::TypeChecker::processBlock(const ast::Block& block) {
+    const auto newScope = this->symbolTable->enterScope();
+    block.scope = newScope;
+
+    for (auto& stm : block.statements) {
+        this->processStm(block.scope, *stm);
+    }
+    this->symbolTable->leaveScope();
+}
+
+void compiler::TypeChecker::processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
     if (varDecl.optionalInitialiser == nullptr) {
-        this->symbolTable->declareGlobalVariable(varDecl.identifier.name, varDecl.typeInfo.type, false);
+       scope->declareSymbol(varDecl.identifier.name, varDecl.typeInfo.type, 0, false);
         return;
     }
     // declare global (as uninitialised)
-    this->symbolTable->declareGlobalVariable(varDecl.identifier.name, varDecl.typeInfo.type, false);
+    scope->declareSymbol(varDecl.identifier.name, varDecl.typeInfo.type, 0, false);
     // check type of expr
-    const auto initializerType = this->checkExprType(*varDecl.optionalInitialiser);
+    const auto initializerType = this->checkExprType(scope, *varDecl.optionalInitialiser);
     // set symbol as initialised after checking optional initialiser (prevents self initialisation)
-    this->symbolTable->getGlobalVariables().at(varDecl.identifier.name).isInitialised = true;
+    scope->lookup(varDecl.identifier.name).value()->isInitialised = true;
 
     if (initializerType != varDecl.typeInfo.type) {
         throw TypeError(
@@ -42,14 +56,15 @@ void compiler::TypeChecker::processStmVarDecl(const ast::StmVarDecl& varDecl) co
     }
 }
 
-void compiler::TypeChecker::processAssignment(const ast::StmAssignment& assignment) {
+void compiler::TypeChecker::processAssignment(Scope* scope, const ast::StmAssignment& assignment) {
     auto identifierSymbol = this->checkSymbolIsDefined(
+        scope,
         assignment.varAccess->identifier.name,
         assignment.varAccess->identifier.line,
         assignment.varAccess->identifier.column
     );
 
-    const auto exprType = this->checkExprType(*assignment.expression);
+    const auto exprType = this->checkExprType(scope, *assignment.expression);
 
     if (identifierSymbol->type != exprType) {
         throw TypeError(
@@ -64,19 +79,20 @@ void compiler::TypeChecker::processAssignment(const ast::StmAssignment& assignme
     identifierSymbol->isInitialised = true;
 }
 
-ast::Type compiler::TypeChecker::checkExprType(const ast::Expr& expr) const {
+compiler::Type compiler::TypeChecker::checkExprType(Scope* scope, const ast::Expr& expr) {
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
-        return ast::Type::INT;
+        return Type::INT;
     }
     if (auto* floatLit = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
-        return ast::Type::FLOAT;
+        return Type::FLOAT;
     }
     if (auto* boolLit = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
-        return ast::Type::BOOL;
+        return Type::BOOL;
     }
     if (auto* exprIdent = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
         // check if symbol has been initialised
-        if (!this->symbolTable->getGlobalVariables().at(exprIdent->name).isInitialised) {
+        const auto symbol = this->checkSymbolIsDefined(scope, exprIdent->name, exprIdent->line, exprIdent->column);
+        if (!symbol->isInitialised) {
             throw SemanticError(
                 this->path->string(),
                 exprIdent->line,
@@ -85,12 +101,12 @@ ast::Type compiler::TypeChecker::checkExprType(const ast::Expr& expr) const {
             );
         }
         // return type of expr identifier
-        return this->symbolTable->getGlobalVariables().at(exprIdent->name).type;
+        return symbol->type;
     }
 
     if (auto* binaryOperator = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
-        const ast::Type leftType = this->checkExprType(*binaryOperator->left);
-        const ast::Type rightType = this->checkExprType(*binaryOperator->right);
+        const Type leftType = this->checkExprType(scope, *binaryOperator->left);
+        const Type rightType = this->checkExprType(scope, *binaryOperator->right);
 
         if (leftType != rightType) {
             throw TypeError(
@@ -104,13 +120,13 @@ ast::Type compiler::TypeChecker::checkExprType(const ast::Expr& expr) const {
         return leftType;
     }
     if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
-        return this->checkExprType(*unaryOperator->expr);
+        return this->checkExprType(scope, *unaryOperator->expr);
     }
     throw std::runtime_error("Unknown expression type");
 }
 
-compiler::Symbol* compiler::TypeChecker::checkSymbolIsDefined(const std::string& identifier, const size_t line, const size_t column) const {
-    auto symbol = this->symbolTable->getGlobalVariable(identifier);
+compiler::Symbol* compiler::TypeChecker::checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) {
+    auto symbol = scope->lookup(identifier);
     if (!symbol.has_value()) {
         throw TypeError(
             this->path->string(),
@@ -122,32 +138,32 @@ compiler::Symbol* compiler::TypeChecker::checkSymbolIsDefined(const std::string&
     return symbol.value();
 }
 
-std::string compiler::TypeChecker::typeToString(const ast::Type& type) {
+std::string compiler::TypeChecker::typeToString(const Type& type) {
     switch (type) {
-        case ast::Type::INT: return "integer";
-        case ast::Type::FLOAT: return "float";
-        case ast::Type::BOOL: return "bool";
+        case Type::INT: return "integer";
+        case Type::FLOAT: return "float";
+        case Type::BOOL: return "bool";
     }
 }
 
-std::string compiler::TypeChecker::binaryOperatorToString(const ast::BinaryOperator &binaryOperator) {
+std::string compiler::TypeChecker::binaryOperatorToString(const BinaryOperator &binaryOperator) {
     switch (binaryOperator) {
-        case ast::BinaryOperator::PLUS: return "+";
-        case ast::BinaryOperator::MINUS: return "-";
-        case ast::BinaryOperator::MULTIPLY: return "*";
-        case ast::BinaryOperator::DIVIDE: return "/";
-        case ast::BinaryOperator::MODULO: return "%";
+        case BinaryOperator::PLUS: return "+";
+        case BinaryOperator::MINUS: return "-";
+        case BinaryOperator::MULTIPLY: return "*";
+        case BinaryOperator::DIVIDE: return "/";
+        case BinaryOperator::MODULO: return "%";
 
-        case ast::BinaryOperator::LOGICAL_OR: return "||";
-        case ast::BinaryOperator::LOGICAL_AND: return "&&";
+        case BinaryOperator::LOGICAL_OR: return "||";
+        case BinaryOperator::LOGICAL_AND: return "&&";
 
-        case ast::BinaryOperator::EQUAL_EQUAL: return "==";
-        case ast::BinaryOperator::NOT_EQUAL: return "!=";
+        case BinaryOperator::EQUAL_EQUAL: return "==";
+        case BinaryOperator::NOT_EQUAL: return "!=";
 
-        case ast::BinaryOperator::LESS_THAN: return "<";
-        case ast::BinaryOperator::LESS_THAN_OR_EQUAL: return "<=";
-        case ast::BinaryOperator::GREATER_THAN: return ">";
-        case ast::BinaryOperator::GREATER_THAN_OR_EQUAL: return ">=";
+        case BinaryOperator::LESS_THAN: return "<";
+        case BinaryOperator::LESS_THAN_OR_EQUAL: return "<=";
+        case BinaryOperator::GREATER_THAN: return ">";
+        case BinaryOperator::GREATER_THAN_OR_EQUAL: return ">=";
     }
 }
 

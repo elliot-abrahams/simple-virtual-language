@@ -4,42 +4,10 @@
 #include <vector>
 #include <string>
 
+#include "SymbolTable.h"
+#include "LanguageTypes.h"
+
 namespace ast {
-
-    enum class Type {
-        INT,
-        FLOAT,
-        BOOL
-    };
-
-    enum class AssignmentOperator {
-        EQUAL
-    };
-
-    enum class BinaryOperator {
-        PLUS,
-        MINUS,
-        MULTIPLY,
-        DIVIDE,
-        MODULO,
-
-        LOGICAL_OR,
-        LOGICAL_AND,
-
-        EQUAL_EQUAL,
-        NOT_EQUAL,
-
-        LESS_THAN,
-        LESS_THAN_OR_EQUAL,
-        GREATER_THAN,
-        GREATER_THAN_OR_EQUAL,
-    };
-
-    enum class UnaryOperator {
-        PLUS,
-        MINUS,
-        LOGICAL_NOT
-    };
 
     struct ASTNode {
         const size_t line;
@@ -86,30 +54,30 @@ namespace ast {
     };
 
     struct TypeInfo final : ASTNode {
-        const Type type;
+        const compiler::Type type;
 
-        TypeInfo(const size_t line, const size_t column, const Type type) :
+        TypeInfo(const size_t line, const size_t column, const compiler::Type type) :
             ASTNode(line, column), type(type) {}
     };
 
     struct AssignmentOperatorInfo final : ASTNode {
-        const AssignmentOperator assignmentOperator;
+        const compiler::AssignmentOperator assignmentOperator;
 
-        AssignmentOperatorInfo(const size_t line, const size_t column, const AssignmentOperator assignmentOperator) :
+        AssignmentOperatorInfo(const size_t line, const size_t column, const compiler::AssignmentOperator assignmentOperator) :
             ASTNode(line, column), assignmentOperator(assignmentOperator) {}
     };
 
     struct BinaryOperatorInfo final : ASTNode {
-        const BinaryOperator binaryOperator;
+        const compiler::BinaryOperator binaryOperator;
 
-        BinaryOperatorInfo(const size_t line, const size_t column, const BinaryOperator binaryOperator) :
+        BinaryOperatorInfo(const size_t line, const size_t column, const compiler::BinaryOperator binaryOperator) :
             ASTNode(line, column), binaryOperator(binaryOperator) {}
     };
 
     struct UnaryOperatorInfo final : ASTNode {
-        const UnaryOperator unaryOperator;
+        const compiler::UnaryOperator unaryOperator;
 
-        UnaryOperatorInfo(const size_t line, const size_t column, const UnaryOperator unaryOperator) :
+        UnaryOperatorInfo(const size_t line, const size_t column, const compiler::UnaryOperator unaryOperator) :
             ASTNode(line, column), unaryOperator(unaryOperator) {}
     };
 
@@ -196,6 +164,19 @@ namespace ast {
             typeInfo(std::move(typeInfo)),
             identifier(std::move(identifier)),
             optionalInitialiser(std::move(optionalInitialiser)) {}
+    };
+
+    struct Block : Stm {
+        const std::vector<std::unique_ptr<Stm>> statements;
+        mutable compiler::Scope* scope;
+
+        Block(const size_t line,
+                    const size_t column,
+                    std::vector<std::unique_ptr<Stm>> statements,
+                    compiler::Scope* scope) :
+            Stm(line, column),
+            statements(std::move(statements)),
+            scope(scope) {}
     };
 
     struct Program {

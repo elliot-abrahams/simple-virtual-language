@@ -16,6 +16,7 @@ namespace compiler {
 
     private:
         std::unique_ptr<ast::Stm> parseStm() const;
+        std::unique_ptr<ast::Block> parseBlock() const;
         std::unique_ptr<ast::StmVarDecl> parseVarDecl() const;
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
 

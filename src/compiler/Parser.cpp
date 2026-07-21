@@ -22,20 +22,55 @@ std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
 }
 
 /*
- *  statement           = var_decl
+ *  statement           = block
+ *                      | var_decl
  *                      | assignment ;
  */
 std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
     const Token stm = tokeniser->tok();
-    if (stm.kind == TokenKind::INTEGER_TYPE ||
+    switch (stm.kind) {
+        case TokenKind::LCBR: return this->parseBlock();
+
+        case TokenKind::INTEGER_TYPE:
+        case TokenKind::FLOAT_TYPE:
+        case TokenKind::BOOL_TYPE:
+            return this->parseVarDecl();
+
+        case TokenKind::IDENTIFIER: return this->parseAssignment();
+
+        default:
+            this->handleUnexpectedToken(stm);
+    }
+}
+
+/*
+ *  block                       = LCBR, { statement }, RCBR ;
+ */
+std::unique_ptr<ast::Block> compiler::Parser::parseBlock() const {
+    const auto LCBR_Token = this->tokeniser->tok();
+    this->tokeniser->eat(TokenKind::LCBR);
+
+
+    std::vector<std::unique_ptr<ast::Stm>> statements;
+
+    Token stm = tokeniser->tok();
+    while (stm.kind == TokenKind::LCBR ||
+        stm.kind == TokenKind::INTEGER_TYPE ||
         stm.kind == TokenKind::FLOAT_TYPE ||
-        stm.kind == TokenKind::BOOL_TYPE) {
-        return this->parseVarDecl();
+        stm.kind == TokenKind::BOOL_TYPE ||
+        stm.kind == TokenKind::IDENTIFIER) {
+
+        statements.push_back(this->parseStm());
+        stm = tokeniser->tok();
     }
-    if (stm.kind == TokenKind::IDENTIFIER) {
-        return this->parseAssignment();
-    }
-    handleUnexpectedToken(stm);
+
+    this->tokeniser->eat(TokenKind::RCBR);
+    return std::make_unique<ast::Block>(
+        LCBR_Token.line,
+        LCBR_Token.column,
+        std::move(statements),
+        nullptr
+    );
 }
 
 /*
@@ -112,7 +147,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLogicalOrExpression() const {
         std::unique_ptr<ast::BinaryOperatorInfo>  binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
             token.line,
             token.column,
-            ast::BinaryOperator::LOGICAL_OR
+            BinaryOperator::LOGICAL_OR
         );
         this->tokeniser->next();
 
@@ -147,7 +182,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLogicalAndExpression() const {
         std::unique_ptr<ast::BinaryOperatorInfo>  binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
             token.line,
             token.column,
-            ast::BinaryOperator::LOGICAL_AND
+            BinaryOperator::LOGICAL_AND
         );
         this->tokeniser->next();
 
@@ -185,14 +220,14 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseEqualityExpression() const {
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::EQUAL_EQUAL
+                    BinaryOperator::EQUAL_EQUAL
                 );
                 break;
             case TokenKind::NOT_EQUAL:
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::NOT_EQUAL
+                    BinaryOperator::NOT_EQUAL
                 );
                 break;
             default:
@@ -237,28 +272,28 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseComparisonExpression() const {
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::LESS_THAN
+                    BinaryOperator::LESS_THAN
                 );
                 break;
             case TokenKind::LESS_THAN_OR_EQUAL:
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::LESS_THAN_OR_EQUAL
+                    BinaryOperator::LESS_THAN_OR_EQUAL
                 );
                 break;
             case TokenKind::GREATER_THAN:
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::GREATER_THAN
+                    BinaryOperator::GREATER_THAN
                 );
                 break;
             case TokenKind::GREATER_THAN_OR_EQUAL:
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::GREATER_THAN_OR_EQUAL
+                    BinaryOperator::GREATER_THAN_OR_EQUAL
                 );
                 break;
             default:
@@ -300,14 +335,14 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::PLUS
+                    BinaryOperator::PLUS
                 );
                 break;
             case TokenKind::MINUS:
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::MINUS
+                    BinaryOperator::MINUS
                 );
                 break;
             default:
@@ -349,21 +384,21 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::MULTIPLY
+                    BinaryOperator::MULTIPLY
                 );
                 break;
             case TokenKind::DIVIDE:
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::DIVIDE
+                    BinaryOperator::DIVIDE
                 );
                 break;
             case TokenKind::MODULO:
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::BinaryOperator::MODULO
+                    BinaryOperator::MODULO
                 );
                 break;
             default:
@@ -402,7 +437,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
                 unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::UnaryOperator::PLUS
+                    UnaryOperator::PLUS
                 );
                 break;
             }
@@ -410,7 +445,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
                 unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::UnaryOperator::MINUS
+                    UnaryOperator::MINUS
                 );
                 break;
             }
@@ -418,7 +453,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
                 unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
                     token.line,
                     token.column,
-                    ast::UnaryOperator::LOGICAL_NOT
+                    UnaryOperator::LOGICAL_NOT
                 );
                 break;
             }
@@ -515,7 +550,7 @@ ast::TypeInfo compiler::Parser::parseType() const {
             return ast::TypeInfo{
                 type.line,
                 type.column,
-                ast::Type::INT
+                Type::INT
             };
         }
         case TokenKind::FLOAT_TYPE : {
@@ -523,7 +558,7 @@ ast::TypeInfo compiler::Parser::parseType() const {
             return ast::TypeInfo{
                 type.line,
                 type.column,
-                ast::Type::FLOAT
+                Type::FLOAT
             };
         }
         case TokenKind::BOOL_TYPE : {
@@ -531,7 +566,7 @@ ast::TypeInfo compiler::Parser::parseType() const {
             return ast::TypeInfo{
                 type.line,
                 type.column,
-                ast::Type::BOOL
+                Type::BOOL
             };
         }
         default:
@@ -594,7 +629,7 @@ std::unique_ptr<ast::AssignmentOperatorInfo> compiler::Parser::parseAssignmentOp
         return std::make_unique<ast::AssignmentOperatorInfo>(
             assignmentOperator.line,
             assignmentOperator.column,
-            ast::AssignmentOperator::EQUAL
+            AssignmentOperator::EQUAL
         );
     }
     this->handleUnexpectedToken(assignmentOperator);

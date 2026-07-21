@@ -6,6 +6,8 @@ enum class TokenKind {
     SEMI,
     LBR,
     RBR,
+    LCBR,
+    RCBR,
 
     EQUAL,
     PLUS,

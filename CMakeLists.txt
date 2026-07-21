@@ -43,6 +43,7 @@ set(Headers
     src/compiler/SymbolTable.h
     src/compiler/TypeChecker.h
     src/compiler/CodeGenerator.h
+    src/compiler/LanguageTypes.h
 )
 
 set(Sources

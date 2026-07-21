@@ -74,6 +74,18 @@ Token compiler::Tokeniser::readToken() {
             this->setHead(token);
             return token;
         }
+        case '{': {
+            const Token token = Token{TokenKind::LCBR, "{", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
+        case '}': {
+            const Token token = Token{TokenKind::RCBR, "}", this->line, this->column};
+            this->advance();
+            this->setHead(token);
+            return token;
+        }
         case '=': {
             if (this->current + 1 < this->source.size() &&
                 this->source[this->current + 1] == '=') {

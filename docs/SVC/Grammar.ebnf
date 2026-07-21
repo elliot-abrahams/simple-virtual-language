@@ -10,8 +10,11 @@ GRAMMAR RULES
 
 program                     = { statement } ;
 
-statement                   = var_decl
+statement                   = block
+                            | var_decl
                             | assignment ;
+
+block                       = LCBR, { statement }, RCBR ;
 
 var_decl                    = type, IDENTIFIER, [ EQUAL, expression ], SEMI ;
 
@@ -57,6 +60,8 @@ TOKENS
 SEMI                        = ";"
 LBR                         = "("
 RBR                         = ")"
+LCBR                        = "{"
+RCBR                        = "}"
 
 EQUAL                       = "="
 PLUS                        = "+"

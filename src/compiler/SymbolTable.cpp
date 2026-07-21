@@ -2,18 +2,43 @@
 
 compiler::SymbolTable::SymbolTable() {}
 
-void compiler::SymbolTable::declareGlobalVariable(const std::string& identifier, const ast::Type& type, const bool isInitialised) {
-    this->globals.insert(std::make_pair(identifier, Symbol{type, isInitialised}));
+bool compiler::Symbol::isGlobal() const {
+    return this->scope->isGlobalScope();
 }
 
-std::unordered_map<std::string, compiler::Symbol>& compiler::SymbolTable::getGlobalVariables() {
-    return this->globals;
+std::unordered_map<std::string, compiler::Symbol>& compiler::SymbolTable::getGlobalVariables() const {
+    return this->globalScope->symbols;
 }
 
-std::optional<compiler::Symbol*> compiler::SymbolTable::getGlobalVariable(const std::string& identifier) {
-    auto it = this->globals.find(identifier);
-    if (it != this->globals.end()) {
-        return &it->second;
+compiler::Scope* compiler::SymbolTable::enterScope() {
+    ScopeKind scopeKind;
+    Scope* parent;
+    if (this->scopeStack.empty()) {
+        scopeKind = ScopeKind::GLOBAL;
+        parent = nullptr;
+    } else {
+        scopeKind = ScopeKind::BLOCK;
+        parent = this->scopeStack.top();
     }
-    return std::nullopt;
+    const auto scope = new Scope{parent, {}, scopeKind, {}};
+
+    if (parent == nullptr) {
+        this->globalScope = scope;
+    } else {
+        // add new scope to parent scope's list of children
+        this->scopeStack.top()->children.push_back(scope);
+    }
+    this->scopeStack.push(scope);
+    this->scopes.push_back(*scope);
+    return scope;
+}
+
+void compiler::SymbolTable::leaveScope() {
+    this->scopeStack.pop();
+}
+
+void compiler::SymbolTable::assignSlotsToLocalSymbols() const {
+    for (const auto& scope : this->globalScope->children) {
+        scope->assignSlotsToLocalSymbols(-1);
+    }
 }

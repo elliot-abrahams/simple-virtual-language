@@ -13,16 +13,20 @@ namespace compiler {
 
     private:
         void compileProgram(const ast::Program& program);
-        void compileStm(const ast::Stm& stm);
-        void compileStmVarDecl(const ast::StmVarDecl& varDecl);
-        void compileStmAssignment(const ast::StmAssignment& assignment);
+
+        void compileFunctionDeclaration(const std::string& functionIdentifier, const uint8_t numberOfArguments, const uint32_t numberOfLocals);
+        void compilePendingScopeFunctions();
+
+        void compileStm(Scope* scope, const ast::Stm& stm);
+        void compileBlock(const ast::Block& block);
+        void compileStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
+        void compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment);
 
         void compileExpr(const ast::Expr& expr);
         void compileBinaryExpr(const ast::ExprBinaryOperator& expr);
         void compileUnaryExpr(const ast::ExprUnaryOperator& expr);
 
         void compileExprIdentifier(const ast::ExprIdentifier& identifier);
-        void compileVarAccess(const ast::VarAccess& varAccess);
 
         void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
         void compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);
@@ -30,17 +34,21 @@ namespace compiler {
 
         void compileGlobalVariables();
 
-        static std::string typeToString(const ast::Type& type);
+        static std::string typeToString(const Type& type);
 
         std::string generateLabel(const std::string& label);
+        static std::string generateLabelDef(const std::string& label);
+        static std::string generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber);
 
+        void emitWithIndent(const std::string& code);
         void emit(const std::string& code);
-        void emitStartOfDataRegion();
-        void emitLabelDef(const std::string& label);
 
         std::vector<std::string> generatedCode;
         SymbolTable* symbolTable;
         uint32_t labelCounter;
+        uint32_t scopeFunctionCounter;
+
+        std::vector<const ast::Block*> pendingScopeFunctions;
     };
 }
 

@@ -30,6 +30,9 @@ void compiler::Compiler::compile(const std::filesystem::path& path) {
         auto typeChecker = TypeChecker(symbolTable, &path);
         typeChecker.processProgram(*program);
 
+        // assign slots to local symbols
+        symbolTable->assignSlotsToLocalSymbols();
+
         // generate assembly code
         const auto codeGenerator = new CodeGenerator(symbolTable);
         auto code = codeGenerator->generateCode(*program);
