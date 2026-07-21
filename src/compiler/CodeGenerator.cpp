@@ -220,7 +220,18 @@ void compiler::CodeGenerator::compileUnaryExpr(const ast::ExprUnaryOperator& exp
             break;
         }
         case UnaryOperator::LOGICAL_NOT: {
-            this->emitWithIndent("not");
+            const std::string evaluateToTrueLabel = this->generateLabel("evaluate_to_true");
+            const std::string endNotLabel = this->generateLabel("end_not");
+
+            emitWithIndent("jez " + evaluateToTrueLabel);
+            this->emitWithIndent("push ui32 #0");
+            this->emitWithIndent("jmp " + endNotLabel);
+
+            this->emit(generateLabelDefFromLabel(evaluateToTrueLabel));
+            this->emitWithIndent("push ui32 #1");
+
+            this->emit(generateLabelDefFromLabel(endNotLabel));
+
             break;
         }
     }
