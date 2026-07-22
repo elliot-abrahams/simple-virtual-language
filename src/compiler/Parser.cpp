@@ -25,7 +25,8 @@ std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
  *  statement           = block
  *                      | var_decl
  *                      | assignment
- *                      | if_statement ;
+ *                      | if_statement
+ *                      | while_statement ;
  */
 std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
     const Token stm = tokeniser->tok();
@@ -39,6 +40,7 @@ std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
 
         case TokenKind::IDENTIFIER: return this->parseAssignment();
         case TokenKind::IF: return this->parseIfStatement();
+        case TokenKind::WHILE: return this->parseWhileStatement();
 
         default:
             this->handleUnexpectedToken(stm);
@@ -155,6 +157,26 @@ std::unique_ptr<ast::IfStm> compiler::Parser::parseIfStatement() const {
         std::move(elseStm)
     );
 }
+
+/*
+ *  while_statement             = WHILE, LBR, expression, RBR, block ;
+ */
+std::unique_ptr<ast::WhileStm> compiler::Parser::parseWhileStatement() const {
+    const auto token = this->tokeniser->tok();
+    this->tokeniser->next();
+    this->tokeniser->eat(TokenKind::LBR);
+    std::unique_ptr<ast::Expr> condition = this->parseExpr();
+    this->tokeniser->eat(TokenKind::RBR);
+    std::unique_ptr<ast::Block> block = this->parseBlock();
+
+    return std::make_unique<ast::WhileStm>(
+        token.line,
+        token.column,
+        std::move(condition),
+        std::move(block)
+    );
+}
+
 
 /*
  *  expression          = logical_or_expression ;

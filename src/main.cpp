@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Driver.h"
 #include "assembler/Assembler.h"
 #include "vm/VM.h"
@@ -6,18 +8,19 @@
 #include "compiler/Compiler.h"
 
 int main(int argc, char* argv[]) {
+    return Driver::runCLI(argc, argv);
 
-    compiler::Compiler* compiler = new compiler::Compiler();
+    const compiler::Compiler* compiler = new compiler::Compiler();
 
     compiler->compile("../examples/test.sv");
 
+    return 0;
 
-    /*
     // set output to UTF-8
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
-    Assembler* assembler = new Assembler();
+    assembler::Assembler* assembler = new assembler::Assembler();
     auto bytecode = assembler->assemble("../examples/vm-test.svma");
     if (!bytecode.has_value()) {
         return 500;
@@ -33,8 +36,4 @@ int main(int argc, char* argv[]) {
     vm->dumpState();
     delete vm;
     return 0;
-
-    return Driver::runCLI(argc, argv);
-
-    */
 }

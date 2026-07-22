@@ -135,6 +135,19 @@ namespace ast {
             right(std::move(right)) {}
     };
 
+    struct WhileStm final : Stm {
+        const std::unique_ptr<Expr> condition;
+        const std::unique_ptr<Block> block;
+
+        WhileStm(const size_t line,
+                const size_t column,
+                std::unique_ptr<Expr> condition,
+                std::unique_ptr<Block> block) :
+            Stm(line, column),
+            condition(std::move(condition)),
+            block(std::move(block)) {}
+    };
+
     struct IfStm final : Stm {
         const std::unique_ptr<Expr> condition;
         const std::unique_ptr<Block> ifBlock;

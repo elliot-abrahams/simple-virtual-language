@@ -1,5 +1,7 @@
 #include "SemanticAnalyser.h"
 
+#include <algorithm>
+
 #include "../include/Error.h"
 
 compiler::SemanticAnalyser::SemanticAnalyser(SymbolTable* symbolTable, const std::filesystem::path* path) :
@@ -24,6 +26,9 @@ void compiler::SemanticAnalyser::processStm(Scope* scope, const ast::Stm& stm) {
     }
     else if (auto* ifStm = dynamic_cast<const ast::IfStm*>(&stm)) {
         this->processIfStatement(scope, *ifStm);
+    }
+    else if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
+        this->processWhileStatement(scope, *whileStm);
     }
 }
 
@@ -83,23 +88,24 @@ void compiler::SemanticAnalyser::processAssignment(Scope* scope, const ast::StmA
 }
 
 void compiler::SemanticAnalyser::processIfStatement(Scope *scope, const ast::IfStm &ifStm) {
-    const auto conditionType = this->checkExprType(scope, *ifStm.condition);
-
     // ensure condition type is bool
-    if (conditionType != Type::BOOL) {
-        throw TypeError(
-            this->path->string(),
-            ifStm.condition->line,
-            ifStm.condition->column,
-            "Expecting type " + typeToString(Type::BOOL) + " but found " + typeToString(conditionType)
-        );
-    }
+    const auto conditionType = this->checkExprType(scope, *ifStm.condition);
+    this->checkType({Type::BOOL}, conditionType, ifStm.condition->line, ifStm.condition->column);
 
     this->processBlock(*ifStm.ifBlock);
     if (ifStm.condition != nullptr) {
         this->processStm(scope, *ifStm.elseStm);
     }
 }
+
+void compiler::SemanticAnalyser::processWhileStatement(Scope* scope, const ast::WhileStm& whileStm) {
+    // ensure condition type is bool
+    const auto conditionType = this->checkExprType(scope, *whileStm.condition);
+    this->checkType({Type::BOOL}, conditionType, whileStm.condition->line, whileStm.condition->column);
+
+    this->processBlock(*whileStm.block);
+}
+
 
 compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
@@ -139,7 +145,18 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
                 "' to types " + typeToString(leftType) + " and " + typeToString(rightType)
             );
         }
-        return leftType;
+
+        switch (binaryOperator->binaryOperatorInfo->binaryOperator) {
+            case BinaryOperator::PLUS:
+            case BinaryOperator::MINUS:
+            case BinaryOperator::MULTIPLY:
+            case BinaryOperator::DIVIDE:
+            case BinaryOperator::MODULO:
+                return leftType;
+
+            default:
+                return Type::BOOL;
+        }
     }
     if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
         return this->checkExprType(scope, *unaryOperator->expr);
@@ -188,4 +205,26 @@ std::string compiler::SemanticAnalyser::binaryOperatorToString(const BinaryOpera
         case BinaryOperator::GREATER_THAN_OR_EQUAL: return ">=";
     }
 }
+
+void compiler::SemanticAnalyser::checkType(const std::vector<Type>& expectedTypes, const Type &actualType, const size_t line, const size_t column) const {
+    if (std::count(expectedTypes.begin(), expectedTypes.end(), actualType) == 0) {
+
+        std::string string;
+
+        string += "Error: type mismatch";
+        string += "\nExpected: ";
+        for (Type expectedType : expectedTypes) {
+            string += typeToString(expectedType)  + " ";
+        }
+        string += "\nActual: " + typeToString(actualType);
+
+        throw TypeError(
+            this->path->string(),
+            line,
+            column,
+            string
+        );
+    }
+}
+
 

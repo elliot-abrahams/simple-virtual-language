@@ -30,6 +30,7 @@ enum class TokenKind {
 
     IF,
     ELSE,
+    WHILE,
 
     INTEGER_TYPE,
     FLOAT_TYPE,
@@ -78,6 +79,7 @@ struct Token {
 
             case TokenKind::IF: return "if";
             case TokenKind::ELSE: return "else";
+            case TokenKind::WHILE: return "while";
 
             case TokenKind::INTEGER_TYPE: return "int";
             case TokenKind::FLOAT_TYPE: return "float";

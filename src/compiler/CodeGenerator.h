@@ -22,6 +22,7 @@ namespace compiler {
         void compileStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
         void compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment);
         void compileIfStatement(Scope* scope, const ast::IfStm& ifStm);
+        void compileWhileStatement(const ast::WhileStm& whileStm);
 
         void compileExpr(const ast::Expr& expr);
         void compileBinaryExpr(const ast::ExprBinaryOperator& expr);

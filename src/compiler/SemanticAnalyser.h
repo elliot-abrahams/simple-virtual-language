@@ -19,6 +19,7 @@ namespace compiler {
         void processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
         void processAssignment(Scope* scope, const ast::StmAssignment& assignment);
         void processIfStatement(Scope* scope, const ast::IfStm& ifStm);
+        void processWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
 
         Type checkExprType(Scope* scope, const ast::Expr& expr);
 
@@ -26,6 +27,8 @@ namespace compiler {
 
         static std::string typeToString(const Type& type);
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
+
+        void checkType(const std::vector<Type>& expectedTypes, const Type& actualType, const size_t line, const size_t column) const;
 
         SymbolTable* symbolTable;
         const std::filesystem::path *path;

@@ -13,7 +13,8 @@ program                     = { statement } ;
 statement                   = block
                             | var_decl
                             | assignment
-                            | if_statement ;
+                            | if_statement
+                            | while_statement ;
 
 block                       = LCBR, { statement }, RCBR ;
 
@@ -22,6 +23,8 @@ var_decl                    = type, IDENTIFIER, [ EQUAL, expression ], SEMI ;
 assignment                  = var_access, assignment_operator, expression, SEMI ;
 
 if_statement                = IF, LBR, expression, RBR, block, [ ELSE, ( block | if_statement ) ] ;
+
+while_statement             = WHILE, LBR, expression, RBR, block ;
 
 expression                  = logical_or_expression ;
 
@@ -85,6 +88,7 @@ GREATER_THAN_OR_EQUAL       = ">="
 
 IF                          = "if"
 ELSE                        = "else"
+WHILE                       = "while"
 
 INTEGER_TYPE                = "int"
 FLOAT_TYPE                  = "float"

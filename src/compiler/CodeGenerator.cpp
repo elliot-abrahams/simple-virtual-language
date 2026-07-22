@@ -53,6 +53,9 @@ void compiler::CodeGenerator::compileStm(Scope* scope, const ast::Stm& stm) {
     else if (auto* ifStm = dynamic_cast<const ast::IfStm*>(&stm)) {
         this->compileIfStatement(scope, *ifStm);
     }
+    else if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
+        this->compileWhileStatement(*whileStm);
+    }
 }
 
 void compiler::CodeGenerator::compileBlock(const ast::Block& block) {
@@ -113,6 +116,24 @@ void compiler::CodeGenerator::compileIfStatement(Scope* scope, const ast::IfStm&
         emit(generateLabelDefFromLabel(endIfLabel));
     }
 }
+
+void compiler::CodeGenerator::compileWhileStatement(const ast::WhileStm &whileStm) {
+    const std::string startWhileLabel = generateLabel("start_while");
+    const std::string endWhileLabel = generateLabel("end_while");
+
+    emit(generateLabelDefFromLabel(startWhileLabel));
+
+    this->compileExpr(*whileStm.condition);
+
+    // skip block if condition is false
+    emitWithIndent("jez " + endWhileLabel);
+
+    this->compileBlock(*whileStm.block);
+    emitWithIndent("jmp " + startWhileLabel);
+
+    emit(generateLabelDefFromLabel(endWhileLabel));
+}
+
 
 void compiler::CodeGenerator::compileExpr(const ast::Expr& expr) {
     if (auto* integerLiteral = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {

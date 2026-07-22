@@ -236,6 +236,12 @@ Token compiler::Tokeniser::readToken() {
                     return token;
                 }
 
+                if (image == "while") {
+                    const Token token = Token{TokenKind::WHILE, image, this->line, this->column};
+                    this->setHead(token);
+                    return token;
+                }
+
                 if (image == "int") {
                     const Token token = Token{TokenKind::INTEGER_TYPE, image, this->line, this->column};
                     this->setHead(token);
