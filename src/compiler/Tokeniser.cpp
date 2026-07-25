@@ -234,6 +234,15 @@ Token compiler::Tokeniser::readToken() {
                 if (image == "bool") return Token{TokenKind::BOOL_TYPE, image, this->line, this->column};
                 if (image == "true" || image == "false") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column};
 
+                if (image.substr(0,2) == "__") {
+                    throw LexicalError(
+                        this->path->string(),
+                        this->line,
+                        this->column,
+                        "identifier '" + image + "' is invalid. Identifiers starting with '__' are reserved"
+                    );
+                }
+
                 return Token{TokenKind::IDENTIFIER, image, this->line, this->column};
             }
 
