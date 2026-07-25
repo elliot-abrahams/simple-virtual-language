@@ -1,7 +1,9 @@
 #ifndef SVM_TOKENISER_H
 #define SVM_TOKENISER_H
+#include <deque>
 #include <filesystem>
 #include <string_view>
+
 #include "Token.h"
 
 
@@ -12,15 +14,15 @@ namespace compiler {
         Tokeniser(const std::string_view source, const std::filesystem::path* path);
 
         Token tok();
+        Token lookAhead(size_t n);
         std::string eat(const TokenKind& kind);
         void next();
 
     private:
         Token readToken();
         void advance();
-        void setHead(const Token& token);
 
-        Token headToken;
+        std::deque<Token> tokenBuffer;
 
         std::string_view source;
         const std::filesystem::path* path;

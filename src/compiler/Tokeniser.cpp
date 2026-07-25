@@ -9,11 +9,21 @@
 compiler::Tokeniser::Tokeniser(const std::string_view source, const std::filesystem::path* path) :
     source(source), path(path) {
 
-    this->next();
+    this->tokenBuffer.push_back(this->readToken());
 }
 
 Token compiler::Tokeniser::tok() {
-    return this->headToken;
+    if (this->tokenBuffer.empty()) {
+        this->tokenBuffer.push_back(this->readToken());
+    }
+    return this->tokenBuffer[0];
+}
+
+Token compiler::Tokeniser::lookAhead(const size_t n) {
+    while (this->tokenBuffer.size() <= n) {
+        tokenBuffer.push_back(this->readToken());
+    }
+    return this->tokenBuffer[n];
 }
 
 std::string compiler::Tokeniser::eat(const TokenKind& kind) {
@@ -23,7 +33,7 @@ std::string compiler::Tokeniser::eat(const TokenKind& kind) {
             this->path->string(),
             this->line,
             this->column,
-            "expecting " + token.kindToString()
+            "expecting '" + Token{kind}.kindToString() + "' but found '" + token.kindToString() + "'"
         );
     }
     this->next();
@@ -31,7 +41,12 @@ std::string compiler::Tokeniser::eat(const TokenKind& kind) {
 }
 
 void compiler::Tokeniser::next() {
-    this->readToken();
+    if (this->tokenBuffer.empty()) {
+        this->readToken();
+    } else {
+        // remove first token in buffer
+        this->tokenBuffer.pop_front();
+    }
 }
 
 Token compiler::Tokeniser::readToken() {
@@ -47,7 +62,6 @@ Token compiler::Tokeniser::readToken() {
     // check reached end
     if (this->current == this->source.size()) {
         const Token token = Token{TokenKind::END_OF_FILE, " ", this->line, this->column};
-        this->setHead(token);
         return token;
     }
 
@@ -59,31 +73,31 @@ Token compiler::Tokeniser::readToken() {
         case ';': {
             const Token token = Token{TokenKind::SEMI, ";", this->line, this->column};
             this->advance();
-            this->setHead(token);
+            return token;
+        }
+        case ',': {
+            const Token token = Token{TokenKind::COMMA, ",", this->line, this->column};
+            this->advance();
             return token;
         }
         case '(': {
             const Token token = Token{TokenKind::LBR, "(", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case ')': {
             const Token token = Token{TokenKind::RBR, ")", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '{': {
             const Token token = Token{TokenKind::LCBR, "{", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '}': {
             const Token token = Token{TokenKind::RCBR, "}", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '=': {
@@ -93,43 +107,36 @@ Token compiler::Tokeniser::readToken() {
                 const Token token = Token{TokenKind::EQUAL_EQUAL, "==", this->line, this->column};
                 this->advance();
                 this->advance();
-                this->setHead(token);
                 return token;
             }
 
             const Token token = Token{TokenKind::EQUAL, "=", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '+': {
             const Token token = Token{TokenKind::PLUS, "+", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '-': {
             const Token token = Token{TokenKind::MINUS, "-", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '*': {
             const Token token = Token{TokenKind::MULTIPLY, "*", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '/': {
             const Token token = Token{TokenKind::DIVIDE, "/", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '%': {
             const Token token = Token{TokenKind::MODULO, "%", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '|': {
@@ -139,7 +146,6 @@ Token compiler::Tokeniser::readToken() {
                 const Token token = Token{TokenKind::LOGICAL_OR, "||", this->line, this->column};
                 this->advance();
                 this->advance();
-                this->setHead(token);
                 return token;
             }
             throw LexicalError(
@@ -156,7 +162,6 @@ Token compiler::Tokeniser::readToken() {
                 const Token token = Token{TokenKind::LOGICAL_AND, "&&", this->line, this->column};
                 this->advance();
                 this->advance();
-                this->setHead(token);
                 return token;
             }
             throw LexicalError(
@@ -173,13 +178,11 @@ Token compiler::Tokeniser::readToken() {
                 const Token token = Token{TokenKind::NOT_EQUAL, "!=", this->line, this->column};
                 this->advance();
                 this->advance();
-                this->setHead(token);
                 return token;
             }
 
             const Token token = Token{TokenKind::LOGICAL_NOT, "!", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '<': {
@@ -189,13 +192,11 @@ Token compiler::Tokeniser::readToken() {
                 const Token token = Token{TokenKind::LESS_THAN_OR_EQUAL, "<=", this->line, this->column};
                 this->advance();
                 this->advance();
-                this->setHead(token);
                 return token;
                 }
 
             const Token token = Token{TokenKind::LESS_THAN, "<", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         case '>': {
@@ -205,13 +206,11 @@ Token compiler::Tokeniser::readToken() {
                 const Token token = Token{TokenKind::GREATER_THAN_OR_EQUAL, ">=", this->line, this->column};
                 this->advance();
                 this->advance();
-                this->setHead(token);
                 return token;
                 }
 
             const Token token = Token{TokenKind::GREATER_THAN, ">", this->line, this->column};
             this->advance();
-            this->setHead(token);
             return token;
         }
         default: {
@@ -222,53 +221,20 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                 }
 
+                // parse keyword or identifier
                 const std::string image(this->source.substr(this->start, this->current - this->start));
 
-                if (image == "if") {
-                    const Token token = Token{TokenKind::IF, image, this->line, this->column};
-                    this->setHead(token);
-                    return token;
-                }
+                if (image == "if") return Token{TokenKind::IF, image, this->line, this->column};
+                if (image == "else") return Token{TokenKind::ELSE, image, this->line, this->column};
+                if (image == "while") return Token{TokenKind::WHILE, image, this->line, this->column};
+                if (image == "return") return Token{TokenKind::RETURN, image, this->line, this->column};
+                if (image == "int") return Token{TokenKind::INTEGER_TYPE, image, this->line, this->column};
+                if (image == "float") return Token{TokenKind::FLOAT_TYPE, image, this->line, this->column};
+                if (image == "void") return Token{TokenKind::VOID_TYPE, image, this->line, this->column};
+                if (image == "bool") return Token{TokenKind::BOOL_TYPE, image, this->line, this->column};
+                if (image == "true" || image == "false") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column};
 
-                if (image == "else") {
-                    const Token token = Token{TokenKind::ELSE, image, this->line, this->column};
-                    this->setHead(token);
-                    return token;
-                }
-
-                if (image == "while") {
-                    const Token token = Token{TokenKind::WHILE, image, this->line, this->column};
-                    this->setHead(token);
-                    return token;
-                }
-
-                if (image == "int") {
-                    const Token token = Token{TokenKind::INTEGER_TYPE, image, this->line, this->column};
-                    this->setHead(token);
-                    return token;
-                }
-
-                if (image == "float") {
-                    const Token token = Token{TokenKind::FLOAT_TYPE, image, this->line, this->column};
-                    this->setHead(token);
-                    return token;
-                }
-
-                if (image == "bool") {
-                    const Token token = Token{TokenKind::BOOL_TYPE, image, this->line, this->column};
-                    this->setHead(token);
-                    return token;
-                }
-
-                if (image == "true" || image == "false") {
-                    const Token token = Token{TokenKind::BOOL_LITERAL, image, this->line, this->column};
-                    this->setHead(token);
-                    return token;
-                }
-
-                const auto token = Token{TokenKind::IDENTIFIER, image, this->line, this->column};
-                this->setHead(token);
-                return token;
+                return Token{TokenKind::IDENTIFIER, image, this->line, this->column};
             }
 
             if (std::isdigit(currentChar)) {
@@ -309,12 +275,10 @@ Token compiler::Tokeniser::readToken() {
 
                     this->advance();
                     auto token = Token{TokenKind::FLOAT_LITERAL, std::string(source.substr(this->start, this->current - this->start - 1)), this->line, this->column};
-                    this->setHead(token);
                     return token;
                 }
 
                 auto token = Token{TokenKind::INTEGER_LITERAL, std::string(source.substr(this->start, this->current - this->start)), this->line, this->column};
-                this->setHead(token);
                 return token;
             }
 
@@ -332,8 +296,3 @@ void compiler::Tokeniser::advance() {
     this->current++;
     this->column++;
 }
-
-void compiler::Tokeniser::setHead(const Token &token) {
-    this->headToken = token;
-}
-

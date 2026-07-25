@@ -8,13 +8,21 @@ NOTATION:
 GRAMMAR RULES
 =================================================
 
-program                     = { statement } ;
+program                     = { statement | function_decl } ;
+
+function_decl               = ( type | VOID_TYPE ), IDENTIFIER, LBR, [ parameter_list ], RBR, block ;
+
+parameter_list              = parameter, { COMMA, parameter } ;
+
+parameter                   = type, IDENTIFIER ;
 
 statement                   = block
                             | var_decl
                             | assignment
                             | if_statement
-                            | while_statement ;
+                            | while_statement
+                            | function_call_statement
+                            | return_statement ;
 
 block                       = LCBR, { statement }, RCBR ;
 
@@ -25,6 +33,10 @@ assignment                  = var_access, assignment_operator, expression, SEMI 
 if_statement                = IF, LBR, expression, RBR, block, [ ELSE, ( block | if_statement ) ] ;
 
 while_statement             = WHILE, LBR, expression, RBR, block ;
+
+function_call_statement    = function_call, SEMI ;
+
+return_statement            = RETURN, expression, SEMI ;
 
 expression                  = logical_or_expression ;
 
@@ -43,9 +55,14 @@ multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | MODULO )
 unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
                             | primary_expression ;
 
-primary_expression          = literal
+primary_expression          = function_call
                             | var_access
+                            | literal
                             | LBR, expression, RBR ;
+
+function_call               = IDENTIFIER, LBR, [ argument_list ], RBR ;
+
+argument_list               = expression, { COMMA, expression } ;
 
 var_access                  = IDENTIFIER ;
 
@@ -64,6 +81,7 @@ TOKENS
 =================================================
 
 SEMI                        = ";"
+COMMA                       = ","
 LBR                         = "("
 RBR                         = ")"
 LCBR                        = "{"
@@ -89,13 +107,15 @@ GREATER_THAN_OR_EQUAL       = ">="
 IF                          = "if"
 ELSE                        = "else"
 WHILE                       = "while"
+RETURN                      = "return"
 
 INTEGER_TYPE                = "int"
 FLOAT_TYPE                  = "float"
 BOOL_TYPE                   = "bool"
+VOID_TYPE                   = "void"
 
 INTEGER_LITERAL             = "[0-9]+"
 FLOAT_LITERAL               = "[0-9]+\.[0-9]+f"
 BOOL_LITERAL                = "true|false"
 
-IDENTIFIER                  = "[a-zA-z_][a-zA-Z0-9_]*"
+IDENTIFIER                  = "[a-zA-Z_][a-zA-Z0-9_]*"

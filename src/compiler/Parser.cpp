@@ -9,16 +9,104 @@ compiler::Parser::Parser(Tokeniser *tokeniser, const std::filesystem::path* path
     tokeniser(tokeniser), path(path) {}
 
 /*
- *  program             = { statement } ;
+ *  program             = { statement | function_decl } ;
  */
 std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
     std::vector<std::unique_ptr<ast::Stm>> statements;
+    std::vector<std::unique_ptr<ast::FunctionDecl>> functionDecls;
 
     while (this->tokeniser->tok().kind != TokenKind::END_OF_FILE) {
-        statements.push_back(this->parseStm());
+        const Token token = this->tokeniser->tok();
+        switch (token.kind) {
+            case TokenKind::INTEGER_TYPE:
+            case TokenKind::FLOAT_TYPE:
+            case TokenKind::BOOL_TYPE: {
+                // peek 2 tokens ahead
+                // to determine whether to parse varDecl or functionDecl
+                if (this->tokeniser->lookAhead(2).kind == TokenKind::LBR) {
+                    functionDecls.push_back(this->parseFunctionDecl());
+                } else {
+                    statements.push_back(this->parseStm());
+                }
+                break;
+            }
+            case TokenKind::VOID_TYPE:
+                functionDecls.push_back(this->parseFunctionDecl());
+                break;
+
+            case TokenKind::LCBR:
+            case TokenKind::IDENTIFIER:
+            case TokenKind::IF:
+            case TokenKind::WHILE:
+            case TokenKind::RETURN:
+                statements.push_back(this->parseStm());
+                break;
+
+            default:
+                this->handleUnexpectedToken(token);
+        }
     }
 
-    return std::make_unique<ast::Program>(std::move(statements));
+    return std::make_unique<ast::Program>(
+        std::move(statements),
+        std::move(functionDecls)
+    );
+}
+
+/*
+ *  function_decl               = ( type | VOID_TYPE ), IDENTIFIER, LBR, [ parameter_list ], RBR, block ;
+ */
+std::unique_ptr<ast::FunctionDecl> compiler::Parser::parseFunctionDecl() const {
+    std::unique_ptr<ast::TypeInfo> returnType = this->parseType();
+    std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
+    this->tokeniser->eat(TokenKind::LBR);
+
+    std::vector<std::unique_ptr<ast::Parameter>> parameterList;
+    if (this->tokeniser->tok().kind != TokenKind::RBR) {
+        parameterList = this->parseParameterList();
+    }
+
+    this->tokeniser->eat(TokenKind::RBR);
+    std::unique_ptr<ast::Block> block = this->parseBlock();
+
+    return std::make_unique<ast::FunctionDecl>(
+        returnType->line,
+        returnType->column,
+        std::move(returnType),
+        std::move(identifier),
+        std::move(parameterList),
+        std::move(block)
+    );
+}
+
+/*
+ *  parameter_list              = parameter, { COMMA, parameter } ;
+ */
+std::vector<std::unique_ptr<ast::Parameter>> compiler::Parser::parseParameterList() const {
+    std::vector<std::unique_ptr<ast::Parameter>> parameterList;
+
+    parameterList.push_back(this->parseParameter());
+
+    while (this->tokeniser->tok().kind == TokenKind::COMMA) {
+        this->tokeniser->next();
+        parameterList.push_back(this->parseParameter());
+    }
+    return parameterList;
+}
+
+/*
+ *  parameter                   = type, IDENTIFIER ;
+ */
+std::unique_ptr<ast::Parameter> compiler::Parser::parseParameter() const {
+    std::unique_ptr<ast::TypeInfo> type = this->parseType();
+    std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
+
+    return std::make_unique<ast::Parameter>(
+        type->line,
+        type->column,
+        std::move(type),
+        std::move(identifier)
+    );
 }
 
 /*
@@ -26,7 +114,9 @@ std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
  *                      | var_decl
  *                      | assignment
  *                      | if_statement
- *                      | while_statement ;
+ *                      | while_statement
+ *                      | function_call_statement
+ *                      | return_statement ;
  */
 std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
     const Token stm = tokeniser->tok();
@@ -38,9 +128,15 @@ std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
         case TokenKind::BOOL_TYPE:
             return this->parseVarDecl();
 
-        case TokenKind::IDENTIFIER: return this->parseAssignment();
+        case TokenKind::IDENTIFIER: {
+            if (this->tokeniser->lookAhead(1).kind == TokenKind::LBR) {
+                return this->parseFunctionCallStatement();
+            }
+            return this->parseAssignment();
+        }
         case TokenKind::IF: return this->parseIfStatement();
         case TokenKind::WHILE: return this->parseWhileStatement();
+        case TokenKind::RETURN: return this->parseReturnStatement();
 
         default:
             this->handleUnexpectedToken(stm);
@@ -54,16 +150,10 @@ std::unique_ptr<ast::Block> compiler::Parser::parseBlock() const {
     const auto LCBR_Token = this->tokeniser->tok();
     this->tokeniser->eat(TokenKind::LCBR);
 
-
     std::vector<std::unique_ptr<ast::Stm>> statements;
 
     Token stm = tokeniser->tok();
-    while (stm.kind == TokenKind::LCBR ||
-        stm.kind == TokenKind::INTEGER_TYPE ||
-        stm.kind == TokenKind::FLOAT_TYPE ||
-        stm.kind == TokenKind::BOOL_TYPE ||
-        stm.kind == TokenKind::IDENTIFIER) {
-
+    while (stm.kind != TokenKind::RCBR) {
         statements.push_back(this->parseStm());
         stm = tokeniser->tok();
     }
@@ -81,17 +171,17 @@ std::unique_ptr<ast::Block> compiler::Parser::parseBlock() const {
  *  var_decl            = type, IDENTIFIER, [ EQUAL, expression ], SEMI ;
  */
 std::unique_ptr<ast::StmVarDecl> compiler::Parser::parseVarDecl() const {
-    ast::TypeInfo type = this->parseType();
-    ast::Identifier identifier = this->parseIdentifier();
+    std::unique_ptr<ast::TypeInfo> type = this->parseType();
+    std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
 
     // varDecl DOES NOT have an initialiser
     if (this->tokeniser->tok().kind != TokenKind::EQUAL) {
         this->tokeniser->eat(TokenKind::SEMI);
         return std::make_unique<ast::StmVarDecl>(
-            type.line,
-            type.column,
-            type,
-            identifier,
+            type->line,
+            type->column,
+            std::move(type),
+            std::move(identifier),
             nullptr
         );
     }
@@ -102,10 +192,10 @@ std::unique_ptr<ast::StmVarDecl> compiler::Parser::parseVarDecl() const {
     this->tokeniser->eat(TokenKind::SEMI);
 
     return std::make_unique<ast::StmVarDecl>(
-        type.line,
-        type.column,
-        type,
-        identifier,
+        type->line,
+        type->column,
+        std::move(type),
+        std::move(identifier),
         std::move(optionalInitialiser)
     );
 }
@@ -177,6 +267,35 @@ std::unique_ptr<ast::WhileStm> compiler::Parser::parseWhileStatement() const {
     );
 }
 
+/*
+ *  function_call_statement    = function_call, SEMI ;
+ */
+std::unique_ptr<ast::FunctionCallStm> compiler::Parser::parseFunctionCallStatement() const {
+    std::unique_ptr<ast::FunctionCall> functionCall = this->parseFunctionCall();
+    this->tokeniser->eat(TokenKind::SEMI);
+
+    return std::make_unique<ast::FunctionCallStm>(
+        functionCall->line,
+        functionCall->column,
+        std::move(functionCall)
+    );
+}
+
+/*
+ *  return_statement            = RETURN, expression, SEMI ;
+ */
+std::unique_ptr<ast::ReturnStm> compiler::Parser::parseReturnStatement() const {
+    const Token token = this->tokeniser->tok();
+    this->tokeniser->next();
+    std::unique_ptr<ast::Expr> returnExpression = this->parseExpr();
+    this->tokeniser->eat(TokenKind::SEMI);
+
+    return std::make_unique<ast::ReturnStm>(
+        token.line,
+        token.column,
+        std::move(returnExpression)
+    );
+}
 
 /*
  *  expression          = logical_or_expression ;
@@ -526,38 +645,85 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
 }
 
 /*
- *  primary_expression          = literal
+ *  primary_expression          = function_call
  *                              | var_access
+ *                              | literal
  *                              | LBR, expression, RBR ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
     const Token primaryExpression = this->tokeniser->tok();
-    if (primaryExpression.kind == TokenKind::INTEGER_LITERAL ||
-        primaryExpression.kind == TokenKind::FLOAT_LITERAL ||
-        primaryExpression.kind == TokenKind::BOOL_LITERAL) {
-        return this->parseLiteral();
+
+    switch (primaryExpression.kind) {
+        case TokenKind::INTEGER_LITERAL:
+        case TokenKind::FLOAT_LITERAL:
+        case TokenKind::BOOL_LITERAL:
+            return this->parseLiteral();
+
+        case TokenKind::IDENTIFIER: {
+            if (this->tokeniser->lookAhead(1).kind == TokenKind::LBR) {
+                return this->parseFunctionCall();
+            }
+            return this->parseExprIdentifier();
+        }
+
+        case TokenKind::LBR: {
+            this->tokeniser->next();
+            auto expr = this->parseExpr();
+            this->tokeniser->eat(TokenKind::RBR);
+            return expr;
+        }
+
+            default:
+            this->handleUnexpectedToken(primaryExpression);
     }
-    if (primaryExpression.kind == TokenKind::IDENTIFIER) {
-        return this->parseExprIdentifier();
+}
+
+/*
+ *  function_call               = IDENTIFIER, LBR, [ argument_list ], RBR ;
+ */
+std::unique_ptr<ast::FunctionCall> compiler::Parser::parseFunctionCall() const {
+    std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
+    this->tokeniser->eat(TokenKind::LBR);
+
+    std::vector<std::unique_ptr<ast::Expr>> argumentList;
+    if (this->tokeniser->tok().kind != TokenKind::RBR) {
+        argumentList = this->parseArgumentList();
     }
-    if (primaryExpression.kind == TokenKind::LBR) {
+
+    this->tokeniser->eat(TokenKind::RBR);
+
+    return std::make_unique<ast::FunctionCall>(
+        identifier->line,
+        identifier->column,
+        std::move(identifier),
+        std::move(argumentList)
+    );
+}
+
+/*
+ *  argument_list               = expression, { COMMA, expression } ;
+ */
+std::vector<std::unique_ptr<ast::Expr>> compiler::Parser::parseArgumentList() const {
+    std::vector<std::unique_ptr<ast::Expr>> argumentList;
+
+    argumentList.push_back(this->parseExpr());
+
+    while(this->tokeniser->tok().kind == TokenKind::COMMA) {
         this->tokeniser->next();
-        auto expr = this->parseExpr();
-        this->tokeniser->eat(TokenKind::RBR);
-        return expr;
+        argumentList.push_back(this->parseExpr());
     }
-    this->handleUnexpectedToken(primaryExpression);
+    return argumentList;
 }
 
 /*
  * IDENTIFIER
  */
 std::unique_ptr<ast::VarAccess> compiler::Parser::parseVarAccess() const {
-    const ast::Identifier identifier = this->parseIdentifier();
+    std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
     return std::make_unique<ast::VarAccess>(
-        identifier.line,
-        identifier.column,
-        identifier
+        identifier->line,
+        identifier->column,
+        std::move(identifier)
     );
 }
 
@@ -578,15 +744,15 @@ std::unique_ptr<ast::ExprIdentifier> compiler::Parser::parseExprIdentifier() con
 /*
  *  IDENTIFIER
  */
-ast::Identifier compiler::Parser::parseIdentifier() const {
+std::unique_ptr<ast::Identifier> compiler::Parser::parseIdentifier() const {
     const Token identifier = this->tokeniser->tok();
     if (identifier.kind == TokenKind::IDENTIFIER) {
         this->tokeniser->next();
-        return ast::Identifier{
+        return std::make_unique<ast::Identifier>(
             identifier.line,
             identifier.column,
             identifier.image
-        };
+        );
     }
     this->handleUnexpectedToken(identifier);
 }
@@ -594,35 +760,37 @@ ast::Identifier compiler::Parser::parseIdentifier() const {
 /*
  *  type                = INTEGER_TYPE
  *                      | FLOAT_TYPE
- *                      | BOOL_TYPE ;
+ *                      | BOOL_TYPE
+ *                      | VOID_TYPE ;
  */
-ast::TypeInfo compiler::Parser::parseType() const {
+std::unique_ptr<ast::TypeInfo> compiler::Parser::parseType() const {
     const Token type = this->tokeniser->tok();
+    this->tokeniser->next();
     switch (type.kind) {
-        case TokenKind::INTEGER_TYPE : {
-            this->tokeniser->next();
-            return ast::TypeInfo{
+        case TokenKind::INTEGER_TYPE :
+            return std::make_unique<ast::TypeInfo>(
                 type.line,
                 type.column,
                 Type::INT
-            };
-        }
-        case TokenKind::FLOAT_TYPE : {
-            this->tokeniser->next();
-            return ast::TypeInfo{
+            );
+        case TokenKind::FLOAT_TYPE :
+            return std::make_unique<ast::TypeInfo>(
                 type.line,
                 type.column,
                 Type::FLOAT
-            };
-        }
-        case TokenKind::BOOL_TYPE : {
-            this->tokeniser->next();
-            return ast::TypeInfo{
+            );
+        case TokenKind::BOOL_TYPE :
+            return std::make_unique<ast::TypeInfo> (
                 type.line,
                 type.column,
                 Type::BOOL
-            };
-        }
+            );
+        case TokenKind::VOID_TYPE :
+            return std::make_unique<ast::TypeInfo> (
+                type.line,
+                type.column,
+                Type::VOID
+            );
         default:
             this->handleUnexpectedToken(type);
     }

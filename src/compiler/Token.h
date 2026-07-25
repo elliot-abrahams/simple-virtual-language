@@ -4,6 +4,7 @@
 
 enum class TokenKind {
     SEMI,
+    COMMA,
     LBR,
     RBR,
     LCBR,
@@ -31,10 +32,12 @@ enum class TokenKind {
     IF,
     ELSE,
     WHILE,
+    RETURN,
 
     INTEGER_TYPE,
     FLOAT_TYPE,
     BOOL_TYPE,
+    VOID_TYPE,
 
     INTEGER_LITERAL,
     FLOAT_LITERAL,
@@ -55,8 +58,11 @@ struct Token {
     inline std::string kindToString() const {
         switch (this->kind) {
             case TokenKind::SEMI: return ";";
+            case TokenKind::COMMA: return ",";
             case TokenKind::LBR: return "(";
             case TokenKind::RBR: return ")";
+            case TokenKind::LCBR: return "{";
+            case TokenKind::RCBR: return "}";
 
             case TokenKind::EQUAL: return "=";
             case TokenKind::PLUS: return "+";
@@ -80,10 +86,12 @@ struct Token {
             case TokenKind::IF: return "if";
             case TokenKind::ELSE: return "else";
             case TokenKind::WHILE: return "while";
+            case TokenKind::RETURN: return "return";
 
             case TokenKind::INTEGER_TYPE: return "int";
             case TokenKind::FLOAT_TYPE: return "float";
             case TokenKind::BOOL_TYPE: return "bool";
+            case TokenKind::VOID_TYPE: return "void";
 
             case TokenKind::INTEGER_LITERAL: return "integer literal";
             case TokenKind::FLOAT_LITERAL: return "float literal";

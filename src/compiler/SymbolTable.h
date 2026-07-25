@@ -1,12 +1,14 @@
 #ifndef SVM_SYMBOLTABLE_H
 #define SVM_SYMBOLTABLE_H
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <optional>
 #include <stack>
 #include <unordered_map>
 #include <vector>
 
+#include "AST.h"
 #include "LanguageTypes.h"
 
 
@@ -23,9 +25,15 @@ namespace compiler {
         bool isGlobal() const;
     };
 
+    struct FunctionSymbol {
+        const Type returnType;
+        const std::vector<Type> parameterTypes;
+    };;
+
     enum class ScopeKind {
         GLOBAL,
-        BLOCK
+        BLOCK,
+        FUNCTION
     };
 
     struct Scope {
@@ -40,9 +48,22 @@ namespace compiler {
         }
 
         std::optional<Symbol*> lookup(const std::string& identifier) {
+            // search in this scope's symbols
             auto it = this->symbols.find(identifier);
             if (it != this->symbols.end()) {
+                // symbol found in current scope
                 return &it->second;
+            }
+
+            if (this->isFunctionScope()) {
+                // don't look up symbols outside the current function scope, except in the global scope
+                Scope* scopeToCheck = this->parent;
+                // search for global scope
+                while (!scopeToCheck->isGlobalScope()) {
+                    scopeToCheck = scopeToCheck->parent;
+                }
+                // lookup symbol in global scope
+                return scopeToCheck->lookup(identifier);
             }
             if (this->isGlobalScope()) {
                 return std::nullopt;
@@ -68,10 +89,6 @@ namespace compiler {
             return slots;
         }
 
-        bool isGlobalScope() const {
-            return this->kind == ScopeKind::GLOBAL;
-        }
-
         void assignSlotsToLocalSymbols(const int startingSlot) {
             int currentSlot = startingSlot;
             for (auto& symbol : this->symbols) {
@@ -83,15 +100,29 @@ namespace compiler {
                 child->assignSlotsToLocalSymbols(currentSlot);
             }
         }
+
+        bool isGlobalScope() const {
+            return this->kind == ScopeKind::GLOBAL;
+        }
+
+        bool isFunctionScope() const {
+            return this->kind == ScopeKind::FUNCTION;
+        }
     };
 
     class SymbolTable {
     public:
         SymbolTable();
 
+        void declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
+
+        const FunctionSymbol* getFunctionSymbol(const std::string& functionIdentifier) const;
+        const FunctionSymbol* getCurrentFunctionSymbol() const;
+
         std::unordered_map<std::string, Symbol>& getGlobalVariables() const;
 
         Scope* enterScope();
+        Scope* enterFunctionScope(const std::string& functionIdentifier);
         void leaveScope();
 
         void assignSlotsToLocalSymbols() const;
@@ -102,6 +133,11 @@ namespace compiler {
 
         std::vector<Scope> scopes;
         std::stack<Scope*> scopeStack;
+
+        std::unordered_map<std::string, FunctionSymbol> functions;
+        std::stack<FunctionSymbol*> functionSymbolStack;
+
+        Scope* getCurrentFunctionScope();
     };
 }
 

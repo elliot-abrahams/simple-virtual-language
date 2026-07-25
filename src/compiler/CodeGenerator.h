@@ -14,7 +14,7 @@ namespace compiler {
     private:
         void compileProgram(const ast::Program& program);
 
-        void compileFunctionDeclaration(const std::string& functionIdentifier, const uint8_t numberOfArguments, const uint32_t numberOfLocals);
+        void compileFunctionDeclaration(const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefualtReturn);
         void compilePendingScopeFunctions();
 
         void compileStm(Scope* scope, const ast::Stm& stm);
@@ -23,11 +23,14 @@ namespace compiler {
         void compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment);
         void compileIfStatement(Scope* scope, const ast::IfStm& ifStm);
         void compileWhileStatement(const ast::WhileStm& whileStm);
+        void compileFunctionCallStatement(const ast::FunctionCallStm& functionCallStm);
+        void compileReturnStatement(const ast::ReturnStm& returnStm);
 
         void compileExpr(const ast::Expr& expr);
         void compileBinaryExpr(const ast::ExprBinaryOperator& expr);
         void compileUnaryExpr(const ast::ExprUnaryOperator& expr);
 
+        void compileFunctionCall(const ast::FunctionCall& functionCall);
         void compileExprIdentifier(const ast::ExprIdentifier& identifier);
 
         void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);

@@ -5,7 +5,6 @@ compiler::CodeGenerator::CodeGenerator(SymbolTable* symbolTable) :
 
 std::vector<std::string> compiler::CodeGenerator::generateCode(const ast::Program& program) {
     this->compileProgram(program);
-    this->compilePendingScopeFunctions();
     this->compileGlobalVariables();
     return this->generatedCode;
 }
@@ -16,12 +15,34 @@ void compiler::CodeGenerator::compileProgram(const ast::Program& program) {
     }
     this->emitWithIndent("halt");
     this->emit("");
+
+    this->compilePendingScopeFunctions();
+    for (auto& functionDecl : program.functionDecls) {
+        this->compileFunctionDeclaration(
+            functionDecl->identifier->name,
+            *functionDecl->body,
+            functionDecl->parameters.size(),
+            functionDecl->body->scope->calculateNumberOfLocalSlots(),
+            functionDecl->returnTypeInfo->type == Type::VOID
+        );
+    }
 }
 
-void compiler::CodeGenerator::compileFunctionDeclaration(const std::string &functionIdentifier, const uint8_t numberOfArguments, const uint32_t numberOfLocals) {
+void compiler::CodeGenerator::compileFunctionDeclaration(const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefualtReturn) {
+    // compile function header
     this->emit("def $" + functionIdentifier + ":");
     this->emitWithIndent("args " + std::to_string(numberOfArguments));
     this->emitWithIndent("locals " + std::to_string(numberOfLocals));
+    this->emit("");
+
+    // compile body
+    for (const auto& stm : body.statements) {
+        this->compileStm(body.scope, *stm);
+    }
+
+    if (includeDefualtReturn) {
+        this->emitWithIndent("ret");
+    }
     this->emit("");
 }
 
@@ -29,14 +50,13 @@ void compiler::CodeGenerator::compilePendingScopeFunctions() {
     for (int scopeCounter = 0; scopeCounter < this->pendingScopeFunctions.size(); scopeCounter++) {
         const auto block = this->pendingScopeFunctions.at(scopeCounter);
         // compile a function declaration for this scope
-        this->compileFunctionDeclaration(generateScopeFunctionIdentifier(scopeCounter), 0, block->scope->calculateNumberOfLocalSlots());
-
-        for (const auto& stm : block->statements) {
-            this->compileStm(this->symbolTable->globalScope, *stm);
-        }
-
-        emitWithIndent("ret");
-        emit("");
+        this->compileFunctionDeclaration(
+            generateScopeFunctionIdentifier(scopeCounter),
+            *block,
+            0,
+            block->scope->calculateNumberOfLocalSlots(),
+            true
+        );
     }
 }
 
@@ -56,6 +76,12 @@ void compiler::CodeGenerator::compileStm(Scope* scope, const ast::Stm& stm) {
     else if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
         this->compileWhileStatement(*whileStm);
     }
+    else if (auto* functionCallStm = dynamic_cast<const ast::FunctionCallStm*>(&stm)) {
+        this->compileFunctionCallStatement(*functionCallStm);
+    }
+    else if (auto* returnStm = dynamic_cast<const ast::ReturnStm*>(&stm)) {
+        this->compileReturnStatement(*returnStm);
+    }
 }
 
 void compiler::CodeGenerator::compileBlock(const ast::Block& block) {
@@ -74,10 +100,10 @@ void compiler::CodeGenerator::compileStmVarDecl(Scope* scope, const ast::StmVarD
     if (varDecl.optionalInitialiser != nullptr) {
         this->compileExpr(*varDecl.optionalInitialiser);
 
-        const auto symbol = scope->lookup(varDecl.identifier.name).value();
+        const auto symbol = scope->lookup(varDecl.identifier->name).value();
 
         if (symbol->isGlobal()) {
-            this->emitWithIndent("storeG $" + varDecl.identifier.name);
+            this->emitWithIndent("storeG $" + varDecl.identifier->name);
         } else {
             this->emitWithIndent("storeL #" + std::to_string(symbol->localSlot));
         }
@@ -87,10 +113,10 @@ void compiler::CodeGenerator::compileStmVarDecl(Scope* scope, const ast::StmVarD
 void compiler::CodeGenerator::compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment) {
     this->compileExpr(*assignment.expression);
 
-    const auto symbol = scope->lookup(assignment.varAccess->identifier.name).value();
+    const auto symbol = scope->lookup(assignment.varAccess->identifier->name).value();
 
     if (symbol->isGlobal()) {
-        this->emitWithIndent("storeG $" + assignment.varAccess->identifier.name);
+        this->emitWithIndent("storeG $" + assignment.varAccess->identifier->name);
     } else {
         this->emitWithIndent("storeL #" + std::to_string(symbol->localSlot));
     }
@@ -134,6 +160,14 @@ void compiler::CodeGenerator::compileWhileStatement(const ast::WhileStm &whileSt
     emit(generateLabelDefFromLabel(endWhileLabel));
 }
 
+void compiler::CodeGenerator::compileFunctionCallStatement(const ast::FunctionCallStm &functionCallStm) {
+    this->compileFunctionCall(*functionCallStm.functionCall);
+}
+
+void compiler::CodeGenerator::compileReturnStatement(const ast::ReturnStm &returnStm) {
+    this->compileExpr(*returnStm.returnExpression);
+    this->emitWithIndent("ret");
+}
 
 void compiler::CodeGenerator::compileExpr(const ast::Expr& expr) {
     if (auto* integerLiteral = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
@@ -153,6 +187,9 @@ void compiler::CodeGenerator::compileExpr(const ast::Expr& expr) {
     }
     if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
         this->compileUnaryExpr(*unaryExpr);
+    }
+    if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
+        this->compileFunctionCall(*functionCall);
     }
 }
 
@@ -282,6 +319,15 @@ void compiler::CodeGenerator::compileUnaryExpr(const ast::ExprUnaryOperator& exp
             break;
         }
     }
+}
+
+void compiler::CodeGenerator::compileFunctionCall(const ast::FunctionCall& functionCall) {
+    // compile arguments
+    for (auto& argument : functionCall.arguments) {
+        this->compileExpr(*argument);
+    }
+
+    this->emitWithIndent("call $" + functionCall.identifier->name);
 }
 
 void compiler::CodeGenerator::compileExprIdentifier(const ast::ExprIdentifier& identifier) {

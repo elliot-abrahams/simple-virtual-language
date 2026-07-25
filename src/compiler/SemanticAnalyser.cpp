@@ -9,67 +9,154 @@ compiler::SemanticAnalyser::SemanticAnalyser(SymbolTable* symbolTable, const std
 
 void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
     Scope* globalScope = this->symbolTable->enterScope(); // generate global scope
+    // process global varDecls
+    for (auto& stm : program.statements) {
+        if (auto* varDecl = dynamic_cast<const ast::StmVarDecl*>(stm.get())) {
+            this->declareGlobalStmVarDecl(globalScope, *varDecl);
+        }
+    }
+
+    // process function declarations
+    for (auto& functionDecl : program.functionDecls) {
+        this->processFunctionDecl(*functionDecl);
+    }
+
+    // process function bodies
+    for (auto& functionDecl : program.functionDecls) {
+        const auto semanticAnalysisResult = this->processFunctionBody(*functionDecl->body, functionDecl->identifier->name);
+
+        // check function body always reaches returnStm if return type is non-void
+        if (functionDecl->returnTypeInfo->type != Type::VOID &&
+            !semanticAnalysisResult.alwaysReturns
+        ) {
+            throw SemanticError(
+                this->path->string(),
+                functionDecl->line,
+                functionDecl->column,
+                "function '" + functionDecl->identifier->name + "'" + "may not return a value on all paths"
+            );
+        }
+    }
+
+    // process statements
     for (auto& stm : program.statements) {
         this->processStm(globalScope, *stm);
     }
 }
 
-void compiler::SemanticAnalyser::processStm(Scope* scope, const ast::Stm& stm) {
+void compiler::SemanticAnalyser::declareGlobalStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
+    scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
+}
+
+void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& functionDecl) {
+    // declare function in symbol table
+    const std::vector<Type> parameterTypes = this->processParameterList(functionDecl.parameters);
+    this->symbolTable->declareFunction(functionDecl.identifier->name, functionDecl.returnTypeInfo->type, parameterTypes);
+}
+
+std::vector<compiler::Type> compiler::SemanticAnalyser::processParameterList(const std::vector<std::unique_ptr<ast::Parameter> > &parameterList) {
+    std::vector<Type> parameterTypes;
+
+    for (auto& parameter : parameterList) {
+        parameterTypes.push_back(parameter->typeInfo->type);
+    }
+    return parameterTypes;
+}
+
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStm(Scope* scope, const ast::Stm& stm) {
     if (auto* varDecl = dynamic_cast<const ast::StmVarDecl*>(&stm)) {
-        this->processStmVarDecl(scope, *varDecl);
+        return this->processStmVarDecl(scope, *varDecl);
     }
-    else if (auto* assignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
-        this->processAssignment(scope, *assignment);
+    if (auto* assignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
+        return this->processAssignment(scope, *assignment);
     }
-    else if (auto* block = dynamic_cast<const ast::Block*>(&stm)) {
-        this->processBlock(*block);
+    if (auto* block = dynamic_cast<const ast::Block*>(&stm)) {
+        return this->processBlock(*block);
     }
-    else if (auto* ifStm = dynamic_cast<const ast::IfStm*>(&stm)) {
-        this->processIfStatement(scope, *ifStm);
+    if (auto* ifStm = dynamic_cast<const ast::IfStm*>(&stm)) {
+        return this->processIfStatement(scope, *ifStm);
     }
-    else if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
-        this->processWhileStatement(scope, *whileStm);
+    if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
+        return this->processWhileStatement(scope, *whileStm);
+    }
+    if (auto* functionCallStm = dynamic_cast<const ast::FunctionCallStm*>(&stm)) {
+        return this->processFunctionCallStatement(scope, *functionCallStm);
+    }
+    if (auto* returnStm = dynamic_cast<const ast::ReturnStm*>(&stm)) {
+        return this->processReturnStatement(scope, *returnStm);
     }
 }
 
-void compiler::SemanticAnalyser::processBlock(const ast::Block& block) {
-    const auto newScope = this->symbolTable->enterScope();
-    block.scope = newScope;
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBlock(const ast::Block& block) {
+    Scope* newScope = this->symbolTable->enterScope();
+    block.scope = newScope; // set scope of block
 
+    bool alwaysReturns = false;
+
+    // process each statement inside the block
     for (auto& stm : block.statements) {
-        this->processStm(block.scope, *stm);
+        const auto semanticAnalysisResult = this->processStm(block.scope, *stm);
+        if (alwaysReturns == false && semanticAnalysisResult.alwaysReturns) {
+            alwaysReturns = true;
+        }
     }
-    this->symbolTable->leaveScope();
+    this->symbolTable->leaveScope(); // leave scope after block is processed
+
+    return SemanticAnalysisResult{alwaysReturns};
 }
 
-void compiler::SemanticAnalyser::processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
-    if (varDecl.optionalInitialiser == nullptr) {
-       scope->declareSymbol(varDecl.identifier.name, varDecl.typeInfo.type, 0, false);
-        return;
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionBody(const ast::Block& block, const std::string& functionIdentifier) {
+    Scope* newScope = this->symbolTable->enterFunctionScope(functionIdentifier);
+    block.scope = newScope; // set scope of block
+
+    bool alwaysReturns = false;
+
+    // process each statement inside the block
+    for (auto& stm : block.statements) {
+        const auto semanticAnalysisResult = this->processStm(block.scope, *stm);
+        if (alwaysReturns == false && semanticAnalysisResult.alwaysReturns) {
+            alwaysReturns = true;
+        }
     }
-    // declare global (as uninitialised)
-    scope->declareSymbol(varDecl.identifier.name, varDecl.typeInfo.type, 0, false);
+    this->symbolTable->leaveScope(); // leave scope after block is processed
+
+    return SemanticAnalysisResult{alwaysReturns};
+}
+
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
+    // if scope is global -> symbol has already been declared on first pass of semantic analysis
+    if (!scope->isGlobalScope()) {
+        // declare symbol (as uninitialised)
+        scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
+    }
+
+    // if var decl does not have an initialiser
+    if (varDecl.optionalInitialiser == nullptr) {
+        return SemanticAnalysisResult{false};
+    }
+
     // check type of expr
     const auto initializerType = this->checkExprType(scope, *varDecl.optionalInitialiser);
     // set symbol as initialised after checking optional initialiser (prevents self initialisation)
-    scope->lookup(varDecl.identifier.name).value()->isInitialised = true;
+    scope->lookup(varDecl.identifier->name).value()->isInitialised = true;
 
-    if (initializerType != varDecl.typeInfo.type) {
+    if (initializerType != varDecl.typeInfo->type) {
         throw TypeError(
             this->path->string(),
             varDecl.optionalInitialiser->line,
             varDecl.optionalInitialiser->column,
-            "cannot initialise '" + varDecl.identifier.name + "' with expression of different type."
+            "cannot initialise '" + varDecl.identifier->name + "' with expression of different type."
         );
     }
+    return SemanticAnalysisResult{false};
 }
 
-void compiler::SemanticAnalyser::processAssignment(Scope* scope, const ast::StmAssignment& assignment) {
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(Scope* scope, const ast::StmAssignment& assignment) {
     auto identifierSymbol = this->checkSymbolIsDefined(
         scope,
-        assignment.varAccess->identifier.name,
-        assignment.varAccess->identifier.line,
-        assignment.varAccess->identifier.column
+        assignment.varAccess->identifier->name,
+        assignment.varAccess->identifier->line,
+        assignment.varAccess->identifier->column
     );
 
     const auto exprType = this->checkExprType(scope, *assignment.expression);
@@ -85,27 +172,59 @@ void compiler::SemanticAnalyser::processAssignment(Scope* scope, const ast::StmA
 
     // update isInitialised of identifier in symbol table
     identifierSymbol->isInitialised = true;
+    return SemanticAnalysisResult{false};
 }
 
-void compiler::SemanticAnalyser::processIfStatement(Scope *scope, const ast::IfStm &ifStm) {
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processIfStatement(Scope *scope, const ast::IfStm &ifStm) {
     // ensure condition type is bool
     const auto conditionType = this->checkExprType(scope, *ifStm.condition);
     this->checkType({Type::BOOL}, conditionType, ifStm.condition->line, ifStm.condition->column);
 
-    this->processBlock(*ifStm.ifBlock);
-    if (ifStm.condition != nullptr) {
-        this->processStm(scope, *ifStm.elseStm);
+    const bool ifBlockAlwaysReturns = this->processBlock(*ifStm.ifBlock).alwaysReturns;
+
+    if (ifStm.elseStm != nullptr) {
+        const bool elseBlockAlwaysReturns = this->processStm(scope, *ifStm.elseStm).alwaysReturns;
+        return SemanticAnalysisResult{ifBlockAlwaysReturns && elseBlockAlwaysReturns};
     }
+    return SemanticAnalysisResult{false};
 }
 
-void compiler::SemanticAnalyser::processWhileStatement(Scope* scope, const ast::WhileStm& whileStm) {
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processWhileStatement(Scope* scope, const ast::WhileStm& whileStm) {
     // ensure condition type is bool
     const auto conditionType = this->checkExprType(scope, *whileStm.condition);
     this->checkType({Type::BOOL}, conditionType, whileStm.condition->line, whileStm.condition->column);
 
     this->processBlock(*whileStm.block);
+    return SemanticAnalysisResult{false};
 }
 
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCallStatement(Scope *scope, const ast::FunctionCallStm &functionCallStm) {
+    this->checkExprType(scope, *functionCallStm.functionCall);
+    return SemanticAnalysisResult{false};
+}
+
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatement(Scope *scope, const ast::ReturnStm &returnStm) {
+    const auto currentFunctionSymbol = this->symbolTable->getCurrentFunctionSymbol();
+    if (currentFunctionSymbol == nullptr) {
+        throw SemanticError(
+            this->path->string(),
+            returnStm.line,
+            returnStm.column,
+            "return statement exists outside of a function"
+            );
+    }
+    const Type type = this->checkExprType(scope, *returnStm.returnExpression);
+
+    if (type != currentFunctionSymbol->returnType) {
+        throw TypeError(
+            this->path->string(),
+            returnStm.line,
+            returnStm.column,
+            "return type mismatch: expected '" + typeToString(currentFunctionSymbol->returnType) + "', got '" + typeToString(type) + "'"
+        );
+    }
+    return SemanticAnalysisResult{true};
+}
 
 compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
@@ -161,7 +280,52 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
     if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
         return this->checkExprType(scope, *unaryOperator->expr);
     }
+    if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
+        // get return type of the function that is called
+        const FunctionSymbol* function = this->symbolTable->getFunctionSymbol(functionCall->identifier->name);
+
+        // function not defined
+        if (function == nullptr) {
+            throw SemanticError(
+                this->path->string(),
+                functionCall->line,
+                functionCall->column,
+                "function '" + functionCall->identifier->name + "' is undefined"
+            );
+        }
+
+        // process function arguments
+        this->processFunctionCall(scope, function, *functionCall);
+
+        return function->returnType;
+    }
     throw std::runtime_error("Unknown expression type");
+}
+
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall(Scope *scope, const FunctionSymbol* functionSymbol, const ast::FunctionCall &functionCall) {
+
+    if (functionCall.arguments.size() != functionSymbol->parameterTypes.size()) {
+        throw SemanticError(
+            this->path->string(),
+            functionCall.line,
+            functionCall.column,
+            "function expects " + std::to_string(functionSymbol->parameterTypes.size()) + " parameters, got " + std::to_string(functionCall.arguments.size())
+        );
+    }
+
+    for (int argIndex = 0; argIndex < functionCall.arguments.size(); argIndex++) {
+        const auto& argument = functionCall.arguments[argIndex];
+        Type argType = checkExprType(scope, *argument);
+        if (argType != functionSymbol->parameterTypes.at(argIndex)) {
+            throw SemanticError(
+                this->path->string(),
+                argument->line,
+                argument->column,
+                "provided type " + typeToString(argType) + ", expecting " + typeToString(functionSymbol->parameterTypes.at(argIndex))
+            );
+        }
+    }
+    return SemanticAnalysisResult{false};
 }
 
 compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) {

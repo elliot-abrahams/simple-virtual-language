@@ -6,7 +6,8 @@ namespace compiler {
     enum class Type {
         INT,
         FLOAT,
-        BOOL
+        BOOL,
+        VOID
     };
 
     enum class AssignmentOperator {

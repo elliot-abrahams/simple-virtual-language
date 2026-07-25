@@ -7,6 +7,10 @@
 #include "SymbolTable.h"
 #include "LanguageTypes.h"
 
+namespace compiler {
+    struct Scope;
+}
+
 namespace ast {
     struct Block;
 
@@ -99,11 +103,24 @@ namespace ast {
     };
 
     struct VarAccess final : ASTNode {
-        const Identifier identifier;
+        const std::unique_ptr<Identifier> identifier;
 
-        VarAccess(const size_t line, const size_t column, const Identifier& identifier) :
+        VarAccess(const size_t line, const size_t column, std::unique_ptr<Identifier> identifier) :
             ASTNode(line, column),
-            identifier(identifier) {}
+            identifier(std::move(identifier)) {}
+    };
+
+    struct FunctionCall final : Expr {
+        const std::unique_ptr<Identifier> identifier;
+        const std::vector<std::unique_ptr<Expr>> arguments;
+
+        FunctionCall(const size_t line,
+                    const size_t column,
+                    std::unique_ptr<Identifier> identifier,
+                    std::vector<std::unique_ptr<Expr>> arguments) :
+            Expr(line, column),
+            identifier(std::move(identifier)),
+            arguments(std::move(arguments)) {}
     };
 
     struct ExprUnaryOperator final : Expr {
@@ -133,6 +150,26 @@ namespace ast {
             left(std::move(left)),
             binaryOperatorInfo(std::move(binaryOperatorInfo)),
             right(std::move(right)) {}
+    };
+
+    struct ReturnStm final : Stm {
+        const std::unique_ptr<Expr> returnExpression;
+
+        ReturnStm(const size_t line,
+                const size_t column,
+                std::unique_ptr<Expr> returnExpression) :
+            Stm(line, column),
+            returnExpression(std::move(returnExpression)) {}
+    };
+
+    struct FunctionCallStm final : Stm {
+        const std::unique_ptr<FunctionCall> functionCall;
+
+        FunctionCallStm(const size_t line,
+                    const size_t column,
+                    std::unique_ptr<FunctionCall> functionCall) :
+            Stm(line, column),
+            functionCall(std::move(functionCall)) {}
     };
 
     struct WhileStm final : Stm {
@@ -181,14 +218,14 @@ namespace ast {
     };
 
     struct StmVarDecl final : Stm {
-        const TypeInfo typeInfo;
-        const Identifier identifier;
+        const std::unique_ptr<TypeInfo> typeInfo;
+        const std::unique_ptr<Identifier> identifier;
         const std::unique_ptr<Expr> optionalInitialiser;
 
         StmVarDecl(const size_t line,
                     const size_t column,
-                    TypeInfo typeInfo,
-                    Identifier identifier,
+                    std::unique_ptr<TypeInfo> typeInfo,
+                    std::unique_ptr<Identifier> identifier,
                     std::unique_ptr<Expr> optionalInitialiser) :
             Stm(line, column),
             typeInfo(std::move(typeInfo)),
@@ -209,11 +246,46 @@ namespace ast {
             scope(scope) {}
     };
 
-    struct Program {
-        std::vector<std::unique_ptr<Stm>> statements;
+    struct Parameter final : ASTNode {
+        const std::unique_ptr<TypeInfo> typeInfo;
+        const std::unique_ptr<Identifier> identifier;
 
-        explicit Program(std::vector<std::unique_ptr<Stm>> statements) :
-            statements(std::move(statements)) {}
+        Parameter(const size_t line,
+                const size_t column,
+                std::unique_ptr<TypeInfo> typeInfo,
+                std::unique_ptr<Identifier> identifier) :
+            ASTNode(line, column),
+            typeInfo(std::move(typeInfo)),
+            identifier(std::move(identifier)) {}
+    };
+
+    struct FunctionDecl final : ASTNode {
+        const std::unique_ptr<TypeInfo> returnTypeInfo;
+        const std::unique_ptr<Identifier> identifier;
+        const std::vector<std::unique_ptr<Parameter>> parameters;
+        const std::unique_ptr<Block> body;
+
+        FunctionDecl(const size_t line,
+                    const size_t column,
+                    std::unique_ptr<TypeInfo> returnTypeInfo,
+                    std::unique_ptr<Identifier> identifier,
+                    std::vector<std::unique_ptr<Parameter>> parameters,
+                    std::unique_ptr<Block> block) :
+            ASTNode(line, column),
+            returnTypeInfo(std::move(returnTypeInfo)),
+            identifier(std::move(identifier)),
+            parameters(std::move(parameters)),
+            body(std::move(block)) {}
+    };
+
+    struct Program {
+        const std::vector<std::unique_ptr<Stm>> statements;
+        const std::vector<std::unique_ptr<FunctionDecl>> functionDecls;
+
+        explicit Program(std::vector<std::unique_ptr<Stm>> statements,
+                        std::vector<std::unique_ptr<FunctionDecl>> functionDecls) :
+            statements(std::move(statements)),
+            functionDecls(std::move(functionDecls)){}
     };
 
 }

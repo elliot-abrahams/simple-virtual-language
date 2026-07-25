@@ -7,6 +7,11 @@
 
 
 namespace compiler {
+
+    struct SemanticAnalysisResult {
+        bool alwaysReturns = false;
+    };
+
     class SemanticAnalyser {
     public:
         SemanticAnalyser(SymbolTable* symbolTable, const std::filesystem::path* filePath);
@@ -14,20 +19,27 @@ namespace compiler {
         void processProgram(const ast::Program& program);
 
     private:
-        void processStm(Scope* scope, const ast::Stm& stm);
-        void processBlock(const ast::Block& block);
-        void processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
-        void processAssignment(Scope* scope, const ast::StmAssignment& assignment);
-        void processIfStatement(Scope* scope, const ast::IfStm& ifStm);
-        void processWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
+        void declareGlobalStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
+        void processFunctionDecl(const ast::FunctionDecl& functionDecl);
+        std::vector<Type> processParameterList(const std::vector<std::unique_ptr<ast::Parameter>>& parameterList);
+
+        SemanticAnalysisResult processStm(Scope* scope, const ast::Stm& stm);
+        SemanticAnalysisResult processBlock(const ast::Block& block);
+        SemanticAnalysisResult processFunctionBody(const ast::Block& block, const std::string& functionIdentifier);
+        SemanticAnalysisResult processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
+        SemanticAnalysisResult processAssignment(Scope* scope, const ast::StmAssignment& assignment);
+        SemanticAnalysisResult processIfStatement(Scope* scope, const ast::IfStm& ifStm);
+        SemanticAnalysisResult processWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
+        SemanticAnalysisResult processFunctionCallStatement(Scope* scope, const ast::FunctionCallStm& functionCallStm);
+        SemanticAnalysisResult processReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
 
         Type checkExprType(Scope* scope, const ast::Expr& expr);
+        SemanticAnalysisResult processFunctionCall(Scope* scope, const FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall);
 
         Symbol* checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column);
 
         static std::string typeToString(const Type& type);
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
-
         void checkType(const std::vector<Type>& expectedTypes, const Type& actualType, const size_t line, const size_t column) const;
 
         SymbolTable* symbolTable;

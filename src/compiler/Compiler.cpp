@@ -27,8 +27,8 @@ void compiler::Compiler::compile(const std::filesystem::path& path) {
         const auto symbolTable = new SymbolTable();
 
         // build symbol table and type check the program
-        auto typeChecker = SemanticAnalyser(symbolTable, &path);
-        typeChecker.processProgram(*program);
+        auto semanticAnalyser = SemanticAnalyser(symbolTable, &path);
+        semanticAnalyser.processProgram(*program);
 
         // assign slots to local symbols
         symbolTable->assignSlotsToLocalSymbols();

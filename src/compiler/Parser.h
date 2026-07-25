@@ -15,12 +15,18 @@ namespace compiler {
         std::unique_ptr<ast::Program> parseProgram() const;
 
     private:
+        std::unique_ptr<ast::FunctionDecl> parseFunctionDecl() const;
+        std::vector<std::unique_ptr<ast::Parameter>> parseParameterList() const;
+        std::unique_ptr<ast::Parameter> parseParameter() const;
+
         std::unique_ptr<ast::Stm> parseStm() const;
         std::unique_ptr<ast::Block> parseBlock() const;
         std::unique_ptr<ast::StmVarDecl> parseVarDecl() const;
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
         std::unique_ptr<ast::IfStm> parseIfStatement() const;
         std::unique_ptr<ast::WhileStm> parseWhileStatement() const;
+        std::unique_ptr<ast::FunctionCallStm> parseFunctionCallStatement() const;
+        std::unique_ptr<ast::ReturnStm> parseReturnStatement() const;
 
         std::unique_ptr<ast::Expr> parseExpr() const;
         std::unique_ptr<ast::Expr> parseLogicalOrExpression() const;
@@ -31,11 +37,13 @@ namespace compiler {
         std::unique_ptr<ast::Expr> parseMultiplicativeExpression() const;
         std::unique_ptr<ast::Expr> parseUnaryExpression() const;
         std::unique_ptr<ast::Expr> parsePrimaryExpression() const;
+        std::unique_ptr<ast::FunctionCall> parseFunctionCall() const;
+        std::vector<std::unique_ptr<ast::Expr>> parseArgumentList() const;
         std::unique_ptr<ast::VarAccess> parseVarAccess() const;
         std::unique_ptr<ast::ExprIdentifier> parseExprIdentifier() const;
 
-        ast::Identifier parseIdentifier() const;
-        ast::TypeInfo parseType() const;
+        std::unique_ptr<ast::Identifier> parseIdentifier() const;
+        std::unique_ptr<ast::TypeInfo> parseType() const;
         std::unique_ptr<ast::Expr> parseLiteral() const;
         std::unique_ptr<ast::AssignmentOperatorInfo> parseAssignmentOperator() const;
 
