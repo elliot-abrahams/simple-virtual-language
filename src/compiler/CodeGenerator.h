@@ -1,5 +1,7 @@
 #ifndef SVM_CODEGENERATOR_H
 #define SVM_CODEGENERATOR_H
+#include <unordered_set>
+
 #include "AST.h"
 #include "SymbolTable.h"
 
@@ -37,6 +39,7 @@ namespace compiler {
         void compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);
         void compileExprBoolLiteral(const ast::ExprBoolLiteral& boolLiteral);
 
+        void compileBuiltinFunctions();
         void compileGlobalVariables();
 
         static std::string typeToString(const Type& type);
@@ -54,6 +57,7 @@ namespace compiler {
         uint32_t scopeFunctionCounter;
 
         std::vector<const ast::Block*> pendingScopeFunctions;
+        std::unordered_set<BuiltinId> calledBuiltins;
     };
 }
 

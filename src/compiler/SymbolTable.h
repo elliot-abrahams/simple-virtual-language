@@ -1,6 +1,5 @@
 #ifndef SVM_SYMBOLTABLE_H
 #define SVM_SYMBOLTABLE_H
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <optional>
@@ -9,6 +8,7 @@
 #include <vector>
 
 #include "LanguageTypes.h"
+#include "BuiltinFunctions.h"
 
 
 namespace compiler {
@@ -28,6 +28,8 @@ namespace compiler {
         std::string label;
         const Type returnType;
         const std::vector<Type> parameterTypes;
+
+        const BuiltinId builtinId;
     };;
 
     enum class ScopeKind {
@@ -115,6 +117,7 @@ namespace compiler {
         SymbolTable();
 
         bool declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
+        void declareBuiltinFunction(const BuiltinId builtinId, const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
 
         FunctionSymbol* getFunctionSymbol(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes);
         const FunctionSymbol* getCurrentFunctionSymbol() const;

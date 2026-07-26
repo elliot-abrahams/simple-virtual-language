@@ -14,7 +14,7 @@ bool compiler::Symbol::isGlobal() const {
 bool compiler::SymbolTable::declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes) {
     if (this->functions.find(functionIdentifier) == this->functions.end()) {
         // function with the same identifier has not been initialised
-        this->functions.insert(std::make_pair(functionIdentifier, std::vector{FunctionSymbol{"", returnType, parameterTypes}}));
+        this->functions.insert(std::make_pair(functionIdentifier, std::vector{FunctionSymbol{"", returnType, parameterTypes, BuiltinId::NONE}}));
         return true;
     }
     // function with the same identifier has already been initialised
@@ -40,9 +40,19 @@ bool compiler::SymbolTable::declareFunction(const std::string& functionIdentifie
     }
 
     if (validSignature) {
-        this->functions.at(functionIdentifier).push_back(FunctionSymbol{"", returnType, parameterTypes});
+        this->functions.at(functionIdentifier).push_back(FunctionSymbol{"", returnType, parameterTypes, BuiltinId::NONE});
     }
     return validSignature;
+}
+
+void compiler::SymbolTable::declareBuiltinFunction(const BuiltinId builtinId, const std::string &functionIdentifier, const Type &returnType, const std::vector<Type> &parameterTypes) {
+    const auto newFunctionSymbol = FunctionSymbol{"", returnType, parameterTypes, builtinId};
+    if (this->functions.find(functionIdentifier) == this->functions.end()) {
+        // function with the same identifier has not been initialised
+        this->functions.insert(std::make_pair(functionIdentifier, std::vector{newFunctionSymbol}));
+    } else {
+        this->functions.at(functionIdentifier).push_back(newFunctionSymbol);
+    }
 }
 
 compiler::FunctionSymbol* compiler::SymbolTable::getFunctionSymbol(const std::string &functionIdentifier, const std::vector<Type>& parameterTypes) {

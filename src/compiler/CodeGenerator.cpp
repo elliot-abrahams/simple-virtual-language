@@ -7,6 +7,7 @@ compiler::CodeGenerator::CodeGenerator(SymbolTable* symbolTable) :
 
 std::vector<std::string> compiler::CodeGenerator::generateCode(const ast::Program& program) {
     this->compileProgram(program);
+    this->compileBuiltinFunctions();
     this->compileGlobalVariables();
     return this->generatedCode;
 }
@@ -335,8 +336,14 @@ void compiler::CodeGenerator::compileFunctionCall(const ast::FunctionCall& funct
     for (auto& argument : functionCall.arguments) {
         this->compileExpr(*argument);
     }
-
-    this->emitWithIndent("call " + functionCall.functionSymbol->label);
+    if (functionCall.functionSymbol->builtinId == BuiltinId::NONE) {
+        // function is user-defined
+        this->emitWithIndent("call " + functionCall.functionSymbol->label);
+    } else {
+        // function is builtin
+        this->emitWithIndent("call " + BuiltinFunctions::getBuiltinFunctionLabel(functionCall.functionSymbol->builtinId));
+        this->calledBuiltins.insert(functionCall.functionSymbol->builtinId);
+    }
 }
 
 void compiler::CodeGenerator::compileExprIdentifier(const ast::ExprIdentifier& identifier) {
@@ -355,6 +362,26 @@ void compiler::CodeGenerator::compileExprBoolLiteral(const ast::ExprBoolLiteral&
     std::string emittedCode = "push ui32 #";
     emittedCode.append(boolLiteral.value ? "1" : "0");
     this->emitWithIndent(emittedCode);
+}
+
+void compiler::CodeGenerator::compileBuiltinFunctions() {
+    for (const auto& builtinFunctionId : this->calledBuiltins) {
+        BuiltinFunction* builtinFunction = BuiltinFunctions::getBuiltinFunction(builtinFunctionId);
+
+        // compile function def
+        this->emit("def " + builtinFunction->functionLabel + ":");
+
+        // compile method metadata
+        this->emitWithIndent("args " + std::to_string(builtinFunction->numberOfArguments));
+        this->emitWithIndent("locals " + std::to_string(builtinFunction->numberOfLocals));
+
+        this->emit("");
+        // compile method body
+        for (const auto& assembly : builtinFunction->functionBodyAssembly) {
+            this->emitWithIndent(assembly);
+        }
+        this->emit("");
+    }
 }
 
 void compiler::CodeGenerator::compileGlobalVariables() {

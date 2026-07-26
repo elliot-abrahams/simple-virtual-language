@@ -34,9 +34,9 @@ namespace compiler {
         SemanticAnalysisResult processReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
 
         Type checkExprType(Scope* scope, const ast::Expr& expr);
-        SemanticAnalysisResult processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes);
+        SemanticAnalysisResult processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
 
-        Symbol* checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column);
+        Symbol* checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) const;
 
         static std::string typeToString(const Type& type);
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);

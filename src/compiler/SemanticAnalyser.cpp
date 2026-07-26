@@ -341,7 +341,7 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
     throw std::runtime_error("Unknown expression type");
 }
 
-compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall &functionCall, const std::vector<Type>& argumentTypes) {
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall &functionCall, const std::vector<Type>& argumentTypes) const {
     if (functionSymbol == nullptr) { // if function is not defined
         std::string errorMsg = "function '";
         errorMsg += functionCall.identifier->name + "(";
@@ -370,7 +370,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall
     return SemanticAnalysisResult{false};
 }
 
-compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) {
+compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) const {
     auto symbol = scope->lookup(identifier);
     if (!symbol.has_value()) {
         throw TypeError(

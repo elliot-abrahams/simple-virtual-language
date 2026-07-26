@@ -8,6 +8,7 @@
 #include "SemanticAnalyser.h"
 #include "CodeGenerator.h"
 #include "../Driver.h"
+#include "BuiltinFunctions.h"
 
 
 compiler::Compiler::Compiler() {}
@@ -25,6 +26,9 @@ void compiler::Compiler::compile(const std::filesystem::path& path) {
         const std::unique_ptr<ast::Program> program = parser->parseProgram();
 
         const auto symbolTable = new SymbolTable();
+
+        // add builtin functions to symbol table
+        BuiltinFunctions::registerBuiltinFunctions(*symbolTable);
 
         // build symbol table and type check the program
         auto semanticAnalyser = SemanticAnalyser(symbolTable, &path);
