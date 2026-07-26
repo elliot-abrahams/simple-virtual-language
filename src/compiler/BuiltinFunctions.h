@@ -45,9 +45,9 @@ namespace compiler {
                 1,
                 0,
                 {
-                "loadL i32 #1",
-                "out i32",
-                "ret"
+                "        loadL i32 #1",
+                "        out i32",
+                "        ret"
             }}},
 
             {BuiltinId::PRINT_FLOAT, BuiltinFunction{
@@ -55,9 +55,9 @@ namespace compiler {
                 1,
                 0,
                 {
-                "loadL f32 #1",
-                "out f32",
-                "ret"
+                "        loadL f32 #1",
+                "        out f32",
+                "        ret"
             }}},
 
             {BuiltinId::PRINT_BOOL, BuiltinFunction{
@@ -65,9 +65,9 @@ namespace compiler {
                 1,
                 0,
                 {
-                "loadL ui32 #1",
-                "out ui32", // TODO: change to string "true" / "false"
-                "ret"
+                "        loadL ui32 #1",
+                "        out ui32", // TODO: change to string "true" / "false"
+                "        ret"
             }}}
         };
     };

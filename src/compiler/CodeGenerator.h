@@ -24,16 +24,16 @@ namespace compiler {
         void compileStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
         void compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment);
         void compileIfStatement(Scope* scope, const ast::IfStm& ifStm);
-        void compileWhileStatement(const ast::WhileStm& whileStm);
-        void compileFunctionCallStatement(const ast::FunctionCallStm& functionCallStm);
-        void compileReturnStatement(const ast::ReturnStm& returnStm);
+        void compileWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
+        void compileFunctionCallStatement(Scope* scope, const ast::FunctionCallStm& functionCallStm);
+        void compileReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
 
-        void compileExpr(const ast::Expr& expr);
-        void compileBinaryExpr(const ast::ExprBinaryOperator& expr);
-        void compileUnaryExpr(const ast::ExprUnaryOperator& expr);
+        void compileExpr(Scope* scope, const ast::Expr& expr);
+        void compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& expr);
+        void compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr);
 
-        void compileFunctionCall(const ast::FunctionCall& functionCall);
-        void compileExprIdentifier(const ast::ExprIdentifier& identifier);
+        void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
+        void compileExprIdentifier(Scope* scope, const ast::ExprIdentifier& identifier);
 
         void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
         void compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);
@@ -48,7 +48,8 @@ namespace compiler {
         static std::string generateLabelDefFromLabel(const std::string& label);
         static std::string generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber);
 
-        void emitWithIndent(const std::string& code);
+        void emitWithDoubleIndent(const std::string& assembly);
+        void emitWithSingleIndent(const std::string& assembly);
         void emit(const std::string& code);
 
         std::vector<std::string> generatedCode;

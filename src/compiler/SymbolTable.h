@@ -1,6 +1,5 @@
 #ifndef SVM_SYMBOLTABLE_H
 #define SVM_SYMBOLTABLE_H
-#include <memory>
 #include <string>
 #include <optional>
 #include <stack>
@@ -22,6 +21,7 @@ namespace compiler {
         mutable bool isInitialised;
 
         bool isGlobal() const;
+        bool isArgument() const;
     };
 
     struct FunctionSymbol {
@@ -74,9 +74,13 @@ namespace compiler {
             return this->parent->lookup(identifier);
         }
 
-        uint32_t calculateNumberOfLocalSlots(const uint32_t currentSlots = 0) const
-        {
-            const uint32_t maxLocalSlots = currentSlots + symbols.size();
+        uint32_t calculateNumberOfLocalSlots(const uint32_t currentSlots = 0) const {
+            uint32_t maxLocalSlots = 0;
+            for (const auto& symbol : this->symbols) {
+                if (!symbol.second.isArgument()) {
+                    maxLocalSlots++;
+                }
+            }
 
             uint32_t slots = maxLocalSlots;
 
@@ -94,6 +98,9 @@ namespace compiler {
         void assignSlotsToLocalSymbols(const int startingSlot) {
             int currentSlot = startingSlot;
             for (auto& symbol : this->symbols) {
+                if (symbol.second.isArgument()) {
+                    continue;
+                }
                 symbol.second.localSlot = currentSlot;
                 currentSlot--;
             }

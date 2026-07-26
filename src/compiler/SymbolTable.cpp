@@ -11,6 +11,10 @@ bool compiler::Symbol::isGlobal() const {
     return this->scope->isGlobalScope();
 }
 
+bool compiler::Symbol::isArgument() const {
+    return this->localSlot > 0;
+}
+
 bool compiler::SymbolTable::declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes) {
     if (this->functions.find(functionIdentifier) == this->functions.end()) {
         // function with the same identifier has not been initialised

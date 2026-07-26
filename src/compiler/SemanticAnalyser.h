@@ -25,7 +25,7 @@ namespace compiler {
 
         SemanticAnalysisResult processStm(Scope* scope, const ast::Stm& stm);
         SemanticAnalysisResult processBlock(const ast::Block& block);
-        SemanticAnalysisResult processFunctionBody(const ast::Block& block, const std::string& functionIdentifier, FunctionSymbol* functionSymbol);
+        SemanticAnalysisResult processFunctionBody(const ast::FunctionDecl& functionDecl, FunctionSymbol* functionSymbol);
         SemanticAnalysisResult processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
         SemanticAnalysisResult processAssignment(Scope* scope, const ast::StmAssignment& assignment);
         SemanticAnalysisResult processIfStatement(Scope* scope, const ast::IfStm& ifStm);

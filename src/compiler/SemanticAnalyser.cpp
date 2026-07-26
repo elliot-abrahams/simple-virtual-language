@@ -30,7 +30,7 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
         }
         auto functionSymbol = this->symbolTable->getFunctionSymbol(functionDecl->identifier->name, parameterTypes);
 
-        const auto semanticAnalysisResult = this->processFunctionBody(*functionDecl->body, functionDecl->identifier->name, functionSymbol);
+        const auto semanticAnalysisResult = this->processFunctionBody(*functionDecl, functionSymbol);
 
         // check function body always reaches returnStm if return type is non-void
         if (functionDecl->returnTypeInfo->type != Type::VOID &&
@@ -150,15 +150,20 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBlock(const 
     return SemanticAnalysisResult{alwaysReturns};
 }
 
-compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionBody(const ast::Block& block, const std::string& functionIdentifier, FunctionSymbol* functionSymbol) {
-    Scope* newScope = this->symbolTable->enterFunctionScope(functionIdentifier, functionSymbol);
-    block.scope = newScope; // set scope of block
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionBody(const ast::FunctionDecl& functionDecl, FunctionSymbol* functionSymbol) {
+    Scope* newScope = this->symbolTable->enterFunctionScope(functionDecl.identifier->name, functionSymbol);
+    functionDecl.body->scope = newScope; // set scope of block
+
+    // add parameters to the list of symbols in newScope
+    for (int parameterIndex = 0; parameterIndex < functionDecl.parameters.size(); parameterIndex++) {
+        newScope->declareSymbol(functionDecl.parameters[parameterIndex]->identifier->name, functionDecl.parameters[parameterIndex]->typeInfo->type, parameterIndex + 1, true);
+    }
 
     bool alwaysReturns = false;
 
     // process each statement inside the block
-    for (auto& stm : block.statements) {
-        const auto semanticAnalysisResult = this->processStm(block.scope, *stm);
+    for (auto& stm : functionDecl.body->statements) {
+        const auto semanticAnalysisResult = this->processStm(functionDecl.body->scope, *stm);
         if (alwaysReturns == false && semanticAnalysisResult.alwaysReturns) {
             alwaysReturns = true;
         }
