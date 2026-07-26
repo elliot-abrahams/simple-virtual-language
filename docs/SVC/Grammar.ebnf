@@ -36,7 +36,7 @@ while_statement             = WHILE, LBR, expression, RBR, block ;
 
 function_call_statement    = function_call, SEMI ;
 
-return_statement            = RETURN, expression, SEMI ;
+return_statement            = RETURN, [ expression ], SEMI ;
 
 expression                  = logical_or_expression ;
 

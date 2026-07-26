@@ -282,12 +282,15 @@ std::unique_ptr<ast::FunctionCallStm> compiler::Parser::parseFunctionCallStateme
 }
 
 /*
- *  return_statement            = RETURN, expression, SEMI ;
+ *  return_statement            = RETURN, [ expression ], SEMI ;
  */
 std::unique_ptr<ast::ReturnStm> compiler::Parser::parseReturnStatement() const {
     const Token token = this->tokeniser->tok();
     this->tokeniser->next();
-    std::unique_ptr<ast::Expr> returnExpression = this->parseExpr();
+    std::unique_ptr<ast::Expr> returnExpression = nullptr;
+    if (this->tokeniser->tok().kind != TokenKind::SEMI) {
+        returnExpression = this->parseExpr();
+    }
     this->tokeniser->eat(TokenKind::SEMI);
 
     return std::make_unique<ast::ReturnStm>(

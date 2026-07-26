@@ -263,16 +263,42 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
             "return statement exists outside of a function"
         );
     }
-    const Type type = this->checkExprType(scope, *returnStm.returnExpression);
 
-    if (type != currentFunctionSymbol->returnType) {
-        throw TypeError(
-            this->path->string(),
-            returnStm.line,
-            returnStm.column,
-            "return type mismatch: expected '" + typeToString(currentFunctionSymbol->returnType) + "', got '" + typeToString(type) + "'"
-        );
+    if (returnStm.returnExpression == nullptr) { // return has no expression
+        if (currentFunctionSymbol->returnType != Type::VOID) {
+            throw SemanticError(
+                this->path->string(),
+                returnStm.line,
+                returnStm.column,
+                "non-void function must return a value"
+            );
+        }
+    } else {
+        // return has expression
+
+        const Type type = this->checkExprType(scope, *returnStm.returnExpression);
+
+        if (currentFunctionSymbol->returnType == Type::VOID) { // function return type is void
+            if (returnStm.returnExpression != nullptr) { // return has an expression
+                throw SemanticError(
+                    this->path->string(),
+                    returnStm.line,
+                    returnStm.column,
+                    "cannot return an expression from a void function"
+                );
+            }
+        }
+
+        if (type != currentFunctionSymbol->returnType) {
+            throw TypeError(
+                this->path->string(),
+                returnStm.line,
+                returnStm.column,
+                "return type mismatch: expected '" + typeToString(currentFunctionSymbol->returnType) + "', got '" + typeToString(type) + "'"
+            );
+        }
     }
+
     return SemanticAnalysisResult{true};
 }
 

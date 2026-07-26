@@ -64,8 +64,8 @@ set(Sources
     src/compiler/SymbolTable.cpp
     src/compiler/SemanticAnalyser.cpp
     src/compiler/CodeGenerator.cpp
-        src/compiler/BuiltinFunctions.cpp
-        src/compiler/BuiltinFunctions.h
+    src/compiler/BuiltinFunctions.cpp
+    src/compiler/BuiltinFunctions.h
 )
 
 add_library(${This} STATIC ${Sources} ${Headers})

@@ -175,7 +175,9 @@ void compiler::CodeGenerator::compileFunctionCallStatement(Scope* scope, const a
 }
 
 void compiler::CodeGenerator::compileReturnStatement(Scope* scope, const ast::ReturnStm &returnStm) {
-    this->compileExpr(scope, *returnStm.returnExpression);
+    if (returnStm.returnExpression != nullptr) {
+        this->compileExpr(scope, *returnStm.returnExpression);
+    }
     this->emitWithDoubleIndent("ret");
 }
 
