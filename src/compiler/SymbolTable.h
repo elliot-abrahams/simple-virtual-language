@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "AST.h"
 #include "LanguageTypes.h"
 
 
@@ -26,6 +25,7 @@ namespace compiler {
     };
 
     struct FunctionSymbol {
+        std::string label;
         const Type returnType;
         const std::vector<Type> parameterTypes;
     };;
@@ -114,15 +114,15 @@ namespace compiler {
     public:
         SymbolTable();
 
-        void declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
+        bool declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
 
-        const FunctionSymbol* getFunctionSymbol(const std::string& functionIdentifier) const;
+        FunctionSymbol* getFunctionSymbol(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes);
         const FunctionSymbol* getCurrentFunctionSymbol() const;
 
         std::unordered_map<std::string, Symbol>& getGlobalVariables() const;
 
         Scope* enterScope();
-        Scope* enterFunctionScope(const std::string& functionIdentifier);
+        Scope* enterFunctionScope(const std::string& functionIdentifier, FunctionSymbol* functionSymbol);
         void leaveScope();
 
         void assignSlotsToLocalSymbols() const;
@@ -134,7 +134,7 @@ namespace compiler {
         std::vector<Scope> scopes;
         std::stack<Scope*> scopeStack;
 
-        std::unordered_map<std::string, FunctionSymbol> functions;
+        std::unordered_map<std::string, std::vector<FunctionSymbol>> functions;
         std::stack<FunctionSymbol*> functionSymbolStack;
 
         Scope* getCurrentFunctionScope();

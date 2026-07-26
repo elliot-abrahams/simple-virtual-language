@@ -25,7 +25,7 @@ namespace compiler {
 
         SemanticAnalysisResult processStm(Scope* scope, const ast::Stm& stm);
         SemanticAnalysisResult processBlock(const ast::Block& block);
-        SemanticAnalysisResult processFunctionBody(const ast::Block& block, const std::string& functionIdentifier);
+        SemanticAnalysisResult processFunctionBody(const ast::Block& block, const std::string& functionIdentifier, FunctionSymbol* functionSymbol);
         SemanticAnalysisResult processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
         SemanticAnalysisResult processAssignment(Scope* scope, const ast::StmAssignment& assignment);
         SemanticAnalysisResult processIfStatement(Scope* scope, const ast::IfStm& ifStm);
@@ -34,7 +34,7 @@ namespace compiler {
         SemanticAnalysisResult processReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
 
         Type checkExprType(Scope* scope, const ast::Expr& expr);
-        SemanticAnalysisResult processFunctionCall(Scope* scope, const FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall);
+        SemanticAnalysisResult processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes);
 
         Symbol* checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column);
 

@@ -113,6 +113,7 @@ namespace ast {
     struct FunctionCall final : Expr {
         const std::unique_ptr<Identifier> identifier;
         const std::vector<std::unique_ptr<Expr>> arguments;
+        mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
         FunctionCall(const size_t line,
                     const size_t column,

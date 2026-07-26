@@ -1,5 +1,7 @@
 #include "CodeGenerator.h"
 
+#include <stdexcept>
+
 compiler::CodeGenerator::CodeGenerator(SymbolTable* symbolTable) :
     symbolTable(symbolTable), labelCounter(0), scopeFunctionCounter(0) {}
 
@@ -18,8 +20,15 @@ void compiler::CodeGenerator::compileProgram(const ast::Program& program) {
 
     this->compilePendingScopeFunctions();
     for (auto& functionDecl : program.functionDecls) {
+        std::vector<Type> parameterTypes;
+        for (auto& parameter : functionDecl->parameters) {
+            parameterTypes.push_back(parameter->typeInfo->type);
+        }
+
+        const auto functionSymbol = this->symbolTable->getFunctionSymbol(functionDecl->identifier->name, parameterTypes);
+
         this->compileFunctionDeclaration(
-            functionDecl->identifier->name,
+            functionSymbol->label,
             *functionDecl->body,
             functionDecl->parameters.size(),
             functionDecl->body->scope->calculateNumberOfLocalSlots(),
@@ -30,7 +39,7 @@ void compiler::CodeGenerator::compileProgram(const ast::Program& program) {
 
 void compiler::CodeGenerator::compileFunctionDeclaration(const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefualtReturn) {
     // compile function header
-    this->emit("def $" + functionIdentifier + ":");
+    this->emit("def " + functionIdentifier + ":");
     this->emitWithIndent("args " + std::to_string(numberOfArguments));
     this->emitWithIndent("locals " + std::to_string(numberOfLocals));
     this->emit("");
@@ -88,7 +97,7 @@ void compiler::CodeGenerator::compileBlock(const ast::Block& block) {
     // if scope declared in global scope and not a scope within a function
     if (block.scope->parent->isGlobalScope()) {
         this->pendingScopeFunctions.push_back(&block);
-        emitWithIndent("call $" + generateScopeFunctionIdentifier(this->scopeFunctionCounter++));
+        emitWithIndent("call " + generateScopeFunctionIdentifier(this->scopeFunctionCounter++));
     } else {
         for (auto& stm : block.statements) {
             this->compileStm(block.scope, *stm);
@@ -327,7 +336,7 @@ void compiler::CodeGenerator::compileFunctionCall(const ast::FunctionCall& funct
         this->compileExpr(*argument);
     }
 
-    this->emitWithIndent("call $" + functionCall.identifier->name);
+    this->emitWithIndent("call " + functionCall.functionSymbol->label);
 }
 
 void compiler::CodeGenerator::compileExprIdentifier(const ast::ExprIdentifier& identifier) {
@@ -376,7 +385,7 @@ std::string compiler::CodeGenerator::generateLabelDefFromLabel(const std::string
 }
 
 std::string compiler::CodeGenerator::generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber) {
-    return "__Scope__" + std::to_string(scopeFunctionNumber);
+    return "$__Scope__" + std::to_string(scopeFunctionNumber);
 }
 
 void compiler::CodeGenerator::emitWithIndent(const std::string& code) {

@@ -1,6 +1,9 @@
 #include "SymbolTable.h"
 
+#include <functional>
 #include <stdexcept>
+
+#include "../include/Error.h"
 
 compiler::SymbolTable::SymbolTable() {}
 
@@ -8,14 +11,62 @@ bool compiler::Symbol::isGlobal() const {
     return this->scope->isGlobalScope();
 }
 
-void compiler::SymbolTable::declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes) {
-    this->functions.insert(std::make_pair(functionIdentifier, FunctionSymbol{returnType, parameterTypes}));
+bool compiler::SymbolTable::declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes) {
+    if (this->functions.find(functionIdentifier) == this->functions.end()) {
+        // function with the same identifier has not been initialised
+        this->functions.insert(std::make_pair(functionIdentifier, std::vector{FunctionSymbol{"", returnType, parameterTypes}}));
+        return true;
+    }
+    // function with the same identifier has already been initialised
+    const std::vector<FunctionSymbol> functionsWithSameName = this->functions.at(functionIdentifier);
+
+    bool validSignature = true;
+
+    // for each function with the same identifier
+    for (const auto& function : functionsWithSameName) {
+        // check parameter types are not identical
+        int identicalTypeCount = 0;
+
+        for (int parameterIndex = 0; parameterIndex < parameterTypes.size(); parameterIndex++) {
+            if (parameterTypes.at(parameterIndex) == function.parameterTypes.at(parameterIndex)) {
+                identicalTypeCount++;
+            }
+        }
+        if (identicalTypeCount == function.parameterTypes.size()) {
+            // function signature is identical
+            validSignature = false;
+            break;
+        }
+    }
+
+    if (validSignature) {
+        this->functions.at(functionIdentifier).push_back(FunctionSymbol{"", returnType, parameterTypes});
+    }
+    return validSignature;
 }
 
-const compiler::FunctionSymbol *compiler::SymbolTable::getFunctionSymbol(const std::string &functionIdentifier) const {
+compiler::FunctionSymbol* compiler::SymbolTable::getFunctionSymbol(const std::string &functionIdentifier, const std::vector<Type>& parameterTypes) {
     auto it = this->functions.find(functionIdentifier);
     if (it != this->functions.end()) {
-        return &it->second;
+
+        // loop through each function with the given identifier
+        for (auto& function : it->second) {
+            if (parameterTypes.size() != function.parameterTypes.size()) {
+                continue;
+            }
+            // loop through each parameter of variable function
+            bool identicalSignature = true;
+            for (int parameterIndex = 0; parameterIndex < parameterTypes.size(); parameterIndex++) {
+                if (parameterTypes[parameterIndex] != function.parameterTypes[parameterIndex]) {
+                    identicalSignature = false;
+                    break;
+                }
+            }
+            if (identicalSignature) {
+                // all parameter types of variable function match
+                return &function;
+            }
+        }
     }
     return nullptr;
 }
@@ -54,13 +105,12 @@ compiler::Scope* compiler::SymbolTable::enterScope() {
     return scope;
 }
 
-compiler::Scope* compiler::SymbolTable::enterFunctionScope(const std::string& functionIdentifier) {
+compiler::Scope* compiler::SymbolTable::enterFunctionScope(const std::string& functionIdentifier, FunctionSymbol* functionSymbol) {
     const auto newScope = new Scope{this->scopeStack.top(), {}, ScopeKind::FUNCTION, {}};
     this->scopeStack.top()->children.push_back(newScope); // add new scope to parent scope's list of children
     this->scopeStack.push(newScope);
     this->scopes.push_back(*newScope);
-    // add functionSymbol to stack
-    this->functionSymbolStack.push(&this->functions.at(functionIdentifier));
+    this->functionSymbolStack.push(functionSymbol);
     return newScope;
 }
 
