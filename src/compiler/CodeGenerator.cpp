@@ -323,13 +323,15 @@ void compiler::CodeGenerator::compileBinaryExpr(Scope* scope, const ast::ExprBin
 }
 
 void compiler::CodeGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr) {
-    this->compileExpr(scope, *expr.expr);
+
     switch (expr.unaryOperatorInfo->unaryOperator) {
         case UnaryOperator::PLUS: {
-            this->emitWithDoubleIndent("add");
+            this->compileExpr(scope, *expr.expr);
             break;
         }
         case UnaryOperator::MINUS: {
+            this->emitWithDoubleIndent("push " + typeToString(expr.resultingType) + " #0");
+            this->compileExpr(scope, *expr.expr);
             this->emitWithDoubleIndent("sub");
             break;
         }

@@ -340,12 +340,15 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
 
 compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
+        intLit->resultingType == Type::INT;
         return Type::INT;
     }
     if (auto* floatLit = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
+        floatLit->resultingType == Type::FLOAT;
         return Type::FLOAT;
     }
     if (auto* boolLit = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
+        boolLit->resultingType == Type::BOOL;
         return Type::BOOL;
     }
     if (auto* exprIdent = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
@@ -360,6 +363,7 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             );
         }
         // return type of expr identifier
+        expr.resultingType = symbol->type;
         return symbol->type;
     }
 
@@ -383,14 +387,18 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             case BinaryOperator::MULTIPLY:
             case BinaryOperator::DIVIDE:
             case BinaryOperator::MODULO:
+                binaryOperator->resultingType = leftType;
                 return leftType;
 
             default:
+                binaryOperator->resultingType = Type::BOOL;
                 return Type::BOOL;
         }
     }
     if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
-        return this->checkExprType(scope, *unaryOperator->expr);
+        const Type type = this->checkExprType(scope, *unaryOperator->expr);
+        unaryOperator->resultingType = type;
+        return type;
     }
     if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
         std::vector<Type> argumentTypes;
@@ -403,6 +411,7 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
         // process function arguments
         this->processFunctionCall(functionSymbol, *functionCall, argumentTypes);
 
+        functionCall->resultingType = functionSymbol->returnType;
         return functionSymbol->returnType;
     }
     throw std::runtime_error("Unknown expression type");

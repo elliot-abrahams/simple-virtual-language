@@ -30,6 +30,7 @@ namespace ast {
     };
 
     struct Expr : ASTNode {
+        mutable compiler::Type resultingType;
         using ASTNode::ASTNode;
         virtual ~Expr() = default;
     };
