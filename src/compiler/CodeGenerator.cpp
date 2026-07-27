@@ -330,7 +330,15 @@ void compiler::CodeGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnar
             break;
         }
         case UnaryOperator::MINUS: {
-            this->emitWithDoubleIndent("push " + typeToString(expr.resultingType) + " #0");
+            std::string pushZeroAssembly = "push " + typeToString(expr.resultingType) + " #";
+
+            if (expr.resultingType == Type::FLOAT) {
+                pushZeroAssembly += "0.0";
+            } else {
+                pushZeroAssembly += "0";
+            }
+
+            this->emitWithDoubleIndent(pushZeroAssembly);
             this->compileExpr(scope, *expr.expr);
             this->emitWithDoubleIndent("sub");
             break;
@@ -418,7 +426,15 @@ void compiler::CodeGenerator::compileGlobalVariables() {
 
     auto globalVariables = this->symbolTable->getGlobalVariables();
     for (auto it = globalVariables.begin(); it != globalVariables.end(); ++it) {
-        this->emitWithSingleIndent("$" + it->first + ": " + typeToString(it->second.type) + " 0");
+        std::string staticDataDef = "$" + it->first + ": " + typeToString(it->second.type) + " ";
+
+        if (it->second.type == Type::FLOAT) {
+            staticDataDef += "0.0";
+        } else {
+            staticDataDef += "0";
+        }
+
+        this->emitWithSingleIndent(staticDataDef);
     }
 }
 
