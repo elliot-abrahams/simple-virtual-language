@@ -32,10 +32,16 @@ namespace compiler {
         const BuiltinId builtinId;
     };;
 
+    struct LoopContext {
+        std::string continueLabel;
+        std::string breakLabel;
+    };
+
     enum class ScopeKind {
         GLOBAL,
         BLOCK,
-        FUNCTION
+        FUNCTION,
+        WHILE
     };
 
     struct Scope {
@@ -44,6 +50,8 @@ namespace compiler {
 
         ScopeKind kind;
         std::unordered_map<std::string, Symbol> symbols;
+
+        LoopContext* loopContext;
 
         void declareSymbol(const std::string& identifier, const Type& type, const int localSlot, const bool isInitialised) {
             this->symbols.insert(std::make_pair(identifier, Symbol{this, type, localSlot, isInitialised}));
@@ -72,6 +80,17 @@ namespace compiler {
             }
             // symbol not found in current scope
             return this->parent->lookup(identifier);
+        }
+
+        const Scope* lookupWhileScope() const {
+            auto scopeToCheck = this;
+            while (!scopeToCheck->isGlobalScope() && !scopeToCheck->isFunctionScope()) {
+                if (scopeToCheck->isWhileScope()) {
+                    return scopeToCheck;
+                }
+                scopeToCheck = scopeToCheck->parent;
+            }
+            return nullptr;
         }
 
         uint32_t calculateNumberOfLocalSlots(const uint32_t currentSlots = 0) const {
@@ -117,6 +136,10 @@ namespace compiler {
         bool isFunctionScope() const {
             return this->kind == ScopeKind::FUNCTION;
         }
+
+        bool isWhileScope() const {
+            return this->kind == ScopeKind::WHILE;
+        }
     };
 
     class SymbolTable {
@@ -131,7 +154,7 @@ namespace compiler {
 
         std::unordered_map<std::string, Symbol>& getGlobalVariables() const;
 
-        Scope* enterScope();
+        Scope* enterScope(const ScopeKind scopeKind);
         Scope* enterFunctionScope(const std::string& functionIdentifier, FunctionSymbol* functionSymbol);
         void leaveScope();
 

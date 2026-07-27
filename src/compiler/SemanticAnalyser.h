@@ -24,12 +24,14 @@ namespace compiler {
         std::vector<Type> processParameterList(const std::vector<std::unique_ptr<ast::Parameter>>& parameterList);
 
         SemanticAnalysisResult processStm(Scope* scope, const ast::Stm& stm);
-        SemanticAnalysisResult processBlock(const ast::Block& block);
+        SemanticAnalysisResult processBlock(const ast::Block& block, const ScopeKind scopeKind);
         SemanticAnalysisResult processFunctionBody(const ast::FunctionDecl& functionDecl, FunctionSymbol* functionSymbol);
         SemanticAnalysisResult processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
         SemanticAnalysisResult processAssignment(Scope* scope, const ast::StmAssignment& assignment);
         SemanticAnalysisResult processIfStatement(Scope* scope, const ast::IfStm& ifStm);
         SemanticAnalysisResult processWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
+        SemanticAnalysisResult processContinueStatement(Scope* scope, const ast::ContinueStm& continueStm);
+        SemanticAnalysisResult processBreakStatement(Scope* scope, const ast::BreakStm& breakStm);
         SemanticAnalysisResult processFunctionCallStatement(Scope* scope, const ast::FunctionCallStm& functionCallStm);
         SemanticAnalysisResult processReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
 

@@ -86,6 +86,12 @@ void compiler::CodeGenerator::compileStm(Scope* scope, const ast::Stm& stm) {
     else if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
         this->compileWhileStatement(scope, *whileStm);
     }
+    else if (auto* continueStm = dynamic_cast<const ast::ContinueStm*>(&stm)) {
+        this->compileContinueStatement(scope, *continueStm);
+    }
+    else if (auto* breakStm = dynamic_cast<const ast::BreakStm*>(&stm)) {
+        this->compileBreakStatement(scope, *breakStm);
+    }
     else if (auto* functionCallStm = dynamic_cast<const ast::FunctionCallStm*>(&stm)) {
         this->compileFunctionCallStatement(scope, *functionCallStm);
     }
@@ -157,6 +163,8 @@ void compiler::CodeGenerator::compileWhileStatement(Scope* scope, const ast::Whi
     const std::string startWhileLabel = generateLabel("start_while");
     const std::string endWhileLabel = generateLabel("end_while");
 
+    whileStm.block->scope->loopContext = new LoopContext{startWhileLabel, endWhileLabel};
+
     emitWithSingleIndent(generateLabelDefFromLabel(startWhileLabel));
 
     this->compileExpr(scope, *whileStm.condition);
@@ -168,6 +176,16 @@ void compiler::CodeGenerator::compileWhileStatement(Scope* scope, const ast::Whi
     emitWithDoubleIndent("jmp " + startWhileLabel);
 
     emitWithSingleIndent(generateLabelDefFromLabel(endWhileLabel));
+}
+
+void compiler::CodeGenerator::compileContinueStatement(Scope* scope, const ast::ContinueStm &continueStm) {
+    const auto loopContext = scope->lookupWhileScope()->loopContext;
+    emitWithDoubleIndent("jmp " + loopContext->continueLabel);
+}
+
+void compiler::CodeGenerator::compileBreakStatement(Scope* scope, const ast::BreakStm &breakStm) {
+    const auto loopContext = scope->lookupWhileScope()->loopContext;
+    emitWithDoubleIndent("jmp " + loopContext->breakLabel);
 }
 
 void compiler::CodeGenerator::compileFunctionCallStatement(Scope* scope, const ast::FunctionCallStm &functionCallStm) {

@@ -227,6 +227,8 @@ Token compiler::Tokeniser::readToken() {
                 if (image == "if") return Token{TokenKind::IF, image, this->line, this->column};
                 if (image == "else") return Token{TokenKind::ELSE, image, this->line, this->column};
                 if (image == "while") return Token{TokenKind::WHILE, image, this->line, this->column};
+                if (image == "continue") return Token{TokenKind::CONTINUE, image, this->line, this->column};
+                if (image == "break") return Token{TokenKind::BREAK, image, this->line, this->column};
                 if (image == "return") return Token{TokenKind::RETURN, image, this->line, this->column};
                 if (image == "int") return Token{TokenKind::INTEGER_TYPE, image, this->line, this->column};
                 if (image == "float") return Token{TokenKind::FLOAT_TYPE, image, this->line, this->column};

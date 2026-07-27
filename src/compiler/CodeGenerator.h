@@ -25,6 +25,8 @@ namespace compiler {
         void compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment);
         void compileIfStatement(Scope* scope, const ast::IfStm& ifStm);
         void compileWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
+        void compileContinueStatement(Scope* scope, const ast::ContinueStm& continueStm);
+        void compileBreakStatement(Scope* scope, const ast::BreakStm& breakStm);
         void compileFunctionCallStatement(Scope* scope, const ast::FunctionCallStm& functionCallStm);
         void compileReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
 

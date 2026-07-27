@@ -96,17 +96,14 @@ std::unordered_map<std::string, compiler::Symbol>& compiler::SymbolTable::getGlo
     return this->globalScope->symbols;
 }
 
-compiler::Scope* compiler::SymbolTable::enterScope() {
-    ScopeKind scopeKind;
+compiler::Scope* compiler::SymbolTable::enterScope(const ScopeKind scopeKind) {
     Scope* parent;
     if (this->scopeStack.empty()) {
-        scopeKind = ScopeKind::GLOBAL;
         parent = nullptr;
     } else {
-        scopeKind = ScopeKind::BLOCK;
         parent = this->scopeStack.top();
     }
-    const auto scope = new Scope{parent, {}, scopeKind, {}};
+    const auto scope = new Scope{parent, {}, scopeKind, {}, nullptr};
 
     if (parent == nullptr) {
         this->globalScope = scope;
@@ -120,7 +117,7 @@ compiler::Scope* compiler::SymbolTable::enterScope() {
 }
 
 compiler::Scope* compiler::SymbolTable::enterFunctionScope(const std::string& functionIdentifier, FunctionSymbol* functionSymbol) {
-    const auto newScope = new Scope{this->scopeStack.top(), {}, ScopeKind::FUNCTION, {}};
+    const auto newScope = new Scope{this->scopeStack.top(), {}, ScopeKind::FUNCTION, {}, nullptr};
     this->scopeStack.top()->children.push_back(newScope); // add new scope to parent scope's list of children
     this->scopeStack.push(newScope);
     this->scopes.push_back(*newScope);

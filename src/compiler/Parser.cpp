@@ -38,6 +38,8 @@ std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
             case TokenKind::IDENTIFIER:
             case TokenKind::IF:
             case TokenKind::WHILE:
+            case TokenKind::CONTINUE:
+            case TokenKind::BREAK:
             case TokenKind::RETURN:
                 statements.push_back(this->parseStm());
                 break;
@@ -115,6 +117,8 @@ std::unique_ptr<ast::Parameter> compiler::Parser::parseParameter() const {
  *                      | assignment
  *                      | if_statement
  *                      | while_statement
+ *                      | continue_statement
+ *                      | break_statement
  *                      | function_call_statement
  *                      | return_statement ;
  */
@@ -136,6 +140,8 @@ std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
         }
         case TokenKind::IF: return this->parseIfStatement();
         case TokenKind::WHILE: return this->parseWhileStatement();
+        case TokenKind::CONTINUE: return this->parseContinueStatement();
+        case TokenKind::BREAK: return this->parseBreakStatement();
         case TokenKind::RETURN: return this->parseReturnStatement();
 
         default:
@@ -264,6 +270,34 @@ std::unique_ptr<ast::WhileStm> compiler::Parser::parseWhileStatement() const {
         token.column,
         std::move(condition),
         std::move(block)
+    );
+}
+
+/*
+ *  continue_statement          = CONTINUE, SEMI ;
+ */
+std::unique_ptr<ast::ContinueStm> compiler::Parser::parseContinueStatement() const {
+    const Token token = this->tokeniser->tok();
+    this->tokeniser->next();
+    this->tokeniser->eat(TokenKind::SEMI);
+
+    return std::make_unique<ast::ContinueStm>(
+        token.line,
+        token.column
+    );
+}
+
+/*
+ *  break_statement             = BREAK, SEMI ;
+ */
+std::unique_ptr<ast::BreakStm> compiler::Parser::parseBreakStatement() const {
+    const Token token = this->tokeniser->tok();
+    this->tokeniser->next();
+    this->tokeniser->eat(TokenKind::SEMI);
+
+    return std::make_unique<ast::BreakStm>(
+        token.line,
+        token.column
     );
 }
 

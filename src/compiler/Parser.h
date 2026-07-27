@@ -25,6 +25,8 @@ namespace compiler {
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
         std::unique_ptr<ast::IfStm> parseIfStatement() const;
         std::unique_ptr<ast::WhileStm> parseWhileStatement() const;
+        std::unique_ptr<ast::ContinueStm> parseContinueStatement() const;
+        std::unique_ptr<ast::BreakStm> parseBreakStatement() const;
         std::unique_ptr<ast::FunctionCallStm> parseFunctionCallStatement() const;
         std::unique_ptr<ast::ReturnStm> parseReturnStatement() const;
 

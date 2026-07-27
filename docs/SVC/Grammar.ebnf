@@ -21,6 +21,8 @@ statement                   = block
                             | assignment
                             | if_statement
                             | while_statement
+                            | continue_statement
+                            | break_statement
                             | function_call_statement
                             | return_statement ;
 
@@ -33,6 +35,10 @@ assignment                  = var_access, assignment_operator, expression, SEMI 
 if_statement                = IF, LBR, expression, RBR, block, [ ELSE, ( block | if_statement ) ] ;
 
 while_statement             = WHILE, LBR, expression, RBR, block ;
+
+continue_statement          = CONTINUE, SEMI ;
+
+break_statement             = BREAK, SEMI ;
 
 function_call_statement    = function_call, SEMI ;
 
@@ -107,6 +113,8 @@ GREATER_THAN_OR_EQUAL       = ">="
 IF                          = "if"
 ELSE                        = "else"
 WHILE                       = "while"
+CONTINUE                    = "continue"
+BREAK                       = "break"
 RETURN                      = "return"
 
 INTEGER_TYPE                = "int"

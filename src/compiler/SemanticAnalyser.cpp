@@ -8,7 +8,7 @@ compiler::SemanticAnalyser::SemanticAnalyser(SymbolTable* symbolTable, const std
     symbolTable(symbolTable), path(path) {}
 
 void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
-    Scope* globalScope = this->symbolTable->enterScope(); // generate global scope
+    Scope* globalScope = this->symbolTable->enterScope(ScopeKind::GLOBAL); // generate global scope
     // process global varDecls
     for (auto& stm : program.statements) {
         if (auto* varDecl = dynamic_cast<const ast::StmVarDecl*>(stm.get())) {
@@ -116,13 +116,19 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStm(Scope* s
         return this->processAssignment(scope, *assignment);
     }
     if (auto* block = dynamic_cast<const ast::Block*>(&stm)) {
-        return this->processBlock(*block);
+        return this->processBlock(*block, ScopeKind::BLOCK);
     }
     if (auto* ifStm = dynamic_cast<const ast::IfStm*>(&stm)) {
         return this->processIfStatement(scope, *ifStm);
     }
     if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
         return this->processWhileStatement(scope, *whileStm);
+    }
+    if (auto* continueStm = dynamic_cast<const ast::ContinueStm*>(&stm)) {
+        return this->processContinueStatement(scope, *continueStm);
+    }
+    if (auto* breakStm = dynamic_cast<const ast::BreakStm*>(&stm)) {
+        return this->processBreakStatement(scope, *breakStm);
     }
     if (auto* functionCallStm = dynamic_cast<const ast::FunctionCallStm*>(&stm)) {
         return this->processFunctionCallStatement(scope, *functionCallStm);
@@ -132,8 +138,8 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStm(Scope* s
     }
 }
 
-compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBlock(const ast::Block& block) {
-    Scope* newScope = this->symbolTable->enterScope();
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBlock(const ast::Block& block, const ScopeKind scopeKind) {
+    Scope* newScope = this->symbolTable->enterScope(scopeKind);
     block.scope = newScope; // set scope of block
 
     bool alwaysReturns = false;
@@ -230,7 +236,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processIfStatement(
     const auto conditionType = this->checkExprType(scope, *ifStm.condition);
     this->checkType({Type::BOOL}, conditionType, ifStm.condition->line, ifStm.condition->column);
 
-    const bool ifBlockAlwaysReturns = this->processBlock(*ifStm.ifBlock).alwaysReturns;
+    const bool ifBlockAlwaysReturns = this->processBlock(*ifStm.ifBlock, ScopeKind::BLOCK).alwaysReturns;
 
     if (ifStm.elseStm != nullptr) {
         const bool elseBlockAlwaysReturns = this->processStm(scope, *ifStm.elseStm).alwaysReturns;
@@ -244,7 +250,37 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processWhileStateme
     const auto conditionType = this->checkExprType(scope, *whileStm.condition);
     this->checkType({Type::BOOL}, conditionType, whileStm.condition->line, whileStm.condition->column);
 
-    this->processBlock(*whileStm.block);
+    this->processBlock(*whileStm.block, ScopeKind::WHILE);
+    return SemanticAnalysisResult{false};
+}
+
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processContinueStatement(Scope* scope, const ast::ContinueStm &continueStm) {
+    const auto loopScope = scope->lookupWhileScope();
+
+    if (loopScope == nullptr) {
+        throw SemanticError(
+            this->path->string(),
+            continueStm.line,
+            continueStm.column,
+            "'continue' statement can only be used within a loop"
+        );
+    }
+
+    return SemanticAnalysisResult{false};
+}
+
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBreakStatement(Scope* scope, const ast::BreakStm &breakStm) {
+    const auto loopScope = scope->lookupWhileScope();
+
+    if (loopScope == nullptr) {
+        throw SemanticError(
+            this->path->string(),
+            breakStm.line,
+            breakStm.column,
+            "'break' statement can only be used within a loop"
+        );
+    }
+
     return SemanticAnalysisResult{false};
 }
 

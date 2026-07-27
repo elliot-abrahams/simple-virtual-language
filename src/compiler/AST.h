@@ -173,6 +173,18 @@ namespace ast {
             functionCall(std::move(functionCall)) {}
     };
 
+    struct BreakStm final : Stm {
+        BreakStm(const size_t line,
+                const size_t column) :
+            Stm(line, column) {}
+    };
+
+    struct ContinueStm final : Stm {
+        ContinueStm(const size_t line,
+                    const size_t column) :
+            Stm(line, column) {}
+    };
+
     struct WhileStm final : Stm {
         const std::unique_ptr<Expr> condition;
         const std::unique_ptr<Block> block;

@@ -32,6 +32,8 @@ enum class TokenKind {
     IF,
     ELSE,
     WHILE,
+    CONTINUE,
+    BREAK,
     RETURN,
 
     INTEGER_TYPE,
@@ -86,6 +88,8 @@ struct Token {
             case TokenKind::IF: return "if";
             case TokenKind::ELSE: return "else";
             case TokenKind::WHILE: return "while";
+            case TokenKind::CONTINUE: return "continue";
+            case TokenKind::BREAK: return "break";
             case TokenKind::RETURN: return "return";
 
             case TokenKind::INTEGER_TYPE: return "int";
