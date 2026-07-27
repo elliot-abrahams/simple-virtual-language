@@ -42,6 +42,7 @@ namespace compiler {
 
         static std::string typeToString(const Type& type);
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
+        static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
         void checkType(const std::vector<Type>& expectedTypes, const Type& actualType, const size_t line, const size_t column) const;
 
         SymbolTable* symbolTable;

@@ -386,9 +386,31 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             case BinaryOperator::MINUS:
             case BinaryOperator::MULTIPLY:
             case BinaryOperator::DIVIDE:
-            case BinaryOperator::MODULO:
+            case BinaryOperator::MODULO: {
+                if (leftType == Type::BOOL || rightType == Type::BOOL) {
+                    throw SemanticError(
+                        this->path->string(),
+                        binaryOperator->line,
+                        binaryOperator->column,
+                        "cannot apply operator '" + binaryOperatorToString(binaryOperator->binaryOperatorInfo->binaryOperator) + " to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
+                    );
+                }
+
                 binaryOperator->resultingType = leftType;
                 return leftType;
+            }
+
+            case BinaryOperator::LOGICAL_OR:
+            case BinaryOperator::LOGICAL_AND: {
+                if (leftType != Type::BOOL || rightType != Type::BOOL) {
+                    throw SemanticError(
+                        this->path->string(),
+                        binaryOperator->line,
+                        binaryOperator->column,
+                        "cannot apply operator '" + binaryOperatorToString(binaryOperator->binaryOperatorInfo->binaryOperator) + " to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
+                    );
+                }
+            }
 
             default:
                 binaryOperator->resultingType = Type::BOOL;
@@ -397,6 +419,20 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
     }
     if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
         const Type type = this->checkExprType(scope, *unaryOperator->expr);
+
+        if (type == Type::BOOL) {
+            if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::MINUS ||
+                unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::PLUS) {
+
+                throw SemanticError(
+                    this->path->string(),
+                    unaryOperator->line,
+                    unaryOperator->column,
+                    "cannot aplly '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type 'bool'"
+                );
+            }
+        }
+
         unaryOperator->resultingType = type;
         return type;
     }
@@ -485,6 +521,14 @@ std::string compiler::SemanticAnalyser::binaryOperatorToString(const BinaryOpera
         case BinaryOperator::LESS_THAN_OR_EQUAL: return "<=";
         case BinaryOperator::GREATER_THAN: return ">";
         case BinaryOperator::GREATER_THAN_OR_EQUAL: return ">=";
+    }
+}
+
+std::string compiler::SemanticAnalyser::unaryOperatorToString(const UnaryOperator& unaryOperator) {
+    switch (unaryOperator) {
+        case UnaryOperator::PLUS: return "+";
+        case UnaryOperator::MINUS: return "-";
+        case UnaryOperator::LOGICAL_NOT: return "!";
     }
 }
 
