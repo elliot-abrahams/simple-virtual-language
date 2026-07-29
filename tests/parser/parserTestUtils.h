@@ -1,7 +1,6 @@
 #ifndef SVM_PARSERTESTUTILS_H
 #define SVM_PARSERTESTUTILS_H
 
-#include "parserTestUtils.h"
 #include "../../src/compiler/Compiler.h"
 #include "../../src/include/Error.h"
 

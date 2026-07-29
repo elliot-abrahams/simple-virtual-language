@@ -71,24 +71,25 @@ gtest_discover_tests(${VM_TESTS})
 set(PARSER_TESTS parser_tests)
 
 set(Parser_Sources
-        Parser/statementTests/returnStatementTests.cpp
-        Parser/statementTests/FunctionCallStatementTests.cpp
-        Parser/statementTests/breakStatementTests.cpp
-        Parser/statementTests/continueStatementTests.cpp
-        Parser/statementTests/whileStatementTests.cpp
-        Parser/statementTests/ifStatementTests.cpp
-        Parser/statementTests/assignmentTests.cpp
-        Parser/statementTests/VarDeclTests.cpp
-        Parser/statementTests/blockTests.cpp
+        parser/functionDeclTests.cpp
 
-        Parser/expressionTests/precedenceTests.cpp
-        Parser/expressionTests/binaryExpressionTests.cpp
-        Parser/expressionTests/unaryExpressionTests.cpp
-        Parser/expressionTests/functionCallExpressionTests.cpp
+        parser/statementTests/returnStatementTests.cpp
+        parser/statementTests/FunctionCallStatementTests.cpp
+        parser/statementTests/breakStatementTests.cpp
+        parser/statementTests/continueStatementTests.cpp
+        parser/statementTests/whileStatementTests.cpp
+        parser/statementTests/ifStatementTests.cpp
+        parser/statementTests/assignmentTests.cpp
+        parser/statementTests/VarDeclTests.cpp
+        parser/statementTests/blockTests.cpp
 
-        Parser/parserTestutils.h
-        Parser/parserTests.cpp
-        Parser/functionDeclTests.cpp
+        parser/expressionTests/precedenceTests.cpp
+        parser/expressionTests/binaryExpressionTests.cpp
+        parser/expressionTests/unaryExpressionTests.cpp
+        parser/expressionTests/functionCallExpressionTests.cpp
+
+        parser/parserTestutils.h
+        parser/parserTests.cpp
 )
 
 add_executable(${PARSER_TESTS} ${Parser_Sources})
@@ -99,3 +100,29 @@ target_link_libraries(${PARSER_TESTS} PRIVATE
 )
 
 gtest_discover_tests(${PARSER_TESTS})
+
+
+# TOKENISER TESTS
+
+set(TOKENISER_TESTS tokeniser_tests)
+
+set(Tokeniser_Sources
+        tokeniser/invalidTokenTests.cpp
+        tokeniser/tokenSequenceTests.cpp
+        tokeniser/identifierTests.cpp
+        tokeniser/keywordTests.cpp
+        tokeniser/literalTests.cpp
+        tokeniser/SymbolTests.cpp
+
+        tokeniser/tokeniserTestUtils.h
+        tokeniser/tokeniserTests.cpp
+)
+
+add_executable(${TOKENISER_TESTS} ${Tokeniser_Sources})
+
+target_link_libraries(${TOKENISER_TESTS} PRIVATE
+        gtest_main
+        svm_lib
+)
+
+gtest_discover_tests(${TOKENISER_TESTS})
