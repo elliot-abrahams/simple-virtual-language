@@ -52,6 +52,16 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
 }
 
 void compiler::SemanticAnalyser::declareGlobalStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
+    // check global symbol with same name has not been initialised already
+    if (scope->symbols.find(varDecl.identifier->name) != scope->symbols.end()) {
+        throw SemanticError(
+            this->path->string(),
+            varDecl.line,
+            varDecl.column,
+            "variable '" + varDecl.identifier->name + "' is already defined"
+        );
+    }
+
     scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
 }
 
@@ -182,6 +192,16 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionBody
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
     // if scope is global -> symbol has already been declared on first pass of semantic analysis
     if (!scope->isGlobalScope()) {
+        // check global symbol with same name has not been initialised already
+        if (scope->symbols.find(varDecl.identifier->name) != scope->symbols.end()) {
+            throw SemanticError(
+                this->path->string(),
+                varDecl.line,
+                varDecl.column,
+                "variable '" + varDecl.identifier->name + "' is already defined"
+            );
+        }
+
         // declare symbol (as uninitialised)
         scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
     }
