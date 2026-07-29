@@ -7,7 +7,7 @@ namespace compiler {
         INT,
         FLOAT,
         BOOL,
-        VOID
+        VOID_RETURN_TYPE
     };
 
     enum class AssignmentOperator {

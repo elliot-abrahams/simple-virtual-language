@@ -826,7 +826,7 @@ std::unique_ptr<ast::TypeInfo> compiler::Parser::parseType() const {
             return std::make_unique<ast::TypeInfo> (
                 type.line,
                 type.column,
-                Type::VOID
+                Type::VOID_RETURN_TYPE
             );
         default:
             this->handleUnexpectedToken(type);

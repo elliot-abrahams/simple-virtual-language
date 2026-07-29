@@ -29,7 +29,7 @@ Token compiler::Tokeniser::lookAhead(const size_t n) {
 std::string compiler::Tokeniser::eat(const TokenKind& kind) {
     const Token token = this->tok();
     if (token.kind != kind) {
-        throw LexicalError(
+        throw SyntaxError(
             this->path->string(),
             this->line,
             this->column,

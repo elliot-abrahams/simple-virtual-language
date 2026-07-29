@@ -33,7 +33,7 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
         const auto semanticAnalysisResult = this->processFunctionBody(*functionDecl, functionSymbol);
 
         // check function body always reaches returnStm if return type is non-void
-        if (functionDecl->returnTypeInfo->type != Type::VOID &&
+        if (functionDecl->returnTypeInfo->type != Type::VOID_RETURN_TYPE &&
             !semanticAnalysisResult.alwaysReturns
         ) {
             throw SemanticError(
@@ -301,7 +301,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
     }
 
     if (returnStm.returnExpression == nullptr) { // return has no expression
-        if (currentFunctionSymbol->returnType != Type::VOID) {
+        if (currentFunctionSymbol->returnType != Type::VOID_RETURN_TYPE) {
             throw SemanticError(
                 this->path->string(),
                 returnStm.line,
@@ -314,7 +314,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
 
         const Type type = this->checkExprType(scope, *returnStm.returnExpression);
 
-        if (currentFunctionSymbol->returnType == Type::VOID) { // function return type is void
+        if (currentFunctionSymbol->returnType == Type::VOID_RETURN_TYPE) { // function return type is void
             if (returnStm.returnExpression != nullptr) { // return has an expression
                 throw SemanticError(
                     this->path->string(),

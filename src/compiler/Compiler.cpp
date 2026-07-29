@@ -50,6 +50,15 @@ void compiler::Compiler::compile(const std::filesystem::path& path) {
     }
 }
 
+std::unique_ptr<ast::Program> compiler::Compiler::testParsing(const std::string& sourceCode) {
+    const auto path = new std::filesystem::path("Testing");
+    auto* tokeniser = new Tokeniser(sourceCode, path);
+    const auto parser = new Parser(tokeniser, path);
+
+    // generate AST
+    return parser->parseProgram();
+}
+
 std::string compiler::Compiler::readFile(const std::filesystem::path& path) {
     std::ifstream file(path, std::ios::binary);
 

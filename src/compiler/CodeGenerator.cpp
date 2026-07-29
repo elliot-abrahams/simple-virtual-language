@@ -33,7 +33,7 @@ void compiler::CodeGenerator::compileProgram(const ast::Program& program) {
             *functionDecl->body,
             functionDecl->parameters.size(),
             functionDecl->body->scope->calculateNumberOfLocalSlots(),
-            functionDecl->returnTypeInfo->type == Type::VOID
+            functionDecl->returnTypeInfo->type == Type::VOID_RETURN_TYPE
         );
     }
 }

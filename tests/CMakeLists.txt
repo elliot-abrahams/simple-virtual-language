@@ -1,12 +1,16 @@
 cmake_minimum_required(VERSION 3.20)
 project(svm)
 
-set(This vm_tests)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(Sources
+include(GoogleTest)
+
+# VM TESTS
+
+set(VM_TESTS vm_tests)
+
+set(VM_Sources
         vm/other/convTests.cpp
         vm/other/innTests.cpp
         vm/other/outTests.cpp
@@ -52,12 +56,46 @@ set(Sources
         vm/vmTests.cpp
 )
 
-add_executable(${This} ${Sources})
+add_executable(${VM_TESTS} ${VM_Sources})
 
-target_link_libraries(${This} PRIVATE
+target_link_libraries(${VM_TESTS} PRIVATE
     gtest_main
     svm_lib
 )
 
-include(GoogleTest)
-gtest_discover_tests(${This})
+gtest_discover_tests(${VM_TESTS})
+
+
+# PARSER TESTS
+
+set(PARSER_TESTS parser_tests)
+
+set(Parser_Sources
+        Parser/statementTests/returnStatementTests.cpp
+        Parser/statementTests/FunctionCallStatementTests.cpp
+        Parser/statementTests/breakStatementTests.cpp
+        Parser/statementTests/continueStatementTests.cpp
+        Parser/statementTests/whileStatementTests.cpp
+        Parser/statementTests/ifStatementTests.cpp
+        Parser/statementTests/assignmentTests.cpp
+        Parser/statementTests/VarDeclTests.cpp
+        Parser/statementTests/blockTests.cpp
+
+        Parser/expressionTests/precedenceTests.cpp
+        Parser/expressionTests/binaryExpressionTests.cpp
+        Parser/expressionTests/unaryExpressionTests.cpp
+        Parser/expressionTests/functionCallExpressionTests.cpp
+
+        Parser/parserTestutils.h
+        Parser/parserTests.cpp
+        Parser/functionDeclTests.cpp
+)
+
+add_executable(${PARSER_TESTS} ${Parser_Sources})
+
+target_link_libraries(${PARSER_TESTS} PRIVATE
+        gtest_main
+        svm_lib
+)
+
+gtest_discover_tests(${PARSER_TESTS})

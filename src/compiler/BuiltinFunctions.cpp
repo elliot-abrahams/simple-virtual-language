@@ -7,21 +7,21 @@ void compiler::BuiltinFunctions::registerBuiltinFunctions(SymbolTable& symbolTab
     symbolTable.declareBuiltinFunction(
         BuiltinId::PRINT_INT,
         "print",
-        Type::VOID,
+        Type::VOID_RETURN_TYPE,
         {Type::INT}
     );
     // void print(float)
     symbolTable.declareBuiltinFunction(
         BuiltinId::PRINT_FLOAT,
         "print",
-        Type::VOID,
+        Type::VOID_RETURN_TYPE,
         {Type::FLOAT}
     );
     // void print(bool)
     symbolTable.declareBuiltinFunction(
         BuiltinId::PRINT_BOOL,
         "print",
-        Type::VOID,
+        Type::VOID_RETURN_TYPE,
         {Type::BOOL}
     );
 }
