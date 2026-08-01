@@ -9,16 +9,15 @@ compiler::SemanticAnalyser::SemanticAnalyser(SymbolTable* symbolTable, const std
 
 void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
     Scope* globalScope = this->symbolTable->enterScope(ScopeKind::GLOBAL); // generate global scope
-    // process global varDecls
-    for (auto& stm : program.statements) {
-        if (auto* varDecl = dynamic_cast<const ast::StmVarDecl*>(stm.get())) {
-            this->declareGlobalStmVarDecl(globalScope, *varDecl);
-        }
-    }
 
     // process function declarations
     for (auto& functionDecl : program.functionDecls) {
         this->processFunctionDecl(*functionDecl);
+    }
+
+    // process statements
+    for (auto& stm : program.statements) {
+        this->processStm(globalScope, *stm);
     }
 
     // process function bodies
@@ -44,25 +43,6 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
             );
         }
     }
-
-    // process statements
-    for (auto& stm : program.statements) {
-        this->processStm(globalScope, *stm);
-    }
-}
-
-void compiler::SemanticAnalyser::declareGlobalStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
-    // check global symbol with same name has not been initialised already
-    if (scope->symbols.find(varDecl.identifier->name) != scope->symbols.end()) {
-        throw SemanticError(
-            this->path->string(),
-            varDecl.line,
-            varDecl.column,
-            "variable '" + varDecl.identifier->name + "' is already defined"
-        );
-    }
-
-    scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
 }
 
 void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& functionDecl) {
@@ -190,21 +170,18 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionBody
 }
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
-    // if scope is global -> symbol has already been declared on first pass of semantic analysis
-    if (!scope->isGlobalScope()) {
-        // check global symbol with same name has not been initialised already
-        if (scope->symbols.find(varDecl.identifier->name) != scope->symbols.end()) {
-            throw SemanticError(
-                this->path->string(),
-                varDecl.line,
-                varDecl.column,
-                "variable '" + varDecl.identifier->name + "' is already defined"
-            );
-        }
-
-        // declare symbol (as uninitialised)
-        scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
+    // check symbol with same name has not been initialised already
+    if (scope->symbols.find(varDecl.identifier->name) != scope->symbols.end()) {
+        throw SemanticError(
+            this->path->string(),
+            varDecl.line,
+            varDecl.column,
+            "variable '" + varDecl.identifier->name + "' is already defined"
+        );
     }
+
+    // declare symbol (as uninitialised)
+    scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
 
     // if var decl does not have an initialiser
     if (varDecl.optionalInitialiser == nullptr) {
