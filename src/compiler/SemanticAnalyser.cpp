@@ -408,7 +408,7 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             case BinaryOperator::DIVIDE:
             case BinaryOperator::MODULO: {
                 if (leftType == Type::BOOL || rightType == Type::BOOL) {
-                    throw SemanticError(
+                    throw TypeError(
                         this->path->string(),
                         binaryOperator->line,
                         binaryOperator->column,
@@ -423,16 +423,35 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             case BinaryOperator::LOGICAL_OR:
             case BinaryOperator::LOGICAL_AND: {
                 if (leftType != Type::BOOL || rightType != Type::BOOL) {
-                    throw SemanticError(
+                    throw TypeError(
                         this->path->string(),
                         binaryOperator->line,
                         binaryOperator->column,
                         "cannot apply operator '" + binaryOperatorToString(binaryOperator->binaryOperatorInfo->binaryOperator) + " to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
                     );
                 }
+                binaryOperator->resultingType = Type::BOOL;
+                return Type::BOOL;
+            }
+
+            case BinaryOperator::LESS_THAN:
+            case BinaryOperator::LESS_THAN_OR_EQUAL:
+            case BinaryOperator::GREATER_THAN:
+            case BinaryOperator::GREATER_THAN_OR_EQUAL: {
+                if (leftType == Type::BOOL || rightType == Type::BOOL) {
+                    throw TypeError(
+                        this->path->string(),
+                        binaryOperator->line,
+                        binaryOperator->column,
+                        "cannot apply operator '" + binaryOperatorToString(binaryOperator->binaryOperatorInfo->binaryOperator) + " to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
+                    );
+                }
+                binaryOperator->resultingType = Type::BOOL;
+                return Type::BOOL;
             }
 
             default:
+                // EQUAL_EQUAL / NOT_EQUAL
                 binaryOperator->resultingType = Type::BOOL;
                 return Type::BOOL;
         }
@@ -444,11 +463,20 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::MINUS ||
                 unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::PLUS) {
 
-                throw SemanticError(
+                throw TypeError(
                     this->path->string(),
                     unaryOperator->line,
                     unaryOperator->column,
-                    "cannot aplly '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type 'bool'"
+                    "cannot apply '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type 'bool'"
+                );
+            }
+        } else { // expr is not of type bool
+            if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT) {
+                throw TypeError(
+                    this->path->string(),
+                    unaryOperator->line,
+                    unaryOperator->column,
+                    "cannot apply '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type '" + typeToString(type) + "'"
                 );
             }
         }
@@ -505,11 +533,11 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall
 compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) const {
     auto symbol = scope->lookup(identifier);
     if (!symbol.has_value()) {
-        throw TypeError(
+        throw SemanticError(
             this->path->string(),
             line,
             column,
-            "undefined label '" + identifier + "'"
+            "undefined identifier '" + identifier + "'"
         );
     }
     return symbol.value();
