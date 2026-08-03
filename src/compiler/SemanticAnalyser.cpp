@@ -50,20 +50,12 @@ void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& fu
     const std::vector<Type> parameterTypes = this->processParameterList(functionDecl.parameters);
     const bool validFunctionSignature = this->symbolTable->declareFunction(functionDecl.identifier->name, functionDecl.returnTypeInfo->type, parameterTypes);
 
+    const std::string functionSignature = functionSignatureToString(functionDecl.identifier->name, parameterTypes);
+
     if (!validFunctionSignature) {
         std::string errorMsg = "function '";
-        errorMsg += functionDecl.identifier->name + "(";
-
-        if (functionDecl.parameters.size() > 0) {
-            errorMsg += typeToString(functionDecl.parameters[0]->typeInfo->type);
-        }
-
-        for (int i = 1; i < functionDecl.parameters.size(); i++) {
-            errorMsg += ", ";
-            errorMsg += typeToString(functionDecl.parameters[i]->typeInfo->type);
-        }
-
-        errorMsg += ")' is already defined";
+        errorMsg += functionSignature;
+        errorMsg += "' is already defined";
 
         throw SemanticError(
             this->path->string(),
@@ -74,16 +66,8 @@ void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& fu
     }
 
     // generate function label
-    std::string functionLabel = "$" + functionDecl.identifier->name;
-    functionLabel += "(";
-    if (parameterTypes.size() > 0) {
-        functionLabel += typeToString(parameterTypes[0]);
-    }
-    for (int i = 1; i < parameterTypes.size(); i++) {
-        functionLabel+= ",";
-        functionLabel += typeToString(parameterTypes[i]);
-    }
-    functionLabel += ")";
+    const std::string functionLabel = "$" + functionSignature;
+
     // set label of functionSymbol
     FunctionSymbol* functionSymbol = this->symbolTable->getFunctionSymbol(functionDecl.identifier->name, parameterTypes);
     functionSymbol->label = functionLabel;
@@ -205,7 +189,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(S
 }
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(Scope* scope, const ast::StmAssignment& assignment) {
-    auto identifierSymbol = this->checkSymbolIsDefined(
+    const auto identifierSymbol = this->checkSymbolIsDefined(
         scope,
         assignment.varAccess->identifier->name,
         assignment.varAccess->identifier->line,
@@ -282,7 +266,27 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBreakStateme
 }
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCallStatement(Scope *scope, const ast::FunctionCallStm &functionCallStm) {
-    this->checkExprType(scope, *functionCallStm.functionCall);
+    std::vector<Type> argumentTypes;
+    for (const auto& argument : functionCallStm.functionCall->arguments) {
+        argumentTypes.push_back(this->checkExprType(scope, *argument));
+    }
+
+    FunctionSymbol* functionSymbol = this->symbolTable->getFunctionSymbol(functionCallStm.functionCall->identifier->name, argumentTypes);
+
+    // process function arguments
+    this->processFunctionCall(functionSymbol, *functionCallStm.functionCall, argumentTypes);
+
+    functionCallStm.functionCall->resultingType = functionSymbol->returnType;
+
+    if (functionSymbol->returnType != Type::VOID_RETURN_TYPE) {
+        throw SemanticError(
+            this->path->string(),
+            functionCallStm.line,
+            functionCallStm.column,
+            "return value of function '" + functionSignatureToString(functionCallStm.functionCall->identifier->name, argumentTypes) + "' must be used"
+        );
+    }
+
     return SemanticAnalysisResult{false};
 }
 
@@ -481,17 +485,8 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall &functionCall, const std::vector<Type>& argumentTypes) const {
     if (functionSymbol == nullptr) { // if function is not defined
         std::string errorMsg = "function '";
-        errorMsg += functionCall.identifier->name + "(";
-
-        if (argumentTypes.size() > 0) {
-            errorMsg += typeToString(argumentTypes.at(0));
-        }
-
-        for (int argumentIndex = 1; argumentIndex < argumentTypes.size(); argumentIndex++) {
-            errorMsg += ", ";
-            errorMsg += typeToString(argumentTypes.at(argumentIndex));
-        }
-        errorMsg += ")' is undefined";
+        errorMsg += functionSignatureToString(functionCall.identifier->name, argumentTypes);
+        errorMsg += "' is undefined";
 
         throw SemanticError(
             this->path->string(),
@@ -522,6 +517,7 @@ compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope,
 
 std::string compiler::SemanticAnalyser::typeToString(const Type& type) {
     switch (type) {
+        case Type::VOID_RETURN_TYPE: return "void";
         case Type::INT: return "int";
         case Type::FLOAT: return "float";
         case Type::BOOL: return "bool";
@@ -578,4 +574,20 @@ void compiler::SemanticAnalyser::checkType(const std::vector<Type>& expectedType
     }
 }
 
+std::string compiler::SemanticAnalyser::functionSignatureToString(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes) {
+    std::string result = "";
 
+    result+= functionIdentifier + "(";
+
+    if (parameterTypes.size() > 0) {
+        result+= typeToString(parameterTypes.at(0));
+    }
+
+    for (int i = 1; i < parameterTypes.size(); i++) {
+        result+= ", ";
+        result+= typeToString(parameterTypes.at(i));
+    }
+
+    result+= ")";
+    return result;
+}

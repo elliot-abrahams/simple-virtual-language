@@ -44,6 +44,7 @@ namespace compiler {
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
         void checkType(const std::vector<Type>& expectedTypes, const Type& actualType, const size_t line, const size_t column) const;
+        static std::string functionSignatureToString(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes);
 
         SymbolTable* symbolTable;
         const std::filesystem::path *path;
