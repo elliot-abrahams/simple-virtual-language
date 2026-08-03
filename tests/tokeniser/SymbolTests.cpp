@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "tokeniserTestUtils.h"
+#include "TokeniserTestUtils.h"
 
 using namespace tokeniserTest;
 

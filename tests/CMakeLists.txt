@@ -31,7 +31,7 @@ set(VM_Sources
         vm/arithmetic/modTests.cpp
         vm/arithmetic/divTests.cpp
         vm/arithmetic/mulTests.cpp
-        vm/arithmetic/subTests.cpp
+        vm/arithmetic/SubTests.cpp
         vm/arithmetic/addTests.cpp
 
         vm/control/jnzTests.cpp
@@ -45,10 +45,10 @@ set(VM_Sources
         vm/memory/loadBStoreBTests.cpp
         vm/memory/loadStoreTests.cpp
 
-        vm/Stack/swapTests.cpp
-        vm/Stack/dupTests.cpp
-        vm/Stack/popTests.cpp
-        vm/Stack/pushTests.cpp
+        vm/stack/swapTests.cpp
+        vm/stack/dupTests.cpp
+        vm/stack/popTests.cpp
+        vm/stack/pushTests.cpp
 
         vm/core/haltTests.cpp
 
@@ -80,7 +80,7 @@ set(Parser_Sources
         parser/statementTests/whileStatementTests.cpp
         parser/statementTests/ifStatementTests.cpp
         parser/statementTests/assignmentTests.cpp
-        parser/statementTests/VarDeclTests.cpp
+        parser/statementTests/varDeclTests.cpp
         parser/statementTests/blockTests.cpp
 
         parser/expressionTests/precedenceTests.cpp
@@ -88,7 +88,7 @@ set(Parser_Sources
         parser/expressionTests/unaryExpressionTests.cpp
         parser/expressionTests/functionCallExpressionTests.cpp
 
-        parser/parserTestutils.h
+        parser/parserTestUtils.h
         parser/parserTests.cpp
 )
 
@@ -142,7 +142,7 @@ set(Semantic_Sources
         semantic/statementTests/continueStatementTests.cpp
         semantic/statementTests/whileStatementTests.cpp
         semantic/statementTests/ifStatementTests.cpp
-        semantic/statementTests/AssignmentTests.cpp
+        semantic/statementTests/assignmentTests.cpp
         semantic/statementTests/varDeclTests.cpp
 
         semantic/expressionTests/binaryExpressionTests.cpp

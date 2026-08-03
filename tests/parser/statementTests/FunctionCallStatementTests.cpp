@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../parserTestUtils.h"
+#include "../ParserTestUtils.h"
 
 TEST(STM_FUNCTION_CALL, FUNCTION_CALL) {
     const auto testCode = R"(
