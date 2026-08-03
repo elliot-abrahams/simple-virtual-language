@@ -1,0 +1,64 @@
+#include <gtest/gtest.h>
+#include "../semanticTestUtils.h"
+
+using namespace semanticTest;
+
+TEST(EXPR_BINARY, INT_PLUS) {
+    ASSERT_SEMANTICALLY_VALID("int x = 5 + 5;");
+}
+
+TEST(EXPR_BINARY, FLOAT_PLUS) {
+    ASSERT_SEMANTICALLY_VALID("float x = 5.5f + 5.5f;");
+}
+
+TEST(EXPR_BINARY, BOOL_LOGICAL_OR) {
+    ASSERT_SEMANTICALLY_VALID("bool x = true || true;");
+}
+
+TEST(EXPR_BINARY, BOOL_LOGICAL_AND) {
+    ASSERT_SEMANTICALLY_VALID("bool x = true && false;");
+}
+
+TEST(EXPR_BINARY, INT_LESS_THAN) {
+    ASSERT_SEMANTICALLY_VALID("bool x = 5 < 10;");
+}
+
+TEST(EXPR_BINARY, FLOAT_GREATER_THAN_OR_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID("bool x = 5.5f >= 10.5f;");
+}
+
+TEST(EXPR_BINARY, INT_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID("bool x = 5 == 10;");
+}
+
+TEST(EXPR_BINARY, BOOL_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID("bool x = true == false;");
+}
+
+TEST(EXPR_BINARY, INVALID_INT_FLOAT_PLUS) {
+    ASSERT_THROWS_TYPE_ERROR("int x = 5 + 5.5f;");
+}
+
+TEST(EXPR_BINARY, INVALID_FLOAT_BOOL_MULTIPLY) {
+    ASSERT_THROWS_TYPE_ERROR("float x = 5.5f * true;");
+}
+
+TEST(EXPR_BINARY, INVALID_INT_LOGICAL_OR) {
+    ASSERT_THROWS_TYPE_ERROR("bool x = 5 || 5;");
+}
+
+TEST(EXPR_BINARY, INVALID_INT_BOOL_LOGICAL_AND) {
+    ASSERT_THROWS_TYPE_ERROR("bool x = 5 && true;");
+}
+
+TEST(EXPR_BINARY, INVALID_BOOL_PLUS) {
+    ASSERT_THROWS_TYPE_ERROR("bool x = true + true;");
+}
+
+TEST(EXPR_BINARY, INVALID_BOOL_LESS_THAN) {
+    ASSERT_THROWS_TYPE_ERROR("bool x = true < false;");
+}
+
+TEST(EXPR_BINARY, INVALID_BOOL_INT_EQUAL) {
+    ASSERT_THROWS_TYPE_ERROR("bool x = false == 10;");
+}

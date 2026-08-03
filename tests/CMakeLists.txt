@@ -126,3 +126,38 @@ target_link_libraries(${TOKENISER_TESTS} PRIVATE
 )
 
 gtest_discover_tests(${TOKENISER_TESTS})
+
+
+# TOKENISER TESTS
+
+set(SEMANTIC_TESTS semantic_tests)
+
+set(Semantic_Sources
+        semantic/functionTests.cpp
+        semantic/variableAndScopeTests.cpp
+
+        semantic/statementTests/returnStatementTests.cpp
+        semantic/statementTests/functionCallStatementTests.cpp
+        semantic/statementTests/breakStatementTests.cpp
+        semantic/statementTests/continueStatementTests.cpp
+        semantic/statementTests/whileStatementTests.cpp
+        semantic/statementTests/ifStatementTests.cpp
+        semantic/statementTests/AssignmentTests.cpp
+        semantic/statementTests/varDeclTests.cpp
+
+        semantic/expressionTests/binaryExpressionTests.cpp
+        semantic/expressionTests/unaryExpressionTests.cpp
+        semantic/expressionTests/functionCallExpressionTests.cpp
+
+        semantic/semanticTestUtils.h
+        semantic/semanticTests.cpp
+)
+
+add_executable(${SEMANTIC_TESTS} ${Semantic_Sources})
+
+target_link_libraries(${SEMANTIC_TESTS} PRIVATE
+        gtest_main
+        svm_lib
+)
+
+gtest_discover_tests(${SEMANTIC_TESTS})
