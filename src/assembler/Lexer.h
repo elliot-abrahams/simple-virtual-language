@@ -1,7 +1,3 @@
-//
-// Created by erael on 03/05/2026.
-//
-
 #ifndef SIMPLE_VM_LEXER_H
 #define SIMPLE_VM_LEXER_H
 
@@ -12,49 +8,51 @@
 #include <vector>
 
 
-class Lexer {
+namespace assembler {
+    class Lexer {
 
-public:
-    Lexer();
+    public:
+        Lexer();
 
-    std::optional<std::vector<AssemblerDefs::SVMAToken>> lex(const std::string& filePath);
-    std::optional<std::vector<AssemblerDefs::SVMAToken>> lexString(const std::string& fileContent);
+        std::optional<std::vector<AssemblerDefs::SVMAToken>> lex(const std::string& filePath);
+        std::optional<std::vector<AssemblerDefs::SVMAToken>> lexString(const std::string& fileContent);
 
 
-private:
-    std::optional<std::vector<AssemblerDefs::SVMAToken>> buildTokenStream();
+    private:
+        std::optional<std::vector<AssemblerDefs::SVMAToken>> buildTokenStream();
 
-    std::optional<AssemblerDefs::SVMAToken> lexToken();
-    std::optional<AssemblerDefs::SVMAToken> lexLabel();
-    std::optional<AssemblerDefs::SVMAToken> lexNumber();
-    std::optional<AssemblerDefs::SVMAToken> lexImmediate();
-    std::optional<AssemblerDefs::SVMAToken> lexDataStart();
-    std::optional<AssemblerDefs::SVMAToken> lexString();
-    std::optional<AssemblerDefs::SVMAToken> lexKeyWord();
+        std::optional<AssemblerDefs::SVMAToken> lexToken();
+        std::optional<AssemblerDefs::SVMAToken> lexLabel();
+        std::optional<AssemblerDefs::SVMAToken> lexNumber();
+        std::optional<AssemblerDefs::SVMAToken> lexImmediate();
+        std::optional<AssemblerDefs::SVMAToken> lexDataStart();
+        std::optional<AssemblerDefs::SVMAToken> lexString();
+        std::optional<AssemblerDefs::SVMAToken> lexKeyWord();
 
-    void next();
-    char peek() const;
-    std::optional<char> peekNext();
-    std::string readUntilWhitespace();
-    std::string readChar();
-    std::string readString();
-    void skipWhitespace();
-    void skipComment();
+        void next();
+        char peek() const;
+        std::optional<char> peekNext();
+        std::string readUntilWhitespace();
+        std::string readChar();
+        std::string readString();
+        void skipWhitespace();
+        void skipComment();
 
-    static bool isValidLabel(const std::string& s);
-    static bool isValidNumber(const std::string& s);
-    static bool isValidImmediate(const std::string& s);
-    static bool isValidString(const std::string& s);
+        static bool isValidLabel(const std::string& s);
+        static bool isValidNumber(const std::string& s);
+        static bool isValidImmediate(const std::string& s);
+        static bool isValidString(const std::string& s);
 
-    void outputInvalidTokenError(const std::string& word) const;
-    void outputInvalidLabelError(const std::string& word) const;
-    void outputLineNumberOfError() const;
+        void outputInvalidTokenError(const std::string& word) const;
+        void outputInvalidLabelError(const std::string& word) const;
+        void outputLineNumberOfError() const;
 
-    std::vector<char> inputBuffer;
-    int charIdx;
-    int lineNumber;
-    bool reachedEndOfFile;
-};
+        std::vector<char> inputBuffer;
+        int charIdx;
+        int lineNumber;
+        bool reachedEndOfFile;
+    };
+}
 
 
 #endif //SIMPLE_VM_LEXER_H
