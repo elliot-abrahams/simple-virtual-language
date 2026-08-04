@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 #include <ios>
 #include <iostream>
+#include <sstream>
 
 #include "TypeConversions.h"
 #include "ArithmeticOps.h"
@@ -525,8 +527,8 @@ void VM::executeOut() {
         }
         case ISA::Type::I32: std::cout << TypeConversions::rawToI32(value.rawValue) << std::endl; break;
         case ISA::Type::I64: std::cout << TypeConversions::rawToI64(value.rawValue) << std::endl; break;
-        case ISA::Type::F32: std::cout << TypeConversions::rawToF32(value.rawValue) << std::endl; break;
-        case ISA::Type::F64: std::cout << TypeConversions::rawToF64(value.rawValue) << std::endl; break;
+        case ISA::Type::F32: std::cout << formatFloatString(TypeConversions::rawToF32(value.rawValue)) << std::endl; break;
+        case ISA::Type::F64: std::cout << formatFloatString(TypeConversions::rawToF64(value.rawValue)) << std::endl; break;
         case ISA::Type::STR: {
             // check value from operand stack is type ptr
             checkType("out",
@@ -748,3 +750,34 @@ void VM::validateFrameAccess(const int32_t offset) const {
     }
 }
 
+std::string VM::formatFloatString(double value) {
+    std::ostringstream oss;
+    oss << std::setprecision(std::numeric_limits<double>::max_digits10)
+        << std::defaultfloat
+        << value;
+
+    std::string formattedString = oss.str();
+
+    auto dot = formattedString.find('.');
+
+    if (dot == std::string::npos) {
+        // no decimal point and not scientific notation
+        if (formattedString.find('e') == std::string::npos &&
+            formattedString.find('E') == std::string::npos) {
+
+            formattedString += ".0";
+        }
+
+    } else {
+        while (formattedString.back() == '0') {
+            // remove trailing zeros
+            formattedString.pop_back();
+        }
+
+        if (formattedString.back() == '.') {
+            formattedString.push_back('0');
+        }
+    }
+
+    return formattedString;
+}

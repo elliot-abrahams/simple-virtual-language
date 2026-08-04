@@ -81,6 +81,7 @@ private:
 
     static void checkType(const std::string &instructionMnemonic, const std::vector<uint8_t> expectedTypes, const uint8_t actualType);
     void validateFrameAccess(const int32_t offset) const;
+    static std::string formatFloatString(double value);
 
     uint32_t PC;
     uint32_t HP;
