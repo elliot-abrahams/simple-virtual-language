@@ -372,6 +372,7 @@ void compiler::CodeGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnar
             const std::string evaluateToTrueLabel = this->generateLabel("evaluate_to_true");
             const std::string endNotLabel = this->generateLabel("end_not");
 
+            this->compileExpr(scope, *expr.expr);
             emitWithDoubleIndent("jez " + evaluateToTrueLabel);
             this->emitWithDoubleIndent("push ui32 #0");
             this->emitWithDoubleIndent("jmp " + endNotLabel);
