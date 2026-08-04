@@ -262,7 +262,17 @@ void compiler::CodeGenerator::compileBinaryExpr(Scope* scope, const ast::ExprBin
             break;
         }
         case BinaryOperator::MODULO: {
+
+            if (expr.resultingType != expr.left->resultingType) {
+                this->emitWithDoubleIndent("conv " + typeToString(expr.resultingType));
+            }
+
             this->compileExpr(scope, *expr.right);
+
+            if (expr.resultingType != expr.right->resultingType) {
+                this->emitWithDoubleIndent("conv " + typeToString(expr.resultingType));
+            }
+
             this->emitWithDoubleIndent("mod");
             break;
         }
