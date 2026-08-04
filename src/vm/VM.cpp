@@ -522,20 +522,20 @@ void VM::executeOut() {
         case ISA::Type::PTR:
         case ISA::Type::UI32:
         case ISA::Type::UI64: {
-            std::cout << value.rawValue << std::endl;
+            std::cout << value.rawValue;
             break;
         }
-        case ISA::Type::I32: std::cout << TypeConversions::rawToI32(value.rawValue) << std::endl; break;
-        case ISA::Type::I64: std::cout << TypeConversions::rawToI64(value.rawValue) << std::endl; break;
-        case ISA::Type::F32: std::cout << formatFloatString(TypeConversions::rawToF32(value.rawValue)) << std::endl; break;
-        case ISA::Type::F64: std::cout << formatFloatString(TypeConversions::rawToF64(value.rawValue)) << std::endl; break;
+        case ISA::Type::I32: std::cout << TypeConversions::rawToI32(value.rawValue); break;
+        case ISA::Type::I64: std::cout << TypeConversions::rawToI64(value.rawValue); break;
+        case ISA::Type::F32: std::cout << formatFloatString(TypeConversions::rawToF32(value.rawValue)); break;
+        case ISA::Type::F64: std::cout << formatFloatString(TypeConversions::rawToF64(value.rawValue)); break;
         case ISA::Type::STR: {
             // check value from operand stack is type ptr
             checkType("out",
                 {static_cast<uint32_t>(ISA::Type::PTR)},
                 static_cast<uint8_t>(value.type)
             );
-            std::cout << this->readStringFromMemory(value.rawValue) << std::endl;
+            std::cout << this->readStringFromMemory(value.rawValue);
             break;
         }
     }

@@ -7,7 +7,7 @@ TEST(OUT, OUTPUT_I32) {
         out i32
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "5");
 }
 
 TEST(OUT, OUTPUT_I32_NEGATIVE) {
@@ -16,7 +16,7 @@ TEST(OUT, OUTPUT_I32_NEGATIVE) {
         out i32
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "-5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "-5");
 }
 
 TEST(OUT, OUTPUT_UI32) {
@@ -25,7 +25,7 @@ TEST(OUT, OUTPUT_UI32) {
         out ui32
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "5");
 }
 
 TEST(OUT, OUTPUT_I64) {
@@ -34,7 +34,7 @@ TEST(OUT, OUTPUT_I64) {
         out i64
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "5");
 }
 
 TEST(OUT, OUTPUT_I64_NEGATIVE) {
@@ -43,7 +43,7 @@ TEST(OUT, OUTPUT_I64_NEGATIVE) {
         out i64
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "-5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "-5");
 }
 
 TEST(OUT, OUTPUT_UI64) {
@@ -52,7 +52,7 @@ TEST(OUT, OUTPUT_UI64) {
         out ui64
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "5");
 }
 
 TEST(OUT, OUTPUT_F32) {
@@ -61,7 +61,7 @@ TEST(OUT, OUTPUT_F32) {
         out f32
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "5.5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "5.5");
 }
 
 TEST(OUT, OUTPUT_F32_NEGATIVE) {
@@ -70,7 +70,7 @@ TEST(OUT, OUTPUT_F32_NEGATIVE) {
         out f32
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "-5.5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "-5.5");
 }
 
 TEST(OUT, OUTPUT_F64) {
@@ -79,7 +79,7 @@ TEST(OUT, OUTPUT_F64) {
         out f64
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "5.5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "5.5");
 }
 
 TEST(OUT, OUTPUT_F64_NEGATIVE) {
@@ -88,7 +88,7 @@ TEST(OUT, OUTPUT_F64_NEGATIVE) {
         out f64
         halt
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "-5.5\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "-5.5");
 }
 
 TEST(OUT, OUTPUT_STR) {
@@ -100,7 +100,7 @@ TEST(OUT, OUTPUT_STR) {
     .data
     $msg: str "Hello"
     )";
-    EXPECT_CONSOLE_OUTPUT(assembly, "Hello\n");
+    EXPECT_CONSOLE_OUTPUT(assembly, "Hello");
 }
 
 TEST(OUT, INVALID_OUTPUT_PTR) {

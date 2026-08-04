@@ -178,8 +178,8 @@ TEST(INN, READ_WRITE_STR) {
     )";
     EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(
         assembly,
-        "hello\n",
-        "hello\n"
+        "hello",
+        "hello"
     );
 }
 
@@ -191,8 +191,8 @@ TEST(INN, READ_WRITE_STR_UTF_8) {
     )";
     EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(
         assembly,
-        "hello😀\n",
-        "hello😀\n"
+        "hello😀",
+        "hello😀"
     );
 }
 
