@@ -341,15 +341,15 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
 
 compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
-        intLit->resultingType == Type::INT;
+        intLit->resultingType = Type::INT;
         return Type::INT;
     }
     if (auto* floatLit = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
-        floatLit->resultingType == Type::FLOAT;
+        floatLit->resultingType = Type::FLOAT;
         return Type::FLOAT;
     }
     if (auto* boolLit = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
-        boolLit->resultingType == Type::BOOL;
+        boolLit->resultingType = Type::BOOL;
         return Type::BOOL;
     }
     if (auto* exprIdent = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
@@ -372,7 +372,9 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
         const Type leftType = this->checkExprType(scope, *binaryOperator->left);
         const Type rightType = this->checkExprType(scope, *binaryOperator->right);
 
-        if (leftType != rightType) {
+
+        // division is an exception
+        if (leftType != rightType && binaryOperator->binaryOperatorInfo->binaryOperator != BinaryOperator::DIVIDE) {
             throw TypeError(
                 this->path->string(),
                 binaryOperator->line,
@@ -387,7 +389,9 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             case BinaryOperator::MINUS:
             case BinaryOperator::MULTIPLY:
             case BinaryOperator::DIVIDE:
+            case BinaryOperator::INTEGER_DIVIDE:
             case BinaryOperator::MODULO: {
+
                 if (leftType == Type::BOOL || rightType == Type::BOOL) {
                     throw TypeError(
                         this->path->string(),
@@ -395,6 +399,26 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
                         binaryOperator->column,
                         "cannot apply operator '" + binaryOperatorToString(binaryOperator->binaryOperatorInfo->binaryOperator) + " to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
                     );
+                }
+
+                if (binaryOperator->binaryOperatorInfo->binaryOperator == BinaryOperator::DIVIDE) {
+                    binaryOperator->resultingType = Type::FLOAT;
+                    return Type::FLOAT;
+                }
+
+                if (binaryOperator->binaryOperatorInfo->binaryOperator == BinaryOperator::INTEGER_DIVIDE) {
+
+                    if (leftType != Type::INT || rightType != Type::INT) {
+                        throw TypeError(
+                            this->path->string(),
+                            binaryOperator->line,
+                            binaryOperator->column,
+                            "cannot apply operator '" + binaryOperatorToString(binaryOperator->binaryOperatorInfo->binaryOperator) + " to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
+                        );
+                    }
+
+                    binaryOperator->resultingType = Type::INT;
+                    return Type::INT;
                 }
 
                 binaryOperator->resultingType = leftType;
@@ -530,6 +554,7 @@ std::string compiler::SemanticAnalyser::binaryOperatorToString(const BinaryOpera
         case BinaryOperator::MINUS: return "-";
         case BinaryOperator::MULTIPLY: return "*";
         case BinaryOperator::DIVIDE: return "/";
+        case BinaryOperator::INTEGER_DIVIDE: return "//";
         case BinaryOperator::MODULO: return "%";
 
         case BinaryOperator::LOGICAL_OR: return "||";

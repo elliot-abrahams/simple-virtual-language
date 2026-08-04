@@ -130,6 +130,14 @@ Token compiler::Tokeniser::readToken() {
             return token;
         }
         case '/': {
+            if (this->current + 1 < this->source.size() &&
+                this->source[this->current + 1] == '/') {
+
+                const Token token = Token{TokenKind::INTEGER_DIVIDE, "//", this->line, this->column};
+                this->advance();
+                this->advance();
+                return token;
+            }
             const Token token = Token{TokenKind::DIVIDE, "/", this->line, this->column};
             this->advance();
             return token;

@@ -89,6 +89,28 @@ TEST(EXPR_BINARY, DIVIDE) {
     parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
+TEST(EXPR_BINARY, INTEGER_DIVIDE) {
+    const auto testCode = R"(
+        int x = 5 // 6;
+    )";
+    const auto program = parserTest::PARSE(testCode);
+    std::vector<std::unique_ptr<parserTest::ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<parserTest::ExpectedVarDecl>(
+            compiler::Type::INT,
+            "x",
+            std::make_unique<parserTest::ExpectedBinaryExpr>(
+                compiler::BinaryOperator::INTEGER_DIVIDE,
+                std::make_unique<parserTest::ExpectedIntegerLiteral>(5),
+                std::make_unique<parserTest::ExpectedIntegerLiteral>(6)
+            )
+        )
+    );
+    std::vector<std::unique_ptr<parserTest::ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<parserTest::ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
 TEST(EXPR_BINARY, MODULO) {
     const auto testCode = R"(
         int x = 1 % 2;

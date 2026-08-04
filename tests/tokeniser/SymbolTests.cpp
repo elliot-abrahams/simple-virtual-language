@@ -47,6 +47,10 @@ TEST(SYMBOL, DIVIDE) {
     ASSERT_TOKEN_EQ("/", TokenKind::DIVIDE, "/");
 }
 
+TEST(SYMBOL, INTEGER_DIVIDE) {
+    ASSERT_TOKEN_EQ("//", TokenKind::INTEGER_DIVIDE, "//");
+}
+
 TEST(SYMBOL, MODULO) {
     ASSERT_TOKEN_EQ("%", TokenKind::MODULO, "%");
 }

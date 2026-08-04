@@ -242,6 +242,21 @@ void compiler::CodeGenerator::compileBinaryExpr(Scope* scope, const ast::ExprBin
             break;
         }
         case BinaryOperator::DIVIDE: {
+
+            if (expr.left->resultingType == Type::INT) {
+                this->emitWithDoubleIndent("conv f32");
+            }
+
+            this->compileExpr(scope, *expr.right);
+
+            if (expr.right->resultingType == Type::INT) {
+                this->emitWithDoubleIndent("conv f32");
+            }
+
+            this->emitWithDoubleIndent("div");
+            break;
+        }
+        case BinaryOperator::INTEGER_DIVIDE: {
             this->compileExpr(scope, *expr.right);
             this->emitWithDoubleIndent("div");
             break;

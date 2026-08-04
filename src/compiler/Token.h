@@ -15,6 +15,7 @@ enum class TokenKind {
     MINUS,
     MULTIPLY,
     DIVIDE,
+    INTEGER_DIVIDE,
     MODULO,
 
     LOGICAL_OR,
@@ -71,6 +72,7 @@ struct Token {
             case TokenKind::MINUS: return "-";
             case TokenKind::MULTIPLY: return "*";
             case TokenKind::DIVIDE: return "/";
+            case TokenKind::INTEGER_DIVIDE: return "//";
             case TokenKind::MODULO: return "%";
 
             case TokenKind::LOGICAL_OR: return "||";

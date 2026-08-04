@@ -19,6 +19,7 @@ namespace compiler {
         MINUS,
         MULTIPLY,
         DIVIDE,
+        INTEGER_DIVIDE,
         MODULO,
 
         LOGICAL_OR,

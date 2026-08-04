@@ -576,7 +576,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
 }
 
 /*
- *  multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | MODULO ), unary_expression } ;
+ *  multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | INTEGER_DIVIDE | MODULO ), unary_expression } ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() const {
     auto left = this->parseUnaryExpression();
@@ -585,35 +585,37 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
 
     Token token = this->tokeniser->tok();
 
-    while (token.kind == TokenKind::MULTIPLY || token.kind == TokenKind::DIVIDE || token.kind == TokenKind::MODULO) {
-
+    while (token.kind == TokenKind::MULTIPLY || token.kind == TokenKind::DIVIDE || token.kind == TokenKind::INTEGER_DIVIDE || token.kind == TokenKind::MODULO) {
         // parse binary operator
-        std::unique_ptr<ast::BinaryOperatorInfo> binaryOperatorInfo = nullptr;
+        BinaryOperator binaryOperator;
         switch (token.kind) {
             case TokenKind::MULTIPLY:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::MULTIPLY
-                );
+                binaryOperator = BinaryOperator::MULTIPLY;
                 break;
+
             case TokenKind::DIVIDE:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::DIVIDE
-                );
+                binaryOperator = BinaryOperator::DIVIDE;
                 break;
+
+            case TokenKind::INTEGER_DIVIDE:
+                binaryOperator = BinaryOperator::INTEGER_DIVIDE;
+                break;
+
             case TokenKind::MODULO:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::MODULO
-                );
+                binaryOperator = BinaryOperator::MODULO;
                 break;
+
             default:
                 this->handleUnexpectedToken(this->tokeniser->tok());
         }
+
+        auto binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
+            token.line,
+            token.column,
+            binaryOperator
+        );
+
+
         this->tokeniser->next();
 
         // parse right expression
