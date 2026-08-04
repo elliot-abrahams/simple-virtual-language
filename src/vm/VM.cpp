@@ -164,7 +164,7 @@ void VM::executeSwap() {
 void VM::executeLoad() {
     const uint8_t type = this->fetchType(); // read type operand
     const Value address = this->operandStack.pop(); // pop address from operand stack
-    checkType("load", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    checkType("load", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr or ui32
 
     const uint64_t value = this->memoryManager.read(MemoryAccessScope::PTR, address.rawValue, static_cast<ISA::Type>(type)); // read value at address
     this->operandStack.push(type, value); // push value onto operand stack
@@ -172,7 +172,7 @@ void VM::executeLoad() {
 
 void VM::executeLoadB() {
     const Value address = this->operandStack.pop(); // pop address from operand stack
-    checkType("loadB", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    checkType("loadB", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr or ui32
     // read byte at address
     const uint8_t value = this->memoryManager.read8(MemoryAccessScope::PTR, address.rawValue);
     // push byte as ui32 onto the operand stack
@@ -216,7 +216,7 @@ void VM::executeLoadL() {
 void VM::executeStore() {
     const Value value = this->operandStack.pop(); // pop value to store from operand stack
     const Value address = this->operandStack.pop(); // pop address to store to from operand stack
-    checkType("store", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    checkType("store", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr or ui32
 
     // store value in memory at address
     this->memoryManager.write(MemoryAccessScope::PTR, address.rawValue, &value);
@@ -237,7 +237,7 @@ void VM::executeStoreB() {
     );
 
     const Value address = this->operandStack.pop(); // pop address to store to from operand stack
-    checkType("storeB", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr
+    checkType("storeB", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr or ui32
 
     // store 8 least significant bytes of value in memory at address
     this->memoryManager.write8(MemoryAccessScope::PTR, address.rawValue, value.rawValue & 0xFF);

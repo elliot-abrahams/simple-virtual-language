@@ -502,7 +502,7 @@ Value ArithmeticOps::shl(const Value &value1, const Value &value2) {
      * ui64 << R -> ui64
      *
      * R -> (i32 | ui32 | i64 | ui64)
-     * R is converted to u32, then masked by (bitWidth - 1)
+     * R is converted to ui32, then masked by (bitWidth - 1)
      */
 
     if (value2.type == ISA::Type::F32 || value2.type == ISA::Type::F64 || value2.type == ISA::Type::PTR ||
@@ -533,7 +533,7 @@ Value ArithmeticOps::shr(const bool isArithmetic, const Value &value1, const Val
      * ui64 >> R -> ui64
      *
      * R -> (i32 | ui32 | i64 | ui64)
-     * R is converted to u32, then masked by (bitWidth - 1)
+     * R is converted to ui32, then masked by (bitWidth - 1)
      */
 
     if (value2.type == ISA::Type::F32 || value2.type == ISA::Type::F64 || value2.type == ISA::Type::PTR ||
@@ -596,13 +596,13 @@ Value ArithmeticOps::cne(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 == i32 -> i32
-     * ui32 == ui32 -> i32
-     * i64 == i64 -> i32
-     * ui64 == ui64 -> i32
-     * f32 == f32 -> i32
-     * f64 == f64 -> i32
-     * ptr == ptr -> i32
+     * i32 != i32 -> i32
+     * ui32 != ui32 -> i32
+     * i64 != i64 -> i32
+     * ui64 != ui64 -> i32
+     * f32 != f32 -> i32
+     * f64 != f64 -> i32
+     * ptr != ptr -> i32
      */
 
     if (value1.type != value2.type) {
@@ -618,13 +618,13 @@ Value ArithmeticOps::clt(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 == i32 -> i32
-     * ui32 == ui32 -> i32
-     * i64 == i64 -> i32
-     * ui64 == ui64 -> i32
-     * f32 == f32 -> i32
-     * f64 == f64 -> i32
-     * ptr == ptr -> i32
+     * i32 < i32 -> i32
+     * ui32 < ui32 -> i32
+     * i64 < i64 -> i32
+     * ui64 < ui64 -> i32
+     * f32 < f32 -> i32
+     * f64 < f64 -> i32
+     * ptr < ptr -> i32
      */
 
     if (value1.type != value2.type) {
@@ -650,13 +650,13 @@ Value ArithmeticOps::cle(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 == i32 -> i32
-     * ui32 == ui32 -> i32
-     * i64 == i64 -> i32
-     * ui64 == ui64 -> i32
-     * f32 == f32 -> i32
-     * f64 == f64 -> i32
-     * ptr == ptr -> i32
+     * i32 <= i32 -> i32
+     * ui32 <= ui32 -> i32
+     * i64 <= i64 -> i32
+     * ui64 <= ui64 -> i32
+     * f32 <= f32 -> i32
+     * f64 <= f64 -> i32
+     * ptr <= ptr -> i32
      */
 
     if (value1.type != value2.type) {
@@ -682,13 +682,13 @@ Value ArithmeticOps::cgt(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 == i32 -> i32
-     * ui32 == ui32 -> i32
-     * i64 == i64 -> i32
-     * ui64 == ui64 -> i32
-     * f32 == f32 -> i32
-     * f64 == f64 -> i32
-     * ptr == ptr -> i32
+     * i32 > i32 -> i32
+     * ui32 > ui32 -> i32
+     * i64 > i64 -> i32
+     * ui64 > ui64 -> i32
+     * f32 > f32 -> i32
+     * f64 > f64 -> i32
+     * ptr > ptr -> i32
      */
 
     if (value1.type != value2.type) {
@@ -714,13 +714,13 @@ Value ArithmeticOps::cge(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 == i32 -> i32
-     * ui32 == ui32 -> i32
-     * i64 == i64 -> i32
-     * ui64 == ui64 -> i32
-     * f32 == f32 -> i32
-     * f64 == f64 -> i32
-     * ptr == ptr -> i32
+     * i32 >= i32 -> i32
+     * ui32 >= ui32 -> i32
+     * i64 >= i64 -> i32
+     * ui64 >= ui64 -> i32
+     * f32 >= f32 -> i32
+     * f64 >= f64 -> i32
+     * ptr >= ptr -> i32
      */
 
     if (value1.type != value2.type) {
