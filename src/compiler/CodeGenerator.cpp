@@ -9,6 +9,7 @@ std::vector<std::string> compiler::CodeGenerator::generateCode(const ast::Progra
     this->compileProgram(program);
     this->compileBuiltinFunctions();
     this->compileGlobalVariables();
+    this->compileBuiltinData();
     return this->generatedCode;
 }
 
@@ -431,6 +432,11 @@ void compiler::CodeGenerator::compileBuiltinFunctions() {
     for (const auto& builtinFunctionId : this->calledBuiltins) {
         BuiltinFunction* builtinFunction = BuiltinFunctions::getBuiltinFunction(builtinFunctionId);
 
+        // store needed builtinData
+        for (const auto& builtinData : builtinFunction->requiredBuiltinData) {
+            this->calledBuiltinData.insert(builtinData);
+        }
+
         // compile function def
         this->emit("def " + builtinFunction->functionLabel + ":");
 
@@ -461,6 +467,12 @@ void compiler::CodeGenerator::compileGlobalVariables() {
         }
 
         this->emitWithSingleIndent(staticDataDef);
+    }
+}
+
+void compiler::CodeGenerator::compileBuiltinData() {
+    for (const auto builtinDataId : this->calledBuiltinData) {
+        this->emit(*BuiltinFunctions::getBuiltinData(builtinDataId));
     }
 }
 

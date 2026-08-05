@@ -19,11 +19,17 @@ namespace compiler {
         PRINT_BOOL,
     };
 
+    enum class BuiltinDataId {
+        TRUE_STRING,
+        FALSE_STRING,
+    };
+
     struct BuiltinFunction {
         const std::string functionLabel;
         const uint8_t numberOfArguments;
         const uint32_t numberOfLocals;
         const std::vector<std::string> functionBodyAssembly;
+        const std::vector<BuiltinDataId> requiredBuiltinData;
     };
 
     class BuiltinFunctions {
@@ -32,6 +38,10 @@ namespace compiler {
 
         static BuiltinFunction* getBuiltinFunction(const BuiltinId id) {
             return &builtinFunctionAssembly.at(id);
+        }
+
+        static std::string* getBuiltinData(const BuiltinDataId id) {
+            return &builtinData.at(id);
         }
 
         static std::string getBuiltinFunctionLabel(const BuiltinId id) {
@@ -48,7 +58,9 @@ namespace compiler {
                 "        loadL i32 #1",
                 "        out i32",
                 "        ret"
-            }}},
+            },
+                {}
+            }},
 
             {BuiltinId::PRINT_FLOAT, BuiltinFunction{
                 "$__Builtin__print(float)",
@@ -58,7 +70,9 @@ namespace compiler {
                 "        loadL f32 #1",
                 "        out f32",
                 "        ret"
-            }}},
+            },
+                {}
+            }},
 
             {BuiltinId::PRINT_BOOL, BuiltinFunction{
                 "$__Builtin__print(bool)",
@@ -66,9 +80,22 @@ namespace compiler {
                 0,
                 {
                 "        loadL ui32 #1",
-                "        out ui32", // TODO: change to string "true" / "false"
+                "        jez $__print(bool)__print__false",
+                "        push ptr $__true__string",
+                "        out str",
+                "        ret",
+                "    $__print(bool)__print__false:",
+                "        push ptr $__false__string",
+                "        out str",
                 "        ret"
-            }}}
+            },
+                {BuiltinDataId::TRUE_STRING, BuiltinDataId::FALSE_STRING}
+            }}
+        };
+
+        inline static std::unordered_map<BuiltinDataId, std::string> builtinData = {
+            {BuiltinDataId::TRUE_STRING, "$__true__string: str \"true\""},
+            {BuiltinDataId::FALSE_STRING, "$__false__string: str \"false\""},
         };
     };
 }

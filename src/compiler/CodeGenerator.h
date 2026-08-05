@@ -43,6 +43,7 @@ namespace compiler {
 
         void compileBuiltinFunctions();
         void compileGlobalVariables();
+        void compileBuiltinData();
 
         static std::string typeToString(const Type& type);
 
@@ -61,6 +62,7 @@ namespace compiler {
 
         std::vector<const ast::Block*> pendingScopeFunctions;
         std::unordered_set<BuiltinId> calledBuiltins;
+        std::unordered_set<BuiltinDataId> calledBuiltinData;
     };
 }
 
