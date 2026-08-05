@@ -94,7 +94,7 @@ namespace compiler {
         }
 
         uint32_t calculateNumberOfLocalSlots(const uint32_t currentSlots = 0) const {
-            uint32_t maxLocalSlots = 0;
+            uint32_t maxLocalSlots = currentSlots;
             for (const auto& symbol : this->symbols) {
                 if (!symbol.second.isArgument()) {
                     maxLocalSlots++;
