@@ -94,23 +94,24 @@ namespace compiler {
         }
 
         uint32_t calculateNumberOfLocalSlots(const uint32_t currentSlots = 0) const {
-            uint32_t slotsInThisScope = currentSlots;
-
+            uint32_t maxLocalSlots = 0;
             for (const auto& symbol : this->symbols) {
-                slotsInThisScope++;
+                if (!symbol.second.isArgument()) {
+                    maxLocalSlots++;
+                }
             }
 
-            uint32_t maxSlots = slotsInThisScope;
+            uint32_t slots = maxLocalSlots;
 
-
-            for (const auto& child : children) {
-                maxSlots = std::max(
-                    maxSlots,
-                    child->calculateNumberOfLocalSlots(slotsInThisScope)
+            for (auto& child : children)
+            {
+                slots = std::max(
+                    slots,
+                    child->calculateNumberOfLocalSlots(maxLocalSlots)
                 );
             }
 
-            return maxSlots;
+            return slots;
         }
 
         void assignSlotsToLocalSymbols(const int startingSlot) {
