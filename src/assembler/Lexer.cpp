@@ -265,7 +265,7 @@ void assembler::Lexer::skipComment() {
 }
 
 bool assembler::Lexer::isValidLabel(const std::string& s) {
-    return std::regex_match(s, std::regex{R"(\$[a-zA-Z_][a-zA-Z0-9_()]*)"});
+    return std::regex_match(s, std::regex{R"(\$[a-zA-Z_][a-zA-Z0-9_(),]*)"});
 }
 
 bool assembler::Lexer::isValidNumber(const std::string& s) {

@@ -600,7 +600,7 @@ std::string compiler::SemanticAnalyser::functionSignatureToString(const std::str
     }
 
     for (int i = 1; i < parameterTypes.size(); i++) {
-        result+= ", ";
+        result+= ",";
         result+= typeToString(parameterTypes.at(i));
     }
 
