@@ -8,7 +8,7 @@ TEST(CGE, I32_I32_TRUE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(1));
 }
 
 TEST(CGE, I32_I32_FALSE) {
@@ -18,7 +18,7 @@ TEST(CGE, I32_I32_FALSE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(0));
 }
 
 TEST(CGE, UI32_UI32_TRUE) {
@@ -28,7 +28,7 @@ TEST(CGE, UI32_UI32_TRUE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(1));
 }
 
 TEST(CGE, UI32_UI32_FALSE) {
@@ -38,7 +38,7 @@ TEST(CGE, UI32_UI32_FALSE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(0));
 }
 
 TEST(CGE, I64_I64_TRUE) {
@@ -48,7 +48,7 @@ TEST(CGE, I64_I64_TRUE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(1));
 }
 
 TEST(CGE, I64_I64_FALSE) {
@@ -58,7 +58,7 @@ TEST(CGE, I64_I64_FALSE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(0));
 }
 
 TEST(CGE, UI64_UI64_TRUE) {
@@ -68,7 +68,7 @@ TEST(CGE, UI64_UI64_TRUE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(1));
 }
 
 TEST(CGE, UI64_UI64_FALSE) {
@@ -78,7 +78,7 @@ TEST(CGE, UI64_UI64_FALSE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(0));
 }
 
 TEST(CGE, F32_F32_TRUE) {
@@ -88,7 +88,7 @@ TEST(CGE, F32_F32_TRUE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(1));
 }
 
 TEST(CGE, F32_F32_FALSE) {
@@ -98,7 +98,7 @@ TEST(CGE, F32_F32_FALSE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(0));
 }
 
 TEST(CGE, F64_F64_TRUE) {
@@ -108,7 +108,7 @@ TEST(CGE, F64_F64_TRUE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(1));
 }
 
 TEST(CGE, F64_F64_FALSE) {
@@ -118,7 +118,7 @@ TEST(CGE, F64_F64_FALSE) {
         cge
         halt
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(0));
 }
 
 TEST(CGE, PTR_PTR_TRUE) {
@@ -132,7 +132,7 @@ TEST(CGE, PTR_PTR_TRUE) {
     $x: i32 5
     $y: i32 5
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(1));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(1));
 }
 
 TEST(CGE, PTR_PTR_FALSE) {
@@ -146,7 +146,7 @@ TEST(CGE, PTR_PTR_FALSE) {
     $x: i32 5
     $y: i32 5
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::I32, int32_t(0));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(0));
 }
 
 TEST(CGE, INVALID_I32_UI32) {

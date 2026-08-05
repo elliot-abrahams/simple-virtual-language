@@ -574,172 +574,172 @@ Value ArithmeticOps::ceq(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 == i32 -> i32
-     * ui32 == ui32 -> i32
-     * i64 == i64 -> i32
-     * ui64 == ui64 -> i32
-     * f32 == f32 -> i32
-     * f64 == f64 -> i32
-     * ptr == ptr -> i32
+     * i32 == i32 -> ui32
+     * ui32 == ui32 -> ui32
+     * i64 == i64 -> ui32
+     * ui64 == ui64 -> ui32
+     * f32 == f32 -> ui32
+     * f64 == f64 -> ui32
+     * ptr == ptr -> ui32
      */
 
     if (value1.type != value2.type) {
         throwInvalidOperationOnTypesVMError("ceq", value2.type, value1.type);
     }
 
-    int result = 0;
+    uint32_t result = 0;
     value1.rawValue == value2.rawValue ? result = 1 : result = 0;
-    return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
+    return Value{ISA::Type::UI32, result};
 }
 
 Value ArithmeticOps::cne(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 != i32 -> i32
-     * ui32 != ui32 -> i32
-     * i64 != i64 -> i32
-     * ui64 != ui64 -> i32
-     * f32 != f32 -> i32
-     * f64 != f64 -> i32
-     * ptr != ptr -> i32
+     * i32 != i32 -> ui32
+     * ui32 != ui32 -> ui32
+     * i64 != i64 -> ui32
+     * ui64 != ui64 -> ui32
+     * f32 != f32 -> ui32
+     * f64 != f64 -> ui32
+     * ptr != ptr -> ui32
      */
 
     if (value1.type != value2.type) {
         throwInvalidOperationOnTypesVMError("cne", value2.type, value1.type);
     }
 
-    int result = 0;
+    uint32_t result = 0;
     value1.rawValue != value2.rawValue ? result = 1 : result = 0;
-    return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
+    return Value{ISA::Type::UI32, result};
 }
 
 Value ArithmeticOps::clt(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 < i32 -> i32
-     * ui32 < ui32 -> i32
-     * i64 < i64 -> i32
-     * ui64 < ui64 -> i32
-     * f32 < f32 -> i32
-     * f64 < f64 -> i32
-     * ptr < ptr -> i32
+     * i32 < i32 -> ui32
+     * ui32 < ui32 -> ui32
+     * i64 < i64 -> ui32
+     * ui64 < ui64 -> ui32
+     * f32 < f32 -> ui32
+     * f64 < f64 -> ui32
+     * ptr < ptr -> ui32
      */
 
     if (value1.type != value2.type) {
         throwInvalidOperationOnTypesVMError("clt", value2.type, value1.type);
     }
 
-    int result;
+    uint32_t result;
     switch (value1.type) {
         case ISA::Type::UI32:
         case ISA::Type::UI64:
         case ISA::Type::PTR:
             value1.rawValue < value2.rawValue ? result = 1 : result = 0; break;
 
-        case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) < TypeConversions::I32ToRaw(value2.rawValue) ? result = 1 : result = 0; break;
+        case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) < TypeConversions::rawToI32(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::I64: TypeConversions::rawToI64(value1.rawValue) < TypeConversions::rawToI64(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::F32: TypeConversions::rawToF32(value1.rawValue) < TypeConversions::rawToF32(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::F64: TypeConversions::rawToF64(value1.rawValue) < TypeConversions::rawToF64(value2.rawValue) ? result = 1 : result = 0; break;
     }
-    return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
+    return Value{ISA::Type::UI32, result};
 }
 
 Value ArithmeticOps::cle(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 <= i32 -> i32
-     * ui32 <= ui32 -> i32
-     * i64 <= i64 -> i32
-     * ui64 <= ui64 -> i32
-     * f32 <= f32 -> i32
-     * f64 <= f64 -> i32
-     * ptr <= ptr -> i32
+     * i32 <= i32 -> ui32
+     * ui32 <= ui32 -> ui32
+     * i64 <= i64 -> ui32
+     * ui64 <= ui64 -> ui32
+     * f32 <= f32 -> ui32
+     * f64 <= f64 -> ui32
+     * ptr <= ptr -> ui32
      */
 
     if (value1.type != value2.type) {
         throwInvalidOperationOnTypesVMError("cle", value2.type, value1.type);
     }
 
-    int result;
+    uint32_t result;
     switch (value1.type) {
         case ISA::Type::UI32:
         case ISA::Type::UI64:
         case ISA::Type::PTR:
             value1.rawValue <= value2.rawValue ? result = 1 : result = 0; break;
 
-        case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) <= TypeConversions::I32ToRaw(value2.rawValue) ? result = 1 : result = 0; break;
+        case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) <= TypeConversions::rawToI32(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::I64: TypeConversions::rawToI64(value1.rawValue) <= TypeConversions::rawToI64(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::F32: TypeConversions::rawToF32(value1.rawValue) <= TypeConversions::rawToF32(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::F64: TypeConversions::rawToF64(value1.rawValue) <= TypeConversions::rawToF64(value2.rawValue) ? result = 1 : result = 0; break;
     }
-    return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
+    return Value{ISA::Type::UI32, result};
 }
 
 Value ArithmeticOps::cgt(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 > i32 -> i32
-     * ui32 > ui32 -> i32
-     * i64 > i64 -> i32
-     * ui64 > ui64 -> i32
-     * f32 > f32 -> i32
-     * f64 > f64 -> i32
-     * ptr > ptr -> i32
+     * i32 > i32 -> ui32
+     * ui32 > ui32 -> ui32
+     * i64 > i64 -> ui32
+     * ui64 > ui64 -> ui32
+     * f32 > f32 -> ui32
+     * f64 > f64 -> ui32
+     * ptr > ptr -> ui32
      */
 
     if (value1.type != value2.type) {
         throwInvalidOperationOnTypesVMError("cgt", value2.type, value1.type);
     }
 
-    int result;
+    uint32_t result;
     switch (value1.type) {
         case ISA::Type::UI32:
         case ISA::Type::UI64:
         case ISA::Type::PTR:
             value1.rawValue > value2.rawValue ? result = 1 : result = 0; break;
 
-        case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) > TypeConversions::I32ToRaw(value2.rawValue) ? result = 1 : result = 0; break;
+        case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) > TypeConversions::rawToI32(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::I64: TypeConversions::rawToI64(value1.rawValue) > TypeConversions::rawToI64(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::F32: TypeConversions::rawToF32(value1.rawValue) > TypeConversions::rawToF32(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::F64: TypeConversions::rawToF64(value1.rawValue) > TypeConversions::rawToF64(value2.rawValue) ? result = 1 : result = 0; break;
     }
-    return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
+    return Value{ISA::Type::UI32, result};
 }
 
 Value ArithmeticOps::cge(const Value& value1, const Value& value2) {
 
     /*
      * VALID OPERATIONS:
-     * i32 >= i32 -> i32
-     * ui32 >= ui32 -> i32
-     * i64 >= i64 -> i32
-     * ui64 >= ui64 -> i32
-     * f32 >= f32 -> i32
-     * f64 >= f64 -> i32
-     * ptr >= ptr -> i32
+     * i32 >= i32 -> ui32
+     * ui32 >= ui32 -> ui32
+     * i64 >= i64 -> ui32
+     * ui64 >= ui64 -> ui32
+     * f32 >= f32 -> ui32
+     * f64 >= f64 -> ui32
+     * ptr >= ptr -> ui32
      */
 
     if (value1.type != value2.type) {
         throwInvalidOperationOnTypesVMError("cge", value2.type, value1.type);
     }
 
-    int result;
+    uint32_t result;
     switch (value1.type) {
         case ISA::Type::UI32:
         case ISA::Type::UI64:
         case ISA::Type::PTR:
             value1.rawValue >= value2.rawValue ? result = 1 : result = 0; break;
 
-        case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) >= TypeConversions::I32ToRaw(value2.rawValue) ? result = 1 : result = 0; break;
+        case ISA::Type::I32: TypeConversions::rawToI32(value1.rawValue) >= TypeConversions::rawToI32(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::I64: TypeConversions::rawToI64(value1.rawValue) >= TypeConversions::rawToI64(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::F32: TypeConversions::rawToF32(value1.rawValue) >= TypeConversions::rawToF32(value2.rawValue) ? result = 1 : result = 0; break;
         case ISA::Type::F64: TypeConversions::rawToF64(value1.rawValue) >= TypeConversions::rawToF64(value2.rawValue) ? result = 1 : result = 0; break;
     }
-    return Value{ISA::Type::I32, TypeConversions::I32ToRaw(result)};
+    return Value{ISA::Type::UI32, result};
 }
 
 uint32_t ArithmeticOps::getBitWidth(const ISA::Type& t) {
