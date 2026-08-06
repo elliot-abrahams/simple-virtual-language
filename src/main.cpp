@@ -1,11 +1,9 @@
-#include <iostream>
+#pragma once
 
-#include "Driver.h"
-#include "assembler/Assembler.h"
-#include "vm/VM.h"
+#define NOMINMAX
 #include <windows.h>
 
-#include "compiler/Compiler.h"
+#include "Driver.h"
 
 int main(int argc, char* argv[]) {
     // set output to UTF-8
