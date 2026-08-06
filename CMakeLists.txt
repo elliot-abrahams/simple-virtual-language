@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
-project(svm)
+project(sv)
 
-set(This svm_lib)
+set(This sv_lib)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -70,9 +70,9 @@ set(Sources
 
 add_library(${This} STATIC ${Sources} ${Headers})
 
-add_executable(svm src/main.cpp)
+add_executable(sv src/main.cpp)
 
-target_link_libraries(svm
+target_link_libraries(sv
     PRIVATE
     ${This}
 )

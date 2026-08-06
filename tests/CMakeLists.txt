@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(svm)
+project(sv)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -60,7 +60,7 @@ add_executable(${VM_TESTS} ${VM_Sources})
 
 target_link_libraries(${VM_TESTS} PRIVATE
     gtest_main
-    svm_lib
+    sv_lib
 )
 
 gtest_discover_tests(${VM_TESTS})
@@ -96,7 +96,7 @@ add_executable(${PARSER_TESTS} ${Parser_Sources})
 
 target_link_libraries(${PARSER_TESTS} PRIVATE
         gtest_main
-        svm_lib
+        sv_lib
 )
 
 gtest_discover_tests(${PARSER_TESTS})
@@ -122,7 +122,7 @@ add_executable(${TOKENISER_TESTS} ${Tokeniser_Sources})
 
 target_link_libraries(${TOKENISER_TESTS} PRIVATE
         gtest_main
-        svm_lib
+        sv_lib
 )
 
 gtest_discover_tests(${TOKENISER_TESTS})
@@ -157,7 +157,7 @@ add_executable(${SEMANTIC_TESTS} ${Semantic_Sources})
 
 target_link_libraries(${SEMANTIC_TESTS} PRIVATE
         gtest_main
-        svm_lib
+        sv_lib
 )
 
 gtest_discover_tests(${SEMANTIC_TESTS})
@@ -186,7 +186,7 @@ add_executable(${INTEGRATION_TESTS} ${Integration_Sources})
 
 target_link_libraries(${INTEGRATION_TESTS} PRIVATE
         gtest_main
-        svm_lib
+        sv_lib
 )
 
 gtest_discover_tests(${INTEGRATION_TESTS})
