@@ -51,18 +51,18 @@ void compiler::Tokeniser::next() {
 
 Token compiler::Tokeniser::readToken() {
     // skip whitespace
-    while (std::isspace(this->source[this->current])) {
-        if (this->source[this->current] == 10) {
+    while (this->current < this->source.size() &&
+       std::isspace(static_cast<unsigned char>(this->source[this->current]))) {
+        if (this->source[this->current] == '\n') {
             this->line++;
             this->column = 0;
         }
         this->advance();
-    }
+       }
 
     // check reached end
     if (this->current == this->source.size()) {
-        const Token token = Token{TokenKind::END_OF_FILE, " ", this->line, this->column};
-        return token;
+        return Token{TokenKind::END_OF_FILE, "", this->line, this->column};
     }
 
     this->start = this->current;
