@@ -267,7 +267,7 @@ void VM::executeStoreL() {
 }
 
 void VM::executeAlloc() {
-    const Value value = this->operandStack.pop(); // pop value to store from operand stack
+    const Value value = this->operandStack.pop(); // pop number of bytes to allocate in the heap
     checkType("alloc", {static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(value.type));
 
     // allocate space on heap
@@ -278,7 +278,7 @@ void VM::executeAlloc() {
 }
 
 void VM::executeFree() {
-    const Value value = this->operandStack.pop(); // pop value to store from operand stack
+    const Value value = this->operandStack.pop(); // pop address of the block to deallocate from the heap
     checkType("free", {static_cast<uint8_t>(ISA::Type::PTR)}, static_cast<uint8_t>(value.type));
     // deallocate heap at address
     heapManager.deallocateBlock(value.rawValue);
