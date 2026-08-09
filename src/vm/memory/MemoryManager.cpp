@@ -1,25 +1,25 @@
 #include "MemoryManager.h"
 
 
-MemoryManager::MemoryManager(const uint32_t* endOfHeapRegion, const uint32_t* startOfCallStackRegion) :
+MemoryManager::MemoryManager(uint32_t* HB, const uint32_t* HP, const uint32_t* SP) :
     pageTable(std::unordered_map<uint32_t, Page*>{}),
     startOfDataRegion(0),
-    startOfHeapRegion(0),
-    endOfHeapRegion(endOfHeapRegion),
-    startOfCallStackRegion(startOfCallStackRegion) {}
+    HB(HB),
+    HP(HP),
+    SP(SP) {}
 
 void MemoryManager::loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode) {
     // read header
     for (int i = 0; i < 4; i++) {
-        startOfDataRegion = startOfDataRegion | static_cast<uint32_t>((*bytecode)[i]) << (i * 8);
+        this->startOfDataRegion = this->startOfDataRegion | static_cast<uint32_t>((*bytecode)[i]) << (i * 8);
     }
 
     for (int i = 0; i < 4; i++) {
-        startOfHeapRegion = startOfHeapRegion | static_cast<uint32_t>((*bytecode)[i + 4]) << (i * 8);
+        *this->HB = *this->HB | static_cast<uint32_t>((*bytecode)[i + 4]) << (i * 8);
     }
 
     this->startOfDataRegion = this->startOfDataRegion + 1 - BYTECODE_HEADER_SIZE;
-    this->startOfHeapRegion = this->startOfHeapRegion + 1 - BYTECODE_HEADER_SIZE;
+    *this->HB = *this->HB + 1 - BYTECODE_HEADER_SIZE;
 
     // load bytecode
     for (uint32_t i = 0; i <= bytecode->size() - BYTECODE_HEADER_SIZE - 1; i++) {
@@ -162,26 +162,31 @@ void MemoryManager::checkAddressInRegion(const MemoryAccessScope region, uint32_
             if (this->inCodeRegion(address)) {
                 return;
             }
+            break;
         }
         case MemoryAccessScope::DATA: {
             if (this->inDataRegion(address)) {
                 return;
             }
+            break;
         }
         case MemoryAccessScope::HEAP: {
             if (this->inHeapRegion(address)) {
                 return;
             }
+            break;
         }
         case MemoryAccessScope::CALL_STACK: {
             if (this->inCallStackRegion(address)) {
                 return;
             }
+            break;
         }
         case MemoryAccessScope::PTR: {
             if (this->inDataRegion(address) || this->inHeapRegion(address)) {
                 return;
             }
+            break;
         }
         case MemoryAccessScope::ANY: return;
     }
@@ -193,13 +198,13 @@ bool MemoryManager::inCodeRegion(const uint32_t address) const {
 }
 
 bool MemoryManager::inDataRegion(const uint32_t address) const {
-    return address >= this->startOfDataRegion && address < this->startOfHeapRegion;
+    return address >= this->startOfDataRegion && address < *this->HB;
 }
 
 bool MemoryManager::inHeapRegion(const uint32_t address) const {
-    return address >= this->startOfHeapRegion && address < *this->endOfHeapRegion;
+    return address >= *this->HB && address <= *this->HP;
 }
 
 bool MemoryManager::inCallStackRegion(const uint32_t address) const {
-    return address >= *this->startOfCallStackRegion;
+    return address >= *this->SP;
 }

@@ -14,25 +14,27 @@ void CallStackManager::push(uint32_t& FP, uint32_t& SP, const uint32_t returnAdd
         throw VMError("Stack overflow");
     }
 
-    // load arguments into memory
-    for (int i = 0; i < numberOfArguments; i++) {
-        this->memoryManager->write64(MemoryAccessScope::CALL_STACK, SP - ((i + 1) * 8), arguments[i].rawValue);
-    }
-
-    // write zero into locals
-    for (int i = 0; i < numberLocals; i++) {
-        this->memoryManager->write64(MemoryAccessScope::CALL_STACK, SP - (sizeOfArguments + (i + 2) * 8), 0);
-    }
-
-    // load previous frame pointer value into memory
-    this->memoryManager->write32(MemoryAccessScope::CALL_STACK, SP - (sizeOfArguments + 4), FP);
-
-    // load return address into memory
-    this->memoryManager->write32(MemoryAccessScope::CALL_STACK, SP - (sizeOfArguments + 8), returnAddress);
+    uint32_t oldFP = FP;
 
     // update FP and SP
     FP = SP - (sizeOfArguments + 8);
     SP = SP - sizeOfFrame;
+
+    // load arguments into memory
+    for (int i = 0; i < numberOfArguments; i++) {
+        this->memoryManager->write64(MemoryAccessScope::CALL_STACK, FP + (sizeOfArguments - (i * 8)), arguments[i].rawValue);
+    }
+
+    // write zero into locals
+    for (int i = 0; i < numberLocals; i++) {
+        this->memoryManager->write64(MemoryAccessScope::CALL_STACK, SP + (i * 8), 0);
+    }
+
+    // load previous frame pointer value into memory
+    this->memoryManager->write32(MemoryAccessScope::CALL_STACK, FP, oldFP);
+
+    // load return address into memory
+    this->memoryManager->write32(MemoryAccessScope::CALL_STACK, FP + 4, returnAddress);
 
     // add frame info to stack
     this->frameInfoStack.push(FrameInfo{numberOfArguments, numberLocals});
@@ -46,10 +48,10 @@ void CallStackManager::pop(uint32_t &FP, uint32_t &SP, uint32_t &PC) {
     }
 
     // read return address from memory
-    PC = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP);
+    PC = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP + 4);
 
     // set FP to previous frame pointer value read from memory
-    FP = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP + 4);
+    FP = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP);
 
     // increase SP by current stack frame size
     const FrameInfo frameInfo = this->frameInfoStack.top();

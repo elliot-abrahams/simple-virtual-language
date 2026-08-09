@@ -18,8 +18,6 @@ public:
 
     void run(const std::vector<uint8_t>* bytecode);
 
-    void setHP(const uint32_t hp);
-
     Value popOperandStack();
 
     void handleVMError(const VMError& e) const;
@@ -84,6 +82,7 @@ private:
     static std::string formatFloatString(double value);
 
     uint32_t PC;
+    uint32_t HB;
     uint32_t HP;
     uint32_t FP;
     uint32_t SP;

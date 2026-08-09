@@ -3,10 +3,12 @@
 
 TEST(LOAD_STORE, I32) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push i32 #5
         store
-        push ui32 #500
+        push ui32 #40
         load i32
         halt
     )";
@@ -15,10 +17,12 @@ TEST(LOAD_STORE, I32) {
 
 TEST(LOAD_STORE, UI32) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push ui32 #5
         store
-        push ui32 #500
+        push ui32 #40
         load ui32
         halt
     )";
@@ -27,10 +31,12 @@ TEST(LOAD_STORE, UI32) {
 
 TEST(LOAD_STORE, I64) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push i64 #5
         store
-        push ui32 #500
+        push ui32 #40
         load i64
         halt
     )";
@@ -39,10 +45,12 @@ TEST(LOAD_STORE, I64) {
 
 TEST(LOAD_STORE, UI64) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push ui64 #5
         store
-        push ui32 #500
+        push ui32 #40
         load ui64
         halt
     )";
@@ -51,10 +59,12 @@ TEST(LOAD_STORE, UI64) {
 
 TEST(LOAD_STORE, F32) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push f32 #5.0
         store
-        push ui32 #500
+        push ui32 #40
         load f32
         halt
     )";
@@ -63,10 +73,12 @@ TEST(LOAD_STORE, F32) {
 
 TEST(LOAD_STORE, F64) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push f64 #5.0
         store
-        push ui32 #500
+        push ui32 #40
         load f64
         halt
     )";
@@ -75,17 +87,19 @@ TEST(LOAD_STORE, F64) {
 
 TEST(LOAD_STORE, PTR) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push ptr $x
         store
-        push ui32 #500
+        push ui32 #40
         load ptr
         halt
 
     .data
     $x: i32 5
     )";
-    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(23));
+    EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::PTR, uint32_t(30));
 }
 
 TEST(LOAD_STORE, INVALID_LOAD_UNDERFLOW) {

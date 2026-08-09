@@ -30,7 +30,7 @@ struct Page {
 class MemoryManager {
 
 public:
-    MemoryManager(const uint32_t* endOfHeapRegion, const uint32_t* startOfCallStackRegion);
+    MemoryManager(uint32_t* HB, const uint32_t* HP, const uint32_t* SP);
 
     void loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode);
 
@@ -60,9 +60,9 @@ private:
 
     std::unordered_map<uint32_t, Page*> pageTable;
     uint32_t startOfDataRegion;
-    uint32_t startOfHeapRegion;
-    const uint32_t* endOfHeapRegion; // points to HP
-    const uint32_t* startOfCallStackRegion; // points to SP
+    uint32_t* HB;
+    const uint32_t* HP;
+    const uint32_t* SP;
 };
 
 

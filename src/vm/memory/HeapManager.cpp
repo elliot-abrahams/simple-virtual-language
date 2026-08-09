@@ -3,12 +3,11 @@
 #include <limits>
 
 HeapManager::HeapManager(MemoryManager* memoryManager) :
-    memoryManager(memoryManager),
-    highestAllocatedAddress(0) {}
+    memoryManager(memoryManager) {}
 
-void HeapManager::initialiseHeap(const uint32_t HP) {
-    this->freeListHead = new FreeBlock{std::numeric_limits<uint32_t>::max() - HP, HP, nullptr};
-    this->highestAllocatedAddress = HP;
+void HeapManager::initialiseHeap(uint32_t* HP) {
+    this->freeListHead = new FreeBlock{std::numeric_limits<uint32_t>::max() - *HP, *HP, nullptr};
+    this->HP = HP;
 }
 
 uint32_t HeapManager::allocateBlock(const uint32_t size, const uint32_t SP) {
@@ -42,6 +41,11 @@ uint32_t HeapManager::allocateBlock(const uint32_t size, const uint32_t SP) {
 
     const uint32_t allocatedAddress = currBlock->address + BLOCK_HEADER_SIZE;
 
+    // update HP if allocated block max address is higher than current HP
+    if (currBlock->address + bytesToAllocate > *this->HP) {
+        *this->HP = currBlock->address + bytesToAllocate;
+    }
+
     // write header onto the heap
     this->memoryManager->write32(MemoryAccessScope::HEAP, currBlock->address, bytesToAllocate);
 
@@ -49,11 +53,6 @@ uint32_t HeapManager::allocateBlock(const uint32_t size, const uint32_t SP) {
     for (uint32_t addressOffset = 0; addressOffset < size; addressOffset++) {
         const uint32_t address = currBlock->address + BLOCK_HEADER_SIZE + addressOffset;
         this->memoryManager->write8(MemoryAccessScope::HEAP, address, 0);
-    }
-
-    // update highestAddress if allocated block max address is higher than current highestAddress
-    if (currBlock->address + bytesToAllocate > this->highestAllocatedAddress) {
-        this->highestAllocatedAddress = currBlock->address + bytesToAllocate;
     }
 
     // if allocated space takes up the entire free block
@@ -120,10 +119,6 @@ void HeapManager::deallocateBlock(const uint32_t address) {
         // merge with next block if adjacent
         mergeIfAdjacentBlocks(node, node->next);
     }
-}
-
-uint32_t HeapManager::getHighestAllocatedAddress() const {
-    return this->highestAllocatedAddress;
 }
 
 bool HeapManager::mergeIfAdjacentBlocks(FreeBlock* block1, FreeBlock* block2) {

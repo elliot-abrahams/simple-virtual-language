@@ -15,10 +15,11 @@
 
 VM::VM() :
     PC(0),
+    HB(0),
     HP(0),
     FP(MAX_MEMORY_ADDRESS),
     SP(MAX_MEMORY_ADDRESS),
-    memoryManager(MemoryManager(&HP, &SP)),
+    memoryManager(MemoryManager(&HB, &HP, &SP)),
     callStackManager(&memoryManager),
     heapManager(&memoryManager),
     operandStack(OperandStack()),
@@ -27,18 +28,15 @@ VM::VM() :
 void VM::run(const std::vector<uint8_t>* bytecode) {
     // load bytecode into memory
     this->memoryManager.loadBytecodeIntoMemory(bytecode);
-    // set HP
-    this->HP = bytecode->size() - BYTECODE_HEADER_SIZE;
+    // set HB
+    this->HB = bytecode->size() - BYTECODE_HEADER_SIZE;
+    this->HP = this->HB;
 
-    this->heapManager.initialiseHeap(this->HP);
+    this->heapManager.initialiseHeap(&this->HP);
 
     while (running) {
         this->execute();
     }
-}
-
-void VM::setHP(const uint32_t hp) {
-    this->HP = hp;
 }
 
 Value VM::popOperandStack() {
@@ -294,7 +292,7 @@ void VM::executeCall() {
     const uint32_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
     // read method metadata
     const uint8_t numberOfArguments = this->memoryManager.read8(MemoryAccessScope::CODE, address);
-    const uint32_t numberOfLocals = this->memoryManager.read32(MemoryAccessScope::DATA, address + 1);
+    const uint32_t numberOfLocals = this->memoryManager.read32(MemoryAccessScope::CODE, address + 1);
 
     // read arguments from operand stack
     std::vector<Value> arguments;
@@ -302,7 +300,7 @@ void VM::executeCall() {
         arguments.push_back(this->operandStack.pop());
     }
     // push stack frame onto call stack
-    this->callStackManager.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, this->heapManager.getHighestAllocatedAddress());
+    this->callStackManager.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, this->HP);
     // set PC to start of called method
     this->PC = address + 5; // (5 for length of method metadata)
 }
@@ -653,13 +651,13 @@ void VM::executeConv() {
 
 std::string VM::readStringFromMemory(const uint32_t address) const {
     // read number of bytes of string
-    const uint32_t size = this->memoryManager.read32(MemoryAccessScope::DATA, address);
+    const uint32_t size = this->memoryManager.read32(MemoryAccessScope::PTR, address);
 
     std::string string;
     string.resize(size);
 
     for (int i = 0; i < size; i++) {
-        string[i] = static_cast<char>(this->memoryManager.read8(MemoryAccessScope::DATA, address + 4 + i));
+        string[i] = static_cast<char>(this->memoryManager.read8(MemoryAccessScope::PTR, address + 4 + i));
     }
     return string;
 }
@@ -707,7 +705,7 @@ void VM::dumpState() const {
     std::cerr << "--- VM STATE ---\n";
 
     std::cerr << "PC: 0x" << std::hex << this->PC << "\n";
-    std::cerr << "HP: 0x" << std::hex << this->HP << "\n";
+    std::cerr << "HB: 0x" << std::hex << this->HB << "\n";
     std::cerr << "FP: 0x" << std::hex << this->FP << "\n";
     std::cerr << "SP: 0x" << std::hex << this->SP << "\n";
 

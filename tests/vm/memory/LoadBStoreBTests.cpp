@@ -3,10 +3,12 @@
 
 TEST(LOADB_STOREB, I32) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push i32 #64
         storeB
-        push ui32 #500
+        push ui32 #40
         loadB
         halt
     )";
@@ -15,10 +17,12 @@ TEST(LOADB_STOREB, I32) {
 
 TEST(LOADB_STOREB, UI32) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push ui32 #64
         storeB
-        push ui32 #500
+        push ui32 #40
         loadB
         halt
     )";
@@ -27,10 +31,12 @@ TEST(LOADB_STOREB, UI32) {
 
 TEST(LOADB_STOREB, I64) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push i64 #64
         storeB
-        push ui32 #500
+        push ui32 #40
         loadB
         halt
     )";
@@ -39,10 +45,12 @@ TEST(LOADB_STOREB, I64) {
 
 TEST(LOADB_STOREB, UI64) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push ui64 #64
         storeB
-        push ui32 #500
+        push ui32 #40
         loadB
         halt
     )";
@@ -51,18 +59,23 @@ TEST(LOADB_STOREB, UI64) {
 
 TEST(LOADB_STOREB, TRUNCATE) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push ui32 #257
         storeB
-        push ui32 #500
+        push ui32 #40
         loadB
+        halt
     )";
     EXPECT_OPERAND_VM_STACK_EQ(assembly, ISA::Type::UI32, uint32_t(1));
 }
 
 TEST(LOADB_STOREB, INVALID_F32) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push f32 #5.5
         storeB
         halt
@@ -72,7 +85,9 @@ TEST(LOADB_STOREB, INVALID_F32) {
 
 TEST(LOADB_STOREB, INVALID_F64) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push f64 #5.5
         storeB
         halt
@@ -82,7 +97,9 @@ TEST(LOADB_STOREB, INVALID_F64) {
 
 TEST(LOADB_STOREB, INVALID_PTR) {
     const auto assembly = R"(
-        push ui32 #500
+        push ui32 #50
+        alloc
+        push ui32 #40
         push ptr $x
         storeB
         halt

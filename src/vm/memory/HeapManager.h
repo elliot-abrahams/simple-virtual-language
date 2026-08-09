@@ -18,18 +18,16 @@ class HeapManager {
 public:
     HeapManager(MemoryManager* memoryManager);
 
-    void initialiseHeap(const uint32_t HP);
+    void initialiseHeap(uint32_t* HP);
     uint32_t allocateBlock(const uint32_t size, const uint32_t SP);
     void deallocateBlock(const uint32_t address);
-
-    uint32_t getHighestAllocatedAddress() const;
 
 private:
     static bool mergeIfAdjacentBlocks(FreeBlock* block1, FreeBlock* block2);
 
     MemoryManager* memoryManager;
     FreeBlock* freeListHead;
-    uint32_t highestAllocatedAddress;
+    uint32_t* HP;
 };
 
 
