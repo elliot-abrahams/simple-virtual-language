@@ -3,18 +3,18 @@
 CallStackManager::CallStackManager(MemoryManager* memoryManager) :
     memoryManager(memoryManager) {};
 
-void CallStackManager::push(uint32_t& FP, uint32_t& SP, const uint32_t returnAddress, const uint8_t numberOfArguments, const uint32_t numberLocals, const std::vector<Value>& arguments, const uint32_t maxHeapAddress) {
+void CallStackManager::push(uint32_t& FP, uint32_t& SP, const uint32_t returnAddress, const uint8_t numberOfArguments, const uint32_t numberLocals, const std::vector<Value>& arguments, const uint32_t* HP) {
     // calc number of bytes allocated to number of arguments and locals
     const uint32_t sizeOfArguments =  numberOfArguments * 8;
     const uint32_t sizeOfLocals = numberLocals * 8;
 
     // check if new frame would collide with heap
     const uint32_t sizeOfFrame = sizeOfArguments + 8 + sizeOfLocals;
-    if (SP - sizeOfFrame <= maxHeapAddress || sizeOfFrame > SP) {
+    if (SP - sizeOfFrame <= *HP || sizeOfFrame > SP) {
         throw VMError("Stack overflow");
     }
 
-    uint32_t oldFP = FP;
+    const uint32_t oldFP = FP;
 
     // update FP and SP
     FP = SP - (sizeOfArguments + 8);

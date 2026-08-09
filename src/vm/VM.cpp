@@ -300,7 +300,7 @@ void VM::executeCall() {
         arguments.push_back(this->operandStack.pop());
     }
     // push stack frame onto call stack
-    this->callStackManager.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, this->HP);
+    this->callStackManager.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, &this->HP);
     // set PC to start of called method
     this->PC = address + 5; // (5 for length of method metadata)
 }

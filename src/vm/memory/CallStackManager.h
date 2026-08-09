@@ -25,8 +25,8 @@ public:
         const uint8_t numberOfArguments,
         const uint32_t numberLocals,
         const std::vector<Value>& arguments,
-        const uint32_t maxHeapAddress
-        );
+        const uint32_t* HP
+    );
 
     void pop(
         uint32_t& FP,
