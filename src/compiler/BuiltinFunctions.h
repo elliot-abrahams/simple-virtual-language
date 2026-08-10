@@ -56,7 +56,7 @@ namespace compiler {
                 0,
                 {
                 "        loadL i32 #1",
-                "        out i32",
+                "        out",
                 "        ret"
             },
                 {}
@@ -68,7 +68,7 @@ namespace compiler {
                 0,
                 {
                 "        loadL f32 #1",
-                "        out f32",
+                "        out",
                 "        ret"
             },
                 {}
@@ -82,11 +82,11 @@ namespace compiler {
                 "        loadL ui32 #1",
                 "        jez $__print(bool)__print__false",
                 "        push ptr $__true__string",
-                "        out str",
+                "        out",
                 "        ret",
                 "    $__print(bool)__print__false:",
                 "        push ptr $__false__string",
-                "        out str",
+                "        out",
                 "        ret"
             },
                 {BuiltinDataId::TRUE_STRING, BuiltinDataId::FALSE_STRING}

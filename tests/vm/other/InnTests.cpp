@@ -173,7 +173,7 @@ TEST(INN, READ_STR) {
 TEST(INN, READ_WRITE_STR) {
     const auto assembly = R"(
         inn str
-        out str
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(
@@ -186,7 +186,7 @@ TEST(INN, READ_WRITE_STR) {
 TEST(INN, READ_WRITE_STR_UTF_8) {
     const auto assembly = R"(
         inn str
-        out str
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(

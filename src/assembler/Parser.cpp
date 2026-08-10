@@ -55,8 +55,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     AssemblerDefs::Operand immediate;
 
     // parse DATA_TYPE Token
-    if (instruction == "out" ||
-        instruction == "inn") {
+    if (instruction == "inn") {
         auto optionalDataType = this->parseDataType();
         if (!optionalDataType.has_value()) {
             handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::DATA_TYPE, lineNumber);
@@ -219,7 +218,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     // Other
     //========================================================================================================
 
-    if (instruction == "out") return AssemblerDefs::Instruction{instruction, {dataType}, lineNumber};
+    if (instruction == "out") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "inn") return AssemblerDefs::Instruction{instruction, {dataType}, lineNumber};
     if (instruction == "conv") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
 

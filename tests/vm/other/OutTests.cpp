@@ -4,7 +4,7 @@
 TEST(OUT, OUTPUT_I32) {
     const auto assembly = R"(
         push i32 #5
-        out i32
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "5");
@@ -13,7 +13,7 @@ TEST(OUT, OUTPUT_I32) {
 TEST(OUT, OUTPUT_I32_NEGATIVE) {
     const auto assembly = R"(
         push i32 #-5
-        out i32
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "-5");
@@ -22,7 +22,7 @@ TEST(OUT, OUTPUT_I32_NEGATIVE) {
 TEST(OUT, OUTPUT_UI32) {
     const auto assembly = R"(
         push ui32 #5
-        out ui32
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "5");
@@ -31,7 +31,7 @@ TEST(OUT, OUTPUT_UI32) {
 TEST(OUT, OUTPUT_I64) {
     const auto assembly = R"(
         push i64 #5
-        out i64
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "5");
@@ -40,7 +40,7 @@ TEST(OUT, OUTPUT_I64) {
 TEST(OUT, OUTPUT_I64_NEGATIVE) {
     const auto assembly = R"(
         push i64 #-5
-        out i64
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "-5");
@@ -49,7 +49,7 @@ TEST(OUT, OUTPUT_I64_NEGATIVE) {
 TEST(OUT, OUTPUT_UI64) {
     const auto assembly = R"(
         push ui64 #5
-        out ui64
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "5");
@@ -58,7 +58,7 @@ TEST(OUT, OUTPUT_UI64) {
 TEST(OUT, OUTPUT_F32) {
     const auto assembly = R"(
         push f32 #5.5
-        out f32
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "5.5");
@@ -67,7 +67,7 @@ TEST(OUT, OUTPUT_F32) {
 TEST(OUT, OUTPUT_F32_NEGATIVE) {
     const auto assembly = R"(
         push f32 #-5.5
-        out f32
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "-5.5");
@@ -76,7 +76,7 @@ TEST(OUT, OUTPUT_F32_NEGATIVE) {
 TEST(OUT, OUTPUT_F64) {
     const auto assembly = R"(
         push f64 #5.5
-        out f64
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "5.5");
@@ -85,7 +85,7 @@ TEST(OUT, OUTPUT_F64) {
 TEST(OUT, OUTPUT_F64_NEGATIVE) {
     const auto assembly = R"(
         push f64 #-5.5
-        out f64
+        out
         halt
     )";
     EXPECT_CONSOLE_OUTPUT(assembly, "-5.5");
@@ -94,7 +94,7 @@ TEST(OUT, OUTPUT_F64_NEGATIVE) {
 TEST(OUT, OUTPUT_STR) {
     const auto assembly = R"(
         push ptr $msg
-        out str
+        out
         halt
 
     .data
@@ -106,7 +106,7 @@ TEST(OUT, OUTPUT_STR) {
 TEST(OUT, INVALID_OUTPUT_PTR) {
     const auto assembly = R"(
         push ptr $x
-        out ptr
+        out
 
     .data
     $x: i32 5
@@ -114,18 +114,9 @@ TEST(OUT, INVALID_OUTPUT_PTR) {
     EXPECT_VM_ERROR(assembly);
 }
 
-TEST(OUT, INVALID_OUTPUT_STR) {
-    const auto assembly = R"(
-        push i32 #5
-        out str
-        halt
-    )";
-    EXPECT_VM_ERROR(assembly);
-}
-
 TEST(OUT, UNDERFLOW) {
     const auto assembly = R"(
-        out i32
+        out
         halt
     )";
     EXPECT_VM_ERROR(assembly);

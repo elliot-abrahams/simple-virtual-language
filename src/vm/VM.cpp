@@ -498,26 +498,10 @@ void VM::executeCge() {
 }
 
 void VM::executeOut() {
-    const uint8_t type = this->fetchType(); // read type operand
-
-    checkType("out",
-        {
-            static_cast<uint8_t>(ISA::Type::I32),
-            static_cast<uint8_t>(ISA::Type::UI32),
-            static_cast<uint8_t>(ISA::Type::I64),
-            static_cast<uint8_t>(ISA::Type::UI64),
-            static_cast<uint8_t>(ISA::Type::F32),
-            static_cast<uint8_t>(ISA::Type::F64),
-            static_cast<uint8_t>(ISA::Type::STR),
-        },
-        type
-    );
-
     const Value value = this->operandStack.pop(); // pop value off of the operand stack
 
     // print value
-    switch (static_cast<ISA::Type>(type)) {
-        case ISA::Type::PTR:
+    switch (static_cast<ISA::Type>(value.type)) {
         case ISA::Type::UI32:
         case ISA::Type::UI64: {
             std::cout << value.rawValue;
@@ -527,7 +511,7 @@ void VM::executeOut() {
         case ISA::Type::I64: std::cout << TypeConversions::rawToI64(value.rawValue); break;
         case ISA::Type::F32: std::cout << formatFloatString(TypeConversions::rawToF32(value.rawValue)); break;
         case ISA::Type::F64: std::cout << formatFloatString(TypeConversions::rawToF64(value.rawValue)); break;
-        case ISA::Type::STR: {
+        case ISA::Type::PTR: {
             // check value from operand stack is type ptr
             checkType("out",
                 {static_cast<uint32_t>(ISA::Type::PTR)},
