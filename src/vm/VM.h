@@ -20,6 +20,9 @@ public:
 
     Value popOperandStack();
 
+    void setExitStatus(int status);
+    int getExitStatus() const;
+
     void handleVMError(const VMError& e) const;
     void dumpState() const;
 
@@ -44,6 +47,7 @@ private:
     void executeFree();
 
     void executeCall();
+    void executeNative();
     void executeRet();
     void executeJmp();
     void executeJez();
@@ -93,6 +97,7 @@ private:
     OperandStack operandStack;
 
     bool running;
+    int exitCode;
 };
 
 

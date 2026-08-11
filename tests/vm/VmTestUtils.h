@@ -156,4 +156,23 @@ inline void EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(
     EXPECT_EQ(output.str(), expectedOutput);
 }
 
+inline void EXPECT_EXIT_CODE(
+    const std::string& source,
+    const int expectedExitCode
+) {
+    try {
+        assembler::Assembler assembler;
+        VM vm;
+
+        const auto bytecode = assembler.assembleString(source);
+
+        vm.run(&bytecode.value());
+
+        ASSERT_EQ(vm.getExitStatus(), expectedExitCode);
+
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
 #endif //SVM_VMTESTUTILS_H

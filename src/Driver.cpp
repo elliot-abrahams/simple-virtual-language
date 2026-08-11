@@ -128,12 +128,11 @@ int Driver::execute(const char* filePath) {
     try {
         const auto vm = new VM();
         vm->run(&bytecode);
-        delete vm;
+        exit(vm->getExitStatus());
     } catch (const VMError& e) {
         std::cerr << "VMError: " << e.what() << std::endl;
         return 1;
     }
-    return 0;
 }
 
 int Driver::assemble(const char* filePath) {
@@ -226,12 +225,11 @@ int Driver::run(const char *filePath, const bool outputAssembly, const bool outp
     try {
         const auto vm = new VM();
         vm->run(&bytecode.value());
-        delete vm;
+        exit(vm->getExitStatus());
     } catch (const VMError& e) {
         std::cerr << "VMError: " << e.what() << std::endl;
         return 1;
     }
-    return 0;
 }
 
 std::string Driver::readSourceCode(const std::filesystem::path& path) {

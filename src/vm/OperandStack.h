@@ -43,6 +43,19 @@ struct Value
         }
     }
 
+    int toInt() const {
+        switch (type) {
+            case ISA::Type::I32:
+            case ISA::Type::UI32:
+            case ISA::Type::I64:
+            case ISA::Type::UI64:
+                return static_cast<int>(rawValue);
+
+            default:
+                throw VMError("Invalid type in operand stack");
+        }
+    }
+
     bool isZero() const {
         switch (type) {
             case ISA::Type::UI32:

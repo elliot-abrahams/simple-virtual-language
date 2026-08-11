@@ -37,6 +37,7 @@ set(VM_Sources
         vm/control/JnzTests.cpp
         vm/control/JezTests.cpp
         vm/control/JmpTests.cpp
+        vm/control/NativeTests.cpp
         vm/control/CallRetTests.cpp
 
         vm/memory/AllocFreeTests.cpp

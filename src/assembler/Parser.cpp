@@ -96,13 +96,20 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
 
     // parse IMMEDIATE Token
     if (instruction == "loadL" ||
-        instruction == "storeL") {
+        instruction == "storeL" ||
+        instruction == "native") {
 
         auto optionalImmediate = this->parseImmediate();
         if (!optionalImmediate.has_value()) {
             handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::IMMEDIATE, lineNumber);
             return std::nullopt;
         }
+        if (instruction == "native" &&
+            stoul(optionalImmediate.value().value.substr(1)) < 0 &&
+            stoul(optionalImmediate.value().value.substr(1)) > 255) {
+                printError(optionalImmediate.value().value + "is out of range for instruction \'native\'", lineNumber);
+            }
+
         immediate = optionalImmediate.value();
     }
 
@@ -184,6 +191,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     //========================================================================================================
 
     if (instruction == "call") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
+    if (instruction == "native") return AssemblerDefs::Instruction{instruction, {immediate}, lineNumber};
     if (instruction == "ret") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "jmp") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
     if (instruction == "jez") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};

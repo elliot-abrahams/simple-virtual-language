@@ -66,6 +66,7 @@ set(Sources
     src/compiler/CodeGenerator.cpp
     src/compiler/BuiltinFunctions.cpp
     src/compiler/BuiltinFunctions.h
+    src/vm/NativeFunctionManager.h
 )
 
 add_library(${This} STATIC ${Sources} ${Headers})

@@ -251,6 +251,12 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertInstructionToBy
     bytecode.push_back(AssemblerDefs::opcode.at(instruction.opcode)); // encode opcode
     std::string dataType;
 
+    if (instruction.opcode == "native") {
+        // push native function id onto bytecode (as 1 byte)
+        bytecode.push_back(static_cast<uint8_t>(std::stoul(instruction.operands.at(0).value.substr(1))));
+        return bytecode;
+    }
+
     // loop through each operand
     for (auto& operand : instruction.operands) {
         if (operand.type == AssemblerDefs::OperandType::TYPE) {

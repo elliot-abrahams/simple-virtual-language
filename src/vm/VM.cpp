@@ -9,6 +9,7 @@
 
 #include "TypeConversions.h"
 #include "ArithmeticOps.h"
+#include "NativeFunctionManager.h"
 #include "VMError.h"
 #include "memory/MemoryManager.h"
 #include "memory/MemoryManager.h"
@@ -23,7 +24,8 @@ VM::VM() :
     callStackManager(&memoryManager),
     heapManager(&memoryManager),
     operandStack(OperandStack()),
-    running(true) {}
+    running(true),
+    exitCode(0) {}
 
 void VM::run(const std::vector<uint8_t>* bytecode) {
     // load bytecode into memory
@@ -41,6 +43,14 @@ void VM::run(const std::vector<uint8_t>* bytecode) {
 
 Value VM::popOperandStack() {
     return this->operandStack.pop();
+}
+
+void VM::setExitStatus(const int status) {
+    this->exitCode = status;
+}
+
+int VM::getExitStatus() const {
+    return this->exitCode;
 }
 
 void VM::execute() {
@@ -80,6 +90,7 @@ void VM::execute() {
         // -------------------------------------------------
 
         case ISA::Opcode::CALL: this->executeCall(); break; // call
+        case ISA::Opcode::NATIVE: this->executeNative(); break; // native
         case ISA::Opcode::RET: this->executeRet(); break; // ret
         case ISA::Opcode::JMP: this->executeJmp(); break; // jmp
         case ISA::Opcode::JEZ: this->executeJez(); break; // jez
@@ -303,6 +314,13 @@ void VM::executeCall() {
     this->callStackManager.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, &this->HP);
     // set PC to start of called method
     this->PC = address + 5; // (5 for length of method metadata)
+}
+
+void VM::executeNative() {
+    // read native function ID operand
+    const uint8_t nativeID = this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
+
+    NativeFunctionManager::invoke(nativeID, this, this->operandStack);
 }
 
 void VM::executeRet() {
