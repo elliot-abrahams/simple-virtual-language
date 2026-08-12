@@ -20,6 +20,8 @@ Native functions interact with the operand stack to receive arguments and produc
 
 ### 2.1 exit
 
+**Native Ref:** `exit`
+
 **ID:** `0`
 
 **Stack:** `[status] → []`

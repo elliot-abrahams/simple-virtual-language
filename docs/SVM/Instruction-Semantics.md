@@ -324,18 +324,16 @@ See Section 5.2 of `Execution-Model.md` for more details on call behaviour.
 
 ### 4.2 native
 
-**Operands:** `<immediate>`
+**Operands:** `<native_ref>`
 
 **Stack:** `[...] → [...] (depends on the invoked function)`
 
 **Semantics:**
-- Invokes the native function identified by the native function ID `<immediate>`
+- Invokes the native function identified by `<native_ref>`
 - The native function may pop values from and push values onto the operand stack
 
 **Type Rules:**
-- `<immediate>` is a 1 byte value
-- `<immediate>` must be an unsigned value in the range `0` - `255`
-- The native function identified by `<immediate>` must be provided by the VM
+- `<native_ref>` must refer to a native function provided by the VM
 
 ---
 

@@ -25,6 +25,7 @@
     - [5.3 Type Encoding](#53-type-encoding)
     - [5.4 Label Encoding](#54-label-encoding)
     - [5.5 Immediate Values](#55-immediate-values)
+    - [5.6 Native Reference Encoding](#56-native-reference-encoding)
 - [6. Data Encoding](#6-data-encoding)
     - [6.1 Data Entries](#61-data-entries)
     - [6.2 Data Type Encoding](#62-data-type-encoding)
@@ -224,11 +225,12 @@ See `Instruction-Set.md` for the opcode assigned to each instruction.
 
 Instruction operands use the following encodings
 
-| Operand       | Size (bytes)               |
-|---------------|----------------------------|
-| `<type>`      | 1                          |
-| `<label>`     | 4                          |
-| `<immediate>` | 4 or 8 (depending on type) |
+| Operand        | Size (bytes)               |
+|----------------|----------------------------|
+| `<type>`       | 1                          |
+| `<label>`      | 4                          |
+| `<immediate>`  | 4 or 8 (depending on type) |
+| `<native_ref>` | 1                          |
 
 Operands are encoded directly after the opcode or proceeding operand.
 
@@ -258,9 +260,28 @@ Immediate values are encoded using their raw binary representation in little-end
 
 There are some exceptions to the immediate size for an operand:
 - `LoadL` and `storeL` immediate operand has length of 4 bytes
-- `native` immediate operand has length of 1 byte
 
 See `Instruction-Set.md` for the number of bytes for each immediate type.
+
+### 5.6 Native Reference Encoding
+
+A native reference is encoded as a 1-byte unsigned native function ID.
+
+The native function ID identifies the VM-provided native function to invoke.
+
+The native function name is not stored in the bytecode.
+
+See `Instruction-Set.md` for the native function ID assigned to each native reference.
+
+For Example:
+```
+native exit
+```
+
+Is encoded as:
+```
+0x11 0x00
+```
 
 ---
 

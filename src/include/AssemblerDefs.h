@@ -28,6 +28,7 @@ namespace AssemblerDefs {
         LABEL_DEF,
         METHOD_DEF,
         METHOD_METADATA_FIELD,
+        NATIVE_REF,
         END_OF_FILE
     };
 
@@ -37,7 +38,7 @@ namespace AssemblerDefs {
         int lineNumber;
     };
 
-    inline std::map<std::string, uint8_t> opcode {
+    inline const std::map<std::string, uint8_t> opcode {
         {"nop", 0x00},
         {"halt", 0x01},
         // stack
@@ -88,7 +89,7 @@ namespace AssemblerDefs {
         {"conv", 0x2a},
     };
 
-    inline std::map<std::string, uint8_t> type {
+    inline const std::map<std::string, uint8_t> type {
         {"i32", 0x00},
         {"ui32", 0x01},
         {"i64", 0x02},
@@ -98,13 +99,17 @@ namespace AssemblerDefs {
         {"ptr", 0x06},
     };
 
-    inline std::map<std::string, uint8_t> dataType {
+    inline const std::map<std::string, uint8_t> dataType {
         {"str", 0x08},
     };
 
-    inline std::set<std::string> method_metadata_fields {
+    inline const std::set<std::string> method_metadata_fields {
         "args",
         "locals"
+    };
+
+    inline const std::map<std::string, uint8_t> nativeRef {
+        {"exit", 0x00}
     };
 
     enum class OperandType {
@@ -113,6 +118,7 @@ namespace AssemblerDefs {
         TYPE,
         DATA_TYPE,
         LABEL_REF,
+        NATIVE_REF
     };
 
     struct Operand {

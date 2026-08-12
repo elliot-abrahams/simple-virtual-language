@@ -126,22 +126,39 @@ void assembler::Assembler::processInstruction(std::map<std::string, uint32_t>& u
     codeSectionLength += 1; // 1 for opcode
     // loop through each operand
     for (auto& operand : instruction.operands) {
-        if (operand.type == AssemblerDefs::OperandType::TYPE || operand.type == AssemblerDefs::OperandType::DATA_TYPE) {
-            codeSectionLength++;
-            type = operand.value;
-        } else if (operand.type == AssemblerDefs::OperandType::LABEL_REF) {
-            // process label ref depending on required label type for this instruction
-            this->processLabelRef(unhandledLabelRefs, Label{operand.value, getOperandLabelType(instruction.opcode)}, instruction.lineNumber);
-            codeSectionLength += 4;
-        } else if (operand.type == AssemblerDefs::OperandType::STRING) {
-            codeSectionLength += 4;
-        } else if (operand.type == AssemblerDefs::OperandType::IMMEDIATE) {
-            if (instruction.opcode == "loadL" || instruction.opcode == "storeL") {
+
+        switch (operand.type) {
+            case AssemblerDefs::OperandType::TYPE:
+            case AssemblerDefs::OperandType::DATA_TYPE: {
+                codeSectionLength++;
+                type = operand.value;
+                break;
+            }
+
+            case AssemblerDefs::OperandType::LABEL_REF: {
+                // process label ref depending on required label type for this instruction
+                this->processLabelRef(unhandledLabelRefs, Label{operand.value, getOperandLabelType(instruction.opcode)}, instruction.lineNumber);
                 codeSectionLength += 4;
-            } else if (instruction.opcode == "native") {
+                break;
+            }
+
+            case AssemblerDefs::OperandType::STRING: {
+                codeSectionLength += 4;
+                break;
+            }
+
+            case AssemblerDefs::OperandType::IMMEDIATE: {
+                if (instruction.opcode == "loadL" || instruction.opcode == "storeL") {
+                    codeSectionLength += 4;
+                } else {
+                    codeSectionLength += this->calculateBytesFromType(type);
+                }
+                break;
+            }
+
+            case AssemblerDefs::OperandType::NATIVE_REF: {
                 codeSectionLength += 1;
-            } else {
-                codeSectionLength += this->calculateBytesFromType(type);
+                break;
             }
         }
     }
@@ -254,35 +271,49 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertInstructionToBy
     bytecode.push_back(AssemblerDefs::opcode.at(instruction.opcode)); // encode opcode
     std::string dataType;
 
-    if (instruction.opcode == "native") {
-        // push native function id onto bytecode (as 1 byte)
-        bytecode.push_back(static_cast<uint8_t>(std::stoul(instruction.operands.at(0).value.substr(1))));
-        return bytecode;
-    }
-
     // loop through each operand
     for (auto& operand : instruction.operands) {
-        if (operand.type == AssemblerDefs::OperandType::TYPE) {
-            bytecode.push_back(this->convertTypeToByte(operand.value));
-            dataType = operand.value;
-        } else if (operand.type == AssemblerDefs::OperandType::DATA_TYPE) {
-            bytecode.push_back(this->convertDataTypeToByte(operand.value));
-            dataType = operand.value;
-        } else if (operand.type == AssemblerDefs::OperandType::LABEL_REF) {
-            this->pushBackVector(bytecode, this->convertLabelRefToBytes(Label{operand.value, getOperandLabelType(instruction.opcode)}));
-        } else if (operand.type == AssemblerDefs::OperandType::STRING ||
-            operand.type == AssemblerDefs::OperandType::IMMEDIATE) {
-            std::string typeToCheckAgainstImmediate = "";
-            if (instruction.opcode == "loadL") {
-                typeToCheckAgainstImmediate = "i32"; // immediate of loadL is type i32
-            } else {
-                typeToCheckAgainstImmediate = dataType;
+
+        switch (operand.type) {
+
+            case AssemblerDefs::OperandType::TYPE: {
+                bytecode.push_back(this->convertTypeToByte(operand.value));
+                dataType = operand.value;
+                break;
             }
-            auto data = this->convertDataToBytes(typeToCheckAgainstImmediate, operand.value, instruction.lineNumber);
-            if (!data.has_value()) {
-                return std::nullopt;
+
+            case AssemblerDefs::OperandType::DATA_TYPE: {
+                bytecode.push_back(this->convertDataTypeToByte(operand.value));
+                dataType = operand.value;
+                break;
             }
-            this->pushBackVector(bytecode, data.value());
+
+            case AssemblerDefs::OperandType::LABEL_REF: {
+                this->pushBackVector(bytecode, this->convertLabelRefToBytes(Label{operand.value, getOperandLabelType(instruction.opcode)}));
+                break;
+            }
+
+            case AssemblerDefs::OperandType::STRING:
+            case AssemblerDefs::OperandType::IMMEDIATE: {
+                std::string typeToCheckAgainstImmediate = "";
+                if (instruction.opcode == "loadL") {
+                    typeToCheckAgainstImmediate = "i32"; // immediate of loadL is type i32
+                } else {
+                    typeToCheckAgainstImmediate = dataType;
+                }
+                auto data = this->convertDataToBytes(typeToCheckAgainstImmediate, operand.value, instruction.lineNumber);
+                if (!data.has_value()) {
+                    return std::nullopt;
+                }
+                this->pushBackVector(bytecode, data.value());
+                break;
+            }
+
+            case AssemblerDefs::OperandType::NATIVE_REF: {
+                // push native function id onto bytecode (as 1 byte)
+                bytecode.push_back(AssemblerDefs::nativeRef.at(instruction.operands[0].value));
+                break;
+            }
         }
     }
     return bytecode;

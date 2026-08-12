@@ -12,6 +12,7 @@
 - [2. Type System](#2-type-system)
   - [2.1 Operand Types](#21-operand-types)
   - [2.2 Data Types](#22-data-types)
+- [3. Native References](#3-native-references)
 
 ---
 
@@ -51,14 +52,14 @@
 
 ### 1.4 Control
 
-| Mnemonic | Opcode | Bytes | Operands    | operand stack [bottom ... top] → [bottom ... top] | Description                                                       |
-|----------|--------|-------|-------------|---------------------------------------------------|-------------------------------------------------------------------|
-| call     | 0x10   | 5     | <label>     | [arg1, arg2, ..., argn] → []                      | Calls a method and creates a new stack frame.                     |
-| native   | 0x11   | 2     | <immediate> | [...] → [...] (depends on the invoked function)   | Invokes a native function provided by the VM                      |
-| ret      | 0x12   | 1     |             |                                                   | Returns from the current method and destroys current stack frame. |
-| jmp      | 0x13   | 5     | <label>     |                                                   | Jump to `<label>` unconditionally.                                |
-| jez      | 0x14   | 5     | <label>     | [value] → []                                      | Jump to `<label>` if value is zero                                |
-| jnz      | 0x15   | 5     | <label>     | [value] → []                                      | Jump to `<label>` if value is not zero.                           |
+| Mnemonic | Opcode | Bytes | Operands     | operand stack [bottom ... top] → [bottom ... top] | Description                                                       |
+|----------|--------|-------|--------------|---------------------------------------------------|-------------------------------------------------------------------|
+| call     | 0x10   | 5     | <label>      | [arg1, arg2, ..., argn] → []                      | Calls a method and creates a new stack frame.                     |
+| native   | 0x11   | 2     | <native_ref> | [...] → [...] (depends on the invoked function)   | Invokes a native function provided by the VM                      |
+| ret      | 0x12   | 1     |              |                                                   | Returns from the current method and destroys current stack frame. |
+| jmp      | 0x13   | 5     | <label>      |                                                   | Jump to `<label>` unconditionally.                                |
+| jez      | 0x14   | 5     | <label>      | [value] → []                                      | Jump to `<label>` if value is zero                                |
+| jnz      | 0x15   | 5     | <label>      | [value] → []                                      | Jump to `<label>` if value is not zero.                           |
 
 ### 1.5 Arithmetic
 
@@ -120,3 +121,11 @@
 | f64  | 0x05     | 8                  |
 | ptr  | 0x06     | 4                  |
 | str  | 0x07     | 4 + UTF-8 encoding |
+
+---
+
+## 3. Native References
+
+| native_ref | Encoding |
+|------------|----------|
+| exit       | 0x00     |

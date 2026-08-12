@@ -53,6 +53,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     AssemblerDefs::Operand type;
     AssemblerDefs::Operand labelRef;
     AssemblerDefs::Operand immediate;
+    AssemblerDefs::Operand nativeRef;
 
     // parse DATA_TYPE Token
     if (instruction == "inn") {
@@ -96,21 +97,24 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
 
     // parse IMMEDIATE Token
     if (instruction == "loadL" ||
-        instruction == "storeL" ||
-        instruction == "native") {
+        instruction == "storeL") {
 
         auto optionalImmediate = this->parseImmediate();
         if (!optionalImmediate.has_value()) {
             handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::IMMEDIATE, lineNumber);
             return std::nullopt;
         }
-        if (instruction == "native" &&
-            stoul(optionalImmediate.value().value.substr(1)) < 0 &&
-            stoul(optionalImmediate.value().value.substr(1)) > 255) {
-                printError(optionalImmediate.value().value + "is out of range for instruction \'native\'", lineNumber);
-            }
-
         immediate = optionalImmediate.value();
+    }
+
+    // parse NATIVE_REF Token
+    if (instruction == "native") {
+        auto optionalNativeRef = this->parseNativeRef();
+        if (!optionalNativeRef.has_value()) {
+            handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::NATIVE_REF, lineNumber);
+            return std::nullopt;
+        }
+        nativeRef = optionalNativeRef.value();
     }
 
     if (instruction == "push") {
@@ -191,7 +195,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     //========================================================================================================
 
     if (instruction == "call") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
-    if (instruction == "native") return AssemblerDefs::Instruction{instruction, {immediate}, lineNumber};
+    if (instruction == "native") return AssemblerDefs::Instruction{instruction, {nativeRef}, lineNumber};
     if (instruction == "ret") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "jmp") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
     if (instruction == "jez") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
@@ -366,6 +370,10 @@ std::optional<AssemblerDefs::Operand> assembler::Parser::parseLabelRef() {
     return this->parseOperand(AssemblerDefs::SVMATokenType::LABEL_REF);
 }
 
+std::optional<AssemblerDefs::Operand> assembler::Parser::parseNativeRef() {
+    return this->parseOperand(AssemblerDefs::SVMATokenType::NATIVE_REF);
+}
+
 std::optional<AssemblerDefs::Operand> assembler::Parser::parseOperand(const AssemblerDefs::SVMATokenType tokenType) {
     auto token = this->peek();
     if (this->peek().type != tokenType) {
@@ -467,6 +475,7 @@ AssemblerDefs::OperandType assembler::Parser::mapTokenTypeToOperandType(const As
         case AssemblerDefs::SVMATokenType::TYPE: return AssemblerDefs::OperandType::TYPE;
         case AssemblerDefs::SVMATokenType::DATA_TYPE: return AssemblerDefs::OperandType::DATA_TYPE;
         case AssemblerDefs::SVMATokenType::LABEL_REF: return AssemblerDefs::OperandType::LABEL_REF;
+        case AssemblerDefs::SVMATokenType::NATIVE_REF: return AssemblerDefs::OperandType::NATIVE_REF;
     }
 }
 
@@ -503,6 +512,7 @@ std::string assembler::Parser::tokenTypeToString(const AssemblerDefs::SVMATokenT
         case AssemblerDefs::SVMATokenType::LABEL_DEF: s = "LABEL_DEF"; break;
         case AssemblerDefs::SVMATokenType::METHOD_DEF: s = "METHOD_DEF"; break;
         case AssemblerDefs::SVMATokenType::METHOD_METADATA_FIELD : s = "METHOD_METADATA_FIELD"; break;
+        case AssemblerDefs::SVMATokenType::NATIVE_REF: s = "NATIVE_REF"; break;
     }
     return s;
 }
