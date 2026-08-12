@@ -136,7 +136,13 @@ void assembler::Assembler::processInstruction(std::map<std::string, uint32_t>& u
         } else if (operand.type == AssemblerDefs::OperandType::STRING) {
             codeSectionLength += 4;
         } else if (operand.type == AssemblerDefs::OperandType::IMMEDIATE) {
-            codeSectionLength += this->calculateBytesFromType(type);
+            if (instruction.opcode == "loadL" || instruction.opcode == "storeL") {
+                codeSectionLength += 4;
+            } else if (instruction.opcode == "native") {
+                codeSectionLength += 1;
+            } else {
+                codeSectionLength += this->calculateBytesFromType(type);
+            }
         }
     }
 }
@@ -196,9 +202,6 @@ uint8_t assembler::Assembler::calculateBytesOfData(const AssemblerDefs::Data& da
 uint8_t assembler::Assembler::calculateBytesFromType(const std::string& type) const {
     if (type == "i64" || type == "ui64" || type == "f64") {
         return 8;
-    }
-    if (type == "char") {
-        return 1;
     }
     return 4;
 }
