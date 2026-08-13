@@ -12,8 +12,6 @@ set(VM_TESTS vm_tests)
 
 set(VM_Sources
         vm/other/ConvTests.cpp
-        vm/other/InnTests.cpp
-        vm/other/OutTests.cpp
 
         vm/arithmetic/CgeTests.cpp
         vm/arithmetic/CgtTests.cpp
@@ -37,8 +35,8 @@ set(VM_Sources
         vm/control/JnzTests.cpp
         vm/control/JezTests.cpp
         vm/control/JmpTests.cpp
-        vm/control/NativeTests.cpp
         vm/control/CallRetTests.cpp
+        vm/control/NativeTests.cpp
 
         vm/memory/AllocFreeTests.cpp
         vm/memory/LoadLStoreLTests.cpp

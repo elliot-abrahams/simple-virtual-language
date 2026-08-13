@@ -5,13 +5,11 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
-#include <sstream>
 
 #include "TypeConversions.h"
 #include "ArithmeticOps.h"
 #include "NativeFunctionManager.h"
 #include "VMError.h"
-#include "memory/MemoryManager.h"
 #include "memory/MemoryManager.h"
 
 VM::VM() :
@@ -46,12 +44,29 @@ Value VM::popOperandStack() {
     return this->operandStack.pop();
 }
 
+OperandStack* VM::getOperandStack() {
+    return &this->operandStack;
+}
+
 void VM::setExitStatus(const int status) {
     this->exitCode = status;
 }
 
 int VM::getExitStatus() const {
     return this->exitCode;
+}
+
+std::string VM::readStringFromMemory(const uint32_t address) const {
+    // read number of bytes of string
+    const uint32_t size = this->memoryManager.read32(MemoryAccessScope::PTR, address);
+
+    std::string string;
+    string.resize(size);
+
+    for (int i = 0; i < size; i++) {
+        string[i] = static_cast<char>(this->memoryManager.read8(MemoryAccessScope::PTR, address + 4 + i));
+    }
+    return string;
 }
 
 void VM::execute() {
@@ -124,8 +139,6 @@ void VM::execute() {
         // OTHER
         // -------------------------------------------------
 
-        case ISA::Opcode::OUT: this->executeOut(); break; // out
-        case ISA::Opcode::INN: this->executeInn(); break; // inn
         case ISA::Opcode::CONV: this->executeConv(); break; // conv
     }
 }
@@ -300,6 +313,13 @@ void VM::executeFree() {
 // CONTROL
 // -------------------------------------------------
 
+void VM::executeNative() {
+    // read native function ID operand
+    const uint8_t nativeID = this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
+
+    NativeFunctionManager::invoke(this, nativeID);
+}
+
 void VM::executeCall() {
     const uint32_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
     // read method metadata
@@ -315,13 +335,6 @@ void VM::executeCall() {
     this->callStackManager.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, &this->HP);
     // set PC to start of called method
     this->PC = address + 5; // (5 for length of method metadata)
-}
-
-void VM::executeNative() {
-    // read native function ID operand
-    const uint8_t nativeID = this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
-
-    NativeFunctionManager::invoke(nativeID, this, this->operandStack);
 }
 
 void VM::executeRet() {
@@ -516,153 +529,12 @@ void VM::executeCge() {
     this->operandStack.push(ArithmeticOps::cge(value2, value1));
 }
 
-void VM::executeOut() {
-    const Value value = this->operandStack.pop(); // pop value off of the operand stack
-
-    // print value
-    switch (static_cast<ISA::Type>(value.type)) {
-        case ISA::Type::UI32:
-        case ISA::Type::UI64: {
-            std::cout << value.rawValue;
-            break;
-        }
-        case ISA::Type::I32: std::cout << TypeConversions::rawToI32(value.rawValue); break;
-        case ISA::Type::I64: std::cout << TypeConversions::rawToI64(value.rawValue); break;
-        case ISA::Type::F32: std::cout << formatFloatString(TypeConversions::rawToF32(value.rawValue)); break;
-        case ISA::Type::F64: std::cout << formatFloatString(TypeConversions::rawToF64(value.rawValue)); break;
-        case ISA::Type::PTR: {
-            // check value from operand stack is type ptr
-            checkType("out",
-                {static_cast<uint32_t>(ISA::Type::PTR)},
-                static_cast<uint8_t>(value.type)
-            );
-            std::cout << this->readStringFromMemory(value.rawValue);
-            break;
-        }
-    }
-}
-
-void VM::executeInn() {
-    const uint8_t type = this->fetchType(); // read type operand
-    Value value = Value{};
-    checkType("inn",
-        {
-            static_cast<uint8_t>(ISA::Type::I32),
-            static_cast<uint8_t>(ISA::Type::UI32),
-            static_cast<uint8_t>(ISA::Type::I64),
-            static_cast<uint8_t>(ISA::Type::UI64),
-            static_cast<uint8_t>(ISA::Type::F32),
-            static_cast<uint8_t>(ISA::Type::F64),
-            static_cast<uint8_t>(ISA::Type::STR),
-        },
-        type);
-
-    switch (static_cast<ISA::Type>(type)) {
-        case ISA::Type::I32: {
-            int32_t input;
-            if (!(std::cin >> input)) {
-                throw VMError("Invalid i32 input");
-            }
-            value = Value{ISA::Type::I32, TypeConversions::I32ToRaw(input)};
-            break;
-        }
-        case ISA::Type::UI32: {
-            uint32_t input;
-            if (!(std::cin >> input)) {
-                throw VMError("Invalid ui32 input");
-            }
-            value = Value{ISA::Type::UI32, input};
-            break;
-        }
-        case ISA::Type::I64: {
-            int64_t input;
-            if (!(std::cin >> input)) {
-                throw VMError("Invalid i64 input");
-            }
-            value = Value{ISA::Type::I64, TypeConversions::I64ToRaw(input)};
-            break;
-        }
-        case ISA::Type::UI64: {
-            uint64_t input;
-            if (!(std::cin >> input)) {
-                throw VMError("Invalid ui64 input");
-            }
-            value = Value{ISA::Type::UI64, input};
-            break;
-        }
-        case ISA::Type::F32: {
-            std::string token;
-            std::cin >> token;
-
-            char* end;
-            float input = std::strtof(token.c_str(), &end);
-
-            if (end != token.c_str() + token.size() || std::isnan(input) || std::isinf(input)) {
-                throw VMError("Invalid f32 input");
-            }
-
-            value = Value{
-                ISA::Type::F32,
-                TypeConversions::F32ToRaw(input)
-            };
-            break;
-        }
-        case ISA::Type::F64: {
-            std::string token;
-            std::cin >> token;
-
-            char* end;
-            double input = std::strtod(token.c_str(), &end);
-
-            if (end != token.c_str() + token.size() || std::isnan(input) || std::isinf(input)) {
-                throw VMError("Invalid f64 input");
-            }
-
-            value = Value{ISA::Type::F64, TypeConversions::F64ToRaw(input)};
-            break;
-        }
-        case ISA::Type::STR: {
-            std::string input;
-            std::getline(std::cin >> std::ws, input);
-
-            // allocate space in heap
-            const uint32_t address = this->heapManager.allocateBlock(input.size() + 4, this->SP);
-
-            // write string length in heap
-            this->memoryManager.write32(MemoryAccessScope::HEAP, address, input.size());
-
-            // store string in heap
-            for (int i = 0; i < input.size(); i++) {
-                this->memoryManager.write8(MemoryAccessScope::HEAP, address + 4 + i, input[i]);
-            }
-
-            // return address of string
-            value = Value{ISA::Type::PTR, address};
-            break;
-        }
-    }
-    this->operandStack.push(value);
-}
-
 void VM::executeConv() {
     const uint8_t type = this->fetchType(); // read type operand
     Value value = this->operandStack.pop(); // pop value off of the operand stack
 
     value.convertToType(static_cast<ISA::Type>(type)); // convert type
     this->operandStack.push(value); // push new value onto operand stack
-}
-
-std::string VM::readStringFromMemory(const uint32_t address) const {
-    // read number of bytes of string
-    const uint32_t size = this->memoryManager.read32(MemoryAccessScope::PTR, address);
-
-    std::string string;
-    string.resize(size);
-
-    for (int i = 0; i < size; i++) {
-        string[i] = static_cast<char>(this->memoryManager.read8(MemoryAccessScope::PTR, address + 4 + i));
-    }
-    return string;
 }
 
 uint8_t VM::fetchType() {
@@ -732,7 +604,7 @@ void VM::checkType(const std::string &instructionMnemonic, const std::vector<uin
         string += "Error: type mismatch";
         string += "\nInstruction: " + instructionMnemonic;
         string += "\nExpected: ";
-        for (uint8_t expectedType : expectedTypes) {
+        for (const uint8_t expectedType : expectedTypes) {
             string += TypeConversions::typeToString(expectedType)  + " ";
         }
         string += "\nActual: " + TypeConversions::typeToString(actualType);
@@ -749,36 +621,4 @@ void VM::validateFrameAccess(const int32_t offset) const {
 
         throw VMError("ERROR: Invalid call stack access");
     }
-}
-
-std::string VM::formatFloatString(double value) {
-    std::ostringstream oss;
-    oss << std::setprecision(std::numeric_limits<double>::max_digits10)
-        << std::defaultfloat
-        << value;
-
-    std::string formattedString = oss.str();
-
-    auto dot = formattedString.find('.');
-
-    if (dot == std::string::npos) {
-        // no decimal point and not scientific notation
-        if (formattedString.find('e') == std::string::npos &&
-            formattedString.find('E') == std::string::npos) {
-
-            formattedString += ".0";
-        }
-
-    } else {
-        while (formattedString.back() == '0') {
-            // remove trailing zeros
-            formattedString.pop_back();
-        }
-
-        if (formattedString.back() == '.') {
-            formattedString.push_back('0');
-        }
-    }
-
-    return formattedString;
 }

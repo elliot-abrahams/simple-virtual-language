@@ -20,8 +20,8 @@ namespace ISA {
         STOREL = 0x0d,
         ALLOC = 0x0e,
         FREE = 0x0f,
-        CALL = 0x10,
-        NATIVE = 0x11,
+        NATIVE = 0x10,
+        CALL = 0x11,
         RET = 0x12,
         JMP = 0x13,
         JEZ = 0x14,
@@ -44,9 +44,7 @@ namespace ISA {
         CLE = 0x25,
         CGT = 0x26,
         CGE = 0x27,
-        OUT = 0x28,
-        INN = 0x29,
-        CONV = 0x2a,
+        CONV = 0x28,
     };
 
     enum class Type : uint8_t {

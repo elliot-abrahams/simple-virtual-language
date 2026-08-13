@@ -3,6 +3,7 @@
 #include "SymbolTable.h"
 
 void compiler::BuiltinFunctions::registerBuiltinFunctions(SymbolTable& symbolTable) {
+
     // void print(int)
     symbolTable.declareBuiltinFunction(
         BuiltinId::PRINT_INT,
@@ -10,6 +11,7 @@ void compiler::BuiltinFunctions::registerBuiltinFunctions(SymbolTable& symbolTab
         Type::VOID_RETURN_TYPE,
         {Type::INT}
     );
+
     // void print(float)
     symbolTable.declareBuiltinFunction(
         BuiltinId::PRINT_FLOAT,
@@ -17,6 +19,7 @@ void compiler::BuiltinFunctions::registerBuiltinFunctions(SymbolTable& symbolTab
         Type::VOID_RETURN_TYPE,
         {Type::FLOAT}
     );
+
     // void print(bool)
     symbolTable.declareBuiltinFunction(
         BuiltinId::PRINT_BOOL,

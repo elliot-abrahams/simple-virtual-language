@@ -128,8 +128,7 @@ void assembler::Assembler::processInstruction(std::map<std::string, uint32_t>& u
     for (auto& operand : instruction.operands) {
 
         switch (operand.type) {
-            case AssemblerDefs::OperandType::TYPE:
-            case AssemblerDefs::OperandType::DATA_TYPE: {
+            case AssemblerDefs::OperandType::TYPE: {
                 codeSectionLength++;
                 type = operand.value;
                 break;
@@ -278,12 +277,6 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertInstructionToBy
 
             case AssemblerDefs::OperandType::TYPE: {
                 bytecode.push_back(this->convertTypeToByte(operand.value));
-                dataType = operand.value;
-                break;
-            }
-
-            case AssemblerDefs::OperandType::DATA_TYPE: {
-                bytecode.push_back(this->convertDataTypeToByte(operand.value));
                 dataType = operand.value;
                 break;
             }

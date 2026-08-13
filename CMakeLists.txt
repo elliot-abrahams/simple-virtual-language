@@ -44,6 +44,8 @@ set(Headers
     src/compiler/SemanticAnalyser.h
     src/compiler/CodeGenerator.h
     src/compiler/LanguageTypes.h
+    src/compiler/BuiltinFunctions.h
+    src/vm/NativeFunctionManager.h
 )
 
 set(Sources
@@ -65,8 +67,6 @@ set(Sources
     src/compiler/SemanticAnalyser.cpp
     src/compiler/CodeGenerator.cpp
     src/compiler/BuiltinFunctions.cpp
-    src/compiler/BuiltinFunctions.h
-    src/vm/NativeFunctionManager.h
 )
 
 add_library(${This} STATIC ${Sources} ${Headers})

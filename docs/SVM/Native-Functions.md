@@ -5,6 +5,7 @@
 - [1. Overview](#1-overview)
 - [2. Native Functions](#2-native-functions)
   - [2.1 exit](#21-exit)
+  - [2.2 print](#22-print)
 
 ## 1. Overview
 
@@ -22,7 +23,7 @@ Native functions interact with the operand stack to receive arguments and produc
 
 **Native Ref:** `exit`
 
-**ID:** `0`
+**ID:** `0x00`
 
 **Stack:** `[status] → []`
 
@@ -31,5 +32,39 @@ Native functions interact with the operand stack to receive arguments and produc
 - Terminates execution of the SVM
 - Uses `status` as the program's exit status
 
-**Rules:**
+**Type Rules:**
 - `status` must be an integer type
+
+---
+
+### 2.2 print
+
+**Native Ref:** `print`
+
+**ID:** `0x01`
+
+**Stack:** `[value]→ []`
+
+**Semantics:**
+- Pops `value` from the operand stack
+- Outputs `value` to standard output
+
+**Type Rules:**
+- `value` must not have type `ptr`
+
+---
+
+### 2.3 print_str
+
+**Native Ref:** `print_str`
+
+**ID:** `0x03`
+
+**Stack:** `[addr]→ []`
+
+**Semantics:**
+- Pops `addr` from the operand stack
+- Output the string located at the address `addr` in memory to standard output
+
+**Type Rules:**
+- `addr` must have type `ptr`

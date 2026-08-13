@@ -24,8 +24,8 @@
     - [3.9 alloc](#39-alloc)
     - [3.10 free](#310-free)
 - [4. Control](#4-control)
-    - [4.1 call](#41-call)
-    - [4.2 native](#42-native)
+    - [4.1 native](#41-native)
+    - [4.2 call](#42-call)
     - [4.3 ret](#43-ret)
     - [4.4 jmp](#44-jmp)
     - [4.5 jez](#45-jez)
@@ -50,9 +50,7 @@
     - [5.17 cgt](#517-cgt)
     - [5.18 cge](#518-cge)
 - [6. Other](#6-other)
-    - [6.1 out](#61-out)
-    - [6.2 inn](#62-inn)
-    - [6.3 conv](#63-conv)
+    - [6.3 conv](#61-conv)
 
 ---
 
@@ -301,7 +299,22 @@ See Section 6.3 of `Execution-Model.md` for more details on deallocation behavio
 
 ## 4. Control
 
-### 4.1 call
+### 4.1 native
+
+**Operands:** `<native_ref>`
+
+**Stack:** `[...] → [...] (depends on the invoked function)`
+
+**Semantics:**
+- Invokes the native function identified by `<native_ref>`
+- The native function may pop values from and push values onto the operand stack
+
+**Type Rules:**
+- `<native_ref>` must refer to a native function provided by the VM
+
+---
+
+### 4.2 call
 
 **Operands:** `<label>`
 
@@ -322,22 +335,7 @@ See Section 5.2 of `Execution-Model.md` for more details on call behaviour.
 
 ---
 
-### 4.2 native
-
-**Operands:** `<native_ref>`
-
-**Stack:** `[...] → [...] (depends on the invoked function)`
-
-**Semantics:**
-- Invokes the native function identified by `<native_ref>`
-- The native function may pop values from and push values onto the operand stack
-
-**Type Rules:**
-- `<native_ref>` must refer to a native function provided by the VM
-
----
-
-### 4.2 ret
+### 4.3 ret
 
 **Stack:** `[] → []`
 
@@ -354,7 +352,7 @@ See Section 5.3 of `Execution-Model.md` for more details on return behaviour.
 
 ---
 
-### 4.3 jmp
+### 4.4 jmp
 
 **Operands:** `<label>`
 
@@ -368,7 +366,7 @@ See Section 5.3 of `Execution-Model.md` for more details on return behaviour.
 
 ---
 
-### 4.4 jez
+### 4.5 jez
 
 **Operands:** `<label>`
 
@@ -384,7 +382,7 @@ See Section 5.3 of `Execution-Model.md` for more details on return behaviour.
 
 ---
 
-### 4.5 jnz
+### 4.6 jnz
 
 **Operands:** `<label>`
 
@@ -700,37 +698,7 @@ See Section 5.3 of `Execution-Model.md` for more details on return behaviour.
 
 ## 6. Other
 
-### 6.1 out
-
-**Stack:** `[value] → []`
-
-**Semantics:**
-- Pops `value` from the operand stack
-- If `value` has type `ptr`, outputs the string located at `value` in memory to standard output
-- Otherwise, outputs `value` to standard output
-
----
-
-### 6.2 inn
-
-**Operands:** `<data_type>`
-
-**Stack:** `[] → [value]`
-
-**Semantics:**
-- Reads a line from standard input
-- If `<data_type>` is `str`, stores the input string in the heap and pushes its address onto the operand stack
-- Otherwise, converts the input to `<data_type>` and pushes the resulting value onto the operand stack
-
-**Type Rules:**
-- `<data_type>` must not be `ptr`
-- If `<data_type>` is `str`, `value` has type `ptr`
-- If `<data_type>` is not `str`, `value` has type `<data_type>`
-- An error occurs if the input cannot be represented as `<data_type>`
-
----
-
-### 6.3 conv
+### 6.1 conv
 
 **Operands:** `<type>`
 

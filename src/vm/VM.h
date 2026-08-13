@@ -20,8 +20,14 @@ public:
 
     Value popOperandStack();
 
+    OperandStack* getOperandStack();
+
     void setExitStatus(int status);
     int getExitStatus() const;
+
+    std::string readStringFromMemory(const uint32_t address) const;
+
+    static void checkType(const std::string &instructionMnemonic, const std::vector<uint8_t> expectedTypes, const uint8_t actualType);
 
     void handleVMError(const VMError& e) const;
     void dumpState() const;
@@ -46,8 +52,8 @@ private:
     void executeAlloc();
     void executeFree();
 
-    void executeCall();
     void executeNative();
+    void executeCall();
     void executeRet();
     void executeJmp();
     void executeJez();
@@ -72,18 +78,12 @@ private:
     void executeCgt();
     void executeCge();
 
-    void executeOut();
-    void executeInn();
     void executeConv();
-
-    std::string readStringFromMemory(const uint32_t address) const;
 
     uint8_t fetchType();
     uint64_t fetchOperand(const uint8_t type);
 
-    static void checkType(const std::string &instructionMnemonic, const std::vector<uint8_t> expectedTypes, const uint8_t actualType);
     void validateFrameAccess(const int32_t offset) const;
-    static std::string formatFloatString(double value);
 
     uint32_t PC;
     uint32_t HB;

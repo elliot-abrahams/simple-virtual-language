@@ -56,7 +56,7 @@ namespace compiler {
                 0,
                 {
                 "        loadL i32 #1",
-                "        out",
+                "        native print",
                 "        ret"
             },
                 {}
@@ -68,7 +68,7 @@ namespace compiler {
                 0,
                 {
                 "        loadL f32 #1",
-                "        out",
+                "        native print",
                 "        ret"
             },
                 {}
@@ -80,17 +80,18 @@ namespace compiler {
                 0,
                 {
                 "        loadL ui32 #1",
-                "        jez $__print(bool)__print__false",
+                "        jez $__print(bool)__false",
                 "        push ptr $__true__string",
-                "        out",
-                "        ret",
-                "    $__print(bool)__print__false:",
+                "        jmp $__print(bool)__print",
+                "    $__print(bool)__false:",
                 "        push ptr $__false__string",
-                "        out",
-                "        ret"
+                "    $__print(bool)__print:",
+                "        native print_str",
+                "        ret",
             },
                 {BuiltinDataId::TRUE_STRING, BuiltinDataId::FALSE_STRING}
             }}
+
         };
 
         inline static std::unordered_map<BuiltinDataId, std::string> builtinData = {

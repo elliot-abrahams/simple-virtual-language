@@ -49,21 +49,10 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     int lineNumber = this->peek().lineNumber;
     this->next();
 
-    AssemblerDefs::Operand dataType;
     AssemblerDefs::Operand type;
     AssemblerDefs::Operand labelRef;
     AssemblerDefs::Operand immediate;
     AssemblerDefs::Operand nativeRef;
-
-    // parse DATA_TYPE Token
-    if (instruction == "inn") {
-        auto optionalDataType = this->parseDataType();
-        if (!optionalDataType.has_value()) {
-            handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::DATA_TYPE, lineNumber);
-            return std::nullopt;
-        }
-        dataType = optionalDataType.value();
-    }
 
     // parse TYPE Token
     if (instruction == "push" ||
@@ -230,8 +219,6 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     // Other
     //========================================================================================================
 
-    if (instruction == "out") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
-    if (instruction == "inn") return AssemblerDefs::Instruction{instruction, {dataType}, lineNumber};
     if (instruction == "conv") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
 
     printError(std::string("Undefined instruction: " + instruction), lineNumber);
@@ -354,13 +341,6 @@ std::optional<AssemblerDefs::Operand> assembler::Parser::parseType() {
     return this->parseOperand(AssemblerDefs::SVMATokenType::TYPE);
 }
 
-std::optional<AssemblerDefs::Operand> assembler::Parser::parseDataType() {
-    auto dataType = this->parseOperand(AssemblerDefs::SVMATokenType::DATA_TYPE);
-    if (dataType.has_value()) {
-        return dataType;
-    }
-    return this->parseOperand(AssemblerDefs::SVMATokenType::TYPE);
-}
 
 std::optional<AssemblerDefs::Operand> assembler::Parser::parseImmediate() {
     return this->parseOperand(AssemblerDefs::SVMATokenType::IMMEDIATE);

@@ -58,8 +58,8 @@ namespace AssemblerDefs {
         {"alloc", 0x0e},
         {"free", 0x0f},
         // control
-        {"call", 0x10},
-        {"native", 0x11},
+        {"native", 0x10},
+        {"call", 0x11},
         {"ret", 0x12},
         {"jmp", 0x13},
         {"jez", 0x14},
@@ -84,9 +84,7 @@ namespace AssemblerDefs {
         {"cgt", 0x26},
         {"cge", 0x27},
         // other
-        {"out", 0x28},
-        {"inn", 0x29},
-        {"conv", 0x2a},
+        {"conv", 0x28},
     };
 
     inline const std::map<std::string, uint8_t> type {
@@ -109,7 +107,9 @@ namespace AssemblerDefs {
     };
 
     inline const std::map<std::string, uint8_t> nativeRef {
-        {"exit", 0x00}
+        {"exit", 0x00},
+        {"print", 0x01},
+        {"print_str", 0x03}
     };
 
     enum class OperandType {

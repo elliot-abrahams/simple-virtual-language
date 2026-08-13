@@ -25,7 +25,6 @@ namespace assembler {
         std::optional<AssemblerDefs::Statement> parseMethodDef();
         std::optional<AssemblerDefs::Statement> parseSectionStart();
         std::optional<AssemblerDefs::Operand> parseType();
-        std::optional<AssemblerDefs::Operand> parseDataType();
         std::optional<AssemblerDefs::Operand> parseImmediate();
         std::optional<AssemblerDefs::Operand> parseLabelRef();
         std::optional<AssemblerDefs::Operand> parseNativeRef();
