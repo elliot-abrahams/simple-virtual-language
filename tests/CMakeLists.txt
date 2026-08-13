@@ -166,7 +166,11 @@ gtest_discover_tests(${SEMANTIC_TESTS})
 set(INTEGRATION_TESTS integration_tests)
 
 set(Integration_Sources
+        integration/builtinFunctionTests/printTests.cpp
+        integration/builtinFunctionTests/exitTests.cpp
+
         integration/FunctionTests.cpp
+        integration/ScopeTests.cpp
 
         integration/statementTests/WhileStatementTests.cpp
         integration/statementTests/IfStatementTests.cpp
@@ -178,7 +182,6 @@ set(Integration_Sources
 
         integration/IntegrationTestUtils.h
         integration/IntegrationTests.cpp
-        integration/ScopeTests.cpp
 )
 
 add_executable(${INTEGRATION_TESTS} ${Integration_Sources})

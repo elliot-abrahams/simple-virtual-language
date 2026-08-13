@@ -14,6 +14,7 @@ namespace compiler {
 
     enum class BuiltinId {
         NONE,
+        EXIT_INT,
         PRINT_INT,
         PRINT_FLOAT,
         PRINT_BOOL,
@@ -50,6 +51,19 @@ namespace compiler {
 
     private:
         inline static std::unordered_map<BuiltinId, BuiltinFunction> builtinFunctionAssembly = {
+
+            {BuiltinId::EXIT_INT, BuiltinFunction{
+                "$__Builtin__exit(int)",
+                1,
+                0,
+                {
+                "        loadL i32 #1",
+                "        native exit",
+                "        ret"
+                },
+                {}
+            }},
+
             {BuiltinId::PRINT_INT, BuiltinFunction{
                 "$__Builtin__print(int)",
                 1,

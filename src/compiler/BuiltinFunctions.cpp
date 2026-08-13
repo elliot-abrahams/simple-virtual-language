@@ -4,6 +4,14 @@
 
 void compiler::BuiltinFunctions::registerBuiltinFunctions(SymbolTable& symbolTable) {
 
+    // void exit(int)
+    symbolTable.declareBuiltinFunction(
+        BuiltinId::EXIT_INT,
+        "exit",
+        Type::VOID_RETURN_TYPE,
+        {Type::INT}
+    );
+
     // void print(int)
     symbolTable.declareBuiltinFunction(
         BuiltinId::PRINT_INT,

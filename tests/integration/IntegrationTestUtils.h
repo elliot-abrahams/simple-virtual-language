@@ -16,6 +16,7 @@
 namespace integrationTests {
 
     inline void compileAndRun(
+        VM* vm,
         const std::string& sourceCode
     ) {
         const auto path = new std::filesystem::path("Testing");
@@ -48,11 +49,10 @@ namespace integrationTests {
             }
 
             assembler::Assembler assembler;
-            VM vm;
 
             const auto bytecode = assembler.assembleString(assemblyCode);
 
-            vm.run(&bytecode.value());
+            vm->run(&bytecode.value());
 
         } catch (const CompilerError& e) {
             std::cerr << e.what() << std::endl;
@@ -64,17 +64,37 @@ namespace integrationTests {
         const std::string& sourceCode,
         const std::string& expectedOutput
     ) {
-        std::stringstream buffer;
+        const std::stringstream buffer;
         std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
 
+        auto vm = new VM();
+
         try {
-            compileAndRun(sourceCode);
+            compileAndRun(vm, sourceCode);
         } catch (const CompilerError& e) {
             std::cerr << e.what() << std::endl;
             FAIL();
         }
         std::cout.rdbuf(old);
         EXPECT_EQ(buffer.str(), expectedOutput);
+    }
+
+    inline void ASSERT_EXIT_CODE_EQ(
+        const std::string& sourceCode,
+        const int expectedExitCode
+    ) {
+
+        auto vm = new VM();
+
+        try {
+            compileAndRun(vm, sourceCode);
+        } catch (const CompilerError& e) {
+            std::cerr << e.what() << std::endl;
+            FAIL();
+        }
+
+        ASSERT_EQ(expectedExitCode, vm->getExitStatus());
+
     }
 
 }
