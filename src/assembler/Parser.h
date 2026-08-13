@@ -36,7 +36,6 @@ namespace assembler {
 
         static bool checkAndHandleValueIsValidAsType(const std::string type, const std::string& value, const int& lineNumber);
         static bool checkAndHandleValueIsValidAsDataType(const std::string type, const std::string& value, const int& lineNumber);
-        static void handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber);
 
         static bool isNumberInteger(const std::string& value);
         static bool isNumberDecimal(const std::string& value);

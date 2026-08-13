@@ -433,10 +433,6 @@ bool assembler::Parser::checkAndHandleValueIsValidAsDataType(const std::string t
     return false;
 }
 
-void assembler::Parser::handleValueOutOfRangeError(const std::string& dataType, const std::string& data, const int& lineNumber) {
-    printError(std::string(data + " out of range for " + dataType), lineNumber);
-}
-
 bool assembler::Parser::isNumberInteger(const std::string& value) {
     return std::regex_match(value, std::regex("-?[0-9]*"));
 }

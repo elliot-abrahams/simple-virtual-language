@@ -363,63 +363,70 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertDataToBytes(con
         dataToConvert = data;
     }
 
-    if (dataType == "i32") {
-        const int64_t parsed = std::stoll(dataToConvert);
+    try {
+        if (dataType == "i32") {
+            const int64_t parsed = std::stoll(dataToConvert);
 
-        const int32_t value = static_cast<int32_t>(parsed);
-        const uint32_t raw = static_cast<uint32_t>(value);
+            const int32_t value = static_cast<int32_t>(parsed);
+            const uint32_t raw = static_cast<uint32_t>(value);
 
-        for (int i = 0; i < 4; i++) {
-            bytecode.push_back((raw >> (i * 8)) & 0xFF);
+            for (int i = 0; i < 4; i++) {
+                bytecode.push_back((raw >> (i * 8)) & 0xFF);
+            }
+
+        } else if (dataType == "ui32" || dataType == "") { // "" for loadL, storeL
+            const uint32_t raw = static_cast<uint32_t>(std::stoull(dataToConvert));
+
+            for (int i = 0; i < 4; i++) {
+                bytecode.push_back((raw >> (i * 8)) & 0xFF);
+            }
+
+        } else if (dataType == "i64") {
+            const int64_t value = std::stoll(dataToConvert);
+            const uint64_t raw = static_cast<uint64_t>(value);
+
+            for (int i = 0; i < 8; i++) {
+                bytecode.push_back((raw >> (i * 8)) & 0xFF);
+            }
+
+        } else if (dataType == "ui64") {
+            const uint64_t raw = std::stoull(dataToConvert);
+
+            for (int i = 0; i < 8; i++) {
+                bytecode.push_back((raw >> (i * 8)) & 0xFF);
+            }
+
+        } else if (dataType == "f32") {
+            const float value = std::stof(dataToConvert);
+            uint32_t raw;
+
+            std::memcpy(&raw, &value, sizeof(float));
+
+            for (int i = 0; i < 4; i++) {
+                bytecode.push_back((raw >> (i * 8)) & 0xFF);
+            }
+
+        } else if (dataType == "f64") {
+            const double value = std::stod(dataToConvert);
+            uint64_t raw;
+
+            std::memcpy(&raw, &value, sizeof(double));
+
+            for (int i = 0; i < 8; i++) {
+                bytecode.push_back((raw >> (i * 8)) & 0xFF);
+            }
+
+        } else if (dataType == "ptr") {
+            this->pushBackVector(bytecode, this->convertLabelRefToBytes(Label{dataToConvert, LabelType::DATA}));
+        } else if (dataType == "str") {
+            this->pushBackVector(bytecode, this->convertStringToBytes(data));
         }
-
-    } else if (dataType == "ui32" || dataType == "") { // "" for loadL, storeL
-        const uint32_t raw = static_cast<uint32_t>(std::stoull(dataToConvert));
-
-        for (int i = 0; i < 4; i++) {
-            bytecode.push_back((raw >> (i * 8)) & 0xFF);
-        }
-
-    } else if (dataType == "i64") {
-        const int64_t value = std::stoll(dataToConvert);
-        const uint64_t raw = static_cast<uint64_t>(value);
-
-        for (int i = 0; i < 8; i++) {
-            bytecode.push_back((raw >> (i * 8)) & 0xFF);
-        }
-
-    } else if (dataType == "ui64") {
-        const uint64_t raw = std::stoull(dataToConvert);
-
-        for (int i = 0; i < 8; i++) {
-            bytecode.push_back((raw >> (i * 8)) & 0xFF);
-        }
-
-    } else if (dataType == "f32") {
-        const float value = std::stof(dataToConvert);
-        uint32_t raw;
-
-        std::memcpy(&raw, &value, sizeof(float));
-
-        for (int i = 0; i < 4; i++) {
-            bytecode.push_back((raw >> (i * 8)) & 0xFF);
-        }
-
-    } else if (dataType == "f64") {
-        const double value = std::stod(dataToConvert);
-        uint64_t raw;
-
-        std::memcpy(&raw, &value, sizeof(double));
-
-        for (int i = 0; i < 8; i++) {
-            bytecode.push_back((raw >> (i * 8)) & 0xFF);
-        }
-
-    } else if (dataType == "ptr") {
-        this->pushBackVector(bytecode, this->convertLabelRefToBytes(Label{dataToConvert, LabelType::DATA}));
-    } else if (dataType == "str") {
-        this->pushBackVector(bytecode, this->convertStringToBytes(data));
+    } catch (const std::out_of_range &e) {
+        std::cerr << "Error found at Line " << lineNumber << std::endl;
+        std::cerr << "Value is out of range for type " + dataType << std::endl;
+        return std::nullopt;
     }
+
     return bytecode;
 }
 
