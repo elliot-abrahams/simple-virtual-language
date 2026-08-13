@@ -23,6 +23,7 @@
     - [5.1 Stack Frame](#51-stack-frame)
     - [5.2 Call Behaviour](#52-call-behaviour)
     - [5.3 Return Behaviour](#53-return-behaviour)
+    - [5.4 Method Termination](#54-method-termination)
 - [6. Heap Management](#6-heap-management)
     - [6.1 Structure](#61-structure)
     - [6.2 Allocation Behaviour](#62-allocation-behaviour)
@@ -267,6 +268,21 @@ When `ret` instruction is called:
 3. Set SP to the current SP + size of current stack frame
 
 The VM internally stores the number of arguments and number of local variables of each stack frame to be able to determine the size of the current stack frame.
+
+### 5.4 Method Termination
+
+A method does not have an implicit termination behaviour.
+
+When executing a method:
+- `ret` returns execution to the caller
+- `halt` terminates VM execution
+- A native function may terminate VM execution
+
+If execution reaches the end of a method without encountering a terminating instruction, execution continues into the following bytecode.
+
+Execution continuing beyond a method may cause invalid or unrelated bytecode to be interpreted as instructions.
+
+---
 
 ## 6. Heap Management
 
