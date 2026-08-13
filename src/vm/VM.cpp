@@ -38,6 +38,7 @@ void VM::run(const std::vector<uint8_t>* bytecode) {
 
     while (running) {
         this->execute();
+        if (this->exitCode != 0) return;
     }
 }
 
