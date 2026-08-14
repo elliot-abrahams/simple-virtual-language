@@ -10,9 +10,11 @@
   - [3.3 Label Table Construction](#33-label-table-construction)
   - [3.4 Bytecode Generation](#34-bytecode-generation)
 
+---
+
 ## 1. Overview
 
-SVA (SVM Assembler) converts SVMA source code into SVM bytecode.
+SVA (Simple Virtual Assembler) converts SVMA source code into SVMB bytecode.
 
 The assembler validates the SVMA source, resolves label references, and generates bytecode according to the rules defined by `SVM/Bytecode-Format.md`.
 

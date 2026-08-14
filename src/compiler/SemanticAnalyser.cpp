@@ -372,46 +372,28 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
         const Type leftType = this->checkExprType(scope, *binaryOperator->left);
         const Type rightType = this->checkExprType(scope, *binaryOperator->right);
 
-
-        // DIVIDE and MODULO are exceptions
-        if (leftType != rightType &&
-            binaryOperator->binaryOperatorInfo->binaryOperator != BinaryOperator::DIVIDE &&
-            binaryOperator->binaryOperatorInfo->binaryOperator != BinaryOperator::MODULO) {
-            throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-        }
-
         switch (binaryOperator->binaryOperatorInfo->binaryOperator) {
             case BinaryOperator::PLUS:
             case BinaryOperator::MINUS:
             case BinaryOperator::MULTIPLY:
             case BinaryOperator::DIVIDE:
-            case BinaryOperator::INTEGER_DIVIDE:
             case BinaryOperator::MODULO: {
-
+                // ensure either operand is not bool
                 if (leftType == Type::BOOL || rightType == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
 
-                switch (binaryOperator->binaryOperatorInfo->binaryOperator) {
-                    case BinaryOperator::DIVIDE: {
-                        binaryOperator->resultingType = Type::FLOAT;
-                        break;
-                    }
-                    case BinaryOperator::INTEGER_DIVIDE: {
-                        if (leftType != Type::INT || rightType != Type::INT) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-
-                        binaryOperator->resultingType = Type::INT;
-                        break;
-                    }
-                    case BinaryOperator::MODULO: {
-                        if (leftType == Type::FLOAT || rightType == Type::FLOAT) {
-                            binaryOperator->resultingType = Type::FLOAT;
-                            break;
-                        }
-                        binaryOperator->resultingType = Type::INT;
-                        break;
-                    }
-                    default: binaryOperator->resultingType = leftType;
+                if (leftType == Type::FLOAT || rightType == Type::FLOAT) {
+                    binaryOperator->resultingType = Type::FLOAT;
+                    return Type::FLOAT;
                 }
-                return binaryOperator->resultingType;;
+                binaryOperator->resultingType = Type::INT;
+                return Type::INT;
+            }
+
+            case BinaryOperator::INTEGER_DIVIDE: {
+                // ensure either operand is not bool
+                if (leftType == Type::BOOL || rightType == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                binaryOperator->resultingType = Type::INT;
+                return Type::INT;
             }
 
             case BinaryOperator::LOGICAL_OR:
@@ -425,20 +407,21 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             case BinaryOperator::LESS_THAN_OR_EQUAL:
             case BinaryOperator::GREATER_THAN:
             case BinaryOperator::GREATER_THAN_OR_EQUAL: {
-                if (leftType == Type::BOOL || rightType == Type::BOOL) {
-                    throw TypeError(
-                        this->path->string(),
-                        binaryOperator->line,
-                        binaryOperator->column,
-                        "cannot apply operator '" + binaryOperatorToString(binaryOperator->binaryOperatorInfo->binaryOperator) + " to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
-                    );
-                }
+                if (leftType == Type::BOOL || rightType == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
                 binaryOperator->resultingType = Type::BOOL;
                 return Type::BOOL;
             }
 
             default:
                 // EQUAL_EQUAL / NOT_EQUAL
+
+                // if either left or right type is bool and the other operand is not bool
+                if ((leftType == Type::BOOL || rightType == Type::BOOL) &&
+                    leftType != rightType
+                ) {
+                    throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                }
+
                 binaryOperator->resultingType = Type::BOOL;
                 return Type::BOOL;
         }
@@ -565,7 +548,7 @@ void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::Exp
         this->path->string(),
         binaryOperator.line,
         binaryOperator.column,
-        "cannot apply operator '" + binaryOperatorToString(binaryOperator.binaryOperatorInfo->binaryOperator) + " to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
+        "cannot apply operator '" + binaryOperatorToString(binaryOperator.binaryOperatorInfo->binaryOperator) + "' to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
     );
 }
 

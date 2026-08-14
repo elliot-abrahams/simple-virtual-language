@@ -226,57 +226,24 @@ void compiler::CodeGenerator::compileExpr(Scope* scope, const ast::Expr& expr) {
 
 void compiler::CodeGenerator::compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator &expr) {
     this->compileExpr(scope, *expr.left);
+
     switch (expr.binaryOperatorInfo->binaryOperator) {
-        case BinaryOperator::PLUS: {
-            this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("add");
-            break;
-        }
-        case BinaryOperator::MINUS: {
-            this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("sub");
-            break;
-        }
-        case BinaryOperator::MULTIPLY: {
-            this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("mul");
-            break;
-        }
-        case BinaryOperator::DIVIDE: {
-
-            if (expr.left->resultingType == Type::INT) {
-                this->emitWithDoubleIndent("conv f32");
-            }
-
-            this->compileExpr(scope, *expr.right);
-
-            if (expr.right->resultingType == Type::INT) {
-                this->emitWithDoubleIndent("conv f32");
-            }
-
-            this->emitWithDoubleIndent("div");
-            break;
-        }
-        case BinaryOperator::INTEGER_DIVIDE: {
-            this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("div");
-            break;
-        }
+        case BinaryOperator::PLUS:
+        case BinaryOperator::MINUS:
+        case BinaryOperator::MULTIPLY:
+        case BinaryOperator::DIVIDE:
         case BinaryOperator::MODULO: {
-
-            if (expr.resultingType != expr.left->resultingType) {
-                this->emitWithDoubleIndent("conv " + typeToString(expr.resultingType));
-            }
-
+            // convert left expr to expr resulting type
+            this->emitWithDoubleIndentConversion(expr.left->resultingType, expr.resultingType);
+            // compile right expr
             this->compileExpr(scope, *expr.right);
-
-            if (expr.resultingType != expr.right->resultingType) {
-                this->emitWithDoubleIndent("conv " + typeToString(expr.resultingType));
-            }
-
-            this->emitWithDoubleIndent("mod");
-            break;
+            // convert right expr to expr resulting type
+            this->emitWithDoubleIndentConversion(expr.right->resultingType, expr.resultingType);
+            // compile binary operator
+            this->compileBinaryOperator(expr.binaryOperatorInfo->binaryOperator);
+            return;
         }
+
         case BinaryOperator::LOGICAL_OR: {
             const std::string evaluateToTrueLabel = this->generateLabel("evaluate_to_true");
             const std::string endOrLabel = this->generateLabel("end_or");
@@ -296,6 +263,7 @@ void compiler::CodeGenerator::compileBinaryExpr(Scope* scope, const ast::ExprBin
             this->emitWithSingleIndent(generateLabelDefFromLabel(endOrLabel));
             break;
         }
+
         case BinaryOperator::LOGICAL_AND: {
             const std::string evaluateToFalseLabel = this->generateLabel("evaluate_to_false");
             const std::string endAndLabel = this->generateLabel("end_and");
@@ -315,38 +283,73 @@ void compiler::CodeGenerator::compileBinaryExpr(Scope* scope, const ast::ExprBin
             this->emitWithSingleIndent(generateLabelDefFromLabel(endAndLabel));
             break;
         }
-        case BinaryOperator::EQUAL_EQUAL: {
-            this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("ceq");
-            break;
-        }
-        case BinaryOperator::NOT_EQUAL: {
-            this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("cne");
-            break;
-        }
-        case BinaryOperator::LESS_THAN: {
-            this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("clt");
-            break;
-        }
-        case BinaryOperator::LESS_THAN_OR_EQUAL: {
-            this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("cle");
-            break;
-        }
-        case BinaryOperator::GREATER_THAN: {
-            this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("cgt");
-            break;
-        }
+
+        case BinaryOperator::INTEGER_DIVIDE:
+        case BinaryOperator::EQUAL_EQUAL:
+        case BinaryOperator::NOT_EQUAL:
+        case BinaryOperator::LESS_THAN:
+        case BinaryOperator::LESS_THAN_OR_EQUAL:
+        case BinaryOperator::GREATER_THAN:
         case BinaryOperator::GREATER_THAN_OR_EQUAL: {
+
+            if (expr.left->resultingType == Type::FLOAT ||
+                expr.right->resultingType == Type::FLOAT
+            ) {
+                // if either operand is float -> convert left expr to float
+                this->emitWithDoubleIndentConversion(expr.left->resultingType, Type::FLOAT);
+            }
+
+            // compile right expression
             this->compileExpr(scope, *expr.right);
-            this->emitWithDoubleIndent("cge");
+
+            if (expr.left->resultingType == Type::FLOAT ||
+                expr.right->resultingType == Type::FLOAT
+            ) {
+                // if either operand is float -> convert right expr to float
+                this->emitWithDoubleIndentConversion(expr.right->resultingType, Type::FLOAT);
+            }
+
+            this->compileBinaryOperator(expr.binaryOperatorInfo->binaryOperator);
             break;
+        }
+
+        default: {}
+    }
+
+    if (expr.binaryOperatorInfo->binaryOperator == BinaryOperator::INTEGER_DIVIDE) {
+        // if either operand is float -> convert result to int
+        if (expr.left->resultingType == Type::FLOAT ||
+            expr.right->resultingType == Type::FLOAT
+        ) {
+            this->emitWithDoubleIndent("conv i32");
         }
     }
+
 }
+
+void compiler::CodeGenerator::compileBinaryOperator(const BinaryOperator binaryOperator) {
+    switch (binaryOperator) {
+        case BinaryOperator::PLUS: emitWithDoubleIndent("add"); break;
+        case BinaryOperator::MINUS: emitWithDoubleIndent("sub"); break;
+        case BinaryOperator::MULTIPLY: emitWithDoubleIndent("mul"); break;
+
+        case BinaryOperator::DIVIDE:
+        case BinaryOperator::INTEGER_DIVIDE:
+            emitWithDoubleIndent("div");
+            break;
+
+        case BinaryOperator::MODULO: emitWithDoubleIndent("mod"); break;
+        case BinaryOperator::EQUAL_EQUAL: emitWithDoubleIndent("ceq"); break;
+        case BinaryOperator::NOT_EQUAL: emitWithDoubleIndent("cne"); break;
+        case BinaryOperator::LESS_THAN: emitWithDoubleIndent("clt"); break;
+        case BinaryOperator::LESS_THAN_OR_EQUAL: emitWithDoubleIndent("cle"); break;
+        case BinaryOperator::GREATER_THAN: emitWithDoubleIndent("cgt"); break;
+        case BinaryOperator::GREATER_THAN_OR_EQUAL: emitWithDoubleIndent("cge"); break;
+
+        default: {}
+    }
+}
+
 
 void compiler::CodeGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr) {
 
@@ -497,6 +500,13 @@ std::string compiler::CodeGenerator::generateLabelDefFromLabel(const std::string
 std::string compiler::CodeGenerator::generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber) {
     return "$__Scope__" + std::to_string(scopeFunctionNumber);
 }
+
+void compiler::CodeGenerator::emitWithDoubleIndentConversion(const Type currentType, const Type newType) {
+    if (currentType != newType) {
+        emitWithDoubleIndent("conv " + typeToString(newType));
+    }
+}
+
 
 void compiler::CodeGenerator::emitWithDoubleIndent(const std::string& assembly) {
     this->generatedCode.push_back("        " + assembly);

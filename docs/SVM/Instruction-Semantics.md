@@ -485,7 +485,8 @@ See Section 5.3 of `Execution-Model.md` for more details on return behaviour.
 
 **Semantics:**
 - Pops `x` and `y` from the operand stack
-- Computes the remainder of dividing `x` by `y` (modulo)
+- Computes the remainder of dividing `x` by `y` using truncating division
+- The remainder has the same sign as `x` when non-zero
 - Pushes the result onto the operand stack
 
 **Type Rules:**

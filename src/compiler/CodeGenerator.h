@@ -32,6 +32,7 @@ namespace compiler {
 
         void compileExpr(Scope* scope, const ast::Expr& expr);
         void compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& expr);
+        void compileBinaryOperator(const BinaryOperator binaryOperator);
         void compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr);
 
         void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
@@ -51,6 +52,7 @@ namespace compiler {
         static std::string generateLabelDefFromLabel(const std::string& label);
         static std::string generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber);
 
+        void emitWithDoubleIndentConversion(const Type currentType, const Type newType);
         void emitWithDoubleIndent(const std::string& assembly);
         void emitWithSingleIndent(const std::string& assembly);
         void emit(const std::string& code);
