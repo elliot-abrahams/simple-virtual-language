@@ -21,6 +21,14 @@ TEST(STM_ASSIGN, FLOAT) {
     );
 }
 
+TEST(STM_ASSIGN, IMPLICIT_INT_TO_FLOAT) {
+    ASSERT_SEMANTICALLY_VALID(R"(
+            float x;
+            x = 5;
+        )"
+    );
+}
+
 TEST(STM_ASSIGN, BOOL) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
@@ -43,14 +51,6 @@ TEST(STM_ASSIGN, INVALID_ASSIGN_BOOL_TO_INT) {
     ASSERT_THROWS_TYPE_ERROR(R"(
             int x;
             x = true;
-        )"
-    );
-}
-
-TEST(STM_ASSIGN, INVALID_ASSIGN_INT_TO_FLOAT) {
-    ASSERT_THROWS_TYPE_ERROR(R"(
-            float x;
-            x = 5;
         )"
     );
 }

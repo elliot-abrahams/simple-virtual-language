@@ -3,374 +3,241 @@
 
 using namespace integrationTests;
 
-TEST(EXPR_BINARY, INT_ADDITION) {
+TEST(EXPR_BINARY, PLUS_INT_INT) {
     ASSERT_OUTPUT_EQ(
         "print(1 + 2);",
         "3"
     );
 }
 
-TEST(EXPR_BINARY, NEGATIVE_INT_ADDITION_ONE) {
+TEST(EXPR_BINARY, PLUS_INT_FLOAT) {
     ASSERT_OUTPUT_EQ(
-        "print(-1 + 2);",
-        "1"
+        "print(1 + 2.5f);",
+        "3.5"
     );
 }
 
-TEST(EXPR_BINARY, NEGATIVE_INT_ADDITION_TWO) {
+TEST(EXPR_BINARY, PLUS_FLOAT_INT) {
     ASSERT_OUTPUT_EQ(
-        "print(1 + -2);",
-        "-1"
+        "print(2.5f + 1);",
+        "3.5"
     );
 }
 
-TEST(EXPR_BINARY, NEGATIVE_INT_ADDITION_THREE) {
+TEST(EXPR_BINARY, PLUS_FLOAT_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        "print(1.5f + 2.5f);",
+        "4.0"
+    );
+}
+
+TEST(EXPR_BINARY, PLUS_INT_NEGATIVE) {
     ASSERT_OUTPUT_EQ(
         "print(-1 + -2);",
         "-3"
     );
 }
 
-TEST(EXPR_BINARY, INT_SUBTRACTION) {
+TEST(EXPR_BINARY, MINUS_INT_INT) {
     ASSERT_OUTPUT_EQ(
-        "print(2 - 1);",
-        "1"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_SUBTRACTION_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-2 - 1);",
-        "-3"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_SUBTRACTION_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(2 - -1);",
-        "3"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_SUBTRACTION_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-2 - -1);",
+        "print(1 - 2);",
         "-1"
     );
 }
 
-TEST(EXPR_BINARY, INT_MULTIPLICATION_ONE) {
+TEST(EXPR_BINARY, MINUS_INT_FLOAT) {
     ASSERT_OUTPUT_EQ(
-        "print(5 * 3);",
-        "15"
+        "print(1 - 2.5f);",
+        "-1.5"
     );
 }
 
-TEST(EXPR_BINARY, INT_MULTIPLICATION_TWO) {
+TEST(EXPR_BINARY, MINUS_FLOAT_INT) {
     ASSERT_OUTPUT_EQ(
-        "print(3 * 5);",
-        "15"
+        "print(2.5f - 1);",
+        "1.5"
     );
 }
 
-TEST(EXPR_BINARY, NEGATIVE_INT_MULTIPLICATION_ONE) {
+TEST(EXPR_BINARY, MINUS_FLOAT_FLOAT) {
     ASSERT_OUTPUT_EQ(
-        "print(-3 * 5);",
-        "-15"
+        "print(1.5f - 2.5f);",
+        "-1.0"
     );
 }
 
-TEST(EXPR_BINARY, NEGATIVE_INT_MULTIPLICATION_TWO) {
+TEST(EXPR_BINARY, MINUS_INT_NEGATIVE) {
     ASSERT_OUTPUT_EQ(
-        "print(3 * -5);",
-        "-15"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_MULTIPLICATION_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-3 * -5);",
-        "15"
-    );
-}
-
-TEST(EXPR_BINARY, INT_DIVISION) {
-    ASSERT_OUTPUT_EQ(
-        "print(10 / 4);",
-        "2.5"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_DIVISION_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-10 / 4);",
-        "-2.5"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_DIVISION_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(10 / -4);",
-        "-2.5"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_DIVISION_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-10 / -4);",
-        "2.5"
-    );
-}
-
-TEST(EXPR_BINARY, FLOAT_DIVISION) {
-    ASSERT_OUTPUT_EQ(
-        "print(12.5f / 2.5f);",
-        "5.0"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_DIVISION_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-12.5f / 2.5f);",
-        "-5.0"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_DIVISION_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(12.5f / -2.5f);",
-        "-5.0"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_DIVISION_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-12.5f / -2.5f);",
-        "5.0"
-    );
-}
-
-TEST(EXPR_BINARY, INT_FLOAT_DIVISION) {
-    ASSERT_OUTPUT_EQ(
-        "print(20 / 2.5f);",
-        "8.0"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_FLOAT_DIVISION_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-20 / 2.5f);",
-        "-8.0"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_FLOAT_DIVISION_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(20 / -2.5f);",
-        "-8.0"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_FLOAT_DIVISION_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-20 / -2.5f);",
-        "8.0"
-    );
-}
-
-TEST(EXPR_BINARY, FLOAT_INT_DIVISION) {
-    ASSERT_OUTPUT_EQ(
-        "print(12.5f / 10);",
-        "1.25"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_INT_DIVISION_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-12.5f / 10);",
-        "-1.25"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_INT_DIVISION_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(12.5f / -10);",
-        "-1.25"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_INT_DIVISION_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-12.5f / -10);",
-        "1.25"
-    );
-}
-
-TEST(EXPR_BINARY, INTEGER_DIVISION) {
-    ASSERT_OUTPUT_EQ(
-        "print(10 // 5);",
-        "2"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INTEGER_DIVISION_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-10 // 5);",
-        "-2"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INTEGER_DIVISION_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(10 // -5);",
-        "-2"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INTEGER_DIVISION_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-10 // -5);",
-        "2"
-    );
-}
-
-TEST(EXPR_BINARY, INT_INT_MODULO_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(5 % 2);",
+        "print(-1 - -2);",
         "1"
     );
 }
 
-TEST(EXPR_BINARY, INT_INT_MODULO_TWO) {
+TEST(EXPR_BINARY, MULTIPLY_INT_INT) {
     ASSERT_OUTPUT_EQ(
-        "print(5 % 5);",
+        "print(1 * 2);",
+        "2"
+    );
+}
+
+TEST(EXPR_BINARY, MULTIPLY_INT_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        "print(1 * 2.5f);",
+        "2.5"
+    );
+}
+
+TEST(EXPR_BINARY, MULTIPLY_FLOAT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(2.5f * 1);",
+        "2.5"
+    );
+}
+
+TEST(EXPR_BINARY, MULTIPLY_FLOAT_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        "print(1.5f * 2.5f);",
+        "3.75"
+    );
+}
+
+TEST(EXPR_BINARY, MUTLIPLY_INT_NEGATIVE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-1 * -2);",
+        "2"
+    );
+}
+
+TEST(EXPR_BINARY, DIVIDE_INT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(2 / 2);",
+        "1"
+    );
+}
+
+TEST(EXPR_BINARY, DIVIDE_INT_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        "print(5.0f / 2.5f);",
+        "2.0"
+    );
+}
+
+TEST(EXPR_BINARY, DIVIDE_FLOAT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(2.5f / 1);",
+        "2.5"
+    );
+}
+
+TEST(EXPR_BINARY, DIVIDE_FLOAT_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        "print(3.75f / 1.5f);",
+        "2.5"
+    );
+}
+
+TEST(EXPR_BINARY, DIVIDE_INT_NEGATIVE_ONE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-1 / -2);",
+        "1.5"
+    );
+}
+
+TEST(EXPR_BINARY, DIVIDE_INT_NEGATIVE_TWO) {
+    ASSERT_OUTPUT_EQ(
+        "print(1 / -2);",
+        "-1.5"
+    );
+}
+
+TEST(EXPR_BINARY, DIVIDE_INT_NEGATIVE_THREE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-1 / 2);",
+        "-1.5"
+    );
+}
+
+TEST(EXPR_BINARY, INTEGER_DIVIDE_INT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(4 // 2);",
+        "2"
+    );
+}
+
+TEST(EXPR_BINARY, INTEGER_DIVIDE_INT_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        "print(4 // 2.5f);",
+        "1"
+    );
+}
+
+TEST(EXPR_BINARY, INTEGER_DIVIDE_FLOAT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(4.5f // 2);",
+        "2"
+    );
+}
+
+TEST(EXPR_BINARY, INTEGER_DIVIDE_FLOAT_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        "print(5.5f // 5.2f);",
+        "1"
+    );
+}
+
+TEST(EXPR_BINARY, INTEGER_DIVIDE_INT_NEGATIVE_ONE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-4 // 2);",
+        "-2"
+    );
+}
+
+TEST(EXPR_BINARY, INTEGER_DIVIDE_INT_NEGATIVE_TW) {
+    ASSERT_OUTPUT_EQ(
+        "print(4 // -2);",
+        "-2"
+    );
+}
+
+TEST(EXPR_BINARY, INTEGER_DIVIDE_INT_NEGATIVE_THREE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-4 // -2);",
+        "2"
+    );
+}
+
+TEST(EXPR_BINARY, MODULO_INT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(10 % 3);",
+        "1"
+    );
+}
+
+TEST(EXPR_BINARY, MODULO_INT_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        "print(5 % 2.5f);",
         "0"
     );
 }
 
-TEST(EXPR_BINARY, NEGATIVE_INT_INT_MODULO_ONE) {
+TEST(EXPR_BINARY, MODULO_INT_NEGATIVE_ONE) {
     ASSERT_OUTPUT_EQ(
         "print(-5 % 2);",
         "-1"
     );
 }
 
-TEST(EXPR_BINARY, NEGATIVE_INT_INT_MODULO_TWO) {
+TEST(EXPR_BINARY, MODULO_INT_NEGATIVE_TWO) {
     ASSERT_OUTPUT_EQ(
         "print(5 % -2);",
         "1"
     );
 }
 
-TEST(EXPR_BINARY, NEGATIVE_INT_INT_MODULO_THREE) {
+TEST(EXPR_BINARY, MODULO_INT_NEGATIVE_THREE) {
     ASSERT_OUTPUT_EQ(
         "print(-5 % -2);",
         "-1"
-    );
-}
-
-TEST(EXPR_BINARY, FLOAT_INT_MODULO_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(5.5f % 2);",
-        "1.5"
-    );
-}
-
-TEST(EXPR_BINARY, FLOAT_INT_MODULO_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(5.5f % 5);",
-        "0.5"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_INT_MODULO_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-5.5f % 2);",
-        "-1.5"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_INT_MODULO_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(5.5f % -2);",
-        "1.5"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_INT_MODULO_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-5.5f % -2);",
-        "-1.5"
-    );
-}
-
-TEST(EXPR_BINARY, INT_FLOAT_MODULO_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(5 % 2.5f);",
-        "0.0"
-    );
-}
-
-TEST(EXPR_BINARY, INT_FLOAT_MODULO_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(5 % 1.5f);",
-        "0.5"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_FLOAT_MODULO_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-5 % 1.5f);",
-        "-0.5"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_FLOAT_MODULO_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(5 % -1.5f);",
-        "0.5"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_INT_FLOAT_MODULO_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-5 % -1.5f);",
-        "-0.5"
-    );
-}
-
-TEST(EXPR_BINARY, FLOAT_FLOAT_MODULO_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(5.5f % 2.5f);",
-        "0.5"
-    );
-}
-
-TEST(EXPR_BINARY, FLOAT_FLOAT_MODULO_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(5.75f % 1.5f);",
-        "1.25"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_FLOAT_MODULO_ONE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-5.75f % 1.5f);",
-        "-1.25"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_FLOAT_MODULO_TWO) {
-    ASSERT_OUTPUT_EQ(
-        "print(5.75f % -1.5f);",
-        "1.25"
-    );
-}
-
-TEST(EXPR_BINARY, NEGATIVE_FLOAT_FLOAT_MODULO_THREE) {
-    ASSERT_OUTPUT_EQ(
-        "print(-5.75f % -1.5f);",
-        "-1.25"
     );
 }
 
@@ -458,6 +325,20 @@ TEST(EXPR_BINARY, EQUAL_EQUAL_FLOAT_FALSE) {
     );
 }
 
+TEST(EXPR_BINARY, EQUAL_EQUAL_INT_FLOAT_TRUE) {
+    ASSERT_OUTPUT_EQ(
+        "print(5 == 5.0f);",
+        "true"
+    );
+}
+
+TEST(EXPR_BINARY, EQUAL_EQUAL_FLOAT_INT_FALSE) {
+    ASSERT_OUTPUT_EQ(
+        "print(5.5f == 5);",
+        "false"
+    );
+}
+
 TEST(EXPR_BINARY, EQUAL_EQUAL_BOOL_TRUE) {
     ASSERT_OUTPUT_EQ(
         "print(true == true);",
@@ -496,6 +377,20 @@ TEST(EXPR_BINARY, NOT_EQUAL_FLOAT_TRUE) {
 TEST(EXPR_BINARY, NOT_EQUAL_FLOAT_FALSE) {
     ASSERT_OUTPUT_EQ(
         "print(5.5f != 5.5f);",
+        "false"
+    );
+}
+
+TEST(EXPR_BINARY, NOT_EQUAL_INT_FLOAT_TRUE) {
+    ASSERT_OUTPUT_EQ(
+        "print(5 != 5.5f);",
+        "true"
+    );
+}
+
+TEST(EXPR_BINARY, NOT_EQUAL_FLOAT_INT_FALSE) {
+    ASSERT_OUTPUT_EQ(
+        "print(5.0f != 5);",
         "false"
     );
 }
@@ -556,6 +451,19 @@ TEST(EXPR_BINARY, LESS_THAN_FLOAT_FALSE_TWO) {
     );
 }
 
+TEST(EXPR_BINARY, LESS_THAN_INT_FLOAT_TRUE) {
+    ASSERT_OUTPUT_EQ(
+        "print(5 < 5.1f);",
+        "true"
+    );
+}
+
+TEST(EXPR_BINARY, LESS_THAN_FLOAT_INT_FALSE) {
+    ASSERT_OUTPUT_EQ("print(5.5f < 5);",
+        "false"
+    );
+}
+
 TEST(EXPR_BINARY, LESS_THAN_OR_EQUAL_INT_TRUE_ONE) {
     ASSERT_OUTPUT_EQ(
         "print(5 <= 10);",
@@ -594,6 +502,19 @@ TEST(EXPR_BINARY, LESS_THAN_OR_EQUAL_FLOAT_TRUE_TWO) {
 TEST(EXPR_BINARY, LESS_THAN_OR_EQUAL_FLOAT_FALSE) {
     ASSERT_OUTPUT_EQ(
         "print(10.5f <= 5.5f);",
+        "false"
+    );
+}
+
+TEST(EXPR_BINARY, LESS_THAN_OR_EQUAL_INT_FLOAT_TRUE) {
+    ASSERT_OUTPUT_EQ(
+        "print(5 <= 5.1f);",
+        "true"
+    );
+}
+
+TEST(EXPR_BINARY, LESS_THAN_OR_EQUAL_FLOAT_INT_FALSE) {
+    ASSERT_OUTPUT_EQ("print(5.5f <= 5);",
         "false"
     );
 }
@@ -640,6 +561,19 @@ TEST(EXPR_BINARY, GREATER_THAN_FLOAT_FALSE_TWO) {
     );
 }
 
+TEST(EXPR_BINARY, GREATER_THAN_INT_FLOAT_TRUE) {
+    ASSERT_OUTPUT_EQ(
+        "print(5 > 4.1f);",
+        "true"
+    );
+}
+
+TEST(EXPR_BINARY, GREATER_THAN_FLOAT_INT_FALSE) {
+    ASSERT_OUTPUT_EQ("print(4.5f > 5);",
+        "false"
+    );
+}
+
 TEST(EXPR_BINARY, GREATER_THAN_OR_EQUAL_INT_TRUE_ONE) {
     ASSERT_OUTPUT_EQ(
         "print(10 >= 5);",
@@ -678,6 +612,19 @@ TEST(EXPR_BINARY, GREATER_THAN_OR_EQUAL_FLOAT_TRUE_TWO) {
 TEST(EXPR_BINARY, GREATER_THAN_OR_EQUAL_FLOAT_FALSE) {
     ASSERT_OUTPUT_EQ(
         "print(5.5f >= 10.5f);",
+        "false"
+    );
+}
+
+TEST(EXPR_BINARY, GREATER_THAN_OR_EQUAL_INT_FLOAT_TRUE) {
+    ASSERT_OUTPUT_EQ(
+        "print(5 >= 4.1f);",
+        "true"
+    );
+}
+
+TEST(EXPR_BINARY, GREATER_THAN_OR_EQUAL_FLOAT_INT_FALSE) {
+    ASSERT_OUTPUT_EQ("print(4.5f >= 5);",
         "false"
     );
 }

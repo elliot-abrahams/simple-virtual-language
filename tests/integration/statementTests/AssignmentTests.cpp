@@ -23,6 +23,16 @@ TEST(STM_ASSIGN, FLOAT) {
     );
 }
 
+TEST(STM_ASSIGN, IMPLICIT_INT_TO_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            float f = 5;
+            print(f);
+        )",
+        "5.0"
+    );
+}
+
 TEST(STM_ASSIGN, BOOL) {
     ASSERT_OUTPUT_EQ(
         R"(
