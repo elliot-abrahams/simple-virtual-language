@@ -146,10 +146,10 @@ namespace compiler {
     public:
         SymbolTable();
 
-        bool declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
+        FunctionSymbol* declareFunction(const std::string& functionIdentifier, const std::string& functionLabel, const Type& returnType, const std::vector<Type>& parameterTypes);
         void declareBuiltinFunction(const BuiltinId builtinId, const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
 
-        FunctionSymbol* getFunctionSymbol(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes);
+        std::vector<FunctionSymbol>* getFunctionSymbols(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes);
         const FunctionSymbol* getCurrentFunctionSymbol() const;
 
         std::unordered_map<std::string, Symbol>& getGlobalVariables() const;

@@ -15,11 +15,13 @@ bool compiler::Symbol::isArgument() const {
     return this->localSlot > 0;
 }
 
-bool compiler::SymbolTable::declareFunction(const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes) {
+compiler::FunctionSymbol* compiler::SymbolTable::declareFunction(const std::string& functionIdentifier, const std::string& functionLabel, const Type& returnType, const std::vector<Type>& parameterTypes) {
+    FunctionSymbol* functionSymbol = nullptr;
     if (this->functions.find(functionIdentifier) == this->functions.end()) {
         // function with the same identifier has not been initialised
-        this->functions.insert(std::make_pair(functionIdentifier, std::vector{FunctionSymbol{"", returnType, parameterTypes, BuiltinId::NONE}}));
-        return true;
+        functionSymbol = new FunctionSymbol{functionLabel, returnType, parameterTypes, BuiltinId::NONE};
+        this->functions.insert(std::make_pair(functionIdentifier, std::vector{*functionSymbol}));
+        return functionSymbol;
     }
     // function with the same identifier has already been initialised
     const std::vector<FunctionSymbol> functionsWithSameName = this->functions.at(functionIdentifier);
@@ -44,9 +46,10 @@ bool compiler::SymbolTable::declareFunction(const std::string& functionIdentifie
     }
 
     if (validSignature) {
-        this->functions.at(functionIdentifier).push_back(FunctionSymbol{"", returnType, parameterTypes, BuiltinId::NONE});
+        functionSymbol = new FunctionSymbol{functionLabel, returnType, parameterTypes, BuiltinId::NONE};
+        this->functions.at(functionIdentifier).push_back(*functionSymbol);
     }
-    return validSignature;
+    return functionSymbol;
 }
 
 void compiler::SymbolTable::declareBuiltinFunction(const BuiltinId builtinId, const std::string &functionIdentifier, const Type &returnType, const std::vector<Type> &parameterTypes) {
@@ -59,30 +62,11 @@ void compiler::SymbolTable::declareBuiltinFunction(const BuiltinId builtinId, co
     }
 }
 
-compiler::FunctionSymbol* compiler::SymbolTable::getFunctionSymbol(const std::string &functionIdentifier, const std::vector<Type>& parameterTypes) {
-    auto it = this->functions.find(functionIdentifier);
-    if (it != this->functions.end()) {
-
-        // loop through each function with the given identifier
-        for (auto& function : it->second) {
-            if (parameterTypes.size() != function.parameterTypes.size()) {
-                continue;
-            }
-            // loop through each parameter of variable function
-            bool identicalSignature = true;
-            for (int parameterIndex = 0; parameterIndex < parameterTypes.size(); parameterIndex++) {
-                if (parameterTypes[parameterIndex] != function.parameterTypes[parameterIndex]) {
-                    identicalSignature = false;
-                    break;
-                }
-            }
-            if (identicalSignature) {
-                // all parameter types of variable function match
-                return &function;
-            }
-        }
+std::vector<compiler::FunctionSymbol>* compiler::SymbolTable::getFunctionSymbols(const std::string &functionIdentifier, const std::vector<Type>& parameterTypes) {
+    if (this->functions.find(functionIdentifier) == this->functions.end()) {
+        return nullptr;
     }
-    return nullptr;
+    return &this->functions.at(functionIdentifier);
 }
 
 const compiler::FunctionSymbol* compiler::SymbolTable::getCurrentFunctionSymbol() const {

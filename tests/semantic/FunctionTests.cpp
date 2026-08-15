@@ -63,6 +63,28 @@ TEST(FUNCTION, OVERLOADING) {
     );
 }
 
+TEST(FUNCTION, IMPLICIT_CONVERSION_INT_TO_FLOAT) {
+    ASSERT_SEMANTICALLY_VALID(R"(
+            float foo(float a) {
+                return a;
+            }
+
+            float res = foo(5);
+        )"
+    );
+}
+
+TEST(FUNCTION, IMPLICIT_CONVERSION_MULTIPLE_INT_TO_FLOAT) {
+    ASSERT_SEMANTICALLY_VALID(R"(
+            float foo(float a, float b) {
+                return a + b;
+            }
+
+            float res = foo(5, 6);
+        )"
+    );
+}
+
 TEST(FUNCTION, INVALID_GLOBAL_VARIABLE_BEFORE_DECLARATION) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
@@ -75,7 +97,7 @@ TEST(FUNCTION, INVALID_GLOBAL_VARIABLE_BEFORE_DECLARATION) {
     );
 }
 
-TEST(FUNCTION, DUPLICATE_FUNCTION_SIGNATURE) {
+TEST(FUNCTION, INVALID_DUPLICATE_FUNCTION_SIGNATURE) {
     ASSERT_THROWS_SEMANTIC_ERROR(
         R"(
             int foo() {
@@ -85,6 +107,31 @@ TEST(FUNCTION, DUPLICATE_FUNCTION_SIGNATURE) {
             int foo() {
                 return 6;
             }
+        )"
+    );
+}
+
+TEST(FUNCTION, INVALID_AMBIGUOUS_FUNCTION_CALL) {
+    ASSERT_THROWS_SEMANTIC_ERROR(R"(
+            float add(float a, float b, float c) {
+                return 3.0f;
+            }
+            float add(float a, int b, float c) {
+                return 2.0f;
+            }
+            float add(int a, int b, float c) {
+                return 1.0f;
+            }
+            float res = add(5, 5, 5);
+        )"
+    );
+}
+
+TEST(FUNCTION, INVALID_IMPLICIT_CONVERSION_FLOAT_TO_INT) {
+    ASSERT_THROWS_SEMANTIC_ERROR(
+        R"(
+            void foo(int a) {}
+            foo(5.5f);
         )"
     );
 }

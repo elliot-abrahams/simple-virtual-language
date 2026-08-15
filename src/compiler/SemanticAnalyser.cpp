@@ -27,9 +27,8 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
         for (const auto& parameterType : functionDecl->parameters) {
             parameterTypes.push_back(parameterType->typeInfo->type);
         }
-        auto functionSymbol = this->symbolTable->getFunctionSymbol(functionDecl->identifier->name, parameterTypes);
 
-        const auto semanticAnalysisResult = this->processFunctionBody(*functionDecl, functionSymbol);
+        const auto semanticAnalysisResult = this->processFunctionBody(*functionDecl, functionDecl->functionSymbol);
 
         // check function body always reaches returnStm if return type is non-void
         if (functionDecl->returnTypeInfo->type != Type::VOID_RETURN_TYPE &&
@@ -48,11 +47,10 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
 void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& functionDecl) {
     // declare function in symbol table
     const std::vector<Type> parameterTypes = this->processParameterList(functionDecl.parameters);
-    const bool validFunctionSignature = this->symbolTable->declareFunction(functionDecl.identifier->name, functionDecl.returnTypeInfo->type, parameterTypes);
-
     const std::string functionSignature = functionSignatureToString(functionDecl.identifier->name, parameterTypes);
+    FunctionSymbol* functionSymbol = this->symbolTable->declareFunction(functionDecl.identifier->name, "$" + functionSignature, functionDecl.returnTypeInfo->type, parameterTypes);
 
-    if (!validFunctionSignature) {
+    if (functionSymbol == nullptr) {
         std::string errorMsg = "function '";
         errorMsg += functionSignature;
         errorMsg += "' is already defined";
@@ -65,15 +63,11 @@ void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& fu
         );
     }
 
-    // generate function label
-    const std::string functionLabel = "$" + functionSignature;
-
-    // set label of functionSymbol
-    FunctionSymbol* functionSymbol = this->symbolTable->getFunctionSymbol(functionDecl.identifier->name, parameterTypes);
-    functionSymbol->label = functionLabel;
+    // set symbol of functionDecl
+    functionDecl.functionSymbol = functionSymbol;
 }
 
-std::vector<compiler::Type> compiler::SemanticAnalyser::processParameterList(const std::vector<std::unique_ptr<ast::Parameter> > &parameterList) {
+std::vector<compiler::Type> compiler::SemanticAnalyser::processParameterList(const std::vector<std::unique_ptr<ast::Parameter>> &parameterList) {
     std::vector<Type> parameterTypes;
 
     for (auto& parameter : parameterList) {
@@ -177,12 +171,12 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(S
     // set symbol as initialised after checking optional initialiser (prevents self initialisation)
     scope->lookup(varDecl.identifier->name).value()->isInitialised = true;
 
-    if (initializerType != varDecl.typeInfo->type) {
+    if (!canImplicitlyConvert(initializerType, varDecl.typeInfo->type)) {
         throw TypeError(
             this->path->string(),
             varDecl.optionalInitialiser->line,
             varDecl.optionalInitialiser->column,
-            "cannot initialise '" + varDecl.identifier->name + "' with expression of different type."
+            "cannot assign " + typeToString(initializerType) + " to " + typeToString(varDecl.typeInfo->type)
         );
     }
     return SemanticAnalysisResult{false};
@@ -198,7 +192,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
 
     const auto exprType = this->checkExprType(scope, *assignment.expression);
 
-    if (identifierSymbol->type != exprType) {
+    if (!canImplicitlyConvert(exprType, identifierSymbol->type)) {
         throw TypeError(
             this->path->string(),
             assignment.line,
@@ -271,7 +265,9 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall
         argumentTypes.push_back(this->checkExprType(scope, *argument));
     }
 
-    FunctionSymbol* functionSymbol = this->symbolTable->getFunctionSymbol(functionCallStm.functionCall->identifier->name, argumentTypes);
+    std::vector<FunctionSymbol>* functionSymbols = this->symbolTable->getFunctionSymbols(functionCallStm.functionCall->identifier->name, argumentTypes);
+
+    FunctionSymbol* functionSymbol = this->resolveFunctionCall(functionSymbols, *functionCallStm.functionCall, argumentTypes);
 
     // process function arguments
     this->processFunctionCall(functionSymbol, *functionCallStm.functionCall, argumentTypes);
@@ -463,9 +459,11 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             argumentTypes.push_back(this->checkExprType(scope, *argument));
         }
 
-        FunctionSymbol* functionSymbol = this->symbolTable->getFunctionSymbol(functionCall->identifier->name, argumentTypes);
+        std::vector<FunctionSymbol>* functionSymbols = this->symbolTable->getFunctionSymbols(functionCall->identifier->name, argumentTypes);
 
-        // process function arguments
+        FunctionSymbol* functionSymbol = this->resolveFunctionCall(functionSymbols, *functionCall, argumentTypes);
+
+        // process function
         this->processFunctionCall(functionSymbol, *functionCall, argumentTypes);
 
         functionCall->resultingType = functionSymbol->returnType;
@@ -493,6 +491,81 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall
 
     return SemanticAnalysisResult{false};
 }
+
+compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::vector<FunctionSymbol> *functionSymbols, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const {
+    FunctionSymbol* functionSymbol = nullptr;
+
+    if (functionSymbols != nullptr) {
+        std::vector<FunctionSymbol*> validFunctionSymbols;
+
+        // loop through each overloaded function
+        for (auto& symbol : *functionSymbols) {
+
+            if (symbol.parameterTypes.size() != argumentTypes.size()) {
+                continue;
+            }
+
+            bool validSignature = true;
+            bool isSignatureIdentical = true;;
+            // loop through each parameter
+            for (size_t i = 0; i < symbol.parameterTypes.size(); i++) {
+                if (symbol.parameterTypes[i] == argumentTypes[i]) {
+                    continue;
+                }
+                isSignatureIdentical = false;
+                validSignature = canImplicitlyConvert(argumentTypes[i], symbol.parameterTypes[i]);
+                if (!validSignature) break;
+            }
+
+            if (isSignatureIdentical) { // signature matches 1 : 1
+                functionSymbol = &symbol;
+                break;
+            }
+
+            if (validSignature) { // signature is valid but requires implicit conversion
+                validFunctionSymbols.push_back(&symbol);
+            }
+        }
+
+        // if argument types are identical to parameter types
+        if (functionSymbol != nullptr) {
+            return functionSymbol;
+        }
+
+        if (validFunctionSymbols.size() == 1) { // function is unambiguous (only 1 function symbol to choose from)
+            functionSymbol = validFunctionSymbols[0];
+
+        } else if (validFunctionSymbols.size() > 1) { // function is ambiguous (multiple function symbols to choose from)
+            throw SemanticError(
+                this->path->string(),
+                functionCall.line,
+                functionCall.column,
+                "ambiguous function call to '" + functionCall.identifier->name + "'"
+            );
+        }
+    }
+    // no valid function signature results in functionSymbol == nullptr
+    return functionSymbol;
+}
+
+bool compiler::SemanticAnalyser::canImplicitlyConvert(const Type from, const Type to) {
+    if (from == to) return true;
+
+    switch (from) {
+        case Type::INT:
+            return to == Type::FLOAT;
+
+        case Type::FLOAT:
+            return false;
+
+        case Type::BOOL:
+            return false;
+
+        default:
+            return false;
+    }
+}
+
 
 compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) const {
     auto symbol = scope->lookup(identifier);

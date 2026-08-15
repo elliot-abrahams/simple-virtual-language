@@ -157,3 +157,30 @@ TEST(FUNCTION, OVERLOADING) {
         "56"
     );
 }
+
+TEST(FUNCTION, IMPLICIT_CONVERSION) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            float foo(float a) {
+                return a;
+            }
+            print(foo(5));
+        )",
+        "5.0"
+    );
+}
+
+TEST(FUNCTION, PREFERS_MATCH_OVER_IMPLICIT_CONVERSION) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            bool foo(float a) {
+                return false;
+            }
+            bool foo(int a) {
+                return true;
+            }
+            print(foo(5));
+        )",
+        "true"
+    );
+}

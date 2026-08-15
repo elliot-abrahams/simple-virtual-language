@@ -27,10 +27,8 @@ void compiler::CodeGenerator::compileProgram(const ast::Program& program) {
             parameterTypes.push_back(parameter->typeInfo->type);
         }
 
-        const auto functionSymbol = this->symbolTable->getFunctionSymbol(functionDecl->identifier->name, parameterTypes);
-
         this->compileFunctionDeclaration(
-            functionSymbol->label,
+            functionDecl->functionSymbol->label,
             *functionDecl->body,
             functionDecl->parameters.size(),
             functionDecl->body->scope->calculateNumberOfLocalSlots(),
@@ -119,6 +117,9 @@ void compiler::CodeGenerator::compileStmVarDecl(Scope* scope, const ast::StmVarD
 
         const auto symbol = scope->lookup(varDecl.identifier->name).value();
 
+        // convert expr to variable type
+        this->emitWithDoubleIndentConversion(varDecl.optionalInitialiser->resultingType, symbol->type);
+
         if (symbol->isGlobal()) {
             this->emitWithDoubleIndent("storeG $" + varDecl.identifier->name);
         } else {
@@ -131,6 +132,9 @@ void compiler::CodeGenerator::compileStmAssignment(Scope* scope, const ast::StmA
     this->compileExpr(scope, *assignment.expression);
 
     const auto symbol = scope->lookup(assignment.varAccess->identifier->name).value();
+
+    // convert expr to variable type
+    this->emitWithDoubleIndentConversion(assignment.expression->resultingType, symbol->type);
 
     if (symbol->isGlobal()) {
         this->emitWithDoubleIndent("storeG $" + assignment.varAccess->identifier->name);
@@ -393,8 +397,12 @@ void compiler::CodeGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnar
 
 void compiler::CodeGenerator::compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall) {
     // compile arguments
-    for (auto& argument : functionCall.arguments) {
-        this->compileExpr(scope, *argument);
+
+    for (size_t argIndex = 0; argIndex < functionCall.arguments.size(); argIndex++) {
+        this->compileExpr(scope, *functionCall.arguments[argIndex]);
+
+        // convert any arguments that require implicit conversion
+        this->emitWithDoubleIndentConversion(functionCall.arguments[argIndex]->resultingType, functionCall.functionSymbol->parameterTypes[argIndex]);
     }
     if (functionCall.functionSymbol->builtinId == BuiltinId::NONE) {
         // function is user-defined

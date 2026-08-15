@@ -19,7 +19,6 @@ namespace compiler {
         void processProgram(const ast::Program& program);
 
     private:
-        void declareGlobalStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
         void processFunctionDecl(const ast::FunctionDecl& functionDecl);
         std::vector<Type> processParameterList(const std::vector<std::unique_ptr<ast::Parameter>>& parameterList);
 
@@ -37,7 +36,9 @@ namespace compiler {
 
         Type checkExprType(Scope* scope, const ast::Expr& expr);
         SemanticAnalysisResult processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
+        FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
 
+        static bool canImplicitlyConvert(const Type from, const Type to);
         Symbol* checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) const;
 
         static std::string typeToString(const Type& type);

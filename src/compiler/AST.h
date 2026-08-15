@@ -278,6 +278,7 @@ namespace ast {
         const std::unique_ptr<Identifier> identifier;
         const std::vector<std::unique_ptr<Parameter>> parameters;
         const std::unique_ptr<Block> body;
+        mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
         FunctionDecl(const size_t line,
                     const size_t column,
