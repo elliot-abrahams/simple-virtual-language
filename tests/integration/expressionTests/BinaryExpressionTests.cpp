@@ -111,7 +111,7 @@ TEST(EXPR_BINARY, MUTLIPLY_INT_NEGATIVE) {
 TEST(EXPR_BINARY, DIVIDE_INT_INT) {
     ASSERT_OUTPUT_EQ(
         "print(2 / 2);",
-        "1"
+        "1.0"
     );
 }
 
@@ -139,21 +139,21 @@ TEST(EXPR_BINARY, DIVIDE_FLOAT_FLOAT) {
 TEST(EXPR_BINARY, DIVIDE_INT_NEGATIVE_ONE) {
     ASSERT_OUTPUT_EQ(
         "print(-1 / -2);",
-        "1.5"
+        "0.5"
     );
 }
 
 TEST(EXPR_BINARY, DIVIDE_INT_NEGATIVE_TWO) {
     ASSERT_OUTPUT_EQ(
         "print(1 / -2);",
-        "-1.5"
+        "-0.5"
     );
 }
 
 TEST(EXPR_BINARY, DIVIDE_INT_NEGATIVE_THREE) {
     ASSERT_OUTPUT_EQ(
         "print(-1 / 2);",
-        "-1.5"
+        "-0.5"
     );
 }
 
@@ -215,8 +215,8 @@ TEST(EXPR_BINARY, MODULO_INT_INT) {
 
 TEST(EXPR_BINARY, MODULO_INT_FLOAT) {
     ASSERT_OUTPUT_EQ(
-        "print(5 % 2.5f);",
-        "0"
+        "print(5 % 2.25f);",
+        "0.5"
     );
 }
 

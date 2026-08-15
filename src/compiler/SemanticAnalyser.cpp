@@ -381,7 +381,10 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
                 // ensure either operand is not bool
                 if (leftType == Type::BOOL || rightType == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
 
-                if (leftType == Type::FLOAT || rightType == Type::FLOAT) {
+                // result is float if either operand is a float or binary operator is divide
+                if ((leftType == Type::FLOAT || rightType == Type::FLOAT) ||
+                    binaryOperator->binaryOperatorInfo->binaryOperator == BinaryOperator::DIVIDE
+                ) {
                     binaryOperator->resultingType = Type::FLOAT;
                     return Type::FLOAT;
                 }
