@@ -69,7 +69,7 @@ std::vector<compiler::FunctionSymbol>* compiler::SymbolTable::getFunctionSymbols
     return &this->functions.at(functionIdentifier);
 }
 
-const compiler::FunctionSymbol* compiler::SymbolTable::getCurrentFunctionSymbol() const {
+compiler::FunctionSymbol* compiler::SymbolTable::getCurrentFunctionSymbol() const {
     if (this->functionSymbolStack.empty()) {
         return nullptr;
     }

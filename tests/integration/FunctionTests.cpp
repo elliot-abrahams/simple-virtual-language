@@ -41,6 +41,18 @@ TEST(FUNCTION, RETURN_FLOAT) {
     );
 }
 
+TEST(FUNCTION, RETURN_FLOAT_IMPLICIT) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            float foo() {
+                return 5;
+            }
+            print(foo());
+        )",
+        "5.0"
+    );
+}
+
 TEST(FUNCTION, RETURN_BOOL) {
     ASSERT_OUTPUT_EQ(
         R"(

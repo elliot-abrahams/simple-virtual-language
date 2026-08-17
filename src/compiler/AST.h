@@ -156,6 +156,7 @@ namespace ast {
 
     struct ReturnStm final : Stm {
         const std::unique_ptr<Expr> returnExpression;
+        mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
         ReturnStm(const size_t line,
                 const size_t column,

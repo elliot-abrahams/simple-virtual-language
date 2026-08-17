@@ -287,7 +287,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall
 }
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatement(Scope *scope, const ast::ReturnStm &returnStm) {
-    const auto currentFunctionSymbol = this->symbolTable->getCurrentFunctionSymbol();
+    auto currentFunctionSymbol = this->symbolTable->getCurrentFunctionSymbol();
     if (currentFunctionSymbol == nullptr) {
         throw SemanticError(
             this->path->string(),
@@ -296,6 +296,8 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
             "return statement exists outside of a function"
         );
     }
+
+    returnStm.functionSymbol = currentFunctionSymbol;
 
     if (returnStm.returnExpression == nullptr) { // return has no expression
         if (currentFunctionSymbol->returnType != Type::VOID_RETURN_TYPE) {
@@ -309,7 +311,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
     } else {
         // return has expression
 
-        const Type type = this->checkExprType(scope, *returnStm.returnExpression);
+        const Type exprType = this->checkExprType(scope, *returnStm.returnExpression);
 
         if (currentFunctionSymbol->returnType == Type::VOID_RETURN_TYPE) { // function return type is void
             if (returnStm.returnExpression != nullptr) { // return has an expression
@@ -322,12 +324,12 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
             }
         }
 
-        if (type != currentFunctionSymbol->returnType) {
+        if (!canImplicitlyConvert(exprType, currentFunctionSymbol->returnType)) {
             throw TypeError(
                 this->path->string(),
                 returnStm.line,
                 returnStm.column,
-                "return type mismatch: expected '" + typeToString(currentFunctionSymbol->returnType) + "', got '" + typeToString(type) + "'"
+                "return type mismatch: expected '" + typeToString(currentFunctionSymbol->returnType) + "', got '" + typeToString(exprType) + "'"
             );
         }
     }

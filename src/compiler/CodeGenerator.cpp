@@ -200,6 +200,7 @@ void compiler::CodeGenerator::compileFunctionCallStatement(Scope* scope, const a
 void compiler::CodeGenerator::compileReturnStatement(Scope* scope, const ast::ReturnStm &returnStm) {
     if (returnStm.returnExpression != nullptr) {
         this->compileExpr(scope, *returnStm.returnExpression);
+        this->emitWithDoubleIndentConversion(returnStm.returnExpression->resultingType, returnStm.functionSymbol->returnType);
     }
     this->emitWithDoubleIndent("ret");
 }

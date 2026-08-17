@@ -39,6 +39,18 @@ TEST(EXPR_FUNCTION_CALL, FLOAT) {
     );
 }
 
+TEST(EXPR_FUNCTION_CALL, FLOAT_IMPLICIT) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            float foo() {
+                return 5;
+            }
+
+            float x = foo();
+        )"
+    );
+}
+
 TEST(EXPR_FUNCTION_CALL, FLOAT_BINARY_EXPR) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
