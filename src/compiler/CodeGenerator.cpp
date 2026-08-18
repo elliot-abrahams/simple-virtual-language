@@ -144,17 +144,19 @@ void compiler::CodeGenerator::compileStmAssignment(Scope* scope, const ast::StmA
 }
 
 void compiler::CodeGenerator::compileIfStatement(Scope* scope, const ast::IfStm& ifStm) {
-    const std::string endIfLabel = generateLabel("end_if");
-
     this->compileExpr(scope, *ifStm.condition);
 
     if (ifStm.elseStm == nullptr) { // if statement without else
+        const std::string endIfLabel = generateLabel("end_if");
+
         emitWithDoubleIndent("jez " + endIfLabel); // skip if block when condition is false
         this->compileBlock(*ifStm.ifBlock);
         emitWithSingleIndent(generateLabelDefFromLabel(endIfLabel));
 
     } else { // if statement with else
         const std::string elseLabel = generateLabel("else");
+        const std::string endIfLabel = generateLabel("end_if");
+
         emitWithDoubleIndent("jez " + elseLabel); // skip if block when condition is false
         this->compileBlock(*ifStm.ifBlock);
         emitWithDoubleIndent("jmp " + endIfLabel);
@@ -223,6 +225,9 @@ void compiler::CodeGenerator::compileExpr(Scope* scope, const ast::Expr& expr) {
     }
     if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
         this->compileUnaryExpr(scope, *unaryExpr);
+    }
+    if (auto* castExpr = dynamic_cast<const ast::ExprCast*>(&expr)) {
+        this->compileCastExpr(scope, *castExpr);
     }
     if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
         this->compileFunctionCall(scope, *functionCall);
@@ -357,7 +362,6 @@ void compiler::CodeGenerator::compileBinaryOperator(const BinaryOperator binaryO
 
 
 void compiler::CodeGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr) {
-
     switch (expr.unaryOperatorInfo->unaryOperator) {
         case UnaryOperator::PLUS: {
             this->compileExpr(scope, *expr.expr);
@@ -396,9 +400,14 @@ void compiler::CodeGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnar
     }
 }
 
+void compiler::CodeGenerator::compileCastExpr(Scope* scope, const ast::ExprCast& castExpr) {
+    this->compileExpr(scope, *castExpr.expr);
+
+    this->emitWithDoubleIndentConversion(castExpr.expr->resultingType, castExpr.resultingType);
+}
+
 void compiler::CodeGenerator::compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall) {
     // compile arguments
-
     for (size_t argIndex = 0; argIndex < functionCall.arguments.size(); argIndex++) {
         this->compileExpr(scope, *functionCall.arguments[argIndex]);
 

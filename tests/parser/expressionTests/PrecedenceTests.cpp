@@ -1,6 +1,30 @@
 #include <gtest/gtest.h>
 #include "../ParserTestUtils.h"
 
+TEST(EXPR_PRECEDENCE, CAST_UNARY_BEFORE_MULTIPLICATIVE) {
+    const auto testCode = R"(
+        int x = (int) 1.8f * 2;
+    )";
+    const auto program = parserTest::PARSE(testCode);
+    std::vector<std::unique_ptr<parserTest::ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<parserTest::ExpectedVarDecl>(
+            compiler::Type::INT,
+            "x",
+            std::make_unique<parserTest::ExpectedBinaryExpr>(
+                compiler::BinaryOperator::MULTIPLY,
+                std::make_unique<parserTest::ExpectedCastExpr>(
+                    compiler::Type::INT,
+                    std::make_unique<parserTest::ExpectedFloatLiteral>(1.8f)
+                ),
+                std::make_unique<parserTest::ExpectedIntegerLiteral>(2)
+            )
+        )
+    );
+    std::vector<std::unique_ptr<parserTest::ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<parserTest::ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
 
 TEST(EXPR_PRECEDENCE, UNARY_BEFORE_MULTIPLICATIVE) {
     const auto testCode = R"(

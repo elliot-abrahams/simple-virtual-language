@@ -125,6 +125,19 @@ namespace ast {
             arguments(std::move(arguments)) {}
     };
 
+    struct ExprCast final : Expr {
+        const std::unique_ptr<TypeInfo> typeInfo;
+        const std::unique_ptr<Expr> expr;
+
+        ExprCast(const size_t line,
+                const size_t column,
+                std::unique_ptr<TypeInfo> typeInfo,
+                std::unique_ptr<Expr> expr) :
+            Expr(line, column),
+            typeInfo(std::move(typeInfo)),
+        expr(std::move(expr)) {}
+    };
+
     struct ExprUnaryOperator final : Expr {
         const std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo;
         const std::unique_ptr<Expr> expr;

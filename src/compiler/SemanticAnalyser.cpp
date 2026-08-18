@@ -455,6 +455,24 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
         unaryOperator->resultingType = type;
         return type;
     }
+
+    if (auto* castExpression = dynamic_cast<const ast::ExprCast*>(&expr)) {
+        const Type exprType = this->checkExprType(scope, *castExpression->expr);
+
+        // if either source or target type is bool
+        if (exprType == Type::BOOL || castExpression->typeInfo->type == Type::BOOL) {
+            throw TypeError(
+                this->path->string(),
+                castExpression->line,
+                castExpression->column,
+                "cannot cast from '" + typeToString(exprType) + "' to '" + typeToString(castExpression->typeInfo->type) + "'"
+            );
+        }
+
+        castExpression->resultingType = castExpression->typeInfo->type;
+        return castExpression->typeInfo->type;
+    }
+
     if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
         std::vector<Type> argumentTypes;
         for (const auto& argument : functionCall->arguments) {

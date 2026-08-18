@@ -635,6 +635,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
 
 /*
  *  unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
+ *                              | LBR, type, RBR, unary_expression
  *                              | primary_expression ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
@@ -680,6 +681,22 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
             std::move(expr)
         );
     }
+
+    if (isTypeToken(this->tokeniser->lookAhead(1).kind)) {
+        // parse cast expression
+
+        this->tokeniser->eat(TokenKind::LBR);
+        auto typeInfo = this->parseType();
+        this->tokeniser->eat(TokenKind::RBR);
+        auto expression = this->parseUnaryExpression();
+
+        return std::make_unique<ast::ExprCast>(
+            token.line,
+            token.column,
+            std::move(typeInfo),
+            std::move(expression)
+        );
+    }
     return this->parsePrimaryExpression();
 }
 
@@ -712,7 +729,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
             return expr;
         }
 
-            default:
+        default:
             this->handleUnexpectedToken(primaryExpression);
     }
 }
@@ -894,6 +911,18 @@ std::unique_ptr<ast::AssignmentOperatorInfo> compiler::Parser::parseAssignmentOp
         );
     }
     this->handleUnexpectedToken(assignmentOperator);
+}
+
+bool compiler::Parser::isTypeToken(const TokenKind& kind) {
+    switch (kind) {
+        case TokenKind::INTEGER_TYPE:
+        case TokenKind::FLOAT_TYPE:
+        case TokenKind::BOOL_TYPE:
+            return true;
+
+        default:
+            return false;
+    }
 }
 
 void compiler::Parser::handleUnexpectedToken(const Token& token) const {

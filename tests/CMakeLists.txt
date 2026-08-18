@@ -85,6 +85,7 @@ set(Parser_Sources
         parser/expressionTests/PrecedenceTests.cpp
         parser/expressionTests/BinaryExpressionTests.cpp
         parser/expressionTests/UnaryExpressionTests.cpp
+        parser/expressionTests/CastExpressionTests.cpp
         parser/expressionTests/FunctionCallExpressionTests.cpp
 
         parser/ParserTestUtils.h
@@ -146,6 +147,7 @@ set(Semantic_Sources
 
         semantic/expressionTests/BinaryExpressionTests.cpp
         semantic/expressionTests/UnaryExpressionTests.cpp
+        semantic/expressionTests/CastExpressionTests.cpp
         semantic/expressionTests/FunctionCallExpressionTests.cpp
 
         semantic/SemanticTestUtils.h
@@ -179,6 +181,7 @@ set(Integration_Sources
         integration/expressionTests/PrecedenceTests.cpp
         integration/expressionTests/BinaryExpressionTests.cpp
         integration/expressionTests/UnaryExpressionTests.cpp
+        integration/expressionTests/castExpressionTests.cpp
 
         integration/IntegrationTestUtils.h
         integration/IntegrationTests.cpp

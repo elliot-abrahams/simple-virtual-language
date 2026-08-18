@@ -22,12 +22,13 @@
 - [5. Expressions](#5-expressions)
   - [5.1 Literals](#51-literals)
   - [5.2 Variable Access](#52-variable-access)
-  - [5.3 Function Calls](#53-function-calls)
-  - [5.4 Unary Operators](#54-unary-operators)
-  - [5.5 Arithmetic Operators](#55-arithmetic-operators)
-  - [5.6 Comparison Operators](#56-comparison-operators)
-  - [5.7 Equality Operators](#57-equality-operators)
-  - [5.8 Logical Operators](#58-logical-operators)
+  - [5.3 Arithmetic Operators](#53-arithmetic-operators)
+  - [5.4 Comparison Operators](#54-comparison-operators)
+  - [5.5 Equality Operators](#55-equality-operators)
+  - [5.6 Logical Operators](#56-logical-operators)
+  - [5.7 Unary Operators](#57-unary-operators)
+  - [5.8 Function Calls](#58-function-calls)
+  - [5.9 Cast Expressions](#59-cast-expressions)
 - [6. Functions](#6-functions)
   - [6.1 Function Declarations](#61-function-declarations)
   - [6.2 Parameters](#62-parameters)
@@ -275,33 +276,7 @@ The resulting type is the declared type of the variable.
 
 See [Section 3.4](#34-variable-access) for the rules governing variable access.
 
-### 5.3 Function Calls
-
-A function call is an expression that evaluates to the return value of the selected function.
-
-The resulting type of a function call is the return type of the selected function.
-
-A function call with a `void` return type does not produce a value and therefore cannot be used where an expression value is required.
-
-Function selection is defined in [Section 6.4](#64-function-resolution).
-
-### 5.4 Unary Operators
-
-The unary operators are:
-
-| Operator | Purpose       |
-|----------|---------------|
-| `+`      | Positive sign |
-| `-`      | Negative sign |
-| `!`      | Logical NOT   |
-
-The `+` and `-` operators can only be applied to numeric operands.
-
-The `!` operator can only be applied to a `bool` operand.
-
-The resulting type of unary expressions is the same as the operand's type.
-
-### 5.5 Arithmetic Operators
+### 5.3 Arithmetic Operators
 
 The arithmetic operators are:
 
@@ -334,7 +309,7 @@ For example:
 `10 // 2     <- int 
 ```
 
-### 5.6 Comparison Operators
+### 5.4 Comparison Operators
 
 The comparison operators are:
 
@@ -349,7 +324,7 @@ The operands of comparison operators must be numeric.
 
 The resulting type is always `bool`.
 
-### 5.7 Equality Operators
+### 5.5 Equality Operators
 
 The equality operators are:
 
@@ -362,7 +337,7 @@ Both operands must be `bool`, or both operands must be numeric.
 
 The resulting type is always `bool`.
 
-### 5.8 Logical Operators
+### 5.6 Logical Operators
 
 The logical operators are:
 
@@ -374,6 +349,40 @@ The logical operators are:
 Both operands must be `bool`.
 
 The resulting type is always `bool`.
+
+### 5.7 Unary Operators
+
+The unary operators are:
+
+| Operator | Purpose       |
+|----------|---------------|
+| `+`      | Positive sign |
+| `-`      | Negative sign |
+| `!`      | Logical NOT   |
+
+The `+` and `-` operators can only be applied to numeric operands.
+
+The `!` operator can only be applied to a `bool` operand.
+
+The resulting type of unary expressions is the same as the operand's type.
+
+### 5.8 Function Calls
+
+A function call is an expression that evaluates to the return value of the selected function.
+
+The resulting type of a function call is the return type of the selected function.
+
+A function call with a `void` return type does not produce a value and therefore cannot be used where an expression value is required.
+
+Function selection is defined in [Section 6.4](#64-function-resolution).
+
+### 5.9 Cast Expressions
+
+A cast expression explicitly converts the resulting value of an expression to the specified type.
+
+The resulting type of a cast expression is the type specified by the cast.
+
+Conversions can only be made between numeric types.
 
 ---
 

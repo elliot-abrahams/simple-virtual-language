@@ -61,6 +61,16 @@ namespace parserTest {
         expectedArguments(std::move(expectedArguments)) {}
     };
 
+    struct ExpectedCastExpr final : ExpectedExpr {
+        const compiler::Type expectedType;
+        const std::unique_ptr<ExpectedExpr> expectedExpr;
+
+        ExpectedCastExpr(const compiler::Type& expectedType,
+            std::unique_ptr<ExpectedExpr> expectedExpr) :
+        expectedType(expectedType),
+        expectedExpr(std::move(expectedExpr)) {}
+    };
+
     struct ExpectedUnaryExpr final : ExpectedExpr {
         const compiler::UnaryOperator unaryOperator;
         const std::unique_ptr<ExpectedExpr> expectedExpr;
@@ -238,6 +248,12 @@ namespace parserTest {
             ASSERT_NE(actualUnaryExpr, nullptr);
             ASSERT_EQ(expectedUnaryExpr->unaryOperator, actualUnaryExpr->unaryOperatorInfo->unaryOperator);
             ASSERT_EXPR_EQ(*expectedUnaryExpr->expectedExpr, *actualUnaryExpr->expr);
+
+        } else if (auto* expectedCastExpression = dynamic_cast<const ExpectedCastExpr*>(&expectedExpr)) {
+            auto* actualCastExpr = dynamic_cast<const ast::ExprCast*>(&actualExpr);
+            ASSERT_NE(actualCastExpr, nullptr);
+            ASSERT_EQ(expectedCastExpression->expectedType, actualCastExpr->typeInfo->type);
+            ASSERT_EXPR_EQ(*expectedCastExpression->expectedExpr, *actualCastExpr->expr);
 
         } else if (auto* expectedFunctionCallExpr = dynamic_cast<const ExpectedFunctionCallExpr*>(&expectedExpr)) {
             auto* actualFunctionCallExpr = dynamic_cast<const ast::FunctionCall*>(&actualExpr);

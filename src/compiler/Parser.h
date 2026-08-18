@@ -49,6 +49,8 @@ namespace compiler {
         std::unique_ptr<ast::Expr> parseLiteral() const;
         std::unique_ptr<ast::AssignmentOperatorInfo> parseAssignmentOperator() const;
 
+        static bool isTypeToken(const TokenKind& kind);
+
         void handleUnexpectedToken(const Token& token) const;
         void handleLiteralOutOfRangeError(const Token& token, const std::string& type) const;
 

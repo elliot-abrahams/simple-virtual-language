@@ -59,6 +59,7 @@ additive_expression         = multiplicative_expression, { ( PLUS | MINUS ), mul
 multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | INTEGER_DIVIDE | MODULO ), unary_expression } ;
 
 unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
+                            | LBR, type, RBR, unary_expression
                             | primary_expression ;
 
 primary_expression          = function_call
