@@ -132,7 +132,7 @@ void compiler::AssemblyGenerator::compileBlock(const ast::Block& block) {
         // call scope function
         this->emit(Instruction{Opcode::CALL,
             {LabelRef{generateScopeFunctionIdentifier(this->scopeFunctionCounter++)}},
-            SourceLocation{0, static_cast<uint32_t>(block.blockEndLine), static_cast<uint16_t>(block.blockEndColumn)}
+            SourceLocation{0, block.blockEndLine, block.blockEndColumn}
         });
     } else {
         for (auto& stm : block.statements) {
@@ -347,7 +347,7 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
             // evaluate to true if left expression is true
             this->emit(Instruction{Opcode::JNZ,
                 {LabelRef{evaluateToTrueLabel}},
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
 
             this->compileExpr(scope, *expr.right);
@@ -355,7 +355,7 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
             // evaluate to true if right expression is true
             this->emit(Instruction{Opcode::JNZ,
                 {LabelRef{evaluateToTrueLabel}},
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
             // push 'false' onto stack
             this->emit(Instruction{Opcode::PUSH,
@@ -363,13 +363,13 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
                     AssemblyType::UI32,
                     Immediate{0}
                 },
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
 
             // jump to end of logical OR
             this->emit(Instruction{Opcode::JMP,
                 {LabelRef{endOrLabel}},
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
 
             this->emit(LabelDef{evaluateToTrueLabel});
@@ -380,7 +380,7 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
                     AssemblyType::UI32,
                     Immediate{1}
                 },
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
 
             this->emit(LabelDef{endOrLabel});
@@ -395,7 +395,7 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
             // evaluate to false if left expression is false
             this->emit(Instruction{Opcode::JEZ,
                 {LabelRef{evaluateToFalseLabel}},
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
 
             this->compileExpr(scope, *expr.right);
@@ -403,7 +403,7 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
             // evaluate to false if right expression is false
             this->emit(Instruction{Opcode::JEZ,
                 {LabelRef{evaluateToFalseLabel}},
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
 
             // push `true` onto stack
@@ -412,13 +412,13 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
                     AssemblyType::UI32,
                     Immediate{1}
                 },
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
 
             // jump to end of logical AND
             this->emit(Instruction{Opcode::JMP,
                 {LabelRef{endAndLabel}},
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
 
             this->emit(LabelDef{evaluateToFalseLabel});
@@ -429,7 +429,7 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
                     AssemblyType::UI32,
                     Immediate{0}
                 },
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
             });
 
             this->emit(LabelDef{endAndLabel});
