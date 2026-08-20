@@ -23,7 +23,7 @@ namespace semanticTest {
         const auto symbolTable = new compiler::SymbolTable();
 
         // add builtin functions to symbol table
-        compiler::BuiltinFunctions::registerBuiltinFunctions(*symbolTable);
+        compiler::Builtins::registerBuiltinFunctions(*symbolTable);
 
         // build symbol table and type check the program
         auto semanticAnalyser = compiler::SemanticAnalyser(symbolTable, path);

@@ -6,9 +6,10 @@
 #include "../include/Error.h"
 #include "Parser.h"
 #include "SemanticAnalyser.h"
-#include "CodeGenerator.h"
+#include "codegen/AssemblyGenerator.h"
 #include "../Driver.h"
-#include "BuiltinFunctions.h"
+#include "codegen/Builtins.h"
+#include "codegen/AssemblyEmitter.h"
 
 
 compiler::Compiler::Compiler() {}
@@ -27,7 +28,7 @@ std::vector<std::string> compiler::Compiler::compile(const std::string& sourceCo
         const auto symbolTable = new SymbolTable();
 
         // add builtin functions to symbol table
-        BuiltinFunctions::registerBuiltinFunctions(*symbolTable);
+        Builtins::registerBuiltinFunctions(*symbolTable);
 
         // build symbol table and type check the program
         auto semanticAnalyser = SemanticAnalyser(symbolTable, &path);
@@ -37,8 +38,12 @@ std::vector<std::string> compiler::Compiler::compile(const std::string& sourceCo
         symbolTable->assignSlotsToLocalSymbols();
 
         // generate assembly code
-        const auto codeGenerator = new CodeGenerator(symbolTable);
-        return codeGenerator->generateCode(*program);
+        const auto codeGenerator = new AssemblyGenerator(symbolTable);
+        const auto assemblyIR = codeGenerator->compileProgram(*program);
+
+        auto assemblyEmitter = new AssemblyEmitter();
+
+        return assemblyEmitter->emitProgram(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
 
     } catch (const CompilerError& e) {
         std::cerr << e.what() << std::endl;

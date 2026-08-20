@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "LanguageTypes.h"
-#include "BuiltinFunctions.h"
+#include "codegen/Builtins.h"
 
 
 namespace compiler {
@@ -29,7 +29,7 @@ namespace compiler {
         const Type returnType;
         const std::vector<Type> parameterTypes;
 
-        const BuiltinId builtinId;
+        const BuiltinFunctionId builtinId;
     };;
 
     struct LoopContext {
@@ -147,7 +147,7 @@ namespace compiler {
         SymbolTable();
 
         FunctionSymbol* declareFunction(const std::string& functionIdentifier, const std::string& functionLabel, const Type& returnType, const std::vector<Type>& parameterTypes);
-        void declareBuiltinFunction(const BuiltinId builtinId, const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
+        void declareBuiltinFunction(const BuiltinFunctionId builtinId, const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
 
         std::vector<FunctionSymbol>* getFunctionSymbols(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes);
         FunctionSymbol* getCurrentFunctionSymbol() const;

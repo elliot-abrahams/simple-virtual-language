@@ -66,11 +66,11 @@
 
 # 1. Overview
 
-The assembly generator translates the semantically analysed abstract syntax tree (AST) into SVMA assembly.
+The assembly generator translates the semantically analysed abstract syntax tree (AST) into an intermediate representation (IR) of the SVMA assembly.
 
-Semantic analysis determines types, symbols, scopes, functions, and other information required by code generation. The assembly generator uses this information to prodoce valid SVMA assembly.
+Semantic analysis determines types, symbols, scopes, functions, and other information required by assembly generation.
 
-The generated assembly can be executed by the SVM after being assembled by the SVA (Simple Virtual Assembler).
+The assembly IR is subsequently converted into textual SVMA assembly by the assembly emitter. The generated assembly can then be assembled by the SVA.
 
 The generated assembly uses the following indentation:
 - Instructions are indented by 8 spaces
@@ -78,6 +78,8 @@ The generated assembly uses the following indentation:
 - Top-level definitions and directives are not indented
 - Method metadata is indented by 8 spaces
 - Data declarations are indented by 4 spaces
+
+The following sections describe how SV language constructs are represented in the assembly emitted by the compiler.
 
 ---
 

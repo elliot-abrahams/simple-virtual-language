@@ -48,7 +48,7 @@ void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& fu
     // declare function in symbol table
     const std::vector<Type> parameterTypes = this->processParameterList(functionDecl.parameters);
     const std::string functionSignature = functionSignatureToString(functionDecl.identifier->name, parameterTypes);
-    FunctionSymbol* functionSymbol = this->symbolTable->declareFunction(functionDecl.identifier->name, "$" + functionSignature, functionDecl.returnTypeInfo->type, parameterTypes);
+    FunctionSymbol* functionSymbol = this->symbolTable->declareFunction(functionDecl.identifier->name, functionSignature, functionDecl.returnTypeInfo->type, parameterTypes);
 
     if (functionSymbol == nullptr) {
         std::string errorMsg = "function '";

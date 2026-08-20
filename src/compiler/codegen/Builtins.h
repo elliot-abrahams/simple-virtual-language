@@ -12,7 +12,7 @@ namespace compiler {
 
 namespace compiler {
 
-    enum class BuiltinId {
+    enum class BuiltinFunctionId {
         NONE,
         EXIT_INT,
         PRINT_INT,
@@ -33,11 +33,11 @@ namespace compiler {
         const std::vector<BuiltinDataId> requiredBuiltinData;
     };
 
-    class BuiltinFunctions {
+    class Builtins {
     public:
         static void registerBuiltinFunctions(SymbolTable& symbolTable);
 
-        static BuiltinFunction* getBuiltinFunction(const BuiltinId id) {
+        static BuiltinFunction* getBuiltinFunction(const BuiltinFunctionId id) {
             return &builtinFunctionAssembly.at(id);
         }
 
@@ -45,63 +45,63 @@ namespace compiler {
             return &builtinData.at(id);
         }
 
-        static std::string getBuiltinFunctionLabel(const BuiltinId id) {
+        static std::string getBuiltinFunctionLabel(const BuiltinFunctionId id) {
             return builtinFunctionAssembly.at(id).functionLabel;
         }
 
     private:
-        inline static std::unordered_map<BuiltinId, BuiltinFunction> builtinFunctionAssembly = {
+        inline static std::unordered_map<BuiltinFunctionId, BuiltinFunction> builtinFunctionAssembly = {
 
-            {BuiltinId::EXIT_INT, BuiltinFunction{
-                "$__Builtin__exit(int)",
+            {BuiltinFunctionId::EXIT_INT, BuiltinFunction{
+                "__Builtin__exit(int)",
                 1,
                 0,
                 {
-                "        loadL i32 #1",
-                "        native exit",
-                "        ret"
+                "    loadL i32 #1",
+                "    native exit",
+                "    ret"
                 },
                 {}
             }},
 
-            {BuiltinId::PRINT_INT, BuiltinFunction{
-                "$__Builtin__print(int)",
+            {BuiltinFunctionId::PRINT_INT, BuiltinFunction{
+                "__Builtin__print(int)",
                 1,
                 0,
                 {
-                "        loadL i32 #1",
-                "        native print",
-                "        ret"
+                "    loadL i32 #1",
+                "    native print",
+                "    ret"
             },
                 {}
             }},
 
-            {BuiltinId::PRINT_FLOAT, BuiltinFunction{
-                "$__Builtin__print(float)",
+            {BuiltinFunctionId::PRINT_FLOAT, BuiltinFunction{
+                "__Builtin__print(float)",
                 1,
                 0,
                 {
-                "        loadL f32 #1",
-                "        native print",
-                "        ret"
+                "    loadL f32 #1",
+                "    native print",
+                "    ret"
             },
                 {}
             }},
 
-            {BuiltinId::PRINT_BOOL, BuiltinFunction{
-                "$__Builtin__print(bool)",
+            {BuiltinFunctionId::PRINT_BOOL, BuiltinFunction{
+                "__Builtin__print(bool)",
                 1,
                 0,
                 {
-                "        loadL ui32 #1",
-                "        jez $__print(bool)__false",
-                "        push ptr $__true__string",
-                "        jmp $__print(bool)__print",
-                "    $__print(bool)__false:",
-                "        push ptr $__false__string",
-                "    $__print(bool)__print:",
-                "        native print_str",
-                "        ret",
+                "    loadL ui32 #1",
+                "    jez $__print(bool)__false",
+                "    push ptr $__true__string",
+                "    jmp $__print(bool)__print",
+                "$__print(bool)__false:",
+                "    push ptr $__false__string",
+                "$__print(bool)__print:",
+                "    native print_str",
+                "    ret",
             },
                 {BuiltinDataId::TRUE_STRING, BuiltinDataId::FALSE_STRING}
             }}

@@ -8,7 +8,7 @@
 
 - The compiler **(SVC)** translates `.sv` source files into an intermediate assembly language (`.svma`).
 - The assembler **(SVA)** translates this intermediate assembly language into portable bytecode (`.svmb`).
-- The virtual machine **(SVM)** executes `.svmb` bytecode
+- The virtual machine **(SVM)** executes `.svmb` bytecode.
 
 ```
   Source Code        (.sv)
@@ -42,6 +42,7 @@ Assembly Language    (.svma)
 - Recursive-descent parser
 - Semantic analysis
 - Abstract Syntax Tree (AST) generation
+- Assembly intermediate representation (IR)
 - Expression parsing with operator precedence
 - Source line and column tracking for compile-time errors
 

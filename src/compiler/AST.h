@@ -15,10 +15,10 @@ namespace ast {
     struct Block;
 
     struct ASTNode {
-        const size_t line;
-        const size_t column;
+        const uint32_t line;
+        const uint16_t column;
 
-        ASTNode(const size_t line, const size_t column) :
+        ASTNode(const uint32_t line, const uint16_t column) :
             line(line), column(column) {}
 
         virtual ~ASTNode() = default;
@@ -38,7 +38,7 @@ namespace ast {
     struct ExprIntegerLiteral final : Expr {
         const int value;
 
-        ExprIntegerLiteral(const size_t line, const size_t column, const int value) :
+        ExprIntegerLiteral(const uint32_t line, const uint16_t column, const int value) :
             Expr(line, column),
             value(value) {}
     };
@@ -46,7 +46,7 @@ namespace ast {
     struct ExprFloatLiteral final : Expr {
         const float value;
 
-        ExprFloatLiteral(const size_t line, const size_t column, const float value) :
+        ExprFloatLiteral(const uint32_t line, const uint16_t column, const float value) :
             Expr(line, column),
             value(value) {}
     };
@@ -54,7 +54,7 @@ namespace ast {
     struct ExprBoolLiteral final : Expr {
         const bool value;
 
-        ExprBoolLiteral(const size_t line, const size_t column, const bool value) :
+        ExprBoolLiteral(const uint32_t line, const uint16_t column, const bool value) :
             Expr(line, column),
             value(value) {}
     };
@@ -62,35 +62,35 @@ namespace ast {
     struct TypeInfo final : ASTNode {
         const compiler::Type type;
 
-        TypeInfo(const size_t line, const size_t column, const compiler::Type type) :
+        TypeInfo(const uint32_t line, const uint16_t column, const compiler::Type type) :
             ASTNode(line, column), type(type) {}
     };
 
     struct AssignmentOperatorInfo final : ASTNode {
         const compiler::AssignmentOperator assignmentOperator;
 
-        AssignmentOperatorInfo(const size_t line, const size_t column, const compiler::AssignmentOperator assignmentOperator) :
+        AssignmentOperatorInfo(const uint32_t line, const uint16_t column, const compiler::AssignmentOperator assignmentOperator) :
             ASTNode(line, column), assignmentOperator(assignmentOperator) {}
     };
 
     struct BinaryOperatorInfo final : ASTNode {
         const compiler::BinaryOperator binaryOperator;
 
-        BinaryOperatorInfo(const size_t line, const size_t column, const compiler::BinaryOperator binaryOperator) :
+        BinaryOperatorInfo(const uint32_t line, const uint16_t column, const compiler::BinaryOperator binaryOperator) :
             ASTNode(line, column), binaryOperator(binaryOperator) {}
     };
 
     struct UnaryOperatorInfo final : ASTNode {
         const compiler::UnaryOperator unaryOperator;
 
-        UnaryOperatorInfo(const size_t line, const size_t column, const compiler::UnaryOperator unaryOperator) :
+        UnaryOperatorInfo(const uint32_t line, const uint16_t column, const compiler::UnaryOperator unaryOperator) :
             ASTNode(line, column), unaryOperator(unaryOperator) {}
     };
 
     struct Identifier final : ASTNode {
         const std::string name;
 
-        Identifier(const size_t line, const size_t column, std::string name) :
+        Identifier(const uint32_t line, const uint16_t column, std::string name) :
             ASTNode(line, column),
             name(std::move(name)) {}
     };
@@ -98,7 +98,7 @@ namespace ast {
     struct ExprIdentifier final : Expr {
         const std::string name;
 
-        ExprIdentifier(const size_t line, const size_t column, std::string name) :
+        ExprIdentifier(const uint32_t line, const uint16_t column, std::string name) :
             Expr(line, column),
             name(std::move(name)) {}
     };
@@ -106,7 +106,7 @@ namespace ast {
     struct VarAccess final : ASTNode {
         const std::unique_ptr<Identifier> identifier;
 
-        VarAccess(const size_t line, const size_t column, std::unique_ptr<Identifier> identifier) :
+        VarAccess(const uint32_t line, const uint16_t column, std::unique_ptr<Identifier> identifier) :
             ASTNode(line, column),
             identifier(std::move(identifier)) {}
     };
@@ -116,8 +116,8 @@ namespace ast {
         const std::vector<std::unique_ptr<Expr>> arguments;
         mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
-        FunctionCall(const size_t line,
-                    const size_t column,
+        FunctionCall(const uint32_t line,
+                    const uint16_t column,
                     std::unique_ptr<Identifier> identifier,
                     std::vector<std::unique_ptr<Expr>> arguments) :
             Expr(line, column),
@@ -129,8 +129,8 @@ namespace ast {
         const std::unique_ptr<TypeInfo> typeInfo;
         const std::unique_ptr<Expr> expr;
 
-        ExprCast(const size_t line,
-                const size_t column,
+        ExprCast(const uint32_t line,
+                const uint16_t column,
                 std::unique_ptr<TypeInfo> typeInfo,
                 std::unique_ptr<Expr> expr) :
             Expr(line, column),
@@ -142,8 +142,8 @@ namespace ast {
         const std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo;
         const std::unique_ptr<Expr> expr;
 
-        ExprUnaryOperator(const size_t line,
-                    const size_t column,
+        ExprUnaryOperator(const uint32_t line,
+                    const uint16_t column,
                     std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo,
                     std::unique_ptr<Expr> expr) :
             Expr(line, column),
@@ -156,8 +156,8 @@ namespace ast {
         const std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo;
         const std::unique_ptr<Expr> right;
 
-        ExprBinaryOperator(const size_t line,
-                    const size_t column,
+        ExprBinaryOperator(const uint32_t line,
+                    const uint16_t column,
                     std::unique_ptr<Expr> left,
                     std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo,
                     std::unique_ptr<Expr> right) :
@@ -171,8 +171,8 @@ namespace ast {
         const std::unique_ptr<Expr> returnExpression;
         mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
-        ReturnStm(const size_t line,
-                const size_t column,
+        ReturnStm(const uint32_t line,
+                const uint16_t column,
                 std::unique_ptr<Expr> returnExpression) :
             Stm(line, column),
             returnExpression(std::move(returnExpression)) {}
@@ -181,22 +181,22 @@ namespace ast {
     struct FunctionCallStm final : Stm {
         const std::unique_ptr<FunctionCall> functionCall;
 
-        FunctionCallStm(const size_t line,
-                    const size_t column,
+        FunctionCallStm(const uint32_t line,
+                    const uint16_t column,
                     std::unique_ptr<FunctionCall> functionCall) :
             Stm(line, column),
             functionCall(std::move(functionCall)) {}
     };
 
     struct BreakStm final : Stm {
-        BreakStm(const size_t line,
-                const size_t column) :
+        BreakStm(const uint32_t line,
+                const uint16_t column) :
             Stm(line, column) {}
     };
 
     struct ContinueStm final : Stm {
-        ContinueStm(const size_t line,
-                    const size_t column) :
+        ContinueStm(const uint32_t line,
+                    const uint16_t column) :
             Stm(line, column) {}
     };
 
@@ -204,8 +204,8 @@ namespace ast {
         const std::unique_ptr<Expr> condition;
         const std::unique_ptr<Block> block;
 
-        WhileStm(const size_t line,
-                const size_t column,
+        WhileStm(const uint32_t line,
+                const uint16_t column,
                 std::unique_ptr<Expr> condition,
                 std::unique_ptr<Block> block) :
             Stm(line, column),
@@ -218,8 +218,8 @@ namespace ast {
         const std::unique_ptr<Block> ifBlock;
         const std::unique_ptr<Stm> elseStm;
 
-        IfStm(const size_t line,
-                const size_t column,
+        IfStm(const uint32_t line,
+                const uint16_t column,
                 std::unique_ptr<Expr> condition,
                 std::unique_ptr<Block> ifBlock,
                 std::unique_ptr<Stm> elseStm) :
@@ -234,8 +234,8 @@ namespace ast {
         const std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo;
         const std::unique_ptr<Expr> expression;
 
-        StmAssignment(const size_t line,
-                    const size_t column,
+        StmAssignment(const uint32_t line,
+                    const uint16_t column,
                     std::unique_ptr<VarAccess> varAccess,
                     std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo,
                     std::unique_ptr<Expr> expression) :
@@ -250,8 +250,8 @@ namespace ast {
         const std::unique_ptr<Identifier> identifier;
         const std::unique_ptr<Expr> optionalInitialiser;
 
-        StmVarDecl(const size_t line,
-                    const size_t column,
+        StmVarDecl(const uint32_t line,
+                    const uint16_t column,
                     std::unique_ptr<TypeInfo> typeInfo,
                     std::unique_ptr<Identifier> identifier,
                     std::unique_ptr<Expr> optionalInitialiser) :
@@ -264,12 +264,18 @@ namespace ast {
     struct Block : Stm {
         const std::vector<std::unique_ptr<Stm>> statements;
         mutable compiler::Scope* scope;
+        const uint32_t blockEndLine;
+        const uint16_t blockEndColumn;
 
-        Block(const size_t line,
-                    const size_t column,
+        Block(const uint32_t line,
+                    const uint16_t column,
+                    const uint32_t blockEndLine,
+                    const uint16_t blockEndColumn,
                     std::vector<std::unique_ptr<Stm>> statements,
                     compiler::Scope* scope) :
             Stm(line, column),
+            blockEndLine(blockEndLine),
+            blockEndColumn(blockEndColumn),
             statements(std::move(statements)),
             scope(scope) {}
     };
@@ -278,8 +284,8 @@ namespace ast {
         const std::unique_ptr<TypeInfo> typeInfo;
         const std::unique_ptr<Identifier> identifier;
 
-        Parameter(const size_t line,
-                const size_t column,
+        Parameter(const uint32_t line,
+                const uint16_t column,
                 std::unique_ptr<TypeInfo> typeInfo,
                 std::unique_ptr<Identifier> identifier) :
             ASTNode(line, column),
@@ -294,8 +300,8 @@ namespace ast {
         const std::unique_ptr<Block> body;
         mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
-        FunctionDecl(const size_t line,
-                    const size_t column,
+        FunctionDecl(const uint32_t line,
+                    const uint16_t column,
                     std::unique_ptr<TypeInfo> returnTypeInfo,
                     std::unique_ptr<Identifier> identifier,
                     std::vector<std::unique_ptr<Parameter>> parameters,

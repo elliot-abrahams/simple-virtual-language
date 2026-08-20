@@ -164,10 +164,13 @@ std::unique_ptr<ast::Block> compiler::Parser::parseBlock() const {
         stm = tokeniser->tok();
     }
 
+    const auto RCBR_Token = this->tokeniser->tok();
     this->tokeniser->eat(TokenKind::RCBR);
     return std::make_unique<ast::Block>(
         LCBR_Token.line,
         LCBR_Token.column,
+        RCBR_Token.line,
+        RCBR_Token.column,
         std::move(statements),
         nullptr
     );

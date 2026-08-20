@@ -6,10 +6,11 @@
 #include "../../src/compiler/Tokeniser.h"
 #include "../../src/compiler/Parser.h"
 #include "../../src/compiler/SemanticAnalyser.h"
-#include "../../src/compiler/CodeGenerator.h"
+#include "../../src/compiler/codegen/AssemblyGenerator.h"
 #include "../../src/include/Error.h"
 #include "../../src/assembler/Assembler.h"
 #include "../../src/vm/VM.h"
+#include "../../src/compiler/codegen/AssemblyEmitter.h"
 #include "gtest/gtest.h"
 
 
@@ -30,7 +31,7 @@ namespace integrationTests {
             const auto symbolTable = new compiler::SymbolTable();
 
             // add builtin functions to symbol table
-            compiler::BuiltinFunctions::registerBuiltinFunctions(*symbolTable);
+            compiler::Builtins::registerBuiltinFunctions(*symbolTable);
 
             // build symbol table and type check the program
             auto semanticAnalyser = compiler::SemanticAnalyser(symbolTable, path);
@@ -40,11 +41,18 @@ namespace integrationTests {
             symbolTable->assignSlotsToLocalSymbols();
 
             // generate assembly code
-            const auto codeGenerator = new compiler::CodeGenerator(symbolTable);
-            auto code = codeGenerator->generateCode(*program);
+            const auto codeGenerator = new compiler::AssemblyGenerator(symbolTable);
+            auto assemblyIR = codeGenerator->compileProgram(*program);
+
+            auto assemblyEmitter = new compiler::AssemblyEmitter();
+
+            const auto code = assemblyEmitter->emitProgram(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
+
+            delete codeGenerator;
+            delete assemblyEmitter;
 
             std::string assemblyCode;
-            for (std::string& line : code) {
+            for (std::string line : code) {
                 assemblyCode += line + "\n";
             }
 

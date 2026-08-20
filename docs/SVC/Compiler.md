@@ -10,6 +10,7 @@
   - [3.3 Semantic Analysis](#33-semantic-analysis)
   - [3.4 Local Slot Assignment](#34-local-slot-assignment)
   - [3.5 Assembly Generation](#35-assembly-generation)
+  - [3.6 Assembly Emission](#36-assembly-emission)
 
 ---
 
@@ -17,7 +18,7 @@
 
 SVC (Simple Virtual Compiler) converts SV source code into SVMA assembly.
 
-The compiler validates SV source code, performs semantic analysis, and generates SVMA assembly according to the rules defined by `SVA/Assembly-Language.md`.
+The compiler validates SV source code, performs semantic analysis, generates an intermediate representation of the SVMA assembly, and emits SVMA assembly according to the rules defined by `SVA/Assembly-Language.md`.
 
 Compilation succeeds only if the SV source is valid.
 
@@ -45,6 +46,7 @@ The compilation process consists of:
 3. Semantic analysis
 4. Local slot assignment
 5. Assembly generation
+6. Assembly emission
 
 Each stage must complete successfully before the next stage can proceed.
 
@@ -104,14 +106,27 @@ These slots are used by the generated assembly to access local variables during 
 
 ### 3.5 Assembly Generation
 
-The code generator converts the validated AST and symbol table into SVMA assembly according to the rules defined in `SVA/Assembly-Language.md`.
+The assembly generator converts the validated AST and symbol table into an intermediate representation (IR) of the SVMA assembly according to the rules defined in `SVA/Assembly-Language.md`.
 
-Assembly generation occurs in the following order:
+The assembly IR represents the assembly items that will be emitted by the compiler.
+
+Assembly generation produces assembly for:
 1. Global-scope statements
 2. Compiler-generated scope functions
 3. User-defined functions
-4. Built-in functions
-5. User-defined global variables
-6. Compiler-generated global variables
+4. User-defined global variables
 
-See `Assembly-Generation.md` for more details.
+Built-in functions and built-in data are not inserted into the assembly during this stage. The required Built-in functions and built-in data are tracked by the assembly generator and inserted during assembly emission.
+
+See...........................
+
+### 3.6 Assembly Emission
+
+The assembler emitter converts the IR produced by the assembly generator into textual SVMA assembly.
+
+During emission, the emitted:
+- Produces the textual representation of each assembly item
+- Inserts the required built-in functions
+- Inserts the required built-in data
+
+The resulting SVMA assembly is then available to be assembled by the SVA.

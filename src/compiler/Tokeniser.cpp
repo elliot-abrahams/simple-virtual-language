@@ -232,17 +232,18 @@ Token compiler::Tokeniser::readToken() {
                 // parse keyword or identifier
                 const std::string image(this->source.substr(this->start, this->current - this->start));
 
-                if (image == "if") return Token{TokenKind::IF, image, this->line, this->column};
-                if (image == "else") return Token{TokenKind::ELSE, image, this->line, this->column};
-                if (image == "while") return Token{TokenKind::WHILE, image, this->line, this->column};
-                if (image == "continue") return Token{TokenKind::CONTINUE, image, this->line, this->column};
-                if (image == "break") return Token{TokenKind::BREAK, image, this->line, this->column};
-                if (image == "return") return Token{TokenKind::RETURN, image, this->line, this->column};
-                if (image == "int") return Token{TokenKind::INTEGER_TYPE, image, this->line, this->column};
-                if (image == "float") return Token{TokenKind::FLOAT_TYPE, image, this->line, this->column};
-                if (image == "void") return Token{TokenKind::VOID_TYPE, image, this->line, this->column};
-                if (image == "bool") return Token{TokenKind::BOOL_TYPE, image, this->line, this->column};
-                if (image == "true" || image == "false") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column};
+                if (image == "if") return Token{TokenKind::IF, image, this->line, this->column - 2};
+                if (image == "else") return Token{TokenKind::ELSE, image, this->line, this->column - 4};
+                if (image == "while") return Token{TokenKind::WHILE, image, this->line, this->column - 5};
+                if (image == "continue") return Token{TokenKind::CONTINUE, image, this->line, this->column - 8};
+                if (image == "break") return Token{TokenKind::BREAK, image, this->line, this->column - 5};
+                if (image == "return") return Token{TokenKind::RETURN, image, this->line, this->column - 6};
+                if (image == "int") return Token{TokenKind::INTEGER_TYPE, image, this->line, this->column - 3};
+                if (image == "float") return Token{TokenKind::FLOAT_TYPE, image, this->line, this->column - 5};
+                if (image == "void") return Token{TokenKind::VOID_TYPE, image, this->line, this->column - 4};
+                if (image == "bool") return Token{TokenKind::BOOL_TYPE, image, this->line, this->column - 4};
+                if (image == "true") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column - 4};
+                if (image == "false") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column - 5};
 
                 if (image.substr(0,2) == "__") {
                     throw LexicalError(
@@ -253,7 +254,7 @@ Token compiler::Tokeniser::readToken() {
                     );
                 }
 
-                return Token{TokenKind::IDENTIFIER, image, this->line, this->column};
+                return Token{TokenKind::IDENTIFIER, image, this->line, this->column - image.size()};
             }
 
             if (std::isdigit(currentChar)) {
@@ -264,7 +265,6 @@ Token compiler::Tokeniser::readToken() {
 
                 // check for a float
                 if (this->current < this->source.size() && this->source[this->current] == '.') {
-                    size_t decimalPosition = this->current;
                     this->advance();
 
                     // enforce digits after '.'
@@ -293,11 +293,13 @@ Token compiler::Tokeniser::readToken() {
                     }
 
                     this->advance();
-                    auto token = Token{TokenKind::FLOAT_LITERAL, std::string(source.substr(this->start, this->current - this->start - 1)), this->line, this->column};
+                    const std::string image = std::string(source.substr(this->start, this->current - this->start - 1));
+                    auto token = Token{TokenKind::FLOAT_LITERAL, image, this->line, this->column - (image.size() + 1)};
                     return token;
                 }
 
-                auto token = Token{TokenKind::INTEGER_LITERAL, std::string(source.substr(this->start, this->current - this->start)), this->line, this->column};
+                const std::string image = std::string(source.substr(this->start, this->current - this->start));
+                auto token = Token{TokenKind::INTEGER_LITERAL, image, this->line, this->column - image.size()};
                 return token;
             }
 

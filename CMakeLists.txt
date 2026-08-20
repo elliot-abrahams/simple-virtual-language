@@ -42,10 +42,12 @@ set(Headers
     src/include/Error.h
     src/compiler/SymbolTable.h
     src/compiler/SemanticAnalyser.h
-    src/compiler/CodeGenerator.h
+    src/compiler/codegen/AssemblyGenerator.h
     src/compiler/LanguageTypes.h
-    src/compiler/BuiltinFunctions.h
+        src/compiler/codegen/Builtins.h
     src/vm/NativeFunctionManager.h
+    src/compiler/codegen/Assembly.h
+    src/compiler/codegen/AssemblyEmitter.h
 )
 
 set(Sources
@@ -65,8 +67,9 @@ set(Sources
     src/compiler/Parser.cpp
     src/compiler/SymbolTable.cpp
     src/compiler/SemanticAnalyser.cpp
-    src/compiler/CodeGenerator.cpp
-    src/compiler/BuiltinFunctions.cpp
+    src/compiler/codegen/AssemblyGenerator.cpp
+        src/compiler/codegen/Builtins.cpp
+    src/compiler/codegen/AssemblyEmitter.cpp
 )
 
 add_library(${This} STATIC ${Sources} ${Headers})

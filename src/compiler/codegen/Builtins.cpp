@@ -1,12 +1,12 @@
-#include "BuiltinFunctions.h"
+#include "Builtins.h"
 
-#include "SymbolTable.h"
+#include "../SymbolTable.h"
 
-void compiler::BuiltinFunctions::registerBuiltinFunctions(SymbolTable& symbolTable) {
+void compiler::Builtins::registerBuiltinFunctions(SymbolTable& symbolTable) {
 
     // void exit(int)
     symbolTable.declareBuiltinFunction(
-        BuiltinId::EXIT_INT,
+        BuiltinFunctionId::EXIT_INT,
         "exit",
         Type::VOID_RETURN_TYPE,
         {Type::INT}
@@ -14,7 +14,7 @@ void compiler::BuiltinFunctions::registerBuiltinFunctions(SymbolTable& symbolTab
 
     // void print(int)
     symbolTable.declareBuiltinFunction(
-        BuiltinId::PRINT_INT,
+        BuiltinFunctionId::PRINT_INT,
         "print",
         Type::VOID_RETURN_TYPE,
         {Type::INT}
@@ -22,7 +22,7 @@ void compiler::BuiltinFunctions::registerBuiltinFunctions(SymbolTable& symbolTab
 
     // void print(float)
     symbolTable.declareBuiltinFunction(
-        BuiltinId::PRINT_FLOAT,
+        BuiltinFunctionId::PRINT_FLOAT,
         "print",
         Type::VOID_RETURN_TYPE,
         {Type::FLOAT}
@@ -30,7 +30,7 @@ void compiler::BuiltinFunctions::registerBuiltinFunctions(SymbolTable& symbolTab
 
     // void print(bool)
     symbolTable.declareBuiltinFunction(
-        BuiltinId::PRINT_BOOL,
+        BuiltinFunctionId::PRINT_BOOL,
         "print",
         Type::VOID_RETURN_TYPE,
         {Type::BOOL}

@@ -19,7 +19,7 @@ compiler::FunctionSymbol* compiler::SymbolTable::declareFunction(const std::stri
     FunctionSymbol* functionSymbol = nullptr;
     if (this->functions.find(functionIdentifier) == this->functions.end()) {
         // function with the same identifier has not been initialised
-        functionSymbol = new FunctionSymbol{functionLabel, returnType, parameterTypes, BuiltinId::NONE};
+        functionSymbol = new FunctionSymbol{functionLabel, returnType, parameterTypes, BuiltinFunctionId::NONE};
         this->functions.insert(std::make_pair(functionIdentifier, std::vector{*functionSymbol}));
         return functionSymbol;
     }
@@ -46,13 +46,13 @@ compiler::FunctionSymbol* compiler::SymbolTable::declareFunction(const std::stri
     }
 
     if (validSignature) {
-        functionSymbol = new FunctionSymbol{functionLabel, returnType, parameterTypes, BuiltinId::NONE};
+        functionSymbol = new FunctionSymbol{functionLabel, returnType, parameterTypes, BuiltinFunctionId::NONE};
         this->functions.at(functionIdentifier).push_back(*functionSymbol);
     }
     return functionSymbol;
 }
 
-void compiler::SymbolTable::declareBuiltinFunction(const BuiltinId builtinId, const std::string &functionIdentifier, const Type &returnType, const std::vector<Type> &parameterTypes) {
+void compiler::SymbolTable::declareBuiltinFunction(const BuiltinFunctionId builtinId, const std::string &functionIdentifier, const Type &returnType, const std::vector<Type> &parameterTypes) {
     const auto newFunctionSymbol = FunctionSymbol{"", returnType, parameterTypes, builtinId};
     if (this->functions.find(functionIdentifier) == this->functions.end()) {
         // function with the same identifier has not been initialised
