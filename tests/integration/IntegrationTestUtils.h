@@ -46,7 +46,7 @@ namespace integrationTests {
 
             auto assemblyEmitter = new compiler::AssemblyEmitter();
 
-            const auto code = assemblyEmitter->emitProgram(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
+            const auto code = assemblyEmitter->emitAssembly(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
 
             delete codeGenerator;
             delete assemblyEmitter;

@@ -41,9 +41,9 @@ std::vector<std::string> compiler::Compiler::compile(const std::string& sourceCo
         const auto codeGenerator = new AssemblyGenerator(symbolTable);
         const auto assemblyIR = codeGenerator->compileProgram(*program);
 
-        auto assemblyEmitter = new AssemblyEmitter();
+        auto assemblyEmitter = new AssemblyEmitter(std::filesystem::absolute(path).string());
 
-        return assemblyEmitter->emitProgram(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
+        return assemblyEmitter->emitAssembly(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
 
     } catch (const CompilerError& e) {
         std::cerr << e.what() << std::endl;
