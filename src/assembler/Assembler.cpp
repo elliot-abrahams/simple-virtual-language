@@ -6,9 +6,9 @@
 
 assembler::Assembler::Assembler() {}
 
-std::optional<std::vector<uint8_t> > assembler::Assembler::assemble(const std::string& filePath) {
+std::optional<std::vector<uint8_t>> assembler::Assembler::assemble(const std::string& filePath) {
     // STEP 1 -> lex source file
-    assembler::Lexer lexer;
+    Lexer lexer;
     auto tokenStream = lexer.lex(filePath);
 
     if (!tokenStream.has_value()) {
@@ -17,9 +17,9 @@ std::optional<std::vector<uint8_t> > assembler::Assembler::assemble(const std::s
     return this->assembleFromTokens(tokenStream.value());
 }
 
-std::optional<std::vector<uint8_t> > assembler::Assembler::assembleString(const std::string& fileContent) {
+std::optional<std::vector<uint8_t>> assembler::Assembler::assembleString(const std::string& fileContent) {
     // STEP 1 -> lex source file
-    assembler::Lexer lexer;
+    Lexer lexer;
     auto tokenStream = lexer.lexString(fileContent);
 
     if (!tokenStream.has_value()) {
@@ -30,7 +30,7 @@ std::optional<std::vector<uint8_t> > assembler::Assembler::assembleString(const 
 
 std::optional<std::vector<uint8_t>> assembler::Assembler::assembleFromTokens(const std::vector<AssemblerDefs::SVMAToken>& tokenStream) {
     // STEP 2 -> parse the stream of tokens
-    assembler::Parser parser;
+    Parser parser;
     const auto parsedStatements = parser.parse(tokenStream);
     if (!parsedStatements.has_value()) {
         return std::nullopt;
@@ -50,7 +50,7 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::assembleFromTokens(con
 bool assembler::Assembler::constructLabelTable() {
     this->section = AssemblerDefs::Section::CODE;
 
-    uint8_t bytecodeHeaderLength = 8;
+    constexpr uint8_t bytecodeHeaderLength = 16;
     uint32_t codeSectionLength = 0;
     uint32_t dataSectionLength = 0;
 
@@ -90,8 +90,12 @@ bool assembler::Assembler::constructLabelTable() {
             this->processData(unhandledLabelRefs, codeSectionLength + dataSectionLength + 1, dataSectionLength, std::get<AssemblerDefs::Data>(statement));
 
         } else {
-            // data section Token
-            this->section = AssemblerDefs::Section::DATA;
+            // section (directive) Token
+            this->section = std::get<AssemblerDefs::Section>(statement);
+
+            if (this->section == AssemblerDefs::Section::DEBUG) {
+                break;
+            }
         }
     }
 
@@ -103,8 +107,8 @@ bool assembler::Assembler::constructLabelTable() {
         return false;
     }
 
-    this->dataStartLocation = bytecodeHeaderLength + codeSectionLength - 1;
-    this->bytecodeLength = bytecodeHeaderLength + codeSectionLength + dataSectionLength - 1;
+    this->codeEndLocation = bytecodeHeaderLength + codeSectionLength - 1;
+    this->dataEndLocation = bytecodeHeaderLength + codeSectionLength + dataSectionLength - 1;
     return true;
 }
 
@@ -189,8 +193,8 @@ assembler::LabelType assembler::Assembler::getOperandLabelType(const std::string
         instructionMnemonic == "storeG"
     ) {
         return LabelType::DATA;
-
-    } else if (
+    }
+    if (
         instructionMnemonic == "jmp" ||
         instructionMnemonic == "jez" ||
         instructionMnemonic == "jnz"
@@ -226,12 +230,21 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::generateBytecode() {
     std::vector<uint8_t> bytecode;
     this->section = AssemblerDefs::Section::CODE;
 
+    // generate header
     for (int i = 0; i < 4; i++) {
-        bytecode.push_back((this->dataStartLocation >> (i * 8)) & 0xFF);
+        bytecode.push_back((this->codeEndLocation >> (i * 8)) & 0xFF); // header (code end location))
     }
 
     for (int i = 0; i < 4; i++) {
-        bytecode.push_back((this->bytecodeLength >> (i * 8)) & 0xFF);
+        bytecode.push_back((this->dataEndLocation >> (i * 8)) & 0xFF); // header (data end location)
+    }
+
+    for (int i = 0; i < 4; i++) {
+        bytecode.push_back((0 >> (i * 8)) & 0xFF); // add placeholder value for header (debug source end location)
+    }
+
+    for (int i = 0; i < 4; i++) {
+        bytecode.push_back((0 >> (i * 8)) & 0xFF); // add placeholder value for header (bytecode end location)
     }
 
     // loop through each statement
@@ -259,9 +272,28 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::generateBytecode() {
             }
             this->pushBackVector(bytecode, data.value());
         } else if (std::holds_alternative<AssemblerDefs::Section>(statement)) {
-            this->section = AssemblerDefs::Section::DATA;
+            this->section = std::get<AssemblerDefs::Section>(statement);
+
+        // convert DEBUG_SOURCE
+        } else if (std::holds_alternative<AssemblerDefs::DebugSource>(statement)) {
+            this->pushBackVector(bytecode, this->convertDebugSource(std::get<AssemblerDefs::DebugSource>(statement)));
+
+        // convert DEBUG_LINE
+        } else if (std::holds_alternative<AssemblerDefs::DebugLine>(statement)) {
+            this->pushBackVector(bytecode, this->convertDebugLine(std::get<AssemblerDefs::DebugLine>(statement)));
         }
     }
+
+    // add header value (debug source end location)
+    for (int i = 0; i < 4; i++) {
+        bytecode.at(8 + i) = ((this->debugSourceLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
+    }
+
+    // add header value (bytecode end location)
+    for (int i = 0; i < 4; i++) {
+        bytecode.at(12 + i) = ((this->debugLineTableLength + this->debugSourceLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
+    }
+
     return bytecode;
 }
 
@@ -453,6 +485,48 @@ std::vector<uint8_t> assembler::Assembler::convertStringToBytes(const std::strin
 
     // encode string as UTF-8
     bytecode.insert(bytecode.end(), str.begin(), str.end());
+
+    return bytecode;
+}
+
+std::vector<uint8_t> assembler::Assembler::convertDebugSource(const AssemblerDefs::DebugSource& debugSource) {
+    std::vector<uint8_t> bytecode;
+    // source Id
+    for (int i = 0; i < 2; i++) {
+        bytecode.push_back((debugSource.sourceId >> (i * 4)) & 0xFF);
+    }
+    this->debugSourceLength += 2;
+
+    // path
+    this->pushBackVector(bytecode, this->convertStringToBytes(debugSource.path));
+    this->debugSourceLength += (4 + debugSource.path.size());
+
+    return bytecode;
+}
+
+std::vector<uint8_t> assembler::Assembler::convertDebugLine(const AssemblerDefs::DebugLine& debugLine) {
+    std::vector<uint8_t> bytecode;
+    // start address
+    for (int i = 0; i < 4; i++) {
+        bytecode.push_back((debugLine.startAddress >> (i * 8)) & 0xFF);
+    }
+    // end address
+    for (int i = 0; i < 4; i++) {
+        bytecode.push_back((debugLine.endAddress >> (i * 8)) & 0xFF);
+    }
+    // source Id
+    for (int i = 0; i < 2; i++) {
+        bytecode.push_back((debugLine.sourceId >> (i * 4)) & 0xFF);
+    }
+    // line
+    for (int i = 0; i < 4; i++) {
+        bytecode.push_back((debugLine.line >> (i * 8)) & 0xFF);
+    }
+    // column
+    for (int i = 0; i < 2; i++) {
+        bytecode.push_back((debugLine.column >> (i * 4)) & 0xFF);
+    }
+    this->debugLineTableLength += 16;
 
     return bytecode;
 }

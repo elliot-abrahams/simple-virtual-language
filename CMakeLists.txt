@@ -22,7 +22,7 @@ set(Headers
     src/assembler/Lexer.h
     src/assembler/Parser.h
     src/assembler/Assembler.h
-    src/include/AssemblerDefs.h
+        src/assembler/AssemblerDefs.h
     src/vm/VM.h
     src/vm/memory/MemoryManager.h
     src/vm/OperandStack.h

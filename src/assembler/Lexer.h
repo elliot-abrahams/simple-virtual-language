@@ -2,7 +2,7 @@
 #define SIMPLE_VM_LEXER_H
 
 #pragma once
-#include "../include/AssemblerDefs.h"
+#include "AssemblerDefs.h"
 #include <optional>
 #include <string>
 #include <vector>
@@ -24,8 +24,9 @@ namespace assembler {
         std::optional<AssemblerDefs::SVMAToken> lexToken();
         std::optional<AssemblerDefs::SVMAToken> lexLabel();
         std::optional<AssemblerDefs::SVMAToken> lexNumber();
+        std::optional<AssemblerDefs::SVMAToken> lexHex();
         std::optional<AssemblerDefs::SVMAToken> lexImmediate();
-        std::optional<AssemblerDefs::SVMAToken> lexDataStart();
+        std::optional<AssemblerDefs::SVMAToken> lexDirective();
         std::optional<AssemblerDefs::SVMAToken> lexString();
         std::optional<AssemblerDefs::SVMAToken> lexKeyWord();
 
@@ -40,6 +41,7 @@ namespace assembler {
 
         static bool isValidLabel(const std::string& s);
         static bool isValidNumber(const std::string& s);
+        static bool isValidHex(const std::string& s);
         static bool isValidImmediate(const std::string& s);
         static bool isValidString(const std::string& s);
 

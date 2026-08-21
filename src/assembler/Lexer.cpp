@@ -83,14 +83,18 @@ std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexToken() {
         case '#':
             return this->lexImmediate();
         case '.':
-            return this->lexDataStart();
+            return this->lexDirective();
         case '"':
             return this->lexString();
         default:
-            if (std::isdigit(this->peek()) || this->peek() == '-') {
-                return this->lexNumber();
+            char currentChar = this->peek();
+            if (!std::isdigit(currentChar) && currentChar != '-') {
+                return this->lexKeyWord();
             }
-            return this->lexKeyWord();
+            if (currentChar == '0' && this->peekNext() == 'x') {
+                return this->lexHex();
+            }
+            return this->lexNumber();
     }
 }
 
@@ -146,6 +150,16 @@ std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexNumber() {
     return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::NUMBER, number, this->lineNumber};
 }
 
+std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexHex() {
+    const std::string hex = this->readUntilWhitespace();
+    if (!isValidHex(hex)) {
+        this->outputLineNumberOfError();
+        std::cerr << "Invalid hexadecimal number \'" << hex << "\'" << std::endl;
+        return std::nullopt;
+    }
+    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::HEX, hex, this->lineNumber};
+}
+
 std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexImmediate() {
     const std::string immediate = this->readUntilWhitespace();
     if (!isValidImmediate(immediate)) {
@@ -156,13 +170,17 @@ std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexImmediate() {
     return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::IMMEDIATE, immediate, this->lineNumber};
 }
 
-std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexDataStart() {
-    const std::string dataStart = this->readUntilWhitespace();
-    if (dataStart != ".data") {
-        this->outputInvalidTokenError(dataStart);
+std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexDirective() {
+    const std::string directive = this->readUntilWhitespace();
+    if (directive != ".data" &&
+        directive != ".debug" &&
+        directive != ".source" &&
+        directive != ".line_table"
+    ) {
+        this->outputInvalidTokenError(directive);
         return std::nullopt;
     }
-    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::DATA_START, "", this->lineNumber};
+    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::DIRECTIVE, directive, this->lineNumber};
 }
 
 std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexString() {
@@ -274,6 +292,10 @@ bool assembler::Lexer::isValidLabel(const std::string& s) {
 
 bool assembler::Lexer::isValidNumber(const std::string& s) {
     return std::regex_match(s, std::regex{R"(-?[0-9]+(\.[0-9]+)?)"});
+}
+
+bool assembler::Lexer::isValidHex(const std::string& s) {
+    return std::regex_match(s, std::regex{R"(0x[0-9A-Fa-f]+)"});
 }
 
 bool assembler::Lexer::isValidImmediate(const std::string& s) {

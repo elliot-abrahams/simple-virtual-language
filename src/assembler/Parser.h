@@ -6,7 +6,7 @@
 #include <variant>
 #include <vector>
 
-#include "../include/AssemblerDefs.h"
+#include "AssemblerDefs.h"
 
 namespace assembler {
     class Parser {
@@ -23,12 +23,15 @@ namespace assembler {
         std::optional<AssemblerDefs::Statement> parseLabelDef();
         std::optional<AssemblerDefs::Statement> parseData();
         std::optional<AssemblerDefs::Statement> parseMethodDef();
-        std::optional<AssemblerDefs::Statement> parseSectionStart();
         std::optional<AssemblerDefs::Operand> parseType();
         std::optional<AssemblerDefs::Operand> parseImmediate();
         std::optional<AssemblerDefs::Operand> parseLabelRef();
         std::optional<AssemblerDefs::Operand> parseNativeRef();
         std::optional<AssemblerDefs::Operand> parseOperand(AssemblerDefs::SVMATokenType tokenType);
+        std::optional<AssemblerDefs::Statement> parseDirective();
+
+        std::optional<AssemblerDefs::DebugSource> parseDebugSource();
+        std::optional<AssemblerDefs::DebugLine> parseDebugLine();
 
         void next();
         AssemblerDefs::SVMAToken peek();
@@ -40,6 +43,9 @@ namespace assembler {
         static bool isNumberInteger(const std::string& value);
         static bool isNumberDecimal(const std::string& value);
         static bool isNumberSigned(const std::string& value);
+
+        static bool fitsUint16(const std::string& s);
+        static bool fitsUint32(const std::string& s);
 
         AssemblerDefs::OperandType mapTokenTypeToOperandType(AssemblerDefs::SVMATokenType tokenType);
 

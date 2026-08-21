@@ -13,16 +13,20 @@ namespace AssemblerDefs {
 
     enum class Section {
         CODE,
-        DATA
+        DATA,
+        DEBUG,
+        DEBUG_SOURCE,
+        DEBUG_LINE_TABLE
     };
 
     enum class SVMATokenType {
-        DATA_START,
+        DIRECTIVE,
         INSTRUCTION,
         TYPE,
         DATA_TYPE,
         NUMBER,
         IMMEDIATE,
+        HEX,
         STRING,
         LABEL_REF,
         LABEL_DEF,
@@ -151,7 +155,20 @@ namespace AssemblerDefs {
         int lineNumber;
     };
 
-    using Statement = std::variant<Instruction, Label, MethodDef, Data, Section>;
+    struct DebugSource {
+        uint16_t sourceId;
+        std::string path;
+    };
+
+    struct DebugLine {
+        uint32_t startAddress;
+        uint32_t endAddress;
+        uint16_t sourceId;
+        uint32_t line;
+        uint16_t column;
+    };
+
+    using Statement = std::variant<Instruction, Label, MethodDef, Data, Section, DebugSource, DebugLine>;
 }
 
 

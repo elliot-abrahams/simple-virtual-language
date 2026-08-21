@@ -1,14 +1,15 @@
 #ifndef SIMPLE_VM_ASSEMBLER_H
 #define SIMPLE_VM_ASSEMBLER_H
 
+#pragma once
+
 #include <cstdint>
 #include <map>
 #include <optional>
 #include <string>
 #include <vector>
 
-#pragma once
-#include "../include/AssemblerDefs.h"
+#include "AssemblerDefs.h"
 #include "Lexer.h"
 #include "Parser.h"
 
@@ -69,13 +70,18 @@ namespace assembler {
         std::vector<uint8_t> convertLabelRefToBytes(const Label& label) const;
         std::vector<uint8_t> convertStringToBytes(const std::string& string) const;
 
+        std::vector<uint8_t> convertDebugSource(const AssemblerDefs::DebugSource& debugSource);
+        std::vector<uint8_t> convertDebugLine(const AssemblerDefs::DebugLine& debugLine);
+
         std::vector<uint8_t> pushBackVector(std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const;
 
         AssemblerDefs::Section section;
         std::vector<AssemblerDefs::Statement> statements;
         std::map<std::string, uint32_t> labelTable;
-        uint32_t dataStartLocation;
-        uint32_t bytecodeLength;
+        uint32_t codeEndLocation = 0;
+        uint32_t dataEndLocation = 0;
+        uint32_t debugSourceLength = 0;
+        uint32_t debugLineTableLength = 0;
     };
 }
 

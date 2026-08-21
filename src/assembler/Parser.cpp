@@ -37,8 +37,24 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseToken() {
         }
         case AssemblerDefs::SVMATokenType::METHOD_DEF:
             return this->parseMethodDef();
-        case AssemblerDefs::SVMATokenType::DATA_START:
-            return this->parseSectionStart();
+        case AssemblerDefs::SVMATokenType::DIRECTIVE:
+            return this->parseDirective();
+        default: {
+            if (this->section == AssemblerDefs::Section::CODE ||
+                this->section == AssemblerDefs::Section::DATA
+            ) {
+                printError(std::string("Unexpected token \'" + this->peek().value + "\'"), this->peek().lineNumber);
+                return std::nullopt;
+            }
+
+            if (this->section == AssemblerDefs::Section::DEBUG_SOURCE) {
+                return this->parseDebugSource();
+            }
+
+            if (this->section == AssemblerDefs::Section::DEBUG_LINE_TABLE) {
+                return this->parseDebugLine();
+            }
+        }
     }
     printError(std::string("Unexpected token \'" + this->peek().value + "\'"), this->peek().lineNumber);
     return std::nullopt;
@@ -363,15 +379,169 @@ std::optional<AssemblerDefs::Operand> assembler::Parser::parseOperand(const Asse
     return AssemblerDefs::Operand{mapTokenTypeToOperandType(tokenType), token.value};
 }
 
-std::optional<AssemblerDefs::Statement> assembler::Parser::parseSectionStart() {
-    if (this->section == AssemblerDefs::Section::DATA) {
-        printError("Duplicate section declaration", this->peek().lineNumber);
+std::optional<AssemblerDefs::Statement> assembler::Parser::parseDirective() {
+    if (this->peek().value == ".data") {
+        if (this->section != AssemblerDefs::Section::CODE) {
+            printError("Invalid '.data' directive", this->peek().lineNumber);
+            return std::nullopt;
+        }
         this->next();
+        this->section = AssemblerDefs::Section::DATA;
+        return AssemblerDefs::Section::DATA;
+    }
+
+    if (this->peek().value == ".debug") {
+        if (this->section != AssemblerDefs::Section::DATA &&
+            this->section != AssemblerDefs::Section::CODE
+        ) {
+            printError("Invalid '.debug' directive", this->peek().lineNumber);
+            return std::nullopt;
+        }
+        this->next();
+        this->section = AssemblerDefs::Section::DEBUG;
+        return AssemblerDefs::Section::DEBUG;
+    }
+
+    if (this->peek().value == ".source") {
+        if (this->section != AssemblerDefs::Section::DEBUG) {
+            printError("Invalid '.source' directive", this->peek().lineNumber);
+            return std::nullopt;
+        }
+        this->next();
+        this->section = AssemblerDefs::Section::DEBUG_SOURCE;
+        return AssemblerDefs::Section::DEBUG_SOURCE;
+    }
+
+    if (this->peek().value == ".line_table") {
+        if (this->section != AssemblerDefs::Section::DEBUG_SOURCE) {
+            printError("Invalid '.line_table' directive", this->peek().lineNumber);
+            return std::nullopt;
+        }
+        this->next();
+        this->section = AssemblerDefs::Section::DEBUG_LINE_TABLE;
+        return AssemblerDefs::Section::DEBUG_LINE_TABLE;
+    }
+}
+
+std::optional<AssemblerDefs::DebugSource> assembler::Parser::parseDebugSource() {
+    const auto sourceIdToken = this->peek();
+
+    if (sourceIdToken.type != AssemblerDefs::SVMATokenType::NUMBER) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::NUMBER}, sourceIdToken, sourceIdToken.lineNumber);
         return std::nullopt;
     }
+    // enforce sourceId can be represented as uint16_t
+    if (!fitsUint16(sourceIdToken.value)) {
+        printError("Invalid value for debug source id \'" + sourceIdToken.value + "\"", this->peek().lineNumber);
+        return std::nullopt;
+    }
+    const uint16_t sourceId = static_cast<uint16_t>(std::stoul(sourceIdToken.value));
+
     this->next();
-    this->section = AssemblerDefs::Section::DATA;
-    return AssemblerDefs::Section::DATA;
+
+    const auto sourcePathToken = this->peek();
+
+    if (sourcePathToken.type != AssemblerDefs::SVMATokenType::STRING) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::STRING}, sourcePathToken, sourcePathToken.lineNumber);
+        return std::nullopt;
+    }
+
+    this->next();
+
+    return AssemblerDefs::DebugSource{
+        sourceId,
+        sourcePathToken.value
+    };
+}
+
+std::optional<AssemblerDefs::DebugLine> assembler::Parser::parseDebugLine() {
+    // parse start Address
+    const auto startAddressToken = this->peek();
+    if (startAddressToken.type != AssemblerDefs::SVMATokenType::HEX) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::HEX}, startAddressToken, startAddressToken.lineNumber);
+        return std::nullopt;
+    }
+
+    // enforce startAddress can be represented as uint32_t
+    if (!fitsUint32(startAddressToken.value)) {
+        printError("Invalid value for debug startAddress \'" + startAddressToken.value + "\"", this->peek().lineNumber);
+        return std::nullopt;
+    }
+    size_t pos;
+    const uint32_t startAddress = static_cast<uint32_t>(std::stoul(startAddressToken.value, &pos, 16)); // convert hex to uint16_t
+
+    this->next();
+
+    // parse end Address
+    const auto endAddressToken = this->peek();
+    if (endAddressToken.type != AssemblerDefs::SVMATokenType::HEX) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::HEX}, endAddressToken, endAddressToken.lineNumber);
+        return std::nullopt;
+    }
+
+    // enforce endAddress can be represented as uint32_t
+    if (!fitsUint32(startAddressToken.value)) {
+        printError("Invalid value for debug endAddress \'" + endAddressToken.value + "\"", this->peek().lineNumber);
+        return std::nullopt;
+    }
+    const uint32_t endAddress = static_cast<uint32_t>(std::stoul(endAddressToken.value, &pos, 16)); // convert hex to uint16_t
+
+    this->next();
+
+    // parse source id
+    const auto sourceIdToken = this->peek();
+    if (sourceIdToken.type != AssemblerDefs::SVMATokenType::NUMBER) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::NUMBER}, sourceIdToken, sourceIdToken.lineNumber);
+        return std::nullopt;
+    }
+
+    // enforce sourceId can be represented as uint16_t
+    if (!fitsUint16(sourceIdToken.value)) {
+        printError("Invalid value for debug source id \'" + sourceIdToken.value + "\"", this->peek().lineNumber);
+        return std::nullopt;
+    }
+    const uint16_t sourceId = static_cast<uint16_t>(std::stoul(sourceIdToken.value));
+
+    this->next();
+
+    // parse line number
+    const auto lineNumberToken = this->peek();
+    if (lineNumberToken.type != AssemblerDefs::SVMATokenType::NUMBER) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::NUMBER}, lineNumberToken, lineNumberToken.lineNumber);
+        return std::nullopt;
+    }
+
+    // enforce lineNumber can be represented as uint32_t
+    if (!fitsUint32(lineNumberToken.value)) {
+        printError("Invalid value for debug line number \'" + lineNumberToken.value + "\"", this->peek().lineNumber);
+        return std::nullopt;
+    }
+    const uint32_t lineNumber = static_cast<uint32_t>(std::stoul(lineNumberToken.value));
+
+    this->next();
+
+    // parse column number
+    const auto columnNumberToken = this->peek();
+    if (columnNumberToken.type != AssemblerDefs::SVMATokenType::NUMBER) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::NUMBER}, columnNumberToken, columnNumberToken.lineNumber);
+        return std::nullopt;
+    }
+    // enforce sourceId can be represented as uint16_t
+    if (!fitsUint16(columnNumberToken.value)) {
+        printError("Invalid value for debug column \'" + columnNumberToken.value + "\"", this->peek().lineNumber);
+        return std::nullopt;
+    }
+    const uint16_t columnNumber = static_cast<uint16_t>(std::stoul(columnNumberToken.value));
+
+    this->next();
+
+    return AssemblerDefs::DebugLine{
+        startAddress,
+        endAddress,
+        sourceId,
+        lineNumber,
+        columnNumber
+    };
 }
 
 void assembler::Parser::next() {
@@ -445,6 +615,34 @@ bool assembler::Parser::isNumberSigned(const std::string& value) {
     return std::regex_match(value, std::regex("-[0-9]+(.[0-9]+)?"));
 }
 
+bool assembler::Parser::fitsUint16(const std::string &s) {
+    try {
+        size_t pos;
+        const long long value = std::stoll(s, &pos);
+
+        return pos == s.size() &&
+            value >= 0 &&
+            value <= std::numeric_limits<uint16_t>::max();
+
+    } catch (const std::out_of_range& e) {
+        return false;
+    }
+}
+
+bool assembler::Parser::fitsUint32(const std::string &s) {
+    try {
+        size_t pos;
+        const long long value = std::stoll(s, &pos, 0);
+
+        return pos == s.size() &&
+            value >= 0 &&
+            value <= std::numeric_limits<uint32_t>::max();
+
+    } catch (const std::out_of_range& e) {
+        return false;
+    }
+}
+
 AssemblerDefs::OperandType assembler::Parser::mapTokenTypeToOperandType(const AssemblerDefs::SVMATokenType tokenType) {
     switch (tokenType) {
         case AssemblerDefs::SVMATokenType::IMMEDIATE: return AssemblerDefs::OperandType::IMMEDIATE;
@@ -477,12 +675,13 @@ void assembler::Parser::handleIncorrectInstructionOperand(const std::string &ins
 std::string assembler::Parser::tokenTypeToString(const AssemblerDefs::SVMATokenType tokenType) {
     std::string s;
     switch (tokenType) {
-        case AssemblerDefs::SVMATokenType::DATA_START: s = "SECTION_START"; break;
+        case AssemblerDefs::SVMATokenType::DIRECTIVE: s = "DIRECTIVE"; break;
         case AssemblerDefs::SVMATokenType::INSTRUCTION: s = "INSTRUCTION"; break;
         case AssemblerDefs::SVMATokenType::TYPE: s = "TYPE"; break;
         case AssemblerDefs::SVMATokenType::DATA_TYPE: s = "DATA_TYPE"; break;
         case AssemblerDefs::SVMATokenType::NUMBER: s = "NUMBER"; break;
         case AssemblerDefs::SVMATokenType::IMMEDIATE: s = "IMMEDIATE"; break;
+        case AssemblerDefs::SVMATokenType::HEX: s = "HEX"; break;
         case AssemblerDefs::SVMATokenType::STRING: s = "STRING"; break;
         case AssemblerDefs::SVMATokenType::LABEL_REF: s = "LABEL_REF"; break;
         case AssemblerDefs::SVMATokenType::LABEL_DEF: s = "LABEL_DEF"; break;
