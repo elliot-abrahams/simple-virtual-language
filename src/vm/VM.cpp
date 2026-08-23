@@ -882,6 +882,7 @@ void VM::dumpState() const {
 
     std::cerr << "  PC: 0x" << std::hex << this->PC << "\n";
     std::cerr << "  HB: 0x" << std::hex << this->HB << "\n";
+    std::cerr << "  HP: 0x" << std::hex << this->HP << "\n";
     std::cerr << "  FP: 0x" << std::hex << this->FP << "\n";
     std::cerr << "  SP: 0x" << std::hex << this->SP << "\n";
 
