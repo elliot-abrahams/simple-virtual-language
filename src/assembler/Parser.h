@@ -31,6 +31,7 @@ namespace assembler {
         std::optional<AssemblerDefs::Statement> parseDirective();
 
         std::optional<AssemblerDefs::DebugSource> parseDebugSource();
+        std::optional<AssemblerDefs::DebugFunction> parseDebugFunction();
         std::optional<AssemblerDefs::DebugLine> parseDebugLine();
 
         void next();

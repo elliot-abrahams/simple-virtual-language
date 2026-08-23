@@ -50,7 +50,7 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::assembleFromTokens(con
 bool assembler::Assembler::constructLabelTable() {
     this->section = AssemblerDefs::Section::CODE;
 
-    constexpr uint8_t bytecodeHeaderLength = 16;
+    constexpr uint8_t bytecodeHeaderLength = 20;
     uint32_t codeSectionLength = 0;
     uint32_t dataSectionLength = 0;
 
@@ -239,13 +239,10 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::generateBytecode() {
         bytecode.push_back((this->dataEndLocation >> (i * 8)) & 0xFF); // header (data end location)
     }
 
-    for (int i = 0; i < 4; i++) {
-        bytecode.push_back((0 >> (i * 8)) & 0xFF); // add placeholder value for header (debug source end location)
+    for (int i = 0; i < 12; i++) { // add placeholder values for header's third, fourth and fifth field
+        bytecode.push_back((0 >> (i * 8)) & 0xFF);
     }
 
-    for (int i = 0; i < 4; i++) {
-        bytecode.push_back((0 >> (i * 8)) & 0xFF); // add placeholder value for header (bytecode end location)
-    }
 
     // loop through each statement
     for (auto& statement : this->statements) {
@@ -278,6 +275,10 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::generateBytecode() {
         } else if (std::holds_alternative<AssemblerDefs::DebugSource>(statement)) {
             this->pushBackVector(bytecode, this->convertDebugSource(std::get<AssemblerDefs::DebugSource>(statement)));
 
+        // convert DEBUG_FUNCTION
+        } else if (std::holds_alternative<AssemblerDefs::DebugFunction>(statement)) {
+            this->pushBackVector(bytecode, this->convertDebugFunction(std::get<AssemblerDefs::DebugFunction>(statement)));
+
         // convert DEBUG_LINE
         } else if (std::holds_alternative<AssemblerDefs::DebugLine>(statement)) {
             this->pushBackVector(bytecode, this->convertDebugLine(std::get<AssemblerDefs::DebugLine>(statement)));
@@ -289,9 +290,14 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::generateBytecode() {
         bytecode.at(8 + i) = ((this->debugSourceLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
     }
 
+    // add header value (debug function end location)
+    for (int i = 0; i < 4; i++) {
+        bytecode.at(12 + i) = ((this->debugFunctionLength + this->debugSourceLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
+    }
+
     // add header value (bytecode end location)
     for (int i = 0; i < 4; i++) {
-        bytecode.at(12 + i) = ((this->debugLineTableLength + this->debugSourceLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
+        bytecode.at(16 + i) = ((this->debugLineTableLength + this->debugFunctionLength + this->debugSourceLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
     }
 
     return bytecode;
@@ -500,6 +506,25 @@ std::vector<uint8_t> assembler::Assembler::convertDebugSource(const AssemblerDef
     // path
     this->pushBackVector(bytecode, this->convertStringToBytes(debugSource.path));
     this->debugSourceLength += (4 + debugSource.path.size() - 2); // (-2) to disregard the space for quotation marks
+
+    return bytecode;
+}
+
+std::vector<uint8_t> assembler::Assembler::convertDebugFunction(const AssemblerDefs::DebugFunction &debugFunction) {
+    std::vector<uint8_t> bytecode;
+    // function name
+    this->pushBackVector(bytecode, this->convertStringToBytes(debugFunction.name));
+
+    // start address
+    for (int i = 0; i < 4; i++) {
+        bytecode.push_back((debugFunction.startAddress >> (i * 8)) & 0xFF);
+    }
+    // end address
+    for (int i = 0; i < 4; i++) {
+        bytecode.push_back((debugFunction.endAddress >> (i * 8)) & 0xFF);
+    }
+
+    this->debugFunctionLength += (12 + debugFunction.name.size() - 2); // (-2) to disregard the space for quotation marks
 
     return bytecode;
 }

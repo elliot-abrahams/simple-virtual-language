@@ -51,6 +51,10 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseToken() {
                 return this->parseDebugSource();
             }
 
+            if (this->section == AssemblerDefs::Section::DEBUG_FUNCTION) {
+                return this->parseDebugFunction();
+            }
+
             if (this->section == AssemblerDefs::Section::DEBUG_LINE_TABLE) {
                 return this->parseDebugLine();
             }
@@ -402,9 +406,9 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseDirective() {
         return AssemblerDefs::Section::DEBUG;
     }
 
-    if (this->peek().value == ".source") {
+    if (this->peek().value == ".sources") {
         if (this->section != AssemblerDefs::Section::DEBUG) {
-            printError("Invalid '.source' directive", this->peek().lineNumber);
+            printError("Invalid '.sources' directive", this->peek().lineNumber);
             return std::nullopt;
         }
         this->next();
@@ -412,8 +416,18 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseDirective() {
         return AssemblerDefs::Section::DEBUG_SOURCE;
     }
 
-    if (this->peek().value == ".line_table") {
+    if (this->peek().value == ".functions") {
         if (this->section != AssemblerDefs::Section::DEBUG_SOURCE) {
+            printError("Invalid '.functions directive", this->peek().lineNumber);
+            return std::nullopt;
+        }
+        this->next();
+        this->section = AssemblerDefs::Section::DEBUG_FUNCTION;
+        return AssemblerDefs::Section::DEBUG_FUNCTION;
+    }
+
+    if (this->peek().value == ".line_table") {
+        if (this->section != AssemblerDefs::Section::DEBUG_FUNCTION) {
             printError("Invalid '.line_table' directive", this->peek().lineNumber);
             return std::nullopt;
         }
@@ -451,6 +465,57 @@ std::optional<AssemblerDefs::DebugSource> assembler::Parser::parseDebugSource() 
     return AssemblerDefs::DebugSource{
         sourceId,
         sourcePathToken.value
+    };
+}
+
+std::optional<AssemblerDefs::DebugFunction> assembler::Parser::parseDebugFunction() {
+    // parse function name
+    const auto functionNameToken = this->peek();
+
+    if (functionNameToken.type != AssemblerDefs::SVMATokenType::STRING) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::STRING}, functionNameToken, functionNameToken.lineNumber);
+        return std::nullopt;
+    }
+
+    this->next();
+
+    // parse start Address
+    const auto startAddressToken = this->peek();
+    if (startAddressToken.type != AssemblerDefs::SVMATokenType::HEX) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::HEX}, startAddressToken, startAddressToken.lineNumber);
+        return std::nullopt;
+    }
+
+    // enforce startAddress can be represented as uint32_t
+    if (!fitsUint32(startAddressToken.value)) {
+        printError("Invalid value for debug startAddress \'" + startAddressToken.value + "\"", this->peek().lineNumber);
+        return std::nullopt;
+    }
+    size_t pos;
+    const uint32_t startAddress = static_cast<uint32_t>(std::stoul(startAddressToken.value, &pos, 16)); // convert hex to uint16_t
+
+    this->next();
+
+    // parse end Address
+    const auto endAddressToken = this->peek();
+    if (endAddressToken.type != AssemblerDefs::SVMATokenType::HEX) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::HEX}, endAddressToken, endAddressToken.lineNumber);
+        return std::nullopt;
+    }
+
+    // enforce endAddress can be represented as uint32_t
+    if (!fitsUint32(startAddressToken.value)) {
+        printError("Invalid value for debug endAddress \'" + endAddressToken.value + "\"", this->peek().lineNumber);
+        return std::nullopt;
+    }
+    const uint32_t endAddress = static_cast<uint32_t>(std::stoul(endAddressToken.value, &pos, 16)); // convert hex to uint16_t
+
+    this->next();
+
+    return AssemblerDefs::DebugFunction{
+        functionNameToken.value,
+        startAddress,
+        endAddress
     };
 }
 

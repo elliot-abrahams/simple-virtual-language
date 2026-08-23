@@ -16,6 +16,7 @@ namespace AssemblerDefs {
         DATA,
         DEBUG,
         DEBUG_SOURCE,
+        DEBUG_FUNCTION,
         DEBUG_LINE_TABLE
     };
 
@@ -160,6 +161,12 @@ namespace AssemblerDefs {
         std::string path;
     };
 
+    struct DebugFunction {
+        std::string name;
+        uint32_t startAddress;
+        uint32_t endAddress;
+    };
+
     struct DebugLine {
         uint32_t startAddress;
         uint32_t endAddress;
@@ -168,7 +175,16 @@ namespace AssemblerDefs {
         uint16_t column;
     };
 
-    using Statement = std::variant<Instruction, Label, MethodDef, Data, Section, DebugSource, DebugLine>;
+    using Statement = std::variant<
+        Instruction,
+        Label,
+        MethodDef,
+        Data,
+        Section,
+        DebugSource,
+        DebugFunction,
+        DebugLine
+    >;
 }
 
 

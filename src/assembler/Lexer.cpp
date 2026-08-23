@@ -174,7 +174,8 @@ std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexDirective() {
     const std::string directive = this->readUntilWhitespace();
     if (directive != ".data" &&
         directive != ".debug" &&
-        directive != ".source" &&
+        directive != ".sources" &&
+        directive != ".functions" &&
         directive != ".line_table"
     ) {
         this->outputInvalidTokenError(directive);

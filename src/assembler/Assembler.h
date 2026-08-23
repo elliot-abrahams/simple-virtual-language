@@ -71,6 +71,7 @@ namespace assembler {
         std::vector<uint8_t> convertStringToBytes(const std::string& string) const;
 
         std::vector<uint8_t> convertDebugSource(const AssemblerDefs::DebugSource& debugSource);
+        std::vector<uint8_t> convertDebugFunction(const AssemblerDefs::DebugFunction& debugFunction);
         std::vector<uint8_t> convertDebugLine(const AssemblerDefs::DebugLine& debugLine);
 
         std::vector<uint8_t> pushBackVector(std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const;
@@ -81,6 +82,7 @@ namespace assembler {
         uint32_t codeEndLocation = 0;
         uint32_t dataEndLocation = 0;
         uint32_t debugSourceLength = 0;
+        uint32_t debugFunctionLength = 0;
         uint32_t debugLineTableLength = 0;
     };
 }
