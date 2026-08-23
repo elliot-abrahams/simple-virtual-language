@@ -10,12 +10,12 @@
 RuntimeErrorHandler::RuntimeErrorHandler(VM* vm) : vm(vm) {}
 
 void RuntimeErrorHandler::insertSource(const uint16_t sourceId, const std::string& path) {
-    this->sources.insert(std::pair<uint32_t, std::string>(sourceId, path));
+    this->sourceMetadata.insert(std::pair<uint32_t, std::string>(sourceId, path));
 }
 
-void RuntimeErrorHandler::insertDebugFunction(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const std::string& functionName) {
-    this->functions.push_back(
-        DebugFunctionInfo{
+void RuntimeErrorHandler::insertFunctionMetadata(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const std::string& functionName) {
+    this->functionMetadata.push_back(
+        FunctionMetadata{
             startAddress,
             endAddress,
             sourceId,
@@ -24,9 +24,9 @@ void RuntimeErrorHandler::insertDebugFunction(const uint32_t startAddress, const
     );
 }
 
-void RuntimeErrorHandler::insertDebugLine(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const uint32_t lineNumber, const uint32_t columnNumber) {
-    this->lineTable.push_back(
-        DebugLineInfo{
+void RuntimeErrorHandler::insertLineTableMetadata(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const uint32_t lineNumber, const uint32_t columnNumber) {
+    this->lineTableMetadata.push_back(
+        LineTableMetadata{
             startAddress,
             endAddress,
             sourceId,
@@ -43,23 +43,23 @@ void RuntimeErrorHandler::raiseRuntimeError(const RuntimeError& error, const uin
         return;
     }
 
-    const DebugLineInfo* debugLine = this->getDebugLineInfo(this->vm->getPC() - 1);
+    const LineTableMetadata* lineMetadata = this->getLineTableMetadata(this->vm->getPC() - 1);
 
-    // TODO:: handle debug line not being found
-    if (debugLine == nullptr) return;
+    // TODO:: handle line metadata not being found
+    if (lineMetadata == nullptr) return;
 
     // get stack trace
     std::optional<RuntimeError> runtimeErrorWhenBuildingStackTrace;
     std::vector<uint32_t> stackTrace = vm->getCallStackManager()->getStackTrace(&runtimeErrorWhenBuildingStackTrace, FP);
-    const DebugFunctionInfo* functionInfo = this->getDebugFunctionInfo(this->vm->getPC() - 1);
+    const FunctionMetadata* functionInfo = this->getFunctionMetadata(this->vm->getPC() - 1);
 
-    const std::string* path = &this->sources.at(debugLine->sourceId);
+    const std::string* path = &this->sourceMetadata.at(lineMetadata->sourceId);
     std::ifstream sourceFile(*path);
 
-    // read line in source code at the source and line from debugLine
+    // read line in source code at the source and line from line metadata
     std::string sourceLine;
     if (sourceFile) {
-        for (size_t i = 1; i <= debugLine->line; ++i) {
+        for (size_t i = 1; i <= lineMetadata->line; ++i) {
             if (!std::getline(sourceFile, sourceLine)) {
                 sourceLine.clear();
                 break;
@@ -79,19 +79,19 @@ void RuntimeErrorHandler::raiseRuntimeError(const RuntimeError& error, const uin
         }
     }
 
-    const std::string spaces(debugLine->column + 4, ' ');
-    const std::string lineNumber = std::to_string(debugLine->line);
+    const std::string spaces(lineMetadata->column + 4, ' ');
+    const std::string lineNumber = std::to_string(lineMetadata->line);
 
     std::cerr <<  runtimeErrorTypeToString(error.type) + ": " + error.message + "\n";
     if (stackTrace.empty() || functionInfo == nullptr) {
-        std::cerr << "    at " + *path + ":" + lineNumber + ":" + std::to_string(debugLine->column) + "\n";
+        std::cerr << "    at " + *path + ":" + lineNumber + ":" + std::to_string(lineMetadata->column) + "\n";
     } else {
-        this->outputStackTraceLine(functionInfo->functionName, functionInfo->sourceId, debugLine->line, debugLine->column);
+        this->outputStackTraceLine(functionInfo->functionName, functionInfo->sourceId, lineMetadata->line, lineMetadata->column);
     }
 
     if (!sourceLine.empty()) {
         std::cerr << "  " + lineNumber + " |    " + sourceLine + "\n";
-        std::cerr << spaces.substr(0, (lineNumber.size() + 3)) + "|" + spaces.substr(0, 3 + (debugLine->column - numberOfRemovedSpaces)) + "^" + "\n";
+        std::cerr << spaces.substr(0, (lineNumber.size() + 3)) + "|" + spaces.substr(0, 3 + (lineMetadata->column - numberOfRemovedSpaces)) + "^" + "\n";
 
     } else { // unable to read source file
         std::cerr << "    | source code unavailable";
@@ -115,27 +115,27 @@ void RuntimeErrorHandler::raiseRuntimeError(const RuntimeError& error, const uin
 
     std::cerr << "stack trace:\n";
     for (uint32_t stackTraceIdx = 0; stackTraceIdx < stackTrace.size() - 1; stackTraceIdx++) {
-        const DebugLineInfo* lineInfo = this->getDebugLineInfo(stackTrace[stackTraceIdx] - 1);
-        const DebugFunctionInfo* functionInfo = this->getDebugFunctionInfo(stackTrace[stackTraceIdx] - 1);
+        const LineTableMetadata* lineInfo = this->getLineTableMetadata(stackTrace[stackTraceIdx] - 1);
+        const FunctionMetadata* functionInfo = this->getFunctionMetadata(stackTrace[stackTraceIdx] - 1);
 
         this->outputStackTraceLine(functionInfo->functionName, functionInfo->sourceId, lineInfo->line, lineInfo->column);
     }
-    const DebugLineInfo* lineInfo = this->getDebugLineInfo(stackTrace.back() - 1);
+    const LineTableMetadata* lineInfo = this->getLineTableMetadata(stackTrace.back() - 1);
     this->outputStackTraceLine("<global>", lineInfo->sourceId, lineInfo->line, lineInfo->column);
 }
 
-const DebugLineInfo* RuntimeErrorHandler::getDebugLineInfo(const uint32_t address) const {
+const LineTableMetadata* RuntimeErrorHandler::getLineTableMetadata(const uint32_t address) const {
     // search for the line info where start address <= address < end address
     auto it = std::upper_bound(
-        this->lineTable.begin(),
-        this->lineTable.end(),
+        this->lineTableMetadata.begin(),
+        this->lineTableMetadata.end(),
         address,
-        [](const uint32_t address, const DebugLineInfo& debugLine) {
-            return address < debugLine.startAddress;
+        [](const uint32_t address, const LineTableMetadata& lineMetadata) {
+            return address < lineMetadata.startAddress;
         }
     );
 
-    if (it == this->lineTable.begin()) {
+    if (it == this->lineTableMetadata.begin()) {
         return nullptr;
     }
 
@@ -148,18 +148,18 @@ const DebugLineInfo* RuntimeErrorHandler::getDebugLineInfo(const uint32_t addres
     return nullptr;
 }
 
-const DebugFunctionInfo* RuntimeErrorHandler::getDebugFunctionInfo(const uint32_t address) const {
+const FunctionMetadata* RuntimeErrorHandler::getFunctionMetadata(const uint32_t address) const {
     // search for the line info where start address <= address < end address
     auto it = std::upper_bound(
-        this->functions.begin(),
-        this->functions.end(),
+        this->functionMetadata.begin(),
+        this->functionMetadata.end(),
         address,
-        [](const uint32_t address, const DebugFunctionInfo& function) {
+        [](const uint32_t address, const FunctionMetadata& function) {
             return address < function.startAddress;
         }
     );
 
-    if (it == this->functions.begin()) {
+    if (it == this->functionMetadata.begin()) {
         return nullptr;
     }
 
@@ -173,7 +173,7 @@ const DebugFunctionInfo* RuntimeErrorHandler::getDebugFunctionInfo(const uint32_
 }
 
 void RuntimeErrorHandler::outputStackTraceLine(const std::string& functionName, const uint16_t sourceId, const uint32_t line, const uint16_t column) const {
-    std::cerr << "  at " + functionName + " (" + this->sources.at(sourceId) + ":" + std::to_string(line) + ":" + std::to_string(column) + ")\n";
+    std::cerr << "  at " + functionName + " (" + this->sourceMetadata.at(sourceId) + ":" + std::to_string(line) + ":" + std::to_string(column) + ")\n";
 }
 
 std::string RuntimeErrorHandler::runtimeErrorTypeToString(const RuntimeErrorType& errorType) {

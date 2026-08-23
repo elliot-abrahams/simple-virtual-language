@@ -47,16 +47,16 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseToken() {
                 return std::nullopt;
             }
 
-            if (this->section == AssemblerDefs::Section::DEBUG_SOURCE) {
-                return this->parseDebugSource();
+            if (this->section == AssemblerDefs::Section::METADATA_SOURCE) {
+                return this->parseSourceMetadata();
             }
 
-            if (this->section == AssemblerDefs::Section::DEBUG_FUNCTION) {
-                return this->parseDebugFunction();
+            if (this->section == AssemblerDefs::Section::METADATA_FUNCTION) {
+                return this->parseFunctionMetadata();
             }
 
-            if (this->section == AssemblerDefs::Section::DEBUG_LINE_TABLE) {
-                return this->parseDebugLine();
+            if (this->section == AssemblerDefs::Section::METADATA_LINE_TABLE) {
+                return this->parseLineTableMetadata();
             }
         }
     }
@@ -394,50 +394,50 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseDirective() {
         return AssemblerDefs::Section::DATA;
     }
 
-    if (this->peek().value == ".debug") {
+    if (this->peek().value == ".metadata") {
         if (this->section != AssemblerDefs::Section::DATA &&
             this->section != AssemblerDefs::Section::CODE
         ) {
-            printError("Invalid '.debug' directive", this->peek().lineNumber);
+            printError("Invalid '.metadata' directive", this->peek().lineNumber);
             return std::nullopt;
         }
         this->next();
-        this->section = AssemblerDefs::Section::DEBUG;
-        return AssemblerDefs::Section::DEBUG;
+        this->section = AssemblerDefs::Section::METADATA;
+        return AssemblerDefs::Section::METADATA;
     }
 
     if (this->peek().value == ".sources") {
-        if (this->section != AssemblerDefs::Section::DEBUG) {
+        if (this->section != AssemblerDefs::Section::METADATA) {
             printError("Invalid '.sources' directive", this->peek().lineNumber);
             return std::nullopt;
         }
         this->next();
-        this->section = AssemblerDefs::Section::DEBUG_SOURCE;
-        return AssemblerDefs::Section::DEBUG_SOURCE;
+        this->section = AssemblerDefs::Section::METADATA_SOURCE;
+        return AssemblerDefs::Section::METADATA_SOURCE;
     }
 
     if (this->peek().value == ".functions") {
-        if (this->section != AssemblerDefs::Section::DEBUG_SOURCE) {
+        if (this->section != AssemblerDefs::Section::METADATA_SOURCE) {
             printError("Invalid '.functions directive", this->peek().lineNumber);
             return std::nullopt;
         }
         this->next();
-        this->section = AssemblerDefs::Section::DEBUG_FUNCTION;
-        return AssemblerDefs::Section::DEBUG_FUNCTION;
+        this->section = AssemblerDefs::Section::METADATA_FUNCTION;
+        return AssemblerDefs::Section::METADATA_FUNCTION;
     }
 
     if (this->peek().value == ".line_table") {
-        if (this->section != AssemblerDefs::Section::DEBUG_FUNCTION) {
+        if (this->section != AssemblerDefs::Section::METADATA_FUNCTION) {
             printError("Invalid '.line_table' directive", this->peek().lineNumber);
             return std::nullopt;
         }
         this->next();
-        this->section = AssemblerDefs::Section::DEBUG_LINE_TABLE;
-        return AssemblerDefs::Section::DEBUG_LINE_TABLE;
+        this->section = AssemblerDefs::Section::METADATA_LINE_TABLE;
+        return AssemblerDefs::Section::METADATA_LINE_TABLE;
     }
 }
 
-std::optional<AssemblerDefs::DebugSource> assembler::Parser::parseDebugSource() {
+std::optional<AssemblerDefs::SourceMetadata> assembler::Parser::parseSourceMetadata() {
     const auto sourceIdToken = this->peek();
 
     if (sourceIdToken.type != AssemblerDefs::SVMATokenType::NUMBER) {
@@ -446,7 +446,7 @@ std::optional<AssemblerDefs::DebugSource> assembler::Parser::parseDebugSource() 
     }
     // enforce sourceId can be represented as uint16_t
     if (!fitsUint16(sourceIdToken.value)) {
-        printError("Invalid value for debug source id \'" + sourceIdToken.value + "\"", this->peek().lineNumber);
+        printError("Invalid value for source id in source metadata \'" + sourceIdToken.value + "\"", this->peek().lineNumber);
         return std::nullopt;
     }
     const uint16_t sourceId = static_cast<uint16_t>(std::stoul(sourceIdToken.value));
@@ -462,13 +462,13 @@ std::optional<AssemblerDefs::DebugSource> assembler::Parser::parseDebugSource() 
 
     this->next();
 
-    return AssemblerDefs::DebugSource{
+    return AssemblerDefs::SourceMetadata{
         sourceId,
         sourcePathToken.value
     };
 }
 
-std::optional<AssemblerDefs::DebugFunction> assembler::Parser::parseDebugFunction() {
+std::optional<AssemblerDefs::FunctionMetadata> assembler::Parser::parseFunctionMetadata() {
     // parse start Address
     const auto startAddressToken = this->peek();
     if (startAddressToken.type != AssemblerDefs::SVMATokenType::HEX) {
@@ -478,7 +478,7 @@ std::optional<AssemblerDefs::DebugFunction> assembler::Parser::parseDebugFunctio
 
     // enforce startAddress can be represented as uint32_t
     if (!fitsUint32(startAddressToken.value)) {
-        printError("Invalid value for debug startAddress \'" + startAddressToken.value + "\"", this->peek().lineNumber);
+        printError("Invalid value for start address in function metadata \'" + startAddressToken.value + "\"", this->peek().lineNumber);
         return std::nullopt;
     }
     size_t pos;
@@ -495,7 +495,7 @@ std::optional<AssemblerDefs::DebugFunction> assembler::Parser::parseDebugFunctio
 
     // enforce endAddress can be represented as uint32_t
     if (!fitsUint32(startAddressToken.value)) {
-        printError("Invalid value for debug endAddress \'" + endAddressToken.value + "\"", this->peek().lineNumber);
+        printError("Invalid value for end address in function metadata \'" + endAddressToken.value + "\"", this->peek().lineNumber);
         return std::nullopt;
     }
     const uint32_t endAddress = static_cast<uint32_t>(std::stoul(endAddressToken.value, &pos, 16)); // convert hex to uint16_t
@@ -511,7 +511,7 @@ std::optional<AssemblerDefs::DebugFunction> assembler::Parser::parseDebugFunctio
 
     // enforce sourceId can be represented as uint16_t
     if (!fitsUint16(sourceIdToken.value)) {
-        printError("Invalid value for debug source id \'" + sourceIdToken.value + "\"", this->peek().lineNumber);
+        printError("Invalid value for source id in function metadata \'" + sourceIdToken.value + "\"", this->peek().lineNumber);
         return std::nullopt;
     }
     const uint16_t sourceId = static_cast<uint16_t>(std::stoul(sourceIdToken.value));
@@ -528,7 +528,7 @@ std::optional<AssemblerDefs::DebugFunction> assembler::Parser::parseDebugFunctio
 
     this->next();
 
-    return AssemblerDefs::DebugFunction{
+    return AssemblerDefs::FunctionMetadata{
         startAddress,
         endAddress,
         sourceId,
@@ -536,7 +536,7 @@ std::optional<AssemblerDefs::DebugFunction> assembler::Parser::parseDebugFunctio
     };
 }
 
-std::optional<AssemblerDefs::DebugLine> assembler::Parser::parseDebugLine() {
+std::optional<AssemblerDefs::LineTableMetadata> assembler::Parser::parseLineTableMetadata() {
     // parse start Address
     const auto startAddressToken = this->peek();
     if (startAddressToken.type != AssemblerDefs::SVMATokenType::HEX) {
@@ -546,7 +546,7 @@ std::optional<AssemblerDefs::DebugLine> assembler::Parser::parseDebugLine() {
 
     // enforce startAddress can be represented as uint32_t
     if (!fitsUint32(startAddressToken.value)) {
-        printError("Invalid value for debug startAddress \'" + startAddressToken.value + "\"", this->peek().lineNumber);
+        printError("Invalid value for start address in line table metadata \'" + startAddressToken.value + "\"", this->peek().lineNumber);
         return std::nullopt;
     }
     size_t pos;
@@ -563,7 +563,7 @@ std::optional<AssemblerDefs::DebugLine> assembler::Parser::parseDebugLine() {
 
     // enforce endAddress can be represented as uint32_t
     if (!fitsUint32(startAddressToken.value)) {
-        printError("Invalid value for debug endAddress \'" + endAddressToken.value + "\"", this->peek().lineNumber);
+        printError("Invalid value for end address in line table metadata \'" + endAddressToken.value + "\"", this->peek().lineNumber);
         return std::nullopt;
     }
     const uint32_t endAddress = static_cast<uint32_t>(std::stoul(endAddressToken.value, &pos, 16)); // convert hex to uint16_t
@@ -579,7 +579,7 @@ std::optional<AssemblerDefs::DebugLine> assembler::Parser::parseDebugLine() {
 
     // enforce sourceId can be represented as uint16_t
     if (!fitsUint16(sourceIdToken.value)) {
-        printError("Invalid value for debug source id \'" + sourceIdToken.value + "\"", this->peek().lineNumber);
+        printError("Invalid value for source id in line table metadata \'" + sourceIdToken.value + "\"", this->peek().lineNumber);
         return std::nullopt;
     }
     const uint16_t sourceId = static_cast<uint16_t>(std::stoul(sourceIdToken.value));
@@ -595,7 +595,7 @@ std::optional<AssemblerDefs::DebugLine> assembler::Parser::parseDebugLine() {
 
     // enforce lineNumber can be represented as uint32_t
     if (!fitsUint32(lineNumberToken.value)) {
-        printError("Invalid value for debug line number \'" + lineNumberToken.value + "\"", this->peek().lineNumber);
+        printError("Invalid value for line number in line table metadata \'" + lineNumberToken.value + "\"", this->peek().lineNumber);
         return std::nullopt;
     }
     const uint32_t lineNumber = static_cast<uint32_t>(std::stoul(lineNumberToken.value));
@@ -610,14 +610,14 @@ std::optional<AssemblerDefs::DebugLine> assembler::Parser::parseDebugLine() {
     }
     // enforce sourceId can be represented as uint16_t
     if (!fitsUint16(columnNumberToken.value)) {
-        printError("Invalid value for debug column \'" + columnNumberToken.value + "\"", this->peek().lineNumber);
+        printError("Invalid value for column inline table metadata \'" + columnNumberToken.value + "\"", this->peek().lineNumber);
         return std::nullopt;
     }
     const uint16_t columnNumber = static_cast<uint16_t>(std::stoul(columnNumberToken.value));
 
     this->next();
 
-    return AssemblerDefs::DebugLine{
+    return AssemblerDefs::LineTableMetadata{
         startAddress,
         endAddress,
         sourceId,

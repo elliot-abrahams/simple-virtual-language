@@ -173,7 +173,7 @@ std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexImmediate() {
 std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexDirective() {
     const std::string directive = this->readUntilWhitespace();
     if (directive != ".data" &&
-        directive != ".debug" &&
+        directive != ".metadata" &&
         directive != ".sources" &&
         directive != ".functions" &&
         directive != ".line_table"

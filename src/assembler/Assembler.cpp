@@ -93,7 +93,7 @@ bool assembler::Assembler::constructLabelTable() {
             // section (directive) Token
             this->section = std::get<AssemblerDefs::Section>(statement);
 
-            if (this->section == AssemblerDefs::Section::DEBUG) {
+            if (this->section == AssemblerDefs::Section::METADATA) {
                 break;
             }
         }
@@ -271,33 +271,33 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::generateBytecode() {
         } else if (std::holds_alternative<AssemblerDefs::Section>(statement)) {
             this->section = std::get<AssemblerDefs::Section>(statement);
 
-        // convert DEBUG_SOURCE
-        } else if (std::holds_alternative<AssemblerDefs::DebugSource>(statement)) {
-            this->pushBackVector(bytecode, this->convertDebugSource(std::get<AssemblerDefs::DebugSource>(statement)));
+        // convert SOURCE_METADATA
+        } else if (std::holds_alternative<AssemblerDefs::SourceMetadata>(statement)) {
+            this->pushBackVector(bytecode, this->convertSourceMetadata(std::get<AssemblerDefs::SourceMetadata>(statement)));
 
-        // convert DEBUG_FUNCTION
-        } else if (std::holds_alternative<AssemblerDefs::DebugFunction>(statement)) {
-            this->pushBackVector(bytecode, this->convertDebugFunction(std::get<AssemblerDefs::DebugFunction>(statement)));
+        // convert FUNCTION_METADATA
+        } else if (std::holds_alternative<AssemblerDefs::FunctionMetadata>(statement)) {
+            this->pushBackVector(bytecode, this->convertFunctionMetadata(std::get<AssemblerDefs::FunctionMetadata>(statement)));
 
-        // convert DEBUG_LINE
-        } else if (std::holds_alternative<AssemblerDefs::DebugLine>(statement)) {
-            this->pushBackVector(bytecode, this->convertDebugLine(std::get<AssemblerDefs::DebugLine>(statement)));
+        // convert LINE_TABLE_METADATA
+        } else if (std::holds_alternative<AssemblerDefs::LineTableMetadata>(statement)) {
+            this->pushBackVector(bytecode, this->convertLineTableMetadata(std::get<AssemblerDefs::LineTableMetadata>(statement)));
         }
     }
 
-    // add header value (debug source end location)
+    // add header value (source metadata end location)
     for (int i = 0; i < 4; i++) {
-        bytecode.at(8 + i) = ((this->debugSourceLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
+        bytecode.at(8 + i) = ((this->sourceMetadataLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
     }
 
-    // add header value (debug function end location)
+    // add header value (function metadata end location)
     for (int i = 0; i < 4; i++) {
-        bytecode.at(12 + i) = ((this->debugFunctionLength + this->debugSourceLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
+        bytecode.at(12 + i) = ((this->functionMetadataLength + this->sourceMetadataLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
     }
 
     // add header value (bytecode end location)
     for (int i = 0; i < 4; i++) {
-        bytecode.at(16 + i) = ((this->debugLineTableLength + this->debugFunctionLength + this->debugSourceLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
+        bytecode.at(16 + i) = ((this->lineTableMetadataLength + this->functionMetadataLength + this->sourceMetadataLength + this->dataEndLocation) >> (i * 8)) & 0xFF;
     }
 
     return bytecode;
@@ -495,67 +495,67 @@ std::vector<uint8_t> assembler::Assembler::convertStringToBytes(const std::strin
     return bytecode;
 }
 
-std::vector<uint8_t> assembler::Assembler::convertDebugSource(const AssemblerDefs::DebugSource& debugSource) {
+std::vector<uint8_t> assembler::Assembler::convertSourceMetadata(const AssemblerDefs::SourceMetadata& sourceMetadata) {
     std::vector<uint8_t> bytecode;
     // source Id
     for (int i = 0; i < 2; i++) {
-        bytecode.push_back((debugSource.sourceId >> (i * 8)) & 0xFF);
+        bytecode.push_back((sourceMetadata.sourceId >> (i * 8)) & 0xFF);
     }
-    this->debugSourceLength += 2;
+    this->sourceMetadataLength += 2;
 
     // path
-    this->pushBackVector(bytecode, this->convertStringToBytes(debugSource.path));
-    this->debugSourceLength += (4 + debugSource.path.size() - 2); // (-2) to disregard the space for quotation marks
+    this->pushBackVector(bytecode, this->convertStringToBytes(sourceMetadata.path));
+    this->sourceMetadataLength += (4 + sourceMetadata.path.size() - 2); // (-2) to disregard the space for quotation marks
 
     return bytecode;
 }
 
-std::vector<uint8_t> assembler::Assembler::convertDebugFunction(const AssemblerDefs::DebugFunction &debugFunction) {
+std::vector<uint8_t> assembler::Assembler::convertFunctionMetadata(const AssemblerDefs::FunctionMetadata& functionMetadata) {
     std::vector<uint8_t> bytecode;
 
     // start address
     for (int i = 0; i < 4; i++) {
-        bytecode.push_back((debugFunction.startAddress >> (i * 8)) & 0xFF);
+        bytecode.push_back((functionMetadata.startAddress >> (i * 8)) & 0xFF);
     }
     // end address
     for (int i = 0; i < 4; i++) {
-        bytecode.push_back((debugFunction.endAddress >> (i * 8)) & 0xFF);
+        bytecode.push_back((functionMetadata.endAddress >> (i * 8)) & 0xFF);
     }
     // source id
     for (int i = 0; i < 2; i++) {
-        bytecode.push_back(debugFunction.sourceId >> (i * 8) & 0xFF);
+        bytecode.push_back(functionMetadata.sourceId >> (i * 8) & 0xFF);
     }
     // function name
-    this->pushBackVector(bytecode, this->convertStringToBytes(debugFunction.name));
+    this->pushBackVector(bytecode, this->convertStringToBytes(functionMetadata.name));
 
-    this->debugFunctionLength += (14 + debugFunction.name.size() - 2); // (-2) to disregard the space for quotation marks
+    this->functionMetadataLength += (14 + functionMetadata.name.size() - 2); // (-2) to disregard the space for quotation marks
 
     return bytecode;
 }
 
-std::vector<uint8_t> assembler::Assembler::convertDebugLine(const AssemblerDefs::DebugLine& debugLine) {
+std::vector<uint8_t> assembler::Assembler::convertLineTableMetadata(const AssemblerDefs::LineTableMetadata& lineTableMetadata) {
     std::vector<uint8_t> bytecode;
     // start address
     for (int i = 0; i < 4; i++) {
-        bytecode.push_back((debugLine.startAddress >> (i * 8)) & 0xFF);
+        bytecode.push_back((lineTableMetadata.startAddress >> (i * 8)) & 0xFF);
     }
     // end address
     for (int i = 0; i < 4; i++) {
-        bytecode.push_back((debugLine.endAddress >> (i * 8)) & 0xFF);
+        bytecode.push_back((lineTableMetadata.endAddress >> (i * 8)) & 0xFF);
     }
     // source Id
     for (int i = 0; i < 2; i++) {
-        bytecode.push_back((debugLine.sourceId >> (i * 8)) & 0xFF);
+        bytecode.push_back((lineTableMetadata.sourceId >> (i * 8)) & 0xFF);
     }
     // line
     for (int i = 0; i < 4; i++) {
-        bytecode.push_back((debugLine.line >> (i * 8)) & 0xFF);
+        bytecode.push_back((lineTableMetadata.line >> (i * 8)) & 0xFF);
     }
     // column
     for (int i = 0; i < 2; i++) {
-        bytecode.push_back((debugLine.column >> (i * 8)) & 0xFF);
+        bytecode.push_back((lineTableMetadata.column >> (i * 8)) & 0xFF);
     }
-    this->debugLineTableLength += 16;
+    this->lineTableMetadataLength += 16;
 
     return bytecode;
 }

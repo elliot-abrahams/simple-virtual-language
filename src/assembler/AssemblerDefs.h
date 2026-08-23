@@ -14,10 +14,10 @@ namespace AssemblerDefs {
     enum class Section {
         CODE,
         DATA,
-        DEBUG,
-        DEBUG_SOURCE,
-        DEBUG_FUNCTION,
-        DEBUG_LINE_TABLE
+        METADATA,
+        METADATA_SOURCE,
+        METADATA_FUNCTION,
+        METADATA_LINE_TABLE
     };
 
     enum class SVMATokenType {
@@ -156,19 +156,19 @@ namespace AssemblerDefs {
         int lineNumber;
     };
 
-    struct DebugSource {
+    struct SourceMetadata {
         uint16_t sourceId;
         std::string path;
     };
 
-    struct DebugFunction {
+    struct FunctionMetadata {
         uint32_t startAddress;
         uint32_t endAddress;
         uint16_t sourceId;
         std::string name;
     };
 
-    struct DebugLine {
+    struct LineTableMetadata {
         uint32_t startAddress;
         uint32_t endAddress;
         uint16_t sourceId;
@@ -182,9 +182,9 @@ namespace AssemblerDefs {
         MethodDef,
         Data,
         Section,
-        DebugSource,
-        DebugFunction,
-        DebugLine
+        SourceMetadata,
+        FunctionMetadata,
+        LineTableMetadata
     >;
 }
 

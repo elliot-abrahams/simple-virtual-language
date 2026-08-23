@@ -30,9 +30,9 @@ namespace assembler {
         std::optional<AssemblerDefs::Operand> parseOperand(AssemblerDefs::SVMATokenType tokenType);
         std::optional<AssemblerDefs::Statement> parseDirective();
 
-        std::optional<AssemblerDefs::DebugSource> parseDebugSource();
-        std::optional<AssemblerDefs::DebugFunction> parseDebugFunction();
-        std::optional<AssemblerDefs::DebugLine> parseDebugLine();
+        std::optional<AssemblerDefs::SourceMetadata> parseSourceMetadata();
+        std::optional<AssemblerDefs::FunctionMetadata> parseFunctionMetadata();
+        std::optional<AssemblerDefs::LineTableMetadata> parseLineTableMetadata();
 
         void next();
         AssemblerDefs::SVMAToken peek();

@@ -4,8 +4,8 @@
 #include <ostream>
 
 compiler::AssemblyEmitter::AssemblyEmitter(const std::string& filepath) {
-    this->debugSources.push_back(
-        DebugSourceInfo{
+    this->sourceMetadata.push_back(
+        SourceMetadata{
             0,
             filepath
         }
@@ -15,7 +15,7 @@ compiler::AssemblyEmitter::AssemblyEmitter(const std::string& filepath) {
 
 std::vector<std::string> compiler::AssemblyEmitter::emitAssembly(const std::vector<AssemblyItem>& assemblyIR, const std::unordered_set<BuiltinFunctionId>& requiredBuiltinFunctions, const std::unordered_set<BuiltinDataId>& requiredBuiltinData) {
     this->emitProgram(assemblyIR, requiredBuiltinFunctions, requiredBuiltinData);
-    this->emitDebugSection();
+    this->emitMetadataSection();
     return this->assembly;
 }
 
@@ -79,7 +79,7 @@ void compiler::AssemblyEmitter::emitInstruction(const Instruction &instruction) 
         return;
     }
 
-    this->debugLines.push_back(DebugLineInfo{
+    this->lineTableMetadata.push_back(LineTableMetadata{
         startAddress,
         this->currentAddress,
         0,
@@ -234,7 +234,7 @@ void compiler::AssemblyEmitter::emitMethodDef(const MethodDef &methodDef) {
     this->emitWithDoubleIndent("locals " + std::to_string(methodDef.numberOfLocals));
     this->emit("");
 
-    this->debugLines.push_back(DebugLineInfo{
+    this->lineTableMetadata.push_back(LineTableMetadata{
         startAddress,
         this->currentAddress,
         0,
@@ -282,21 +282,21 @@ void compiler::AssemblyEmitter::emitBuiltinData(const std::unordered_set<Builtin
     }
 }
 
-void compiler::AssemblyEmitter::emitDebugSection() {
+void compiler::AssemblyEmitter::emitMetadataSection() {
     this->emit("");
-    this->emit(".debug");
+    this->emit(".metadata");
 
-    this->emitDebugSourceSection();
-    this->emitDebugFunctions();
-    this->emitDebugLineTableSection();
+    this->emitSourceMetadataSection();
+    this->emitFunctionMetadataSection();
+    this->emitLineTableMetadataSection();
 }
 
-void compiler::AssemblyEmitter::emitDebugSourceSection() {
+void compiler::AssemblyEmitter::emitSourceMetadataSection() {
     this->emit("");
     this->emitWithSingleIdent(".sources");
 
     // for each source info entry
-    for (const auto& sourceInfo : this->debugSources) {
+    for (const auto& sourceInfo : this->sourceMetadata) {
 
         std::string sourceId = std::to_string(sourceInfo.sourceId);
         std::string spaces(5 - sourceId.length(), ' ');
@@ -305,12 +305,12 @@ void compiler::AssemblyEmitter::emitDebugSourceSection() {
     }
 }
 
-void compiler::AssemblyEmitter::emitDebugFunctions() {
+void compiler::AssemblyEmitter::emitFunctionMetadataSection() {
     this->emit("");
     this->emitWithSingleIdent(".functions");
     this->emitWithDoubleIndent(";     start          end       source    name");
 
-    for (const auto& functionInfo : this->debugFunctions) {
+    for (const auto& functionInfo : this->functionMetadata) {
         std::stringstream startAddressOutput;
         std::stringstream endAddressOutput;
         // format string to represent uint32_t as "0x00000000"
@@ -330,56 +330,56 @@ void compiler::AssemblyEmitter::emitDebugFunctions() {
     }
 }
 
-void compiler::AssemblyEmitter::emitDebugLineTableSection() {
+void compiler::AssemblyEmitter::emitLineTableMetadataSection() {
     this->emit("");
     this->emitWithSingleIdent(".line_table");
 
     this->emitWithDoubleIndent(";     start          end       source       line       column");
 
-    DebugLineInfo* previousLineInfo = &this->debugLines[0];
-    bool mergeLastDebugLine = false;
+    LineTableMetadata* previousLineInfo = &this->lineTableMetadata[0];
+    bool mergeLastMetadataLine = false;
     // for each line table entry
-    for (uint32_t lineIdx = 1; lineIdx < this->debugLines.size(); ++lineIdx) {
+    for (uint32_t lineIdx = 1; lineIdx < this->lineTableMetadata.size(); ++lineIdx) {
 
-        // while previous debugLine (source, line, column matches current debugLine
+        // while previous metadata line (source, line, column matches current metadata line
         // and previous end address is the same as the current start address
         while (
-            lineIdx < this->debugLines.size() &&
-            this->debugLines[lineIdx - 1].endAddress == this->debugLines[lineIdx].startAddress &&
-            previousLineInfo->sourceId == this->debugLines[lineIdx].sourceId &&
-            previousLineInfo->line == this->debugLines[lineIdx].line &&
-            previousLineInfo->column == this->debugLines[lineIdx].column
+            lineIdx < this->lineTableMetadata.size() &&
+            this->lineTableMetadata[lineIdx - 1].endAddress == this->lineTableMetadata[lineIdx].startAddress &&
+            previousLineInfo->sourceId == this->lineTableMetadata[lineIdx].sourceId &&
+            previousLineInfo->line == this->lineTableMetadata[lineIdx].line &&
+            previousLineInfo->column == this->lineTableMetadata[lineIdx].column
         ) {
             lineIdx++;
         }
 
-        if (lineIdx == this->debugLines.size()) {
-            mergeLastDebugLine = true;
+        if (lineIdx == this->lineTableMetadata.size()) {
+            mergeLastMetadataLine = true;
         }
-        this->emitDebugLine(
+        this->emitLineMetadata(
             previousLineInfo->startAddress,
-            this->debugLines[lineIdx - 1].endAddress,
+            this->lineTableMetadata[lineIdx - 1].endAddress,
             previousLineInfo->sourceId,
             previousLineInfo->line,
             previousLineInfo->column
         );
-        previousLineInfo = &this->debugLines[lineIdx];
+        previousLineInfo = &this->lineTableMetadata[lineIdx];
     }
 
-    // return if last debug line in the list was already emitted
-    if (mergeLastDebugLine) return;
+    // return if last metadata line in the list was already emitted
+    if (mergeLastMetadataLine) return;
 
-    // emit last debug line in the list
-    this->emitDebugLine(
-        this->debugLines[this->debugLines.size() - 1].startAddress,
-        this->debugLines[this->debugLines.size() - 1].endAddress,
-        this->debugLines[this->debugLines.size() - 1].sourceId,
-        this->debugLines[this->debugLines.size() - 1].line,
-        this->debugLines[this->debugLines.size() - 1].column
+    // emit last metadata line in the list
+    this->emitLineMetadata(
+        this->lineTableMetadata[this->lineTableMetadata.size() - 1].startAddress,
+        this->lineTableMetadata[this->lineTableMetadata.size() - 1].endAddress,
+        this->lineTableMetadata[this->lineTableMetadata.size() - 1].sourceId,
+        this->lineTableMetadata[this->lineTableMetadata.size() - 1].line,
+        this->lineTableMetadata[this->lineTableMetadata.size() - 1].column
     );
 }
 
-void compiler::AssemblyEmitter::emitDebugLine(
+void compiler::AssemblyEmitter::emitLineMetadata(
         const uint32_t startAddress,
         const uint32_t endAddress,
         const uint16_t sourceId,
@@ -413,7 +413,7 @@ void compiler::AssemblyEmitter::handleIRMarker(const IRMarker marker) {
             if (this->currentMethodDef.has_value() &&
                 this->currentMethodDef.value()->type == MethodDefType::USER
             ) {
-                this->debugFunctions.push_back(DebugFunctionInfo{
+                this->functionMetadata.push_back(FunctionMetadata{
                     this->startAddressOfCurrentMethodDecl,
                     this->currentAddress,
                     0,

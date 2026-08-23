@@ -12,19 +12,19 @@
 
 namespace compiler {
 
-    struct DebugSourceInfo {
+    struct SourceMetadata {
         uint16_t sourceId;
         std::string path;
     };
 
-    struct DebugFunctionInfo {
+    struct FunctionMetadata {
         uint32_t startAddress;
         uint32_t endAddress;
         uint16_t sourceId;
         std::string name;
     };
 
-    struct DebugLineInfo {
+    struct LineTableMetadata {
         uint32_t startAddress;
         uint32_t endAddress;
         uint16_t sourceId;
@@ -57,11 +57,11 @@ namespace compiler {
         void emitBuiltinFunctions(const std::unordered_set<BuiltinFunctionId>& requiredBuiltinFunctions);
         void emitBuiltinData(const std::unordered_set<BuiltinDataId>& requiredBuiltinData);
 
-        void emitDebugSection();
-        void emitDebugSourceSection();
-        void emitDebugFunctions();
-        void emitDebugLineTableSection();
-        void emitDebugLine(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const uint32_t line, const uint16_t column);
+        void emitMetadataSection();
+        void emitSourceMetadataSection();
+        void emitFunctionMetadataSection();
+        void emitLineTableMetadataSection();
+        void emitLineMetadata(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const uint32_t line, const uint16_t column);
 
         void handleIRMarker(const IRMarker marker);
 
@@ -72,9 +72,9 @@ namespace compiler {
         std::vector<std::string> assembly;
 
         uint32_t currentAddress = 0;
-        std::vector<DebugSourceInfo> debugSources;
-        std::vector<DebugFunctionInfo> debugFunctions;
-        std::vector<DebugLineInfo> debugLines;
+        std::vector<SourceMetadata> sourceMetadata;
+        std::vector<FunctionMetadata> functionMetadata;
+        std::vector<LineTableMetadata> lineTableMetadata;
 
         uint32_t startAddressOfCurrentMethodDecl = 0;
         std::optional<const MethodDef*> currentMethodDef = std::nullopt;

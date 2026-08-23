@@ -70,9 +70,9 @@ namespace assembler {
         std::vector<uint8_t> convertLabelRefToBytes(const Label& label) const;
         std::vector<uint8_t> convertStringToBytes(const std::string& string) const;
 
-        std::vector<uint8_t> convertDebugSource(const AssemblerDefs::DebugSource& debugSource);
-        std::vector<uint8_t> convertDebugFunction(const AssemblerDefs::DebugFunction& debugFunction);
-        std::vector<uint8_t> convertDebugLine(const AssemblerDefs::DebugLine& debugLine);
+        std::vector<uint8_t> convertSourceMetadata(const AssemblerDefs::SourceMetadata& sourceMetadata);
+        std::vector<uint8_t> convertFunctionMetadata(const AssemblerDefs::FunctionMetadata& functionMetadata);
+        std::vector<uint8_t> convertLineTableMetadata(const AssemblerDefs::LineTableMetadata& lineTableMetadata);
 
         std::vector<uint8_t> pushBackVector(std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const;
 
@@ -81,9 +81,9 @@ namespace assembler {
         std::map<std::string, uint32_t> labelTable;
         uint32_t codeEndLocation = 0;
         uint32_t dataEndLocation = 0;
-        uint32_t debugSourceLength = 0;
-        uint32_t debugFunctionLength = 0;
-        uint32_t debugLineTableLength = 0;
+        uint32_t sourceMetadataLength = 0;
+        uint32_t functionMetadataLength = 0;
+        uint32_t lineTableMetadataLength = 0;
     };
 }
 

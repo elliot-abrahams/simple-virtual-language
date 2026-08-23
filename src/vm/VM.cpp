@@ -118,7 +118,7 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
 
     ErrorContext errorContext;
     if (endOfDataAddress == endOfSourcesAddress && endOfSourcesAddress == endOfLineTableAddress) {
-        // if debug information not present
+        // if metadata information not present
         errorContext = ErrorContext::INTERNAL;
     } else {
         errorContext = ErrorContext::LANGUAGE;
@@ -130,9 +130,9 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
     this->memoryManager.loadBytecodeIntoMemory(&this->runtimeError, bytecode, endOfDataAddress);
     this->memoryManager.setStartOfDataRegion(endOfCodeAddress + 1 - BYTECODE_HEADER_SIZE);
 
-    // decode debug information for runtimeErrorHandler
+    // decode metadata for runtimeErrorHandler
 
-    // traverse debug source info in bytecode
+    // traverse source metadata in bytecode
     uint32_t bytecodeIdx = endOfDataAddress + 1;
     while (bytecodeIdx < endOfSourcesAddress) {
         // read sourceId from bytecode
@@ -161,7 +161,7 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
         this->runtimeErrorHandler.insertSource(sourceId, path);
     }
 
-    // traverse debug function info in bytecode
+    // traverse function metadata in bytecode
     bytecodeIdx = endOfSourcesAddress + 1;
     while (bytecodeIdx < endOfFunctionsAddress) {
         // read start address
@@ -201,7 +201,7 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
 
         bytecodeIdx += functionNameStringSize;
 
-        this->runtimeErrorHandler.insertDebugFunction(
+        this->runtimeErrorHandler.insertFunctionMetadata(
             startAddress,
             endAddress,
             sourceId,
@@ -209,7 +209,7 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
         );
     }
 
-    // traverse debug line table in bytecode
+    // traverse line table metadata in bytecode
     bytecodeIdx = endOfFunctionsAddress + 1;
     while (bytecodeIdx < endOfLineTableAddress) {
         // read start address
@@ -247,7 +247,7 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
         }
         bytecodeIdx += 2;
 
-        this->runtimeErrorHandler.insertDebugLine(
+        this->runtimeErrorHandler.insertLineTableMetadata(
             startAddress,
             endAddress,
             sourceId,

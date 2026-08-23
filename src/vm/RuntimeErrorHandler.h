@@ -10,14 +10,14 @@
 
 class VM;
 
-struct DebugFunctionInfo {
+struct FunctionMetadata {
     const uint32_t startAddress;
     const uint32_t endAddress;
     const uint16_t sourceId;
     const std::string functionName;
 };
 
-struct DebugLineInfo {
+struct LineTableMetadata {
     const uint32_t startAddress;
     const uint32_t endAddress;
     const uint16_t sourceId;
@@ -30,14 +30,14 @@ public:
     RuntimeErrorHandler(VM* vm);
 
     void insertSource(const uint16_t sourceId, const std::string& path);
-    void insertDebugFunction(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const std::string& functionName);
-    void insertDebugLine(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const uint32_t lineNumber, const uint32_t columnNumber);
+    void insertFunctionMetadata(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const std::string& functionName);
+    void insertLineTableMetadata(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const uint32_t lineNumber, const uint32_t columnNumber);
 
     void raiseRuntimeError(const RuntimeError& error, const uint32_t FP) const;
 
 private:
-    const DebugLineInfo* getDebugLineInfo(const uint32_t address) const;
-    const DebugFunctionInfo* getDebugFunctionInfo(const uint32_t address) const;
+    const LineTableMetadata* getLineTableMetadata(const uint32_t address) const;
+    const FunctionMetadata* getFunctionMetadata(const uint32_t address) const;
 
     void outputStackTraceLine(const std::string& functionName, const uint16_t sourceId, const uint32_t line, const uint16_t column) const;
 
@@ -46,9 +46,9 @@ private:
 
     VM* vm;
 
-    std::map<uint32_t, std::string> sources;
-    std::vector<DebugFunctionInfo> functions;
-    std::vector<DebugLineInfo> lineTable;
+    std::map<uint32_t, std::string> sourceMetadata;
+    std::vector<FunctionMetadata> functionMetadata;
+    std::vector<LineTableMetadata> lineTableMetadata;
 };
 
 
