@@ -512,8 +512,6 @@ std::vector<uint8_t> assembler::Assembler::convertDebugSource(const AssemblerDef
 
 std::vector<uint8_t> assembler::Assembler::convertDebugFunction(const AssemblerDefs::DebugFunction &debugFunction) {
     std::vector<uint8_t> bytecode;
-    // function name
-    this->pushBackVector(bytecode, this->convertStringToBytes(debugFunction.name));
 
     // start address
     for (int i = 0; i < 4; i++) {
@@ -523,8 +521,14 @@ std::vector<uint8_t> assembler::Assembler::convertDebugFunction(const AssemblerD
     for (int i = 0; i < 4; i++) {
         bytecode.push_back((debugFunction.endAddress >> (i * 8)) & 0xFF);
     }
+    // source id
+    for (int i = 0; i < 2; i++) {
+        bytecode.push_back(debugFunction.sourceId >> (i * 8) & 0xFF);
+    }
+    // function name
+    this->pushBackVector(bytecode, this->convertStringToBytes(debugFunction.name));
 
-    this->debugFunctionLength += (12 + debugFunction.name.size() - 2); // (-2) to disregard the space for quotation marks
+    this->debugFunctionLength += (14 + debugFunction.name.size() - 2); // (-2) to disregard the space for quotation marks
 
     return bytecode;
 }

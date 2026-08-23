@@ -14,7 +14,7 @@ enum class Type : uint8_t;
 struct Value;
 
 constexpr size_t PAGE_SIZE = 4096;
-constexpr size_t BYTECODE_HEADER_SIZE = 16;
+constexpr size_t BYTECODE_HEADER_SIZE = 20;
 
 enum class MemoryAccessScope {
     CODE,

@@ -42,6 +42,10 @@ public:
 
     const FrameInfo* peekFrameInfo() const;
 
+    bool isCallStackEmpty() const;
+
+    std::vector<uint32_t> getStackTrace(std::optional<RuntimeError>* runtimeError, const uint32_t FP) const;
+
 private:
     MemoryManager *memoryManager;
     std::stack<FrameInfo> frameInfoStack;

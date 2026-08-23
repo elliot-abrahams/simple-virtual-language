@@ -79,3 +79,24 @@ const FrameInfo* CallStackManager::peekFrameInfo() const {
     }
     return &this->frameInfoStack.top();
 }
+
+bool CallStackManager::isCallStackEmpty() const {
+    return this->frameInfoStack.empty();
+}
+
+std::vector<uint32_t> CallStackManager::getStackTrace(std::optional<RuntimeError>* runtimeError, const uint32_t FP) const {
+    std::vector<uint32_t> stackTrace;
+
+    uint32_t currentFrameFP = FP;
+    // for each frame in the call stack
+    for (int stackIdx = 0; stackIdx < this->frameInfoStack.size(); stackIdx++) {
+        // read return address
+        // read return address from memory
+        stackTrace.push_back(this->memoryManager->read32(runtimeError, MemoryAccessScope::CALL_STACK, currentFrameFP + 4));
+
+        // read fp and set it to current frame fp
+        currentFrameFP = this->memoryManager->read32(runtimeError, MemoryAccessScope::CALL_STACK, currentFrameFP);
+    }
+
+    return stackTrace;
+}

@@ -308,7 +308,7 @@ void compiler::AssemblyEmitter::emitDebugSourceSection() {
 void compiler::AssemblyEmitter::emitDebugFunctions() {
     this->emit("");
     this->emitWithSingleIdent(".functions");
-    this->emitWithDoubleIndent("; name    start    end");
+    this->emitWithDoubleIndent(";     start          end       source    name");
 
     for (const auto& functionInfo : this->debugFunctions) {
         std::stringstream startAddressOutput;
@@ -317,7 +317,16 @@ void compiler::AssemblyEmitter::emitDebugFunctions() {
         startAddressOutput << "0x" << std::uppercase << std::hex << std::setw(8) << std::setfill('0') << functionInfo.startAddress;
         endAddressOutput << "0x" << std::uppercase << std::hex << std::setw(8) << std::setfill('0') << functionInfo.endAddress;
 
-        this->emitWithDoubleIndent("\"" + functionInfo.name + "\"    " + startAddressOutput.str() + "    " + endAddressOutput.str());
+        std::string spaces(5, ' ');
+        std::string sourceId = std::to_string(functionInfo.sourceId);
+        std::string sourceIdOutput = spaces.substr(0, (5 - sourceId.size())) + sourceId;
+
+        this->emitWithDoubleIndent(
+            startAddressOutput.str() + "    " +
+            endAddressOutput.str() + "    " +
+            sourceIdOutput + "        " +
+             "\"" + functionInfo.name + "\""
+        );
     }
 }
 
@@ -405,9 +414,10 @@ void compiler::AssemblyEmitter::handleIRMarker(const IRMarker marker) {
                 this->currentMethodDef.value()->type == MethodDefType::USER
             ) {
                 this->debugFunctions.push_back(DebugFunctionInfo{
-                        this->currentMethodDef.value()->name.name.substr(0, this->currentMethodDef.value()->name.name.find('(')), // remove params from label to return the function's identifier
-                        this->startAddressOfCurrentMethodDecl,
-                        this->currentAddress,
+                    this->startAddressOfCurrentMethodDecl,
+                    this->currentAddress,
+                    0,
+                    this->currentMethodDef.value()->name.name.substr(0, this->currentMethodDef.value()->name.name.find('(')), // remove params from label to return the function's identifier
                 });
             }
         }

@@ -162,9 +162,10 @@ namespace AssemblerDefs {
     };
 
     struct DebugFunction {
-        std::string name;
         uint32_t startAddress;
         uint32_t endAddress;
+        uint16_t sourceId;
+        std::string name;
     };
 
     struct DebugLine {

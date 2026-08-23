@@ -69,9 +69,15 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
     }
 
     // read fourth header field (end of line table address)
+    uint32_t endOfFunctionsAddress = 0;
+    for (int i = 0; i < 4; i++) {
+        endOfFunctionsAddress = endOfFunctionsAddress | static_cast<uint32_t>((*bytecode)[i + 12]) << (i * 8);
+    }
+
+    // read fifth header field (end of line table address)
     uint32_t endOfLineTableAddress = 0;
     for (int i = 0; i < 4; i++) {
-        endOfLineTableAddress = endOfLineTableAddress | static_cast<uint32_t>((*bytecode)[i + 12]) << (i * 8);
+        endOfLineTableAddress = endOfLineTableAddress | static_cast<uint32_t>((*bytecode)[i + 16]) << (i * 8);
     }
 
     ErrorContext errorContext;
@@ -119,8 +125,56 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
         this->runtimeErrorHandler.insertSource(sourceId, path);
     }
 
-    // traverse debug line table in bytecode
+    // traverse debug function info in bytecode
     bytecodeIdx = endOfSourcesAddress + 1;
+    while (bytecodeIdx < endOfFunctionsAddress) {
+        // read start address
+        uint32_t startAddress = 0;
+        for (int i = 0; i < 4; i++) {
+            startAddress = startAddress | static_cast<uint32_t>((*bytecode)[bytecodeIdx + i]) << (i * 8);
+        }
+        bytecodeIdx += 4;
+
+        // read end address
+        uint32_t endAddress = 0;
+        for (int i = 0; i < 4; i++) {
+            endAddress = endAddress | static_cast<uint32_t>((*bytecode)[bytecodeIdx + i]) << (i * 8);
+        }
+        bytecodeIdx += 4;
+
+        // read source id
+        uint32_t sourceId = 0;
+        for (int i = 0; i < 2; i++) {
+            sourceId = sourceId | static_cast<uint32_t>((*bytecode)[bytecodeIdx + i]) << (i * 8);
+        }
+        bytecodeIdx += 2;
+
+        // read function name
+        uint32_t functionNameStringSize = 0;
+        for (int i = 0; i < 4; i++) {
+            functionNameStringSize  = functionNameStringSize | static_cast<uint32_t>((*bytecode)[bytecodeIdx + i]) << (i * 8);
+        }
+        bytecodeIdx += 4;
+
+        std::string functionName;
+        functionName.resize(functionNameStringSize);
+
+        for (int i = 0; i < functionNameStringSize; i++) {
+            functionName[i] = static_cast<char>((*bytecode)[bytecodeIdx + i]);
+        }
+
+        bytecodeIdx += functionNameStringSize;
+
+        this->runtimeErrorHandler.insertDebugFunction(
+            startAddress,
+            endAddress,
+            sourceId,
+            functionName
+        );
+    }
+
+    // traverse debug line table in bytecode
+    bytecodeIdx = endOfFunctionsAddress + 1;
     while (bytecodeIdx < endOfLineTableAddress) {
         // read start address
         uint32_t startAddress = 0;
@@ -187,7 +241,7 @@ void VM::handleRuntimeError() const {
         return;
     }
 
-    this->runtimeErrorHandler.raiseRuntimeError(*runtimeError);
+    this->runtimeErrorHandler.raiseRuntimeError(*runtimeError, this->FP);
 }
 
 void VM::setExitStatus(const int status) {

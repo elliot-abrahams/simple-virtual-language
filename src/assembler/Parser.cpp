@@ -469,16 +469,6 @@ std::optional<AssemblerDefs::DebugSource> assembler::Parser::parseDebugSource() 
 }
 
 std::optional<AssemblerDefs::DebugFunction> assembler::Parser::parseDebugFunction() {
-    // parse function name
-    const auto functionNameToken = this->peek();
-
-    if (functionNameToken.type != AssemblerDefs::SVMATokenType::STRING) {
-        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::STRING}, functionNameToken, functionNameToken.lineNumber);
-        return std::nullopt;
-    }
-
-    this->next();
-
     // parse start Address
     const auto startAddressToken = this->peek();
     if (startAddressToken.type != AssemblerDefs::SVMATokenType::HEX) {
@@ -512,10 +502,37 @@ std::optional<AssemblerDefs::DebugFunction> assembler::Parser::parseDebugFunctio
 
     this->next();
 
+    // parse source id
+    const auto sourceIdToken = this->peek();
+    if (sourceIdToken.type != AssemblerDefs::SVMATokenType::NUMBER) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::NUMBER}, sourceIdToken, sourceIdToken.lineNumber);
+        return std::nullopt;
+    }
+
+    // enforce sourceId can be represented as uint16_t
+    if (!fitsUint16(sourceIdToken.value)) {
+        printError("Invalid value for debug source id \'" + sourceIdToken.value + "\"", this->peek().lineNumber);
+        return std::nullopt;
+    }
+    const uint16_t sourceId = static_cast<uint16_t>(std::stoul(sourceIdToken.value));
+
+    this->next();
+
+    // parse function name
+    const auto functionNameToken = this->peek();
+
+    if (functionNameToken.type != AssemblerDefs::SVMATokenType::STRING) {
+        handleUnexpectedTokenError({AssemblerDefs::SVMATokenType::STRING}, functionNameToken, functionNameToken.lineNumber);
+        return std::nullopt;
+    }
+
+    this->next();
+
     return AssemblerDefs::DebugFunction{
-        functionNameToken.value,
         startAddress,
-        endAddress
+        endAddress,
+        sourceId,
+        functionNameToken.value
     };
 }
 
