@@ -49,6 +49,42 @@ void VM::run(const std::vector<uint8_t>* bytecode) {
     }
 }
 
+void VM::run(const std::vector<uint8_t>* bytecode, VMTestScenario testScenario) {
+    // read bytecode
+    this->readBytecode(bytecode);
+
+    // set HB
+    this->HB = bytecode->size() - BYTECODE_HEADER_SIZE;
+    this->HP = this->HB;
+
+    this->heapManager.initialiseHeap(&this->HP);
+
+    Value::runtimeError = &this->runtimeError;
+
+    switch (testScenario) {
+        case VMTestScenario::NEAR_CALL_STACK_OVERFLOW:
+            this->FP = this->SP = 0x000000FF;
+            break;
+
+        case VMTestScenario::NEAR_HEAP_EXHAUSTION:
+            this->HP = 0xFFFFFF00;
+            break;
+
+            default: {}
+    }
+
+    while (running) {
+        this->execute();
+
+        if (this->runtimeError.has_value()) {
+            this->exitCode = 1;
+            return;
+        }
+
+        if (this->exitCode != 0) return;
+    }
+}
+
 void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
     // read first header field (end of code address)
     uint32_t endOfCodeAddress = 0;

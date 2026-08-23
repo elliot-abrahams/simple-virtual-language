@@ -168,6 +168,8 @@ gtest_discover_tests(${SEMANTIC_TESTS})
 set(INTEGRATION_TESTS integration_tests)
 
 set(Integration_Sources
+        integration/RuntimeErrorTests.cpp
+
         integration/builtinFunctionTests/printTests.cpp
         integration/builtinFunctionTests/exitTests.cpp
 
@@ -194,4 +196,7 @@ target_link_libraries(${INTEGRATION_TESTS} PRIVATE
         sv_lib
 )
 
-gtest_discover_tests(${INTEGRATION_TESTS})
+gtest_discover_tests(
+        ${INTEGRATION_TESTS}
+        DISCOVERY_TIMEOUT 30
+)

@@ -13,11 +13,18 @@
 
 constexpr uint32_t MAX_MEMORY_ADDRESS = std::numeric_limits<uint32_t>::max();
 
+enum class VMTestScenario {
+    NONE,
+    NEAR_CALL_STACK_OVERFLOW,
+    NEAR_HEAP_EXHAUSTION
+};
+
 class VM {
 public:
     VM();
 
     void run(const std::vector<uint8_t>* bytecode);
+    void run(const std::vector<uint8_t>* bytecode, VMTestScenario testScenario);
 
     void readBytecode(const std::vector<uint8_t>* bytecode);
 

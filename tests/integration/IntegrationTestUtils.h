@@ -18,7 +18,8 @@ namespace integrationTests {
 
     inline void compileAndRun(
         VM* vm,
-        const std::string& sourceCode
+        const std::string& sourceCode,
+        const VMTestScenario testScenario
     ) {
         const auto path = new std::filesystem::path("Testing");
         auto* tokeniser = new compiler::Tokeniser(sourceCode, path);
@@ -57,7 +58,7 @@ namespace integrationTests {
 
             const auto bytecode = assembler.assembleString(assemblyCode);
 
-            vm->run(&bytecode.value());
+            vm->run(&bytecode.value(), testScenario);
 
         } catch (const CompilerError& e) {
             std::cerr << e.what() << std::endl;
@@ -72,10 +73,10 @@ namespace integrationTests {
         const std::stringstream buffer;
         std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
 
-        auto vm = new VM();
+        VM vm;
 
         try {
-            compileAndRun(vm, sourceCode);
+            compileAndRun(&vm, sourceCode, VMTestScenario::NONE);
         } catch (const CompilerError& e) {
             std::cerr << e.what() << std::endl;
             FAIL();
@@ -89,17 +90,36 @@ namespace integrationTests {
         const int expectedExitCode
     ) {
 
-        auto vm = new VM();
+        VM vm;
 
         try {
-            compileAndRun(vm, sourceCode);
+            compileAndRun(&vm, sourceCode, VMTestScenario::NONE);
         } catch (const CompilerError& e) {
             std::cerr << e.what() << std::endl;
             FAIL();
         }
 
-        ASSERT_EQ(expectedExitCode, vm->getExitStatus());
+        ASSERT_EQ(expectedExitCode, vm.getExitStatus());
 
+    }
+
+    inline void ASSERT_THROWS_RUNTIME_ERROR(
+        const std::string& sourceCode,
+        const RuntimeErrorType runtimeErrorType,
+        const VMTestScenario testScenario
+    ) {
+        VM vm;
+
+        try {
+            compileAndRun(&vm, sourceCode, testScenario);
+        } catch (const CompilerError& e) {
+            std::cerr << e.what() << std::endl;
+            FAIL();
+        }
+
+        ASSERT_TRUE(vm.getRuntimeError()->has_value());
+        ASSERT_EQ(vm.getRuntimeError()->value().type, runtimeErrorType);
+        ASSERT_EQ(vm.getExitStatus(), 1);
     }
 
 }
