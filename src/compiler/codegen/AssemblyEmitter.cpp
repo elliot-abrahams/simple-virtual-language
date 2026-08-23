@@ -21,26 +21,29 @@ std::vector<std::string> compiler::AssemblyEmitter::emitAssembly(const std::vect
 
 void compiler::AssemblyEmitter::emitProgram(const std::vector<AssemblyItem> &assemblyIR, const std::unordered_set<BuiltinFunctionId> &requiredBuiltinFunctions, const std::unordered_set<BuiltinDataId> &requiredBuiltinData) {
     for (const auto& assemblyItem : assemblyIR) {
-
         // DIRECTIVE
         if (std::holds_alternative<Directive>(assemblyItem)) {
             this->emitDirective(std::get<Directive>(assemblyItem), requiredBuiltinFunctions);
 
-            // INSTRUCTION
+        // INSTRUCTION
         } else if (std::holds_alternative<Instruction>(assemblyItem)) {
             this->emitInstruction(std::get<Instruction>(assemblyItem));
 
-            // LABEL_DEF
+        // LABEL_DEF
         } else if (std::holds_alternative<LabelDef>(assemblyItem)) {
             this->emitWithSingleIdent(this->emitLabelDef(std::get<LabelDef>(assemblyItem)));
 
-            // METHOD_DEF
+        // METHOD_DEF
         } else if (std::holds_alternative<MethodDef>(assemblyItem)) {
             this->emitMethodDef(std::get<MethodDef>(assemblyItem));
 
-            // DATA_DEF
+        // DATA_DEF
         } else if (std::holds_alternative<DataDef>(assemblyItem)) {
             this->emitDataDef(std::get<DataDef>(assemblyItem));
+
+        // IR_MARKER
+        } else if (std::holds_alternative<IRMarker>(assemblyItem)) {
+            this->handleIRMarker(std::get<IRMarker>(assemblyItem));
         }
     }
 
@@ -48,7 +51,6 @@ void compiler::AssemblyEmitter::emitProgram(const std::vector<AssemblyItem> &ass
 }
 
 void compiler::AssemblyEmitter::emitDirective(const Directive directive, const std::unordered_set<BuiltinFunctionId>& requiredBuiltinFunctions) {
-
     switch (directive) {
         case Directive::DATA:
 
@@ -58,7 +60,7 @@ void compiler::AssemblyEmitter::emitDirective(const Directive directive, const s
     }
 }
 
-void compiler::AssemblyEmitter::emitInstruction(const Instruction instruction) {
+void compiler::AssemblyEmitter::emitInstruction(const Instruction &instruction) {
     const uint32_t startAddress = this->currentAddress;
     std::string assemblyLine = "";
 
@@ -136,9 +138,10 @@ std::string compiler::AssemblyEmitter::emitOpcode(const Opcode opcode) {
 
         case Opcode::CONV: return "conv";
     }
+    return "";
 }
 
-std::string compiler::AssemblyEmitter::emitOperand(const Operand operand) {
+std::string compiler::AssemblyEmitter::emitOperand(const Operand &operand) {
     // ASSEMBLY TYPE
     if (std::holds_alternative<AssemblyType>(operand)) {
         return this->emitType(std::get<AssemblyType>(operand));
@@ -159,6 +162,7 @@ std::string compiler::AssemblyEmitter::emitOperand(const Operand operand) {
     if (std::holds_alternative<NativeRef>(operand)) {
         return this->emitNativeRef(std::get<NativeRef>(operand));
     }
+    return "";
 }
 
 std::string compiler::AssemblyEmitter::emitNumber(const Number number) {
@@ -186,6 +190,7 @@ std::string compiler::AssemblyEmitter::emitNumber(const Number number) {
         this->currentAddress += 8;
         return std::to_string(std::get<double>(number.value));
     }
+    return "";
 }
 
 std::string compiler::AssemblyEmitter::emitNativeRef(const NativeRef nativeRef) {
@@ -195,6 +200,7 @@ std::string compiler::AssemblyEmitter::emitNativeRef(const NativeRef nativeRef) 
         case NativeRef::PRINT: return "print";
         case NativeRef::PRINT_STR: return "print_str";
     }
+    return "";
 }
 
 std::string compiler::AssemblyEmitter::emitType(const AssemblyType assemblyType) {
@@ -209,14 +215,17 @@ std::string compiler::AssemblyEmitter::emitType(const AssemblyType assemblyType)
         case AssemblyType::PTR: return "ptr";
         case AssemblyType::STR: return "str";
     }
+    return "";
 }
 
-std::string compiler::AssemblyEmitter::emitLabelDef(const LabelDef labelDef) {
+std::string compiler::AssemblyEmitter::emitLabelDef(const LabelDef &labelDef) {
     return "$" + labelDef.name + ":";
 }
 
-void compiler::AssemblyEmitter::emitMethodDef(const MethodDef methodDef) {
+void compiler::AssemblyEmitter::emitMethodDef(const MethodDef &methodDef) {
     const uint32_t startAddress = this->currentAddress;
+    this->startAddressOfCurrentMethodDecl = this->currentAddress;
+    this->currentMethodDef = &methodDef;
     this->currentAddress += 5;
     this->emit("");
     this->emit("def " + this->emitLabelDef(methodDef.name));
@@ -234,7 +243,7 @@ void compiler::AssemblyEmitter::emitMethodDef(const MethodDef methodDef) {
     });
 }
 
-void compiler::AssemblyEmitter::emitDataDef(const DataDef dataDef) {
+void compiler::AssemblyEmitter::emitDataDef(const DataDef &dataDef) {
     std::string dataValue = "";
 
     if (std::holds_alternative<Number>(dataDef.value)) {
@@ -278,12 +287,13 @@ void compiler::AssemblyEmitter::emitDebugSection() {
     this->emit(".debug");
 
     this->emitDebugSourceSection();
+    this->emitDebugFunctions();
     this->emitDebugLineTableSection();
 }
 
 void compiler::AssemblyEmitter::emitDebugSourceSection() {
     this->emit("");
-    this->emitWithSingleIdent(".source");
+    this->emitWithSingleIdent(".sources");
 
     // for each source info entry
     for (const auto& sourceInfo : this->debugSources) {
@@ -292,6 +302,22 @@ void compiler::AssemblyEmitter::emitDebugSourceSection() {
         std::string spaces(5 - sourceId.length(), ' ');
 
         this->emitWithDoubleIndent(spaces + sourceId + "    \"" + sourceInfo.path + "\"");
+    }
+}
+
+void compiler::AssemblyEmitter::emitDebugFunctions() {
+    this->emit("");
+    this->emitWithSingleIdent(".functions");
+    this->emitWithDoubleIndent("; name    start    end");
+
+    for (const auto& functionInfo : this->debugFunctions) {
+        std::stringstream startAddressOutput;
+        std::stringstream endAddressOutput;
+        // format string to represent uint32_t as "0x00000000"
+        startAddressOutput << "0x" << std::uppercase << std::hex << std::setw(8) << std::setfill('0') << functionInfo.startAddress;
+        endAddressOutput << "0x" << std::uppercase << std::hex << std::setw(8) << std::setfill('0') << functionInfo.endAddress;
+
+        this->emitWithDoubleIndent("\"" + functionInfo.name + "\"    " + startAddressOutput.str() + "    " + endAddressOutput.str());
     }
 }
 
@@ -370,6 +396,22 @@ void compiler::AssemblyEmitter::emitDebugLine(
         spaces.substr(0, (10 - lineOutput.length())) + lineOutput + "    " +
         spaces.substr(0, (5 - columnOutput.length())) + columnOutput
     );
+}
+
+void compiler::AssemblyEmitter::handleIRMarker(const IRMarker marker) {
+    switch (marker) {
+        case IRMarker::METHOD_DEF_END: {
+            if (this->currentMethodDef.has_value() &&
+                this->currentMethodDef.value()->type == MethodDefType::USER
+            ) {
+                this->debugFunctions.push_back(DebugFunctionInfo{
+                        this->currentMethodDef.value()->name.name.substr(0, this->currentMethodDef.value()->name.name.find('(')), // remove params from label to return the function's identifier
+                        this->startAddressOfCurrentMethodDecl,
+                        this->currentAddress,
+                });
+            }
+        }
+    }
 }
 
 void compiler::AssemblyEmitter::emit(const std::string& assemblyLine) {

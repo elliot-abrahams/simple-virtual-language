@@ -37,8 +37,8 @@ void compiler::AssemblyGenerator::compileUserDefinedFunction(const ast::Function
     for (auto& parameter : functionDecl.parameters) {
         parameterTypes.push_back(parameter->typeInfo->type);
     }
-
     this->compileFunctionDeclaration(
+        functionDecl.functionSymbol->builtinId == BuiltinFunctionId::NONE ? MethodDefType::USER : MethodDefType::BUILTIN,
         functionDecl.functionSymbol->label,
         *functionDecl.body,
         functionDecl.parameters.size(),
@@ -51,13 +51,14 @@ void compiler::AssemblyGenerator::compileUserDefinedFunction(const ast::Function
     );
 }
 
-void compiler::AssemblyGenerator::compileFunctionDeclaration(const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefaultReturn, const uint32_t line, const uint16_t column, const uint32_t functionBodyEndLine, const uint16_t functionBodyEndColumn) {
+void compiler::AssemblyGenerator::compileFunctionDeclaration(const MethodDefType methodType, const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefaultReturn, const uint32_t line, const uint16_t column, const uint32_t functionBodyEndLine, const uint16_t functionBodyEndColumn) {
     // compile function header
 
     this->emit(MethodDef{
         functionIdentifier,
         numberOfArguments,
         numberOfLocals,
+        methodType,
         SourceLocation{0, line, column}
     });
 
@@ -75,6 +76,8 @@ void compiler::AssemblyGenerator::compileFunctionDeclaration(const std::string& 
             }
         );
     }
+
+    this->emit(IRMarker::METHOD_DEF_END);
 }
 
 void compiler::AssemblyGenerator::compilePendingScopeFunctions() {
@@ -82,6 +85,7 @@ void compiler::AssemblyGenerator::compilePendingScopeFunctions() {
         const auto block = this->pendingScopeFunctions.at(scopeCounter);
         // compile a function declaration for this scope
         this->compileFunctionDeclaration(
+            MethodDefType::SCOPE,
             generateScopeFunctionIdentifier(scopeCounter),
             *block,
             0,

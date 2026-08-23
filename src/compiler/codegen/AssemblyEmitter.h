@@ -17,6 +17,12 @@ namespace compiler {
         std::string path;
     };
 
+    struct DebugFunctionInfo {
+        std::string name;
+        uint32_t startAddress;
+        uint32_t endAddress;
+    };
+
     struct DebugLineInfo {
         uint32_t startAddress;
         uint32_t endAddress;
@@ -35,25 +41,28 @@ namespace compiler {
         void emitProgram(const std::vector<AssemblyItem>& assemblyIR, const std::unordered_set<BuiltinFunctionId>& requiredBuiltinFunctions, const std::unordered_set<BuiltinDataId>& requiredBuiltinData);
 
         void emitDirective(const Directive directive, const std::unordered_set<BuiltinFunctionId>& requiredBuiltinFunctions);
-        void emitInstruction(const Instruction instruction);
+        void emitInstruction(const Instruction &instruction);
 
         std::string emitOpcode(const Opcode opcode);
-        std::string emitOperand(const Operand operand);
+        std::string emitOperand(const Operand &operand);
         std::string emitNumber(const Number number);
         std::string emitNativeRef(const NativeRef nativeRef);
         std::string emitType(const AssemblyType assemblyType);
 
-        std::string emitLabelDef(const LabelDef labelDef);
-        void emitMethodDef(const MethodDef methodDef);
-        void emitDataDef(const DataDef dataDef);
+        static std::string emitLabelDef(const LabelDef &labelDef);
+        void emitMethodDef(const MethodDef &methodDef);
+        void emitDataDef(const DataDef &dataDef);
 
         void emitBuiltinFunctions(const std::unordered_set<BuiltinFunctionId>& requiredBuiltinFunctions);
         void emitBuiltinData(const std::unordered_set<BuiltinDataId>& requiredBuiltinData);
 
         void emitDebugSection();
         void emitDebugSourceSection();
+        void emitDebugFunctions();
         void emitDebugLineTableSection();
         void emitDebugLine(const uint32_t startAddress, const uint32_t endAddress, const uint16_t sourceId, const uint32_t line, const uint16_t column);
+
+        void handleIRMarker(const IRMarker marker);
 
         void emit(const std::string& assemblyLine);
         void emitWithSingleIdent(const std::string& assemblyLine);
@@ -63,7 +72,11 @@ namespace compiler {
 
         uint32_t currentAddress = 0;
         std::vector<DebugSourceInfo> debugSources;
+        std::vector<DebugFunctionInfo> debugFunctions;
         std::vector<DebugLineInfo> debugLines;
+
+        uint32_t startAddressOfCurrentMethodDecl = 0;
+        std::optional<const MethodDef*> currentMethodDef = std::nullopt;
     };
 }
 

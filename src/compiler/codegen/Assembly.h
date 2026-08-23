@@ -77,10 +77,20 @@ namespace compiler {
         DATA
     };
 
+    enum class IRMarker {
+        METHOD_DEF_END
+    };
+
     enum class NativeRef {
         EXIT,
         PRINT,
         PRINT_STR
+    };
+
+    enum class MethodDefType {
+        USER,
+        SCOPE,
+        BUILTIN
     };
 
     struct Number {
@@ -123,15 +133,16 @@ namespace compiler {
         const Opcode opcode;
         const std::vector<Operand> operands;
 
-        std::optional<SourceLocation> source;
+        const std::optional<SourceLocation> source;
     };
 
     struct MethodDef {
         const LabelDef name;
         const uint8_t numberOfArguments;
         const uint32_t numberOfLocals;
+        const MethodDefType type;
 
-        std::optional<SourceLocation> source;
+        const std::optional<SourceLocation> source;
     };
 
     using DataValue = std::variant<std::string, Number>;
@@ -147,7 +158,8 @@ namespace compiler {
         Instruction,
         LabelDef,
         MethodDef,
-        DataDef
+        DataDef,
+        IRMarker
     >;
 
 }

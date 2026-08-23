@@ -19,7 +19,7 @@ namespace compiler {
 
     private:
         void compileUserDefinedFunction(const ast::FunctionDecl& functionDecl);
-        void compileFunctionDeclaration(const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefualtReturn, const uint32_t line, const uint16_t column, const uint32_t functionBodyEndLine, const uint16_t functionBodyEndColumn);
+        void compileFunctionDeclaration(const MethodDefType methodType, const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefualtReturn, const uint32_t line, const uint16_t column, const uint32_t functionBodyEndLine, const uint16_t functionBodyEndColumn);
         void compilePendingScopeFunctions();
 
         void compileStm(Scope* scope, const ast::Stm& stm);
