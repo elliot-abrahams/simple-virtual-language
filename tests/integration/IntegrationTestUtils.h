@@ -44,12 +44,9 @@ namespace integrationTests {
             const auto codeGenerator = new compiler::AssemblyGenerator(symbolTable);
             auto assemblyIR = codeGenerator->compileProgram(*program);
 
-            auto assemblyEmitter = new compiler::AssemblyEmitter();
+            auto assemblyEmitter = new compiler::AssemblyEmitter(path->string());
 
             const auto code = assemblyEmitter->emitAssembly(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
-
-            delete codeGenerator;
-            delete assemblyEmitter;
 
             std::string assemblyCode;
             for (std::string line : code) {

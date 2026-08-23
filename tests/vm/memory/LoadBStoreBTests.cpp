@@ -80,7 +80,7 @@ TEST(LOADB_STOREB, INVALID_F32) {
         storeB
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(LOADB_STOREB, INVALID_F64) {
@@ -92,7 +92,7 @@ TEST(LOADB_STOREB, INVALID_F64) {
         storeB
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(LOADB_STOREB, INVALID_PTR) {
@@ -107,7 +107,7 @@ TEST(LOADB_STOREB, INVALID_PTR) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(LOADB_STOREB, INVALID_LOADB_UNDERFLOW) {
@@ -115,7 +115,7 @@ TEST(LOADB_STOREB, INVALID_LOADB_UNDERFLOW) {
         loadB
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(LOADB_STOREB, INVALID_STOREB_UNDERFLOW_BY_ONE) {
@@ -124,7 +124,7 @@ TEST(LOADB_STOREB, INVALID_STOREB_UNDERFLOW_BY_ONE) {
         storeB
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(LOADB_STOREB, INVALID_LOADB_UNDERFLOW_BY_TWO) {
@@ -132,5 +132,5 @@ TEST(LOADB_STOREB, INVALID_LOADB_UNDERFLOW_BY_TWO) {
         storeB
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

@@ -100,5 +100,5 @@ TEST(DUP, INVALID_UNDERFLOW) {
         dup
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

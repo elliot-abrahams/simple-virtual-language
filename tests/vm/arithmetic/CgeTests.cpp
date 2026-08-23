@@ -156,7 +156,7 @@ TEST(CGE, INVALID_I32_UI32) {
         cge
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CGE, INVALID_I64_UI64) {
@@ -166,7 +166,7 @@ TEST(CGE, INVALID_I64_UI64) {
         cge
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CGE, INVALID_F32_F64) {
@@ -176,7 +176,7 @@ TEST(CGE, INVALID_F32_F64) {
         cge
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CGE, INVALID_I32_PTR) {
@@ -189,7 +189,7 @@ TEST(CGE, INVALID_I32_PTR) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CGE, INVALID_UNDERFLOW_BY_ONE) {
@@ -198,7 +198,7 @@ TEST(CGE, INVALID_UNDERFLOW_BY_ONE) {
         cge
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CGE, INVALID_UNDERFLOW_BY_TWO) {
@@ -206,5 +206,5 @@ TEST(CGE, INVALID_UNDERFLOW_BY_TWO) {
         cge
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

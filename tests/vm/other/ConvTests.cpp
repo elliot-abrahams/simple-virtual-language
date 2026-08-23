@@ -575,7 +575,7 @@ TEST(CONV, INVALID_I32_TO_PTR_NEGATIVE) {
         conv ptr
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_I64_TO_PTR_NEGATIVE) {
@@ -584,7 +584,7 @@ TEST(CONV, INVALID_I64_TO_PTR_NEGATIVE) {
         conv ptr
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_I64_TO_PTR_OUT_OF_RANGE) {
@@ -593,7 +593,7 @@ TEST(CONV, INVALID_I64_TO_PTR_OUT_OF_RANGE) {
         conv ptr
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_UI64_TO_PTR_OUT_OF_RANGE) {
@@ -602,7 +602,7 @@ TEST(CONV, INVALID_UI64_TO_PTR_OUT_OF_RANGE) {
         conv ptr
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_F32_TO_PTR) {
@@ -611,7 +611,7 @@ TEST(CONV, INVALID_F32_TO_PTR) {
         conv ptr
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_F64_TO_UI64_OUT_OF_RANGE) {
@@ -620,7 +620,7 @@ TEST(CONV, INVALID_F64_TO_UI64_OUT_OF_RANGE) {
         conv ui64
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
     }
 
 TEST(CONV, INVALID_F64_TO_PTR) {
@@ -629,7 +629,7 @@ TEST(CONV, INVALID_F64_TO_PTR) {
         conv ptr
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_F32_TO_I32_OUT_OF_RANGE) {
@@ -638,7 +638,7 @@ TEST(CONV, INVALID_F32_TO_I32_OUT_OF_RANGE) {
         conv i32
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_F32_TO_UI32_OUT_OF_RANGE) {
@@ -647,7 +647,7 @@ TEST(CONV, INVALID_F32_TO_UI32_OUT_OF_RANGE) {
         conv ui32
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_F32_TO_UI64_OUT_OF_RANGE) {
@@ -656,7 +656,7 @@ TEST(CONV, INVALID_F32_TO_UI64_OUT_OF_RANGE) {
         conv ui64
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_F64_TO_I32_OUT_OF_RANGE) {
@@ -665,7 +665,7 @@ TEST(CONV, INVALID_F64_TO_I32_OUT_OF_RANGE) {
         conv i32
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_F64_TO_UI32_OUT_OF_RANGE) {
@@ -674,7 +674,7 @@ TEST(CONV, INVALID_F64_TO_UI32_OUT_OF_RANGE) {
         conv ui32
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_PTR_TO_F32) {
@@ -686,7 +686,7 @@ TEST(CONV, INVALID_PTR_TO_F32) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_PTR_TO_F64) {
@@ -698,7 +698,7 @@ TEST(CONV, INVALID_PTR_TO_F64) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CONV, INVALID_UNDERFLOW) {
@@ -706,5 +706,5 @@ TEST(CONV, INVALID_UNDERFLOW) {
         conv i32
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

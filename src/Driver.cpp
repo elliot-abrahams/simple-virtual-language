@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include "compiler/Compiler.h"
+#include "include/Error.h"
 
 
 int Driver::runCLI(int argc, char* argv[]) {
@@ -128,9 +129,10 @@ int Driver::execute(const char* filePath) {
     try {
         const auto vm = new VM();
         vm->run(&bytecode);
+        vm->handleRuntimeError();
         exit(vm->getExitStatus());
-    } catch (const VMError& e) {
-        std::cerr << "VMError: " << e.what() << std::endl;
+    } catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
         return 1;
     }
 }
@@ -225,9 +227,10 @@ int Driver::run(const char *filePath, const bool outputAssembly, const bool outp
     try {
         const auto vm = new VM();
         vm->run(&bytecode.value());
+        vm->handleRuntimeError();
         exit(vm->getExitStatus());
-    } catch (const VMError& e) {
-        std::cerr << "VMError: " << e.what() << std::endl;
+    } catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
         return 1;
     }
 }

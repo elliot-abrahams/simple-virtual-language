@@ -211,5 +211,5 @@ TEST(JEZ, INVALID_UNDERFLOW) {
         halt
     $l:
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

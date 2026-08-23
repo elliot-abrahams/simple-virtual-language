@@ -155,7 +155,7 @@ TEST(CEQ, INVALID_I32_UI32) {
         ceq
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CEQ, INVALID_I64_UI64) {
@@ -165,7 +165,7 @@ TEST(CEQ, INVALID_I64_UI64) {
         ceq
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CEQ, INVALID_F32_F64) {
@@ -175,7 +175,7 @@ TEST(CEQ, INVALID_F32_F64) {
         ceq
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CEQ, INVALID_I32_PTR) {
@@ -188,7 +188,7 @@ TEST(CEQ, INVALID_I32_PTR) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CEQ, INVALID_UNDERFLOW_BY_ONE) {
@@ -197,7 +197,7 @@ TEST(CEQ, INVALID_UNDERFLOW_BY_ONE) {
         ceq
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CEQ, INVALID_UNDERFLOW_BY_TWO) {
@@ -205,5 +205,5 @@ TEST(CEQ, INVALID_UNDERFLOW_BY_TWO) {
         ceq
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

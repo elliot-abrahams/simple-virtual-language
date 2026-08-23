@@ -3,12 +3,13 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <optional>
 #include <variant>
 #include <vector>
 
 #include "TypeConversions.h"
-#include "VMError.h"
 #include "../include/ISA.h"
+#include "../include/Error.h"
 
 
 constexpr size_t MAX_OPERAND_STACK_SIZE = 1024;
@@ -19,6 +20,9 @@ struct Value
 {
     ISA::Type type;
     uint64_t rawValue;
+
+    inline static std::optional<RuntimeError>* runtimeError;
+    inline static ErrorContext errorContext;
 
     TypedValue toTyped() const {
         switch (type) {
@@ -39,20 +43,11 @@ struct Value
                 return d;
             }
             default:
-                throw VMError("Invalid type in operand stack");
-        }
-    }
-
-    int toInt() const {
-        switch (type) {
-            case ISA::Type::I32:
-            case ISA::Type::UI32:
-            case ISA::Type::I64:
-            case ISA::Type::UI64:
-                return static_cast<int>(rawValue);
-
-            default:
-                throw VMError("Invalid type in operand stack");
+                *runtimeError = RuntimeError{
+                    RuntimeErrorType::INTERNAL,
+                    "unexpected type on the operand stack"
+                };
+                return TypedValue{};
         }
     }
 
@@ -85,10 +80,7 @@ struct Value
 
             // block conversions between ptr and f32 / f64
             if (nonPtrType == ISA::Type::F32 || nonPtrType == ISA::Type::F64) {
-                throw VMError(std::string("ERROR: Invalid types for instruction: conv") +
-                    "\nTypes: " + TypeConversions::typeToString(static_cast<uint8_t>(this->type)) +
-                    ", " + TypeConversions::typeToString(static_cast<uint8_t>(newType))
-                );
+                handleInvalidOperandTypesForConversion(newType);
             }
 
             if (this->type != ISA::Type::PTR) {
@@ -125,7 +117,7 @@ struct Value
                         break;
 
                     default:
-                        throw VMError("Invalid conversion");
+                        handleInvalidOperandTypesForConversion(newType);
                 }
             }
         }
@@ -189,24 +181,42 @@ struct Value
                         case ISA::Type::F64:
                             return TypeConversions::F64ToRaw(static_cast<double>(value));
                         default:
-                            throw VMError("Invalid conversion type");
+                            this->handleInvalidOperandTypesForConversion(newType);
                     }
-
                 }, typedValue);
         } catch (std::out_of_range) {
-            throw VMError("ERROR: Out of range during conversion");
+            this->handleOutOfRangeConversionError(newType);
         }
 
         type = newType;
     }
 
+    void handleInvalidOperandTypesForConversion(const ISA::Type newType) {
+        *runtimeError = RuntimeError{
+            RuntimeErrorType::INTERNAL,
+            "cannot convert value from type " +
+                TypeConversions::typeToString(static_cast<uint8_t>(this->type)) +
+                " to type " +
+                TypeConversions::typeToString(static_cast<uint8_t>(newType))
+        };
+    }
+
     void handleOutOfRangeConversionError(const ISA::Type& newType) {
-        std::string errorMessage = "";
-        errorMessage += "ERROR: Out of range during conversion from " +
-            TypeConversions::typeToString(static_cast<uint8_t>(this->type)) +
-            " to " +
-            TypeConversions::typeToString(static_cast<uint8_t>(newType));
-        throw VMError(errorMessage);
+        if (errorContext == ErrorContext::LANGUAGE) {
+            *runtimeError = RuntimeError {
+                RuntimeErrorType::OUT_OF_RANGE,
+                "value cannot be represented by the target type"
+            };
+
+        } else {
+            *runtimeError = RuntimeError {
+                RuntimeErrorType::INTERNAL,
+                "out of range during conversion from type " +
+                TypeConversions::typeToString(static_cast<uint8_t>(this->type)) +
+                " to type " +
+                TypeConversions::typeToString(static_cast<uint8_t>(newType))
+            };
+        }
     }
 };
 
@@ -215,12 +225,12 @@ class OperandStack {
 public:
     OperandStack();
 
-    Value pop();
+    Value pop(std::optional<RuntimeError>* runtimeError);
 
-    Value peek() const;
+    Value peek(std::optional<RuntimeError>* runtimeError) const;
 
-    void push(const uint8_t typeOperand, const uint64_t rawValue);
-    void push(const Value value);
+    void push(std::optional<RuntimeError>* runtimeError, const uint8_t typeOperand, const uint64_t rawValue);
+    void push(std::optional<RuntimeError>* runtimeError, const Value value);
 
     const std::vector<Value>* getStack() const;
 

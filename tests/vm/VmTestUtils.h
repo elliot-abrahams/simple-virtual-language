@@ -54,15 +54,15 @@ void EXPECT_N_OPERANDS_OF_SAME_TYPE_VM_STACK_EQ(
     }
 }
 
-inline void EXPECT_VM_ERROR(const std::string& source) {
+inline void EXPECT_INTERNAL_RUNTIME_ERROR(const std::string& source) {
     assembler::Assembler assembler;
     VM vm;
 
     const auto bytecode = assembler.assembleString(source);
 
-    EXPECT_THROW({
-        vm.run(&bytecode.value());
-    }, VMError);
+    vm.run(&bytecode.value());
+
+    ASSERT_TRUE(vm.getRuntimeError()->has_value());
 }
 
 template<typename T>
@@ -95,7 +95,7 @@ void EXPECT_OPERAND_VM_STACK_EQ_WITH_CONSOLE_INPUT(
     }
 }
 
-inline void EXPECT_VM_ERROR_WITH_CONSOLE_INPUT(
+inline void EXPECT_INTERNAL_RUNTIME_ERROR_WITH_CONSOLE_INPUT(
     const std::string& source,
     const std::string& consoleInput
 ) {
@@ -107,9 +107,9 @@ inline void EXPECT_VM_ERROR_WITH_CONSOLE_INPUT(
 
     const auto bytecode = assembler.assembleString(source);
 
-    EXPECT_THROW({
-        vm.run(&bytecode.value());
-    }, VMError);
+    vm.run(&bytecode.value());
+
+    ASSERT_TRUE(vm.getRuntimeError()->has_value());
 
     std::cin.rdbuf(oldCin);
 }

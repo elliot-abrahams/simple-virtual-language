@@ -9,20 +9,23 @@
 
 class NativeFunctionManager {
 public:
-    static void invoke(VM* vm, const uint8_t id) {
+    static void invoke(VM* vm, std::optional<RuntimeError>* runtimeError, const uint8_t id) {
         switch (id) {
-            case 0x00: executeExit(vm); break;
-            case 0x01: executePrint(vm); break;
-            case 0x03: executePrintStr(vm); break;
+            case 0x00: executeExit(vm, runtimeError); break;
+            case 0x01: executePrint(vm, runtimeError); break;
+            case 0x03: executePrintStr(vm, runtimeError); break;
 
             default:
-                throw VMError("Unknown native function ID");
+                *runtimeError = RuntimeError{
+                    RuntimeErrorType::INTERNAL,
+                    "native call ID " + std::to_string(id) + " does not correspond to a defined function"
+                };
         }
     }
 
 private:
-    static void executeExit(VM* vm) {
-        const Value exitStatus = vm->getOperandStack()->pop();
+    static void executeExit(VM* vm, std::optional<RuntimeError>* runtimeError) {
+        const Value exitStatus = vm->getOperandStack()->pop(runtimeError);
 
         // type of exitStatus must be integer
         vm->checkType(
@@ -34,11 +37,14 @@ private:
                 static_cast<uint8_t>(ISA::Type::UI64)
             },
             static_cast<uint8_t>(exitStatus.type));
-        vm->setExitStatus(exitStatus.toInt());
+
+        if (vm->getRuntimeError()->has_value()) return;
+
+        vm->setExitStatus(static_cast<int>(exitStatus.rawValue));
     }
 
-    static void executePrint(VM* vm) {
-        const Value value = vm->getOperandStack()->pop();
+    static void executePrint(VM* vm, std::optional<RuntimeError>* runtimeError) {
+        const Value value = vm->getOperandStack()->pop(runtimeError);
 
         // type of value must be either integer or float
         vm->checkType(
@@ -53,6 +59,8 @@ private:
             },
             static_cast<uint8_t>(value.type));
 
+        if (vm->getRuntimeError()->has_value()) return;
+
         switch (static_cast<ISA::Type>(value.type)) {
             case ISA::Type::UI32:
             case ISA::Type::UI64:
@@ -65,14 +73,19 @@ private:
             case ISA::Type::F64: std::cout << formatFloatString(TypeConversions::rawToF64(value.rawValue)); break;
 
             default:
-                throw VMError("Incorrect operand type for native function 'print'");
+                *runtimeError = RuntimeError{
+                    RuntimeErrorType::INTERNAL,
+                    "invalid operand type for native function 'print'"
+                };
         }
     }
 
-    static void executePrintStr(VM* vm) {
-        const Value value = vm->getOperandStack()->pop();
+    static void executePrintStr(VM* vm, std::optional<RuntimeError>* runtimeError) {
+        const Value value = vm->getOperandStack()->pop(runtimeError);
         // type of value must be ptr
         vm->checkType("native print_str", {static_cast<uint8_t>(ISA::Type::PTR)}, static_cast<uint8_t>(value.type));
+
+        if (vm->getRuntimeError()->has_value()) return;
 
         std::cout << vm->readStringFromMemory(value.rawValue);
     }
@@ -93,7 +106,7 @@ private:
                 formattedString.find('E') == std::string::npos) {
 
                 formattedString += ".0";
-                }
+            }
 
         } else {
             while (formattedString.back() == '0') {

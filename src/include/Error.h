@@ -3,6 +3,25 @@
 #include <stdexcept>
 #include <string>
 
+enum class ErrorContext {
+    LANGUAGE,
+    INTERNAL
+};
+
+enum class RuntimeErrorType {
+    DIVISION_BY_ZERO,
+    OUT_OF_RANGE,
+    STACK_OVERFLOW,
+    OUT_OF_MEMORY,
+
+    INTERNAL
+};
+
+struct RuntimeError {
+    RuntimeErrorType type;
+    std::string message;
+};
+
 struct CompilerError : std::runtime_error {
     std::string file;
     size_t line;

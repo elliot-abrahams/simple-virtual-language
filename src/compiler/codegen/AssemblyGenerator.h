@@ -35,7 +35,7 @@ namespace compiler {
 
         void compileExpr(Scope* scope, const ast::Expr& expr);
         void compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& expr);
-        void compileBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorinfo);
+        void compileBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo);
         void compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr);
         void compileCastExpr(Scope* scope, const ast::ExprCast& castExpr);
 

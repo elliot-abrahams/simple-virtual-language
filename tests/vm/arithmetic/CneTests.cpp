@@ -156,7 +156,7 @@ TEST(CNE, INVALID_I32_UI32) {
         cne
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CNE, INVALID_I64_UI64) {
@@ -166,7 +166,7 @@ TEST(CNE, INVALID_I64_UI64) {
         cne
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CNE, INVALID_F32_F64) {
@@ -176,7 +176,7 @@ TEST(CNE, INVALID_F32_F64) {
         cne
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CNE, INVALID_I32_PTR) {
@@ -189,7 +189,7 @@ TEST(CNE, INVALID_I32_PTR) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CNE, INVALID_UNDERFLOW_BY_ONE) {
@@ -198,7 +198,7 @@ TEST(CNE, INVALID_UNDERFLOW_BY_ONE) {
         cne
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CNE, INVALID_UNDERFLOW_BY_TWO) {
@@ -206,5 +206,5 @@ TEST(CNE, INVALID_UNDERFLOW_BY_TWO) {
         cne
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

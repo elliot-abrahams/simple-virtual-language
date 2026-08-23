@@ -79,7 +79,7 @@ TEST(MOD, INVALID_I32_ZERO) {
         mod
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(MOD, INVALID_PTR_PTR) {
@@ -92,7 +92,7 @@ TEST(MOD, INVALID_PTR_PTR) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(MOD, INVALID_I32_F32) {
@@ -102,7 +102,7 @@ TEST(MOD, INVALID_I32_F32) {
         mod
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(MOD, INVALID_UI64_F64) {
@@ -112,7 +112,7 @@ TEST(MOD, INVALID_UI64_F64) {
         mod
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(MOD, INVALID_PTR_I64) {
@@ -125,7 +125,7 @@ TEST(MOD, INVALID_PTR_I64) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(MOD, INVALID_UNDERFLOW_BY_ONE) {
@@ -134,7 +134,7 @@ TEST(MOD, INVALID_UNDERFLOW_BY_ONE) {
         mod
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(MOD, INVALID_UNDERFLOW_BY_TWO) {
@@ -142,5 +142,5 @@ TEST(MOD, INVALID_UNDERFLOW_BY_TWO) {
         mod
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

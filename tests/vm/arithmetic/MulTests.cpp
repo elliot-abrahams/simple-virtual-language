@@ -77,7 +77,7 @@ TEST(MUL, INVALID_UNDERFLOW_BY_ONE) {
         mul
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(MUL, INVALID_UNDERFLOW_BY_TWO) {
@@ -85,5 +85,5 @@ TEST(MUL, INVALID_UNDERFLOW_BY_TWO) {
         mul
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

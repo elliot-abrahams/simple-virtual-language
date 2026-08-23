@@ -493,13 +493,13 @@ std::vector<uint8_t> assembler::Assembler::convertDebugSource(const AssemblerDef
     std::vector<uint8_t> bytecode;
     // source Id
     for (int i = 0; i < 2; i++) {
-        bytecode.push_back((debugSource.sourceId >> (i * 4)) & 0xFF);
+        bytecode.push_back((debugSource.sourceId >> (i * 8)) & 0xFF);
     }
     this->debugSourceLength += 2;
 
     // path
     this->pushBackVector(bytecode, this->convertStringToBytes(debugSource.path));
-    this->debugSourceLength += (4 + debugSource.path.size());
+    this->debugSourceLength += (4 + debugSource.path.size() - 2); // (-2) to disregard the space for quotation marks
 
     return bytecode;
 }
@@ -516,7 +516,7 @@ std::vector<uint8_t> assembler::Assembler::convertDebugLine(const AssemblerDefs:
     }
     // source Id
     for (int i = 0; i < 2; i++) {
-        bytecode.push_back((debugLine.sourceId >> (i * 4)) & 0xFF);
+        bytecode.push_back((debugLine.sourceId >> (i * 8)) & 0xFF);
     }
     // line
     for (int i = 0; i < 4; i++) {
@@ -524,7 +524,7 @@ std::vector<uint8_t> assembler::Assembler::convertDebugLine(const AssemblerDefs:
     }
     // column
     for (int i = 0; i < 2; i++) {
-        bytecode.push_back((debugLine.column >> (i * 4)) & 0xFF);
+        bytecode.push_back((debugLine.column >> (i * 8)) & 0xFF);
     }
     this->debugLineTableLength += 16;
 

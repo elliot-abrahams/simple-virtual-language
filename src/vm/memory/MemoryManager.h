@@ -1,10 +1,12 @@
 #ifndef SIMPLE_VM_MEMORYMANAGER_H
 #define SIMPLE_VM_MEMORYMANAGER_H
 #include <cstdint>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
 #include "../OperandStack.h"
+#include "../../include/Error.h"
 #include "../../include/ISA.h"
 
 
@@ -12,7 +14,7 @@ enum class Type : uint8_t;
 struct Value;
 
 constexpr size_t PAGE_SIZE = 4096;
-constexpr size_t BYTECODE_HEADER_SIZE = 8;
+constexpr size_t BYTECODE_HEADER_SIZE = 16;
 
 enum class MemoryAccessScope {
     CODE,
@@ -32,17 +34,18 @@ class MemoryManager {
 public:
     MemoryManager(uint32_t* HB, const uint32_t* HP, const uint32_t* SP);
 
-    void loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode);
+    void loadBytecodeIntoMemory(std::optional<RuntimeError>* runtimeError, const std::vector<uint8_t>* bytecode, const uint32_t endOfDataAddress);
+    void setStartOfDataRegion(const uint32_t startOfDataAddress);
 
-    void write(const MemoryAccessScope region, uint32_t address, const Value* value);
-    void write8(const MemoryAccessScope region, uint32_t address, uint8_t value);
-    void write32(const MemoryAccessScope region, uint32_t address, uint32_t value);
-    void write64(const MemoryAccessScope region, uint32_t address, uint64_t value);
+    void write(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const Value* value);
+    void write8(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const uint8_t value);
+    void write32(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const uint32_t value);
+    void write64(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const uint64_t value);
 
-    uint64_t read(const MemoryAccessScope region, uint32_t address, ISA::Type type) const;
-    uint8_t read8(const MemoryAccessScope region, uint32_t address) const;
-    uint32_t read32(const MemoryAccessScope region, uint32_t address) const;
-    uint64_t read64(const MemoryAccessScope region, uint32_t address) const;
+    uint64_t read(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const ISA::Type type) const;
+    uint8_t read8(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address) const;
+    uint32_t read32(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address) const;
+    uint64_t read64(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address) const;
 
 private:
     void allocatePage(uint32_t pageNumber);
@@ -52,7 +55,7 @@ private:
     Page* getOrCreatePage(uint32_t address);
     Page* getPage(uint32_t address) const;
 
-    void checkAddressInRegion(const MemoryAccessScope region, uint32_t address) const;
+    void checkAddressInRegion(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const bool isWrite) const;
     bool inCodeRegion(const uint32_t address) const;
     bool inDataRegion(const uint32_t address) const;
     bool inHeapRegion(const uint32_t address) const;

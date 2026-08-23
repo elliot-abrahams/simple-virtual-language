@@ -62,7 +62,7 @@ TEST(NATIVE, EXIT_UI64) {
 }
 
 TEST(NATIVE, EXIT_INVALID_F32) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push f32 #5.0
             native exit
@@ -71,7 +71,7 @@ TEST(NATIVE, EXIT_INVALID_F32) {
 }
 
 TEST(NATIVE, EXIT_INVALID_F64) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push f64 #5.0
             native exit
@@ -80,7 +80,7 @@ TEST(NATIVE, EXIT_INVALID_F64) {
 }
 
 TEST(NATIVE, EXIT_INVALID_PTR) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push ptr $x
             native exit
@@ -92,7 +92,7 @@ TEST(NATIVE, EXIT_INVALID_PTR) {
 }
 
 TEST(NATIVE, EXIT_INVALID_UNDERFLOW) {
-    EXPECT_VM_ERROR("native exit");
+    EXPECT_INTERNAL_RUNTIME_ERROR("native exit");
 }
 
 TEST(NATIVE, PRINT_I32) {
@@ -206,7 +206,7 @@ TEST(NATIVE, PRINT_F64_NEGATIVE) {
 }
 
 TEST(NATIVE, PRINT_INVALID_PTR) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push ptr $x
             native print
@@ -219,7 +219,7 @@ TEST(NATIVE, PRINT_INVALID_PTR) {
 }
 
 TEST(NATIVE, PRINT_INVALID_UNDERFLOW) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             native print
             halt
@@ -256,7 +256,7 @@ TEST(NATIVE, PRINT_STR_PTR_UTF_8) {
 }
 
 TEST(NATIVE, PRINT_STR_INVALID_I32) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push i32 #5
             native print_str
@@ -266,7 +266,7 @@ TEST(NATIVE, PRINT_STR_INVALID_I32) {
 }
 
 TEST(NATIVE, PRINT_STR_INVALID_UI32) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push ui32 #5
             native print_str
@@ -276,7 +276,7 @@ TEST(NATIVE, PRINT_STR_INVALID_UI32) {
 }
 
 TEST(NATIVE, PRINT_STR_INVALID_I64) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push i64 #5
             native print_str
@@ -286,7 +286,7 @@ TEST(NATIVE, PRINT_STR_INVALID_I64) {
 }
 
 TEST(NATIVE, PRINT_STR_INVALID_UI64) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push ui64 #5
             native print_str
@@ -296,7 +296,7 @@ TEST(NATIVE, PRINT_STR_INVALID_UI64) {
 }
 
 TEST(NATIVE, PRINT_STR_INVALID_F32) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push f32 #5.5
             native print_str
@@ -306,7 +306,7 @@ TEST(NATIVE, PRINT_STR_INVALID_F32) {
 }
 
 TEST(NATIVE, PRINT_STR_INVALID_F64) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             push f64 #5.5
             native print_str
@@ -316,7 +316,7 @@ TEST(NATIVE, PRINT_STR_INVALID_F64) {
 }
 
 TEST(NATIVE, PRINT_STR_INVALID_UNDERFLOW) {
-    EXPECT_VM_ERROR(
+    EXPECT_INTERNAL_RUNTIME_ERROR(
         R"(
             native print_str
             halt

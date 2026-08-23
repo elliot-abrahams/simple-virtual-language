@@ -118,7 +118,7 @@ TEST(SAR, INVALID_F32_I32) {
         sar
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(SAR, INVALID_F64_I32) {
@@ -128,7 +128,7 @@ TEST(SAR, INVALID_F64_I32) {
         sar
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(SAR, INVALID_PTR_I32) {
@@ -141,7 +141,7 @@ TEST(SAR, INVALID_PTR_I32) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(SAR, INVALID_I32_F32) {
@@ -151,7 +151,7 @@ TEST(SAR, INVALID_I32_F32) {
         sar
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(SAR, INVALID_I32_F64) {
@@ -161,7 +161,7 @@ TEST(SAR, INVALID_I32_F64) {
         sar
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(SAR, INVALID_I32_PTR) {
@@ -174,7 +174,7 @@ TEST(SAR, INVALID_I32_PTR) {
     .data
     $x: i32 5
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(SAR, INVALID_UNDERFLOW_BY_ONE) {
@@ -183,7 +183,7 @@ TEST(SAR, INVALID_UNDERFLOW_BY_ONE) {
         sar
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(SAR, INVALID_UNDERFLOW_BY_TWO) {
@@ -191,5 +191,5 @@ TEST(SAR, INVALID_UNDERFLOW_BY_TWO) {
         sar
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

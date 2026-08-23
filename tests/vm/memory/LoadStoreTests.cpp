@@ -107,7 +107,7 @@ TEST(LOAD_STORE, INVALID_LOAD_UNDERFLOW) {
         load i32
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(LOAD_STORE, INVALID_STORE_UNDERFLOW_BY_ONE) {
@@ -116,7 +116,7 @@ TEST(LOAD_STORE, INVALID_STORE_UNDERFLOW_BY_ONE) {
         store
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(LOAD_STORE, INVALID_STORE_UNDERFLOW_BY_TWO) {
@@ -124,5 +124,5 @@ TEST(LOAD_STORE, INVALID_STORE_UNDERFLOW_BY_TWO) {
         store
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

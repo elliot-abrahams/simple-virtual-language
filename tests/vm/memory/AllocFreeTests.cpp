@@ -61,7 +61,7 @@ TEST(ALLOC_FREE, INVALID_ALLOCATE_ZERO_BYTES) {
         alloc
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(ALLOC_FREE, INVALUD_ALLOC_UNDERFLOW) {
@@ -69,7 +69,7 @@ TEST(ALLOC_FREE, INVALUD_ALLOC_UNDERFLOW) {
         alloc
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(ALLOC_FREE, INVALID_STACK_OVERFLOW) {
@@ -78,7 +78,7 @@ TEST(ALLOC_FREE, INVALID_STACK_OVERFLOW) {
         alloc
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(ALLOC_FREE, INVALID_FREE_UNDERFLOW) {
@@ -86,5 +86,5 @@ TEST(ALLOC_FREE, INVALID_FREE_UNDERFLOW) {
         free
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

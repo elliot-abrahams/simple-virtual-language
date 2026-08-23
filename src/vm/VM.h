@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "OperandStack.h"
+#include "RuntimeErrorHandler.h"
 #include "memory/CallStackManager.h"
 #include "memory/HeapManager.h"
 #include "memory/MemoryManager.h"
@@ -18,18 +19,25 @@ public:
 
     void run(const std::vector<uint8_t>* bytecode);
 
+    void readBytecode(const std::vector<uint8_t>* bytecode);
+
     Value popOperandStack();
 
     OperandStack* getOperandStack();
+    CallStackManager* getCallStackManager();
+
+    void handleRuntimeError() const;
 
     void setExitStatus(int status);
     int getExitStatus() const;
+    uint32_t getPC() const;
+    ErrorContext getErrorContext() const;
+    const std::optional<RuntimeError>* getRuntimeError() const;
 
-    std::string readStringFromMemory(const uint32_t address) const;
+    std::string readStringFromMemory(const uint32_t address);
 
-    static void checkType(const std::string &instructionMnemonic, const std::vector<uint8_t> expectedTypes, const uint8_t actualType);
+    void checkType(const std::string &instructionMnemonic, const std::vector<uint8_t> expectedTypes, const uint8_t actualType);
 
-    void handleVMError(const VMError& e) const;
     void dumpState() const;
 
 private:
@@ -83,7 +91,7 @@ private:
     uint8_t fetchType();
     uint64_t fetchOperand(const uint8_t type);
 
-    void validateFrameAccess(const int32_t offset) const;
+    void validateFrameAccess(const int32_t offset);
 
     uint32_t PC;
     uint32_t HB;
@@ -95,6 +103,10 @@ private:
     CallStackManager callStackManager;
     HeapManager heapManager;
     OperandStack operandStack;
+
+    RuntimeErrorHandler runtimeErrorHandler;
+    std::optional<RuntimeError> runtimeError;
+    ErrorContext errorContext;
 
     bool running;
     int exitCode;

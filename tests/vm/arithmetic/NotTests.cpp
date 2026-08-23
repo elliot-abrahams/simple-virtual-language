@@ -43,7 +43,7 @@ TEST(NOT, INVALID_F32) {
         not
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(NOT, INVALID_F64) {
@@ -52,7 +52,7 @@ TEST(NOT, INVALID_F64) {
         not
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(NOT, INVALID_UNDERFLOW) {
@@ -60,5 +60,5 @@ TEST(NOT, INVALID_UNDERFLOW) {
         not
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

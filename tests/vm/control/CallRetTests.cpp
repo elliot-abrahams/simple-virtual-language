@@ -106,7 +106,7 @@ TEST(CALL_RET, INVALID_RET_UNDERFLOW) {
         ret
         halt
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }
 
 TEST(CALL_RET, IVALID_OVERFLOW) {
@@ -121,5 +121,5 @@ TEST(CALL_RET, IVALID_OVERFLOW) {
         call $method
         ret
     )";
-    EXPECT_VM_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
 }

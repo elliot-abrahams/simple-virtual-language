@@ -19,8 +19,8 @@ public:
     HeapManager(MemoryManager* memoryManager);
 
     void initialiseHeap(uint32_t* HP);
-    uint32_t allocateBlock(const uint32_t size, const uint32_t SP);
-    void deallocateBlock(const uint32_t address);
+    uint32_t allocateBlock(std::optional<RuntimeError>* runtimeError, const uint32_t size, const uint32_t SP);
+    void deallocateBlock(std::optional<RuntimeError>* runtimeError, const uint32_t address);
 
 private:
     static bool mergeIfAdjacentBlocks(FreeBlock* block1, FreeBlock* block2);

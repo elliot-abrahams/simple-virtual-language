@@ -2,28 +2,40 @@
 
 OperandStack::OperandStack() : stack(std::vector<Value>{}) {}
 
-Value OperandStack::pop() {
-    if (stack.empty()) {
-        throw VMError("stack underflow (operand stack empty)");
+Value OperandStack::pop(std::optional<RuntimeError>* runtimeError) {
+    if (this->stack.empty()) {
+        *runtimeError = RuntimeError {
+            RuntimeErrorType::INTERNAL,
+            "attempted to pop from an empty operand stack"
+        };
+        return Value{};
     }
-    Value top = stack.back();
-    stack.pop_back();
+    const Value top = this->stack.back();
+    this->stack.pop_back();
     return top;
 }
 
-Value OperandStack::peek() const {
-    if (stack.empty()) {
-        throw VMError("stack underflow (operand stack empty)");
+Value OperandStack::peek(std::optional<RuntimeError>* runtimeError) const {
+    if (this->stack.empty()) {
+        *runtimeError = RuntimeError {
+            RuntimeErrorType::INTERNAL,
+            "attempted to peek at an empty operand stack"
+        };
+        return Value{};
     }
-    return stack.at(stack.size() - 1);
+    return this->stack.at(stack.size() - 1);
 }
 
-void OperandStack::push(const uint8_t typeOperand, const uint64_t rawValue) {
-    if (stack.size() == MAX_OPERAND_STACK_SIZE) {
-        throw VMError("stack overflow (max capacity reached)");
+void OperandStack::push(std::optional<RuntimeError>* runtimeError, const uint8_t typeOperand, const uint64_t rawValue) {
+    if (this->stack.size() == MAX_OPERAND_STACK_SIZE) {
+        *runtimeError = RuntimeError {
+            RuntimeErrorType::INTERNAL,
+            "attempted to push onto a full operand stack"
+        };
+        return;
     }
 
-    Value val;
+    Value val{};
 
     switch (typeOperand) {
         case 0x00: { // i32
@@ -58,7 +70,15 @@ void OperandStack::push(const uint8_t typeOperand, const uint64_t rawValue) {
     this->stack.push_back(val);
 }
 
-void OperandStack::push(const Value value) {
+void OperandStack::push(std::optional<RuntimeError>* runtimeError, const Value value) {
+    if (this->stack.size() == MAX_OPERAND_STACK_SIZE) {
+        *runtimeError = RuntimeError {
+            RuntimeErrorType::INTERNAL,
+            "attempted to push onto a full operand stack"
+        };
+        return;
+    }
+
     this->stack.push_back(value);
 }
 
