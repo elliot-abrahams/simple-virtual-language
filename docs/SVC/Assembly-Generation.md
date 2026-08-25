@@ -61,6 +61,10 @@
   - [7.1 Builtin Functions](#71-builtin-functions)
   - [7.2 Builtin Data](#72-builtin-data)
 - [8. Assembly Generation Order](#8-assembly-generation-order)
+- [9. Metadata](#9-metadata)
+  - [9.1 Source Metadata Entry](#91-source-metadata-entry)
+  - [9.2 Function Metadata Entry](#92-function-metadata-entry)
+  - [9.3 Line Table Entry](#93-line-table-entry)
 
 ---
 
@@ -75,9 +79,14 @@ The assembly IR is subsequently converted into textual SVMA assembly by the asse
 The generated assembly uses the following indentation:
 - Instructions are indented by 8 spaces
 - Label definitions are indented by 4 spaces
-- Top-level definitions and directives are not indented
+- Method definitions are not indented
 - Method metadata is indented by 8 spaces
 - Data declarations are indented by 4 spaces
+- `.data` and `.metadata` directives are not indented
+- `.sources`, `.functions`, and `.line_table` directives are indented by 4 spaces
+- All metadata entries are indented by 8 spaces
+
+The assembly generator records source locations for generated assembly IR. These locations are used by the assembly emitter to generate source, function, and line table metadata.
 
 The following sections describe how SV language constructs are represented in the assembly emitted by the compiler.
 
@@ -100,6 +109,20 @@ The generated assembly consists of the global statements, generated scope functi
 .data
     [global variable declarations]      
     [builtin data declarations]  
+    
+.metadata
+
+    .sources
+        [source metadata entries]
+        
+    .functions
+        ;     start          end       source    name
+        [function metadata entries]
+        
+    .line_table
+        ;     start          end       source       line       column
+        [line table entries] 
+   
 ```
 
 Where:
@@ -109,6 +132,9 @@ Where:
 - `[builtin functions]` represents the assembly generated for builtin functions
 - `[global variable delcarations]` represents the assembly generated for global variable declarations
 - `[builtin data delcarations]` represents the assembly generated for the variable declarations required by builtin functions
+- `[source metadata entries]` represents the assembly generated for the source metadata entries
+- `[function metadata entries]` represents the assembly generated for the function metadata entries
+- `[line table entries]` represents the assembly generated for the line table entries
 
 ---
 ## 3. Types
@@ -893,3 +919,54 @@ The assembly generator emits assembly in the following order:
 6. `.data`
 7. Global variable declarations
 8. Builtin data declarations
+
+---
+
+## 9. Metadata
+
+The assembly generator records the source location of most items in the assembly IR. The assembly emitter uses these locations and the current assembly address to generate metadata for the resulting SVMA assembly.
+
+While emitting the code section, the emitter tracks the current byte address of the generated assembly.
+
+Before the line table is emitted, adjacent entries with the same source ID, line, and column are merged into a single entry.
+
+### 9.1 Source Metadata Entry
+
+A source metadata entry is generated as:
+
+```
+[source ID]    "[file path]"
+```
+
+Where:
+- `[source ID]` is the unique ID assigned to each source file. The ID is right-aligned within a field of 5 characters and padded with spaces on the left when necessary
+- `[file path]` is the absolute file path of the source file
+
+### 9.2 Function Metadata Entry
+
+A function metadata entry is generated as:
+
+```
+0x[start address]    0x[end address]    [source ID]    "[function name]"
+```
+
+Where:
+- `[start address]` is the address of the first byte of the function's method metadata, represented as an 8-digit hexadecimal value
+- `[end address]` is the address immediately after the last byte of the function, represented as an 8-digit hexadecimal value
+- `[source ID]` is the ID of the source file containing the function. The ID is right-aligned within a field of 5 characters and padded with spaces on the left when necessary
+- `[function name]` is the name of the function
+
+### 9.3 Line Table Entry
+
+A line table entry is generated as:
+
+```
+0x[start address]    0x[end address]    [source ID]    [line]    [column]
+```
+
+Where:
+- `[start address]` is the address of the first byte of the generated assembly associated with the source location, represented as an 8-digit hexadecimal value
+- `[end address]` is the address immediately after the last byte of the generated assembly associated with the source location, represented as an 8-digit hexadecimal value
+- `[source ID]` is the ID of the source file containing the function. The ID is right-aligned within a field of 5 characters and padded with spaces on the left when necessary
+- `[line]` is the source line number. The line number is right-aligned within a field of 10 characters and padded with spaces on the left when necessary
+- `[column]` is the source column number. The line number is right-aligned within a field of 5 characters and padded with spaces on the left when necessary

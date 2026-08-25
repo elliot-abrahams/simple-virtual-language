@@ -6,7 +6,8 @@
 - [2. SVMA Structure](#2-svma-structure)
     - [2.1 Code Region](#21-code-region)
     - [2.2 Data Region](#22-data-region)
-    - [2.3 Region Rules](#23-region-rules)
+    - [2.3 Metadata Region](#23-metadata-region)
+    - [2.4 Region Rules](#24-region-rules)
 - [3. Lexical Rules](#3-lexical-rules)
     - [3.1 Whitespace](#31-whitespace)
     - [3.2 Comments](#32-comments)
@@ -42,17 +43,22 @@
     - [8.3 Numeric Data](#83-numeric-data)
     - [8.4 String Data](#84-string-data)
     - [8.5 Pointer Data](#85-pointer-data)
-- [9. Program Constraints](#9-program-constraints)
-    - [9.1 Region Constraints](#91-region-constraints)
-    - [9.2 Label Constraints](#92-label-constraints)
-    - [9.3 Method Constraints](#93-method-constraints)
-    - [9.4 Instruction Constraints](#94-instruction-constraints)
-    - [9.5 Data Definition Constraints](#95-data-definition-constraints)
-- [10. Examples](#10-examples)
-    - [10.1 Add Two Numbers](#101-add-two-numbers)
-    - [10.2 Output String](#102-output-string)
-    - [10.3 Method](#103-method)
-    - [10.4 Loop](#104-loop)
+- [9. Source Metadata](#9-source-metadata)
+  - [9.1 Metadata Region](#91-metadata-region)
+  - [9.2 Source Entries](#92-source-entries)
+  - [9.3 Function Entries](#93-function-entries)
+  - [9.4 Line Table Entries](#94-line-table-entries)
+- [10. Program Constraints](#10-program-constraints)
+    - [10.1 Region Constraints](#101-region-constraints)
+    - [10.2 Label Constraints](#102-label-constraints)
+    - [10.3 Method Constraints](#103-method-constraints)
+    - [10.4 Instruction Constraints](#104-instruction-constraints)
+    - [10.5 Data Definition Constraints](#105-data-definition-constraints)
+- [11. Examples](#11-examples)
+    - [11.1 Add Two Numbers](#111-add-two-numbers)
+    - [11.2 Output String](#112-output-string)
+    - [11.3 Method](#113-method)
+    - [11.4 Loop](#114-loop)
 
 ---
 
@@ -68,7 +74,12 @@ An SVMA source file is assembled by the SVA into bytecode that can be executed b
 
 ## 2. SVMA Structure
 
-An SVMA source file consists of a code region followed by an optional data region.
+An SVMA source file consists of a code region followed by an optional data region and an optional metadata region.
+
+The regions occur in the following order:
+1. Code
+2. Data
+3. Metadata
 
 ### 2.1 Code Region
 
@@ -102,14 +113,50 @@ $message: str "Hello
 $value: i32 40
 ```
 
-### 2.3 Region Rules
+### 2.3 Metadata Region
+
+The metadata region contains information used to associate bytecode addresses with source files, function, and source locations.
+
+It begins with the `.metadata` directive.
+
+The metadata regions contains the following section:
+- `.sources`
+- `.functions`
+- `.line_table`
+
+Example:
+```
+.metadata
+
+    .sources
+            0    "C:\Projects\svm\examples\test.sv"
+
+    .functions
+        ;     start          end       source    name
+        0x00000006    0x00000011        0        "foo"
+
+    .line_table
+        ;     start          end       source       line       column
+        0x00000000    0x00000005        0             7        1
+```
+
+Metadata does not represent instructions or data executed by the SVM.
+
+### 2.4 Region Rules
 
 An SVMA source file:
 - Must contain only one code region
 - Must contain zero or one data regions
-- Must contain keyword `.data` before any data definitions.
-- Must not contain instructions or method definitions in the data region
-- Must not contain data definitions in the code region
+- Must contain zero or one metadata regions
+- Must contain `.data` before any data definitions.
+- Must contain `.metadata` before any metadata
+- Must contain `.data` before `.metadata` if `.metadata` is present
+- Must contain `.metadata` before `.sources` if `.sources` is present
+- Must contain `.sources` before `.functions` if `.functions` is present
+- Must contain `.functions` before `.line-table` if `.line_table` is present
+- Must not contain instructions or method definitions in the data or metadata regions
+- Must not contain data definitions in the code or metadata regions
+- Must not contain metadata in the code or data regions
 
 ---
 
@@ -571,28 +618,124 @@ String data has a maximum size of 4,294,967,295 bytes when encoded as UTF-8.
 
 ---
 
-## 9. Program Constraints
+## 9. Source Metadata
+
+Source metadata allows the SVM to associate VM addresses with source files, functions, and source locations.
+
+Metadata is introduced using the `.metadata` directive
+
+The metadata region contains three sections:
+
+- `.sources`
+- `.functions`
+- `.line_table`
+
+### 9.1 Metadata Region
+
+The metadata region has the following structure
+
+```
+.metadata
+
+.sources
+
+.functions
+
+.line_table
+```
+
+Metadata does not represent executable instructions or statically allocated data.
+
+It is used by the SVM when reporting source-level runtime errors and stack traces.
+
+### 9.2 Source Entries
+
+A source entry associates a source ID with a source file path.
+
+The format is:
+```
+<source ID> "<source file path>"
+```
+
+Where:
+- `<source ID>` uniquely identifies the source file within the SVMA file.
+- `<source file path>` identifies the source file used to generate the assembly
+
+Example:
+```
+.sources
+    0    "C:\Projects\svm\examples\test.sv"
+```
+
+### 9.3 Function Entries
+
+A function entry associates a range of VM addresses with a source-level function name.
+
+The format is:
+```
+<start address> <end address> <souce ID> "<function name>"
+```
+
+Where:
+- `<start address>` is the first VM address belonging to the function.
+- `<end address>` is the first VM address after the function.
+- `<source ID>` identifies the source file containing the function.
+- `<function name>` is the source level function name.
+
+Example:
+```
+.functions
+    0x00000006    0x00000011    0    "foo"
+```
+
+### 9.4 Line Table Entries
+
+A line table entry associates a range of VM addresses with a source location.
+
+The format is:
+```
+<start address> <end address> <source ID> <line> <column>
+```
+
+Where:
+- `<start address>` is the first VM address associated with the source location.
+- `<end address>` is the first VM address after the range
+- `<source ID>` identifies the source file
+- `<line>` identifies the line number in the source file
+- `<column>` identifies the column number in the source file
+
+The SVM uses line table entries to report the source location of runtime errors and stack trace entries.
+
+For example:
+```
+.line_table
+    0x00000000    0x00000005        0             7        1
+```
+
+---
+
+## 10. Program Constraints
 
 The following constraints apply to SVMA programs.
 
-### 9.1 Region Constraints
+### 10.1 Region Constraints
 - Only one `.data` region may be declared.
 - The `.data` region must occur after the code region.
 - Instructions cannot appear in the data region.
 - Data definitions cannot appear in the code region.
 
-### 9.2 Label Constraints
+### 10.2 Label Constraints
 - Labels must follow the required label syntax.
 - Labels must be unique within their namespace.
 - A label reference must resolve to a label of the appropriate category.
 
-### 9.3 Method Constraints
+### 10.3 Method Constraints
 - Method metadata must immediately follow its method definition.
 - The number of arguments must fit within an unsigned 8-bit value.
 - The number of locals must fit within an unsigned 32-bit value.
 - Method instructions must appear after the method metadata.
 
-### 9.4 Instruction Constraints
+### 10.4 Instruction Constraints
 - Instructions must use a defined mnemonic.
 - The number of operands must match the instruction definition.
 - Operands must appear in the order specified by the instruction.
@@ -600,14 +743,14 @@ The following constraints apply to SVMA programs.
 - Label references must refer to the required label category.
 - A native reference must refer to a native function provided by the SVM.
 
-### 9.5 Data Definition Constraints
+### 10.5 Data Definition Constraints
 - The data of a data definition must be valid for its data type.
 
 ---
 
-## 10. Examples
+## 11. Examples
 
-### 10.1 Add Two Numbers
+### 11.1 Add Two Numbers
 ```
         push i32 #5
         push i32 #10
@@ -616,7 +759,7 @@ The following constraints apply to SVMA programs.
         halt
 ```
 
-### 10.2 Output String
+### 11.2 Output String
 ```
         push ptr $message
         native print_str
@@ -626,7 +769,7 @@ The following constraints apply to SVMA programs.
 $message: str "Hello World!"
 ```
 
-### 10.3 Method
+### 11.3 Method
 ```
         push f32 #5.2
         push f32 #-2.1
@@ -643,7 +786,7 @@ def $mul:
         ret
 ```
 
-### 10.4 Loop
+### 11.4 Loop
 ```
 $start_loop:
         loadG $i
@@ -667,4 +810,54 @@ $end_loop:
     
 .data
 $i: i32 0
+```
+
+### 11.5 Metadata
+```
+        call $foo1()
+        halt
+
+def $foo1():
+        args 0
+        locals 0
+
+        call $foo2()
+        ret
+
+def $foo2():
+        args 0
+        locals 1
+
+        push i32 #5
+        conv f32
+        push i32 #0
+        conv f32
+        div
+        storeL #-1
+        ret
+.data
+
+.metadata
+
+    .sources
+            0    "C:\Projects\svm\examples\test.sv"
+
+    .functions
+        ;     start          end       source    name
+        0x00000006    0x00000011        0        "foo1"
+        0x00000011    0x0000002D        0        "foo2"
+
+    .line_table
+        ;     start          end       source       line       column
+        0x00000000    0x00000005        0             7        1
+        0x00000006    0x0000000B        0             1        1
+        0x0000000B    0x00000010        0             2        5
+        0x00000010    0x00000011        0             3        1
+        0x00000011    0x00000016        0             4        1
+        0x00000016    0x0000001E        0             5       15
+        0x0000001E    0x00000026        0             5       19
+        0x00000026    0x00000027        0             5       17
+        0x00000027    0x0000002C        0             5        5
+        0x0000002C    0x0000002D        0             6        1
+
 ```

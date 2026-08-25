@@ -52,11 +52,13 @@ Each stage must complete successfully before the next stage can proceed.
 The lexer converts the SVMA source into a sequence of tokens.
 
 The lexer validates that lexical elements conform to their required formats, including:
+- Instructions
 - Labels
 - Numbers
 - Immediate Values
 - Strings
 - Native References
+- Directives
 
 ### 3.2 Syntax Analysis
 
@@ -68,7 +70,10 @@ The parser validates that:
 - Numeric operands and immediate values have a valid sign and are either integers or decimals as required by their type.
 - Method definitions contain valid metadata
 - Data definitions contain values matching their declared data type.
+- Directives appear in the correct order.
 - Statements appear in valid locations within the program.
+- Metadata sections and entries follow their required format.
+- Metadata entries contain valid values.
 
 ### 3.3 Label Table Construction
 
@@ -90,3 +95,7 @@ During this stage:
 - Numeric values are checked to ensure they are within the range of their required type.
 - Label references are replaced with the addresses stored in the label table.
 - Native references are replaced with their corresponding native function ID.
+- Source metadata is encoded into the source metadata section.
+- Function metadata is encoded into the function metadata section.
+- Line table metadata is encoded into the line table metadata section.
+- The bytecode header is generated with the final section boundaries.

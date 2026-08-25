@@ -33,7 +33,7 @@
 
 ## 1. Overview
 
-This document describes the runtime execution model of SVM, including the VM lifecycle, registers, operand stack, function calls, stack frames, and heap management.
+This document describes the runtime execution model of SVM, including the VM lifecycle, registers, operand stack, function calls, stack frames, heap management, and runtime error handling.
 
 ---
 
@@ -46,14 +46,15 @@ This document describes the runtime execution model of SVM, including the VM lif
 3. HP is set to zero
 4. FP is set to max memory address (2 ^ 32)
 5. SP is set to max memory address (2 ^ 32)
-6. Bytecode header is read (holds info about size of both code and data regions)
-7. Bytecode (without the header) is written into memory
-8. HB is set to the first address after the statically allocated data region
-9. HP is set to HB
+6. Bytecode header is read (holds info about addresses of each bytecode section)
+7. Bytecode (code and data sections only) is written into memory
+8. Bytecode metadata is read and interpreted
+9. HB is set to the first address after the statically allocated data region
+10. HP is set to HB
 
 ### 2.2 Execution
 
-The VM goes into a loop that runs until it reaches a `halt` instruction or a run-time error
+The VM goes into a loop that runs until it reaches a `halt` instruction or a runtime error has been raised.
 
 #### Fetch
 
@@ -140,12 +141,58 @@ When the VM reads the halt instruction:
 
 #### Runtime termination
 
-When the VM encounters a runtime error:
+When an instruction encounters a runtime error, the vm recorded the error and terminates execution after the current execution cycle.
 
-1. The execution loop ends.
-2. An error message is emitted
-3. An exit code of 1 is produced
+The metadata read from the bytecode is used to build a source-level runtime error message.
+
+For a language runtime error, the runtime error handler:
+1. Searches for the line table where the current value of `PC` sits between the start and end address of the line table entry
+2. Determines the absolute path of the source file using the source metadata
+3. Reads the source file at the line provided by the line table
+4. Gets the list of return addresses from each frame in the call stack, and read from the function metadata to build the stack trace
+5. Builds and outputs the error message
+6. An exit code of 1 is produced.
+7. The program terminates
+
+For example, a language runtime error may be reported as:
+```
+DivisionByZeroError: division by zero
+  at foo2 (C:\...\svm\examples\test.sv:5:17)
+  5 |    float x = 5 / 0;
+    |                ^
+stack trace:
+  at foo1 (C:\...\svm\examples\test.sv:2:5)
+  at <global> (C:\...\svm\examples\test.sv:7:1)
+```
+
+The '...' included in the file path is not part of the actual error message
+
+The metadata allows runtime errors to be reported in terms of the source program rather than VM instructions or bytecode addresses.
+
+If the source file cannot be accessed, the error location is still reported using the source path, line, and column stored in the metadata, by the source code itself cannot be displayed.
+
+For an internal runtime error, the runtime error handler:
+1. Builds and outputs the error message
+2. Outputs the VM state (registers and values in the operand stack)
+3. An exit code of 1 is produced.
 4. The program terminates
+
+For example, an internal runtime error may be reported as:
+```
+DivisionByZeroError: division by zero
+
+--- VM STATE ---
+  PC: 0x13
+  HB: 0x14
+  HP: 0x14
+  FP: 0xffffffff
+  SP: 0xffffffff
+
+Operand Stack (bottom -> top):
+0x0: 5
+```
+
+Internal errors are reported separately from language-level runtime errors. They describe an error occurring within the VM rather than an error caused by the execution of a valid source program. VM state (Registers and the values in the operand stack) are included when reporting an internal error. 
 
 ---
 

@@ -38,3 +38,4 @@ Describes how the semantically analysed AST is translated into SVMA assembly.
 - Functions
 - Built-in Functions
 - Built-in Data
+- Metadata

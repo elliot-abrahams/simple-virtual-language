@@ -116,17 +116,26 @@ Assembly generation produces assembly for:
 3. User-defined functions
 4. User-defined global variables
 
-Built-in functions and built-in data are not inserted into the assembly during this stage. The required Built-in functions and built-in data are tracked by the assembly generator and inserted during assembly emission.
+The assembly generator also records the source location associated with each generated assembly item.
 
-See...........................
+Built-in functions and built-in data are not inserted into the assembly during this stage. The required Built-in functions and built-in data are tracked by the assembly generator and inserted during assembly emission.
 
 ### 3.6 Assembly Emission
 
 The assembler emitter converts the IR produced by the assembly generator into textual SVMA assembly.
 
-During emission, the emitted:
+The emitter:
 - Produces the textual representation of each assembly item
 - Inserts the required built-in functions
 - Inserts the required built-in data
+
+While emitting the code section, the emitter tracks the current byte address of the generated assembly.
+
+The emitter uses these addresses and source locations recorded by the assembly generator to construct:
+- Source metadata entries
+- Function metadata entries
+- Line table entries
+
+After the code and data sections have been emitted, the emitter writes the `.metadata` section containing the generated metadata.
 
 The resulting SVMA assembly is then available to be assembled by the SVA.

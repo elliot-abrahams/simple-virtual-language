@@ -36,6 +36,9 @@ Assembly Language    (.svma)
 - Functions and function overloading
 - Control flow (`if`, `while`, `break`, `continue`)
 - Integer, floating-point and boolean types
+- Implicit and explicit type conversions
+- Arithmetic, comparison and logical operators
+- Runtime error reporting with source locations and stack traces
 
 ### Compiler
 
@@ -44,13 +47,13 @@ Assembly Language    (.svma)
 - Abstract Syntax Tree (AST) generation
 - Assembly intermediate representation (IR)
 - Expression parsing with operator precedence
-- Source line and column tracking for compile-time errors
+- Source line and column tracking for compile and runtime errors
 
 ### Assembler
 
 - Two-pass assembler
 - Label resolution
-- Bytecode generation
+- Bytecode and metadata generation
 
 ### Virtual Machine
 
@@ -58,6 +61,10 @@ Assembly Language    (.svma)
 - Virtual paged memory
 - Separate code, data, heap, and call stack regions
 - Dynamic heap allocation and deallocation using a free-list allocator
+- Runtime error detection
+- Source-level runtime error reporting
+- Function call stack and stack traces
+- Native functions
 
 ### Testing
 
@@ -232,3 +239,4 @@ tests        Unit and Integration tests
 - Additional VM native functions
 - Multi-file compilation
 - Import / library system
+- Code optimisation during compilation
