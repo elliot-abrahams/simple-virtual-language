@@ -61,15 +61,15 @@ TEST(ALLOC_FREE, INVALID_ALLOCATE_ZERO_BYTES) {
         alloc
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
-TEST(ALLOC_FREE, INVALUD_ALLOC_UNDERFLOW) {
+TEST(ALLOC_FREE, INVALID_ALLOC_UNDERFLOW) {
     const auto assembly = R"(
         alloc
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
 TEST(ALLOC_FREE, INVALID_STACK_OVERFLOW) {
@@ -78,7 +78,7 @@ TEST(ALLOC_FREE, INVALID_STACK_OVERFLOW) {
         alloc
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::OUT_OF_MEMORY);
 }
 
 TEST(ALLOC_FREE, INVALID_FREE_UNDERFLOW) {
@@ -86,5 +86,5 @@ TEST(ALLOC_FREE, INVALID_FREE_UNDERFLOW) {
         free
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }

@@ -193,6 +193,7 @@ void MemoryManager::checkAddressInRegion(std::optional<RuntimeError>* runtimeErr
         RuntimeErrorType::INTERNAL,
         errorMessage
     };
+    throw std::runtime_error{""};
 }
 
 bool MemoryManager::inCodeRegion(const uint32_t address) const {

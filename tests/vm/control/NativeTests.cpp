@@ -66,7 +66,8 @@ TEST(NATIVE, EXIT_INVALID_F32) {
         R"(
             push f32 #5.0
             native exit
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -75,7 +76,8 @@ TEST(NATIVE, EXIT_INVALID_F64) {
         R"(
             push f64 #5.0
             native exit
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -87,12 +89,13 @@ TEST(NATIVE, EXIT_INVALID_PTR) {
 
         .data
         $x: i32 5
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
 TEST(NATIVE, EXIT_INVALID_UNDERFLOW) {
-    EXPECT_INTERNAL_RUNTIME_ERROR("native exit");
+    EXPECT_INTERNAL_RUNTIME_ERROR("native exit", RuntimeErrorType::INTERNAL);
 }
 
 TEST(NATIVE, PRINT_I32) {
@@ -214,7 +217,8 @@ TEST(NATIVE, PRINT_INVALID_PTR) {
 
             .data
             $x: i32 5
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -223,7 +227,8 @@ TEST(NATIVE, PRINT_INVALID_UNDERFLOW) {
         R"(
             native print
             halt
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -261,7 +266,8 @@ TEST(NATIVE, PRINT_STR_INVALID_I32) {
             push i32 #5
             native print_str
             halt
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -271,7 +277,8 @@ TEST(NATIVE, PRINT_STR_INVALID_UI32) {
             push ui32 #5
             native print_str
             halt
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -281,7 +288,8 @@ TEST(NATIVE, PRINT_STR_INVALID_I64) {
             push i64 #5
             native print_str
             halt
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -291,7 +299,8 @@ TEST(NATIVE, PRINT_STR_INVALID_UI64) {
             push ui64 #5
             native print_str
             halt
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -301,7 +310,8 @@ TEST(NATIVE, PRINT_STR_INVALID_F32) {
             push f32 #5.5
             native print_str
             halt
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -311,7 +321,8 @@ TEST(NATIVE, PRINT_STR_INVALID_F64) {
             push f64 #5.5
             native print_str
             halt
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }
 
@@ -320,6 +331,7 @@ TEST(NATIVE, PRINT_STR_INVALID_UNDERFLOW) {
         R"(
             native print_str
             halt
-        )"
+        )",
+        RuntimeErrorType::INTERNAL
     );
 }

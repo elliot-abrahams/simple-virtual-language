@@ -106,10 +106,10 @@ TEST(CALL_RET, INVALID_RET_UNDERFLOW) {
         ret
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
-TEST(CALL_RET, IVALID_OVERFLOW) {
+TEST(CALL_RET, INVALID_OVERFLOW) {
     const auto assembly = R"(
         call $method
         halt
@@ -121,5 +121,5 @@ TEST(CALL_RET, IVALID_OVERFLOW) {
         call $method
         ret
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::STACK_OVERFLOW);
 }

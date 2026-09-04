@@ -79,5 +79,5 @@ TEST(POP, INVLAID_UNDERFLOW) {
         pop
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }

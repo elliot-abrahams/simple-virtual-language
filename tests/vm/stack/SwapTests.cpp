@@ -91,7 +91,7 @@ TEST(SWAP, INVALID_UNDERFLOW_BY_ONE) {
         swap
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
 TEST(SWAP, INVALID_UNDERFLOW_BY_TWO) {
@@ -99,5 +99,5 @@ TEST(SWAP, INVALID_UNDERFLOW_BY_TWO) {
         swap
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly);
+    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
