@@ -159,7 +159,8 @@ void assembler::Assembler::processInstruction(std::map<std::string, uint32_t>& u
                 break;
             }
 
-            case AssemblerDefs::OperandType::NATIVE_REF: {
+            case AssemblerDefs::OperandType::NATIVE_REF:
+            case AssemblerDefs::OperandType::ERROR_REF: {
                 codeSectionLength += 1;
                 break;
             }
