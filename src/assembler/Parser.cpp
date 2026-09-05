@@ -308,7 +308,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseData() {
             return std::nullopt;
         }
     }
-    auto data = AssemblerDefs::Data{labelDef.value, dataTypeToken.value, this->peek().value};
+    auto data = AssemblerDefs::Data{labelDef.value, dataTypeToken.value, this->peek().value, valueToken.lineNumber};
     this->next();
     return data;
 }
