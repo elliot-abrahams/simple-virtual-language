@@ -111,6 +111,7 @@ Example:
 
 $message: str "Hello
 $value: i32 40
+$arr: ptr 0
 ```
 
 ### 2.3 Metadata Region
@@ -592,25 +593,28 @@ push ptr $message
 
 ### 8.5 Pointer Data
 
-Pointer data is defined using a label reference.
+Pointer data is defined using a label reference or a numeric literal.
 
-This label reference must refer to a data label definition.
+If a label reference is used, it must refer to a data label definition.
+
+If a numeric literal is used, the value must be an unsigned integer that can be represented in an ui32 type.
 
 Example:
 ```
 $x: i32 5
 $pointer: ptr $x
+$arr: ptr 200
 ```
 
 ### 8.6 Data Constraints
 
-| Type | Size (Bytes) | Range / Precision                                       | Maximum value | 
-|------|--------------|---------------------------------------------------------|---------------|
-| i32  | 4            | -2,147,483,648 to 2,147,483,647                         |               |
-| ui32 | 4            | 0 to 4,294,967,295                                      |               |
-| i64  | 8            | -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 |               |
-| ui64 | 8            | 0 to 18,446,744,073,709,551,615                         |               |
-| ptr  | 4            | 0 to 4,294,967,295                                      |               |
+| Type | Size (Bytes) | Range / Precision                                       |
+|------|--------------|---------------------------------------------------------|
+| i32  | 4            | -2,147,483,648 to 2,147,483,647                         |               
+| ui32 | 4            | 0 to 4,294,967,295                                      |               
+| i64  | 8            | -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 |               
+| ui64 | 8            | 0 to 18,446,744,073,709,551,615                         |               
+| ptr  | 4            | 0 to 4,294,967,295                                      |               
 | f32  | 4            | IEEE-754 Single Precision                               |
 | f64  | 8            | IEEE-754 Double Precision                               |
 
