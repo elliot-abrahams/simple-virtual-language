@@ -10,6 +10,7 @@ enum class ErrorContext {
 
 enum class RuntimeErrorType {
     EXPLICIT_ARRAY_INDEX_OUT_OF_RANGE,
+    EXPLICIT_NEGATIVE_ARRAY_SIZE,
 
     DIVISION_BY_ZERO,
     OUT_OF_RANGE,

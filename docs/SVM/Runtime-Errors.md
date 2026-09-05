@@ -9,6 +9,7 @@
   - [2.3 Internal Runtime Errors](#23-internal-runtime-errors)
 - [3. Explicit Runtime Errors](#3-explicit-runtime-errors)
   - [3.1 ArrayIndexOutOfRangeError](#31-arrayindexoutofrangeerror)
+  - [3.2 NegativeArraySize](#32-negativearraysize)
 - [4. Implicit Runtime Errors](#4-implicit-runtime-errors)
   - [4.1 DivisionByZeroError](#41-divisionbyzeroerror)
   - [4.2 OutOfRangeError](#42-outofrangeerror)
@@ -88,7 +89,7 @@ This cannot be produced by valid SV source code compiled by the SVC.
 
 Occurs when an array is accessed using and index outside its valid range.
 
-**Error Ref:** `array_index`
+**Error Ref:** `array_index_out_of_range`
 
 **ID:** `0x00`
 
@@ -106,6 +107,31 @@ Occurs when an array is accessed using and index outside its valid range.
 **Messages:**
 ```
 Index <array_index> out of range for length <array_length>
+```
+
+---
+
+### 3.2 NegativeArraySize
+
+Occurs when an array is accessed using and index outside its valid range.
+
+**Error Ref:** `negative_array_size`
+
+**ID:** `0x01`
+
+**Stack:** `[array_index] → []`
+
+**Semantics:**
+- Throws `NegativeArraySizeError`
+- Terminates execution of the SVM
+- Uses `array_index` to construct the error message
+
+**Type Rules:**
+- `array_index` must be an integer type
+
+**Messages:**
+```
+NegativeArraySizeError: cannot create array with size <array_index>
 ```
 
 ---

@@ -852,7 +852,7 @@ void VM::executeThrow() {
             const Value arrayLength = this->operandStack.pop(&this->runtimeError);
 
             checkType(
-                "throw array_index",
+                "throw array_index_out_of_range",
                 {
                     static_cast<uint8_t>(ISA::Type::I32),
                     static_cast<uint8_t>(ISA::Type::UI32),
@@ -863,7 +863,7 @@ void VM::executeThrow() {
             );
 
             checkType(
-                "throw array_index",
+                "throw array_index_out_of_range",
                 {
                     static_cast<uint8_t>(ISA::Type::UI32),
                 },
@@ -871,9 +871,29 @@ void VM::executeThrow() {
             );
 
             const std::string errorMsg = "Index " + arrayIndex.toString() + " out of range for length " + arrayLength.toString();
-
             this->runtimeError = RuntimeError{
                 RuntimeErrorType::EXPLICIT_ARRAY_INDEX_OUT_OF_RANGE,
+                errorMsg
+            };
+            throw std::runtime_error{""};
+        }
+        case 0x01: { // NegativeArraySizeError
+            const Value arrayIndex = this->operandStack.pop(&this->runtimeError);
+
+            checkType(
+                "throw negative_array_size",
+                {
+                    static_cast<uint8_t>(ISA::Type::I32),
+                    static_cast<uint8_t>(ISA::Type::UI32),
+                    static_cast<uint8_t>(ISA::Type::I64),
+                    static_cast<uint8_t>(ISA::Type::UI64)
+                },
+                static_cast<uint8_t>(arrayIndex.type)
+            );
+
+            const std::string errorMsg = "cannot create array with size " + arrayIndex.toString();
+            this->runtimeError = RuntimeError{
+                RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_SIZE,
                 errorMsg
             };
             throw std::runtime_error{""};

@@ -135,6 +135,7 @@
 
 ## 4. Error References
 
-| Error Type           | error_ref   | Encoding |
-|----------------------|-------------|----------|
-| ArrayIndexOutOfRange | array_index | 0x00     | 
+| Error Type           | error_ref                | Encoding |
+|----------------------|--------------------------|----------|
+| ArrayIndexOutOfRange | array_index_out_of_range | 0x00     | 
+| NegativeArraySize    | negative_array_size      | 0x01     |
