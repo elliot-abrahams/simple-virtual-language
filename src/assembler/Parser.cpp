@@ -681,12 +681,16 @@ bool assembler::Parser::checkAndHandleValueIsValidAsType(const std::string type,
         return true;
     }
     if (type == "ptr") {
-        // enforce ptr type is matched with LABEL_REF
-        if (value[0] != '$' || value[value.size() - 1] == ':') {
-            printError("Expecting Label Reference", lineNumber);
-            return false;
+        // enforce ptr type is matched with LABEL_REF or an unsigned integer
+        if (value[0] == '$' && value[value.size() - 1] != ':') {
+            return true;
         }
-        return true;
+
+        if (!isNumberSigned(value) && isNumberInteger(value)) {
+            return true;
+        }
+        printError("Expecting Label Reference or unsigned integer", lineNumber);
+        return false;
     }
     return false;
 }

@@ -173,7 +173,7 @@ void assembler::Assembler::processData(std::map<std::string, uint32_t> &unhandle
     this->processLabelDef(unhandledLabelRefs, location, Label{data.name.substr(0, data.name.size() - 1), LabelType::DATA}, data.lineNumber);
 
     // check if data type is ptr
-    if (data.type == "ptr") {
+    if (data.type == "ptr" && data.value[0] == '$') {
         this->processLabelRef(unhandledLabelRefs, Label{data.value, LabelType::DATA}, data.lineNumber);
     }
     // add length of data to dataSectionLength
@@ -462,7 +462,23 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertDataToBytes(con
             }
 
         } else if (dataType == "ptr") {
-            this->pushBackVector(bytecode, this->convertLabelRefToBytes(Label{dataToConvert, LabelType::DATA}));
+            if (data[0] == '$') {
+                this->pushBackVector(bytecode, this->convertLabelRefToBytes(Label{dataToConvert, LabelType::DATA}));
+            } else {
+                const uint64_t raw = std::stoull(data);
+
+                if (raw > UINT32_MAX) {
+                    std::cerr << "Error found at Line " << lineNumber << std::endl;
+                    std::cerr << "Value is out of range for type ptr";
+                    return std::nullopt;
+                }
+
+                const uint32_t rawValToEncode = static_cast<uint32_t>(std::stoull(dataToConvert));
+
+                for (int i = 0; i < 4; i++) {
+                    bytecode.push_back((rawValToEncode >> (i * 8)) & 0xFF);
+                }
+            }
         } else if (dataType == "str") {
             this->pushBackVector(bytecode, this->convertStringToBytes(data));
         }
