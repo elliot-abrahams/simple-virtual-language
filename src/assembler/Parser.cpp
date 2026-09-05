@@ -73,6 +73,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     AssemblerDefs::Operand labelRef;
     AssemblerDefs::Operand immediate;
     AssemblerDefs::Operand nativeRef;
+    AssemblerDefs::Operand errorRef;
 
     // parse TYPE Token
     if (instruction == "push" ||
@@ -124,6 +125,16 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
             return std::nullopt;
         }
         nativeRef = optionalNativeRef.value();
+    }
+
+    // parse ERROR_REF Token
+    if (instruction == "throw") {
+        auto optionalErrorRef = this->parseErrorRef();
+        if (!optionalErrorRef.has_value()) {
+            handleIncorrectInstructionOperand(instruction, AssemblerDefs::SVMATokenType::ERROR_REF, lineNumber);
+            return std::nullopt;
+        }
+        errorRef = optionalErrorRef.value();
     }
 
     if (instruction == "push") {
@@ -240,6 +251,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     //========================================================================================================
 
     if (instruction == "conv") return AssemblerDefs::Instruction{instruction, {type}, lineNumber};
+    if (instruction == "throw") return AssemblerDefs::Instruction{instruction, {errorRef}, lineNumber};
 
     printError(std::string("Undefined instruction: " + instruction), lineNumber);
     return std::nullopt;
@@ -372,6 +384,10 @@ std::optional<AssemblerDefs::Operand> assembler::Parser::parseLabelRef() {
 
 std::optional<AssemblerDefs::Operand> assembler::Parser::parseNativeRef() {
     return this->parseOperand(AssemblerDefs::SVMATokenType::NATIVE_REF);
+}
+
+std::optional<AssemblerDefs::Operand> assembler::Parser::parseErrorRef() {
+    return this->parseOperand(AssemblerDefs::SVMATokenType::ERROR_REF);
 }
 
 std::optional<AssemblerDefs::Operand> assembler::Parser::parseOperand(const AssemblerDefs::SVMATokenType tokenType) {
@@ -732,6 +748,7 @@ AssemblerDefs::OperandType assembler::Parser::mapTokenTypeToOperandType(const As
         case AssemblerDefs::SVMATokenType::DATA_TYPE: return AssemblerDefs::OperandType::DATA_TYPE;
         case AssemblerDefs::SVMATokenType::LABEL_REF: return AssemblerDefs::OperandType::LABEL_REF;
         case AssemblerDefs::SVMATokenType::NATIVE_REF: return AssemblerDefs::OperandType::NATIVE_REF;
+        case AssemblerDefs::SVMATokenType::ERROR_REF: return AssemblerDefs::OperandType::ERROR_REF;
     }
 }
 
@@ -770,6 +787,7 @@ std::string assembler::Parser::tokenTypeToString(const AssemblerDefs::SVMATokenT
         case AssemblerDefs::SVMATokenType::METHOD_DEF: s = "METHOD_DEF"; break;
         case AssemblerDefs::SVMATokenType::METHOD_METADATA_FIELD : s = "METHOD_METADATA_FIELD"; break;
         case AssemblerDefs::SVMATokenType::NATIVE_REF: s = "NATIVE_REF"; break;
+        case AssemblerDefs::SVMATokenType::ERROR_REF: s = "ERROR_REF"; break;
     }
     return s;
 }

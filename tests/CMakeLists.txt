@@ -11,6 +11,7 @@ include(GoogleTest)
 set(VM_TESTS vm_tests)
 
 set(VM_Sources
+        vm/other/ThrowTests.cpp
         vm/other/ConvTests.cpp
 
         vm/arithmetic/CgeTests.cpp

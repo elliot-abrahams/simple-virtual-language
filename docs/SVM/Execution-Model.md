@@ -145,7 +145,7 @@ When an instruction encounters a runtime error, the vm recorded the error and te
 
 The metadata read from the bytecode is used to build a source-level runtime error message.
 
-For a language runtime error, the runtime error handler:
+When running bytecode that has been previously processed by the SVC, the runtime error handler:
 1. Searches for the line table where the current value of `PC` sits between the start and end address of the line table entry
 2. Determines the absolute path of the source file using the source metadata
 3. Reads the source file at the line provided by the line table
@@ -171,7 +171,7 @@ The metadata allows runtime errors to be reported in terms of the source program
 
 If the source file cannot be accessed, the error location is still reported using the source path, line, and column stored in the metadata, by the source code itself cannot be displayed.
 
-For an internal runtime error, the runtime error handler:
+For an internal runtime error or an error thrown during execution of bytecode that has not been previously processed by the SVC, the runtime error handler:
 1. Builds and outputs the error message
 2. Outputs the VM state (registers and values in the operand stack)
 3. An exit code of 1 is produced.
@@ -323,6 +323,7 @@ A method does not have an implicit termination behaviour.
 When executing a method:
 - `ret` returns execution to the caller
 - `halt` terminates VM execution
+- `throw` terminates VM execution
 - A native function may terminate VM execution
 
 If execution reaches the end of a method without encountering a terminating instruction, execution continues into the following bytecode.

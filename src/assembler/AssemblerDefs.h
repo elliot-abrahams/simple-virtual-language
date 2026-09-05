@@ -34,6 +34,7 @@ namespace AssemblerDefs {
         METHOD_DEF,
         METHOD_METADATA_FIELD,
         NATIVE_REF,
+        ERROR_REF,
         END_OF_FILE
     };
 
@@ -90,6 +91,7 @@ namespace AssemblerDefs {
         {"cge", 0x27},
         // other
         {"conv", 0x28},
+        {"throw", 0x29}
     };
 
     inline const std::map<std::string, uint8_t> type {
@@ -117,13 +119,18 @@ namespace AssemblerDefs {
         {"print_str", 0x03}
     };
 
+    inline const std::map<std::string, uint8_t> errorRef {
+        {"array_index", 0x00}
+    };
+
     enum class OperandType {
         IMMEDIATE,
         STRING,
         TYPE,
         DATA_TYPE,
         LABEL_REF,
-        NATIVE_REF
+        NATIVE_REF,
+        ERROR_REF
     };
 
     struct Operand {

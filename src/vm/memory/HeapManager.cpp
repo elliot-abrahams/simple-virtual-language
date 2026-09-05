@@ -16,7 +16,7 @@ uint32_t HeapManager::allocateBlock(std::optional<RuntimeError>* runtimeError, c
             RuntimeErrorType::INTERNAL,
             "attempted to allocate 0 bytes in heap memory"
         };
-        return 0;
+        throw std::runtime_error{""};
     }
 
     const uint32_t bytesToAllocate = size + BLOCK_HEADER_SIZE;
@@ -41,7 +41,7 @@ uint32_t HeapManager::allocateBlock(std::optional<RuntimeError>* runtimeError, c
             RuntimeErrorType::OUT_OF_MEMORY,
             "heap memory exhausted"
         };
-        return 0;
+        throw std::runtime_error{""};
     }
 
     const uint32_t allocatedAddress = currBlock->address + BLOCK_HEADER_SIZE;

@@ -8,7 +8,7 @@ Value OperandStack::pop(std::optional<RuntimeError>* runtimeError) {
             RuntimeErrorType::INTERNAL,
             "attempted to pop from an empty operand stack"
         };
-        return Value{};
+        throw std::runtime_error{""};
     }
     const Value top = this->stack.back();
     this->stack.pop_back();
@@ -21,7 +21,7 @@ Value OperandStack::peek(std::optional<RuntimeError>* runtimeError) const {
             RuntimeErrorType::INTERNAL,
             "attempted to peek at an empty operand stack"
         };
-        return Value{};
+        throw std::runtime_error{""};
     }
     return this->stack.at(stack.size() - 1);
 }
@@ -32,7 +32,7 @@ void OperandStack::push(std::optional<RuntimeError>* runtimeError, const uint8_t
             RuntimeErrorType::INTERNAL,
             "attempted to push onto a full operand stack"
         };
-        return;
+        throw std::runtime_error{""};
     }
 
     Value val{};
@@ -76,7 +76,7 @@ void OperandStack::push(std::optional<RuntimeError>* runtimeError, const Value v
             RuntimeErrorType::INTERNAL,
             "attempted to push onto a full operand stack"
         };
-        return;
+        throw std::runtime_error{""};
     }
 
     this->stack.push_back(value);

@@ -225,6 +225,10 @@ std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexKeyWord() {
     if (AssemblerDefs::nativeRef.find(keyword) != AssemblerDefs::nativeRef.end()) {
         return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::NATIVE_REF, keyword, this->lineNumber};
     }
+    // ERROR_REF
+    if (AssemblerDefs::errorRef.find(keyword) != AssemblerDefs::errorRef.end()) {
+        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::ERROR_REF, keyword, this->lineNumber};
+    }
     this->outputInvalidTokenError(keyword);
     return std::nullopt;
 }

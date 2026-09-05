@@ -9,6 +9,8 @@ enum class ErrorContext {
 };
 
 enum class RuntimeErrorType {
+    EXPLICIT_ARRAY_INDEX_OUT_OF_RANGE,
+
     DIVISION_BY_ZERO,
     OUT_OF_RANGE,
     STACK_OVERFLOW,

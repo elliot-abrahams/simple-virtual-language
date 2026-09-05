@@ -27,6 +27,7 @@ namespace assembler {
         std::optional<AssemblerDefs::Operand> parseImmediate();
         std::optional<AssemblerDefs::Operand> parseLabelRef();
         std::optional<AssemblerDefs::Operand> parseNativeRef();
+        std::optional<AssemblerDefs::Operand> parseErrorRef();
         std::optional<AssemblerDefs::Operand> parseOperand(AssemblerDefs::SVMATokenType tokenType);
         std::optional<AssemblerDefs::Statement> parseDirective();
 

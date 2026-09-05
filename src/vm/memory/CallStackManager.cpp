@@ -15,7 +15,7 @@ void CallStackManager::push(std::optional<RuntimeError>* runtimeError, uint32_t&
             RuntimeErrorType::STACK_OVERFLOW,
             "stack overflow"
         };
-        return;
+        throw std::runtime_error{""};
     }
 
     const uint32_t oldFP = FP;
@@ -52,7 +52,7 @@ void CallStackManager::pop(std::optional<RuntimeError>* runtimeError, uint32_t &
             RuntimeErrorType::INTERNAL,
             "cannot execute 'ret' with an empty call stack",
         };
-        return;
+        throw std::runtime_error{""};
     }
 
     // read return address from memory

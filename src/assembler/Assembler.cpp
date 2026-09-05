@@ -345,6 +345,12 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertInstructionToBy
                 bytecode.push_back(AssemblerDefs::nativeRef.at(instruction.operands[0].value));
                 break;
             }
+
+            case AssemblerDefs::OperandType::ERROR_REF: {
+                // push error ref id onto bytecode (as 1 byte)
+                bytecode.push_back(AssemblerDefs::errorRef.at(instruction.operands[0].value));
+                break;
+            }
         }
     }
     return bytecode;

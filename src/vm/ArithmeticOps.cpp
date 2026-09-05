@@ -721,6 +721,7 @@ void ArithmeticOps::raiseInvalidOperationOnTypesRuntimeError(std::optional<Runti
         TypeConversions::typeToString(static_cast<uint8_t>(type2)) +
         " for '" + instructionMnemonic + "'"
     };
+    throw std::runtime_error{""};
 }
 
 void ArithmeticOps::raiseInvalidOperationOnTypesRuntimeError(std::optional<RuntimeError>* runtimeError, const std::string &instructionMnemonic, const ISA::Type &type1) {
@@ -730,4 +731,5 @@ void ArithmeticOps::raiseInvalidOperationOnTypesRuntimeError(std::optional<Runti
         TypeConversions::typeToString(static_cast<uint8_t>(type1)) +
         " for '" + instructionMnemonic + "'"
     };
+    throw std::runtime_error{""};
 }

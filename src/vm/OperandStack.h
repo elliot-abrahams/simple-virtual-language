@@ -2,6 +2,7 @@
 #define SIMPLE_VM_OPERANDSTACK_H
 #include <cstdint>
 #include <cstring>
+#include <iomanip>
 #include <limits>
 #include <optional>
 #include <variant>
@@ -47,7 +48,7 @@ struct Value
                     RuntimeErrorType::INTERNAL,
                     "unexpected type on the operand stack"
                 };
-                return TypedValue{};
+                throw std::runtime_error{""};
         }
     }
 
@@ -191,7 +192,26 @@ struct Value
         type = newType;
     }
 
-    void handleInvalidOperandTypesForConversion(const ISA::Type newType) {
+    std::string toString() const {
+        switch (this->type) {
+            case ISA::Type::UI32:
+            case ISA::Type::UI64: {
+                return std::to_string(this->rawValue);
+            }
+
+            case ISA::Type::I32: return std::to_string(TypeConversions::rawToI32(this->rawValue));
+            case ISA::Type::I64: return std::to_string(TypeConversions::rawToI64(this->rawValue));
+            case ISA::Type::F32: return this->formatFloatString(TypeConversions::rawToF32(this->rawValue));
+            case ISA::Type::F64: return this->formatFloatString(TypeConversions::rawToF64(this->rawValue));
+
+            default:
+                return "";
+        }
+    }
+
+private:
+
+    void handleInvalidOperandTypesForConversion(const ISA::Type newType) const {
         *runtimeError = RuntimeError{
             RuntimeErrorType::INTERNAL,
             "cannot convert value from type " +
@@ -199,9 +219,10 @@ struct Value
                 " to type " +
                 TypeConversions::typeToString(static_cast<uint8_t>(newType))
         };
+        throw std::runtime_error{""};
     }
 
-    void handleOutOfRangeConversionError(const ISA::Type& newType) {
+    void handleOutOfRangeConversionError(const ISA::Type& newType) const {
         if (errorContext == ErrorContext::LANGUAGE) {
             *runtimeError = RuntimeError {
                 RuntimeErrorType::OUT_OF_RANGE,
@@ -217,6 +238,39 @@ struct Value
                 TypeConversions::typeToString(static_cast<uint8_t>(newType))
             };
         }
+        throw std::runtime_error{""};
+    }
+
+    std::string formatFloatString(const double value) const {
+        std::ostringstream oss;
+        oss << std::setprecision(std::numeric_limits<double>::max_digits10)
+            << std::defaultfloat
+            << value;
+
+        std::string formattedString = oss.str();
+
+        auto dot = formattedString.find('.');
+
+        if (dot == std::string::npos) {
+            // no decimal point and not scientific notation
+            if (formattedString.find('e') == std::string::npos &&
+                formattedString.find('E') == std::string::npos) {
+
+                formattedString += ".0";
+                }
+
+        } else {
+            while (formattedString.back() == '0') {
+                // remove trailing zeros
+                formattedString.pop_back();
+            }
+
+            if (formattedString.back() == '.') {
+                formattedString.push_back('0');
+            }
+        }
+
+        return formattedString;
     }
 };
 

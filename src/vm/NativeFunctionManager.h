@@ -20,6 +20,7 @@ public:
                     RuntimeErrorType::INTERNAL,
                     "native call ID " + std::to_string(id) + " does not correspond to a defined function"
                 };
+                throw std::runtime_error{""};
         }
     }
 
@@ -57,27 +58,22 @@ private:
                 static_cast<uint8_t>(ISA::Type::F32),
                 static_cast<uint8_t>(ISA::Type::F64)
             },
-            static_cast<uint8_t>(value.type));
+            static_cast<uint8_t>(value.type)
+        );
 
         if (vm->getRuntimeError()->has_value()) return;
 
-        switch (static_cast<ISA::Type>(value.type)) {
-            case ISA::Type::UI32:
-            case ISA::Type::UI64:
-                std::cout << value.rawValue;
-                break;
+        const std::string output = value.toString();
 
-            case ISA::Type::I32: std::cout << TypeConversions::rawToI32(value.rawValue); break;
-            case ISA::Type::I64: std::cout << TypeConversions::rawToI64(value.rawValue); break;
-            case ISA::Type::F32: std::cout << formatFloatString(TypeConversions::rawToF32(value.rawValue)); break;
-            case ISA::Type::F64: std::cout << formatFloatString(TypeConversions::rawToF64(value.rawValue)); break;
-
-            default:
-                *runtimeError = RuntimeError{
-                    RuntimeErrorType::INTERNAL,
-                    "invalid operand type for native function 'print'"
-                };
+        if (output == "") {
+            *runtimeError = RuntimeError{
+                RuntimeErrorType::INTERNAL,
+                "invalid operand type for native function 'print'"
+            };
+            throw std::runtime_error{""};
         }
+
+        std::cout << output;
     }
 
     static void executePrintStr(VM* vm, std::optional<RuntimeError>* runtimeError) {
@@ -88,38 +84,6 @@ private:
         if (vm->getRuntimeError()->has_value()) return;
 
         std::cout << vm->readStringFromMemory(value.rawValue);
-    }
-
-    static std::string formatFloatString(const double value) {
-        std::ostringstream oss;
-        oss << std::setprecision(std::numeric_limits<double>::max_digits10)
-            << std::defaultfloat
-            << value;
-
-        std::string formattedString = oss.str();
-
-        auto dot = formattedString.find('.');
-
-        if (dot == std::string::npos) {
-            // no decimal point and not scientific notation
-            if (formattedString.find('e') == std::string::npos &&
-                formattedString.find('E') == std::string::npos) {
-
-                formattedString += ".0";
-            }
-
-        } else {
-            while (formattedString.back() == '0') {
-                // remove trailing zeros
-                formattedString.pop_back();
-            }
-
-            if (formattedString.back() == '.') {
-                formattedString.push_back('0');
-            }
-        }
-
-        return formattedString;
     }
 };
 

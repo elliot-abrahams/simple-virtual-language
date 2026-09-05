@@ -54,7 +54,7 @@
 
 | Mnemonic | Opcode | Bytes | Operands     | operand stack [bottom ... top] → [bottom ... top] | Description                                                       |
 |----------|--------|-------|--------------|---------------------------------------------------|-------------------------------------------------------------------|
-| native   | 0x10   | 2     | <native_ref> | [...] → [...] (depends on the invoked function)   | Invokes a native function provided by the VM                      |
+| native   | 0x10   | 2     | <native_ref> | [...] → [...] (depends on the invoked function)   | Invokes a native function provided by the VM.                     |
 | call     | 0x11   | 5     | <label>      | [arg1, arg2, ..., argn] → []                      | Calls a method and creates a new stack frame.                     |
 | ret      | 0x12   | 1     |              |                                                   | Returns from the current method and destroys current stack frame. |
 | jmp      | 0x13   | 5     | <label>      |                                                   | Jump to `<label>` unconditionally.                                |
@@ -89,6 +89,7 @@
 | Mnemonic | Opcode | Bytes | Operands    | Operand Stack [bottom ... top] → [bottom ... top] | Description                                                                                  |
 |----------|--------|-------|-------------|---------------------------------------------------|----------------------------------------------------------------------------------------------|
 | conv     | 0x28   | 2     | <type>      | [x] → [y]                                         | Converts the top value of the operand stack to the specified `<type>` and pushes the result. |
+| throw    | 0x29   | 2     | <error_ref> | [...] → [] (depends on the error thrown)          | Throws a runtime error.                                                                      |
 
 ---
 
@@ -105,7 +106,6 @@
 | f32  | 0x04     | 4       |
 | f64  | 0x05     | 8       |
 | ptr  | 0x06     | 4       |
-
 
 ### 2.2 Data Types
 
@@ -129,3 +129,11 @@
 | exit       | 0x00     |
 | print      | 0x01     |
 | print_str  | 0x03     |
+
+---
+
+## 4. Error References
+
+| Error Type           | error_ref   | Encoding |
+|----------------------|-------------|----------|
+| ArrayIndexOutOfRange | array_index | 0x00     | 

@@ -50,7 +50,8 @@
     - [5.17 cgt](#517-cgt)
     - [5.18 cge](#518-cge)
 - [6. Other](#6-other)
-    - [6.3 conv](#61-conv)
+    - [6.1 conv](#61-conv)
+    - [6.2 throw](#62-throw)
 
 ---
 
@@ -717,3 +718,16 @@ See Section 5.3 of `Execution-Model.md` for more details on return behaviour.
 - When converting from a floating type, `x` must be representable as `<type>`
 - When converting between integer types, values that cannot be represented by `<type>` are wrapped to the range of `<type>`
 - `y` has type `<type>`
+
+---
+
+### 6.2 throw
+
+**Operands:** `<error_ref>`
+
+**Stack:** `[...] → [] (depends on the error thrown)`
+
+**Semantics:**
+- `<error_ref>` must refer to a runtime error provided by the VM
+
+See `Runtime-Errors.md` for details of how each `error_ref` is handled.

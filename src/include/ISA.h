@@ -45,6 +45,7 @@ namespace ISA {
         CGT = 0x26,
         CGE = 0x27,
         CONV = 0x28,
+        THROW = 0x29
     };
 
     enum class Type : uint8_t {
