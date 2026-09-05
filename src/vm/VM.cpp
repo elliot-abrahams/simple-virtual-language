@@ -335,6 +335,7 @@ void VM::execute() {
         case ISA::Opcode::POP: this->executePop(); break; // pop
         case ISA::Opcode::DUP: this->executeDup(); break; // dup
         case ISA::Opcode::SWAP: this->executeSwap(); break; // swap
+        case ISA::Opcode::ROT: this->executeRot(); break; // rot
 
         // -------------------------------------------------
         // MEMORY
@@ -423,12 +424,24 @@ void VM::executeDup() {
 
 void VM::executeSwap() {
     // pop top two values from operand stack
-    const Value val1 = this->operandStack.pop(&this->runtimeError);
-    const Value val2 = this->operandStack.pop(&this->runtimeError);
+    const Value y = this->operandStack.pop(&this->runtimeError);
+    const Value x = this->operandStack.pop(&this->runtimeError);
 
-    // push the two values onto the operand stack but swapped
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(val1.type), val1.rawValue);
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(val2.type), val2.rawValue);
+    // push the two values onto the operand stack resulting in a swap
+    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(y.type), y.rawValue);
+    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(x.type), x.rawValue);
+}
+
+void VM::executeRot() {
+    // pop top three values from operand stack
+    const Value z = this->operandStack.pop(&this->runtimeError);
+    const Value y = this->operandStack.pop(&this->runtimeError);
+    const Value x = this->operandStack.pop(&this->runtimeError);
+
+    // push the three values onto the operand stack resulting in a rotation
+    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(y.type), y.rawValue);
+    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(z.type), z.rawValue);
+    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(x.type), x.rawValue);
 }
 
 // -------------------------------------------------

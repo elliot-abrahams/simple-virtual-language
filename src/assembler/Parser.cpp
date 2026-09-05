@@ -194,6 +194,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     if (instruction == "pop") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "dup") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "swap") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "rot") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 
     //========================================================================================================
     // MEMORY

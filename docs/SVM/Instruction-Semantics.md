@@ -12,6 +12,7 @@
     - [2.2 pop](#22-pop)
     - [2.3 dup](#23-dup)
     - [2.4 swap](#24-swap)
+    - [2.5 rot](#25-rot)
 - [3. Memory](#3-memory)
     - [3.1 load](#31-load)
     - [3.2 loadB](#32-loadb)
@@ -126,6 +127,18 @@
 
 **Type Rules:**
 - The types of `x` and `y` are unchanged
+
+---
+
+### 2.5 rot
+
+**Stack:** `[x, y, z]→ [y, z, x]`
+
+**Semantics:**
+- Rotates the top three values of the operand stack. (pulls third value to the top)
+
+**Type Rules:**
+- The types of `x`, `y`, and `z` are unchanged
 
 ---
 

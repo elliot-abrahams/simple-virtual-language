@@ -45,6 +45,7 @@ set(VM_Sources
         vm/memory/LoadBStoreBTests.cpp
         vm/memory/LoadStoreTests.cpp
 
+        vm/stack/RotTests.cpp
         vm/stack/SwapTests.cpp
         vm/stack/DupTests.cpp
         vm/stack/PopTests.cpp

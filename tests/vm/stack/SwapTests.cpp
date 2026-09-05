@@ -85,6 +85,24 @@ TEST(SWAP, F64) {
     );
 }
 
+TEST(SWAP, PTR) {
+    const auto assembly = R"(
+        push ptr $x
+        push ptr $y
+        swap
+        halt
+
+        .data
+        $x: i32 5
+        $y: i32 4
+    )";
+    EXPECT_N_OPERANDS_OF_SAME_TYPE_VM_STACK_EQ(
+        assembly,
+        ISA::Type::PTR,
+        std::vector{uint32_t(15), uint32_t(20)}
+    );
+}
+
 TEST(SWAP, INVALID_UNDERFLOW_BY_ONE) {
     const auto assembly = R"(
         push i32 #5
