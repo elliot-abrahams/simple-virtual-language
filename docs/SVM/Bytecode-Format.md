@@ -29,6 +29,7 @@
     - [5.4 Label Encoding](#54-label-encoding)
     - [5.5 Immediate Values](#55-immediate-values)
     - [5.6 Native Reference Encoding](#56-native-reference-encoding)
+    - [5.7 Error Reference Encoding](#57-error-reference-encoding)
 - [6. Data Encoding](#6-data-encoding)
     - [6.1 Data Entries](#61-data-entries)
     - [6.2 Data Type Encoding](#62-data-type-encoding)
@@ -320,6 +321,26 @@ native exit
 Is encoded as:
 ```
 0x11 0x00
+```
+
+### 5.7 Error Reference Encoding
+
+An error reference is encoded as a 1-byte unsigned value.
+
+The value identifies the explicit runtime error type to throw.
+
+The error reference name is not stored in the bytecode.
+
+See `Instruction-Set.md` for the values assigned to each error reference.
+
+For Example:
+```
+throw array_index_out_of_range
+```
+
+Is encoded as:
+```
+0x2B 0x00
 ```
 
 ---
