@@ -335,7 +335,8 @@ void VM::execute() {
         case ISA::Opcode::POP: this->executePop(); break; // pop
         case ISA::Opcode::DUP: this->executeDup(); break; // dup
         case ISA::Opcode::SWAP: this->executeSwap(); break; // swap
-        case ISA::Opcode::ROT: this->executeRot(); break; // rot
+        case ISA::Opcode::ROTD: this->executeRotD(); break; // rotD
+        case ISA::Opcode::ROTU: this->executeRotU(); break; // rotU
 
         // -------------------------------------------------
         // MEMORY
@@ -432,16 +433,40 @@ void VM::executeSwap() {
     this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(x.type), x.rawValue);
 }
 
-void VM::executeRot() {
-    // pop top three values from operand stack
-    const Value z = this->operandStack.pop(&this->runtimeError);
-    const Value y = this->operandStack.pop(&this->runtimeError);
-    const Value x = this->operandStack.pop(&this->runtimeError);
+void VM::executeRotD() {
+    // read depth of rotation
+    uint8_t depth = 0;
+    for (int i = 0; i < 2; i++) {
+        depth = depth | this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++) >> (i * 8) & 0xFF;
+    }
+    std::vector<Value> values;
+    // pop values
+    for (int i = 0; i < depth; i++) {
+        values.push_back(this->operandStack.pop(&runtimeError));
+    }
+    // push values resulting in a downwards rotation
+    for (int i = depth - 2; i >= 0; i--) {
+        this->operandStack.push(&runtimeError, static_cast<uint8_t>(values[i].type), values[i].rawValue);
+    }
+    this->operandStack.push(&runtimeError, static_cast<uint8_t>(values[depth - 1].type), values[depth - 1].rawValue);
+}
 
-    // push the three values onto the operand stack resulting in a rotation
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(y.type), y.rawValue);
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(z.type), z.rawValue);
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(x.type), x.rawValue);
+void VM::executeRotU() {
+    // read depth of rotation
+    uint8_t depth = 0;
+    for (int i = 0; i < 2; i++) {
+        depth = depth | this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++) >> (i * 8) & 0xFF;
+    }
+    // pop values
+    std::vector<Value> values;
+    for (int i = 0; i < depth; i++) {
+        values.push_back(this->operandStack.pop(&runtimeError));
+    }
+    // push values resulting in an upwards rotation
+    this->operandStack.push(&runtimeError, static_cast<uint8_t>(values[0].type), values[0].rawValue);
+    for (int i = depth - 1; i >= 1; i--) {
+        this->operandStack.push(&runtimeError, static_cast<uint8_t>(values[i].type), values[i].rawValue);
+    }
 }
 
 // -------------------------------------------------

@@ -45,7 +45,8 @@ set(VM_Sources
         vm/memory/LoadBStoreBTests.cpp
         vm/memory/LoadStoreTests.cpp
 
-        vm/stack/RotTests.cpp
+        vm/stack/RotUTests.cpp
+        vm/stack/RotDTests.cpp
         vm/stack/SwapTests.cpp
         vm/stack/DupTests.cpp
         vm/stack/PopTests.cpp
@@ -64,7 +65,10 @@ target_link_libraries(${VM_TESTS} PRIVATE
     sv_lib
 )
 
-gtest_discover_tests(${VM_TESTS})
+gtest_discover_tests(
+    ${VM_TESTS}
+    DISCOVERY_TIMEOUT 30
+)
 
 
 # PARSER TESTS

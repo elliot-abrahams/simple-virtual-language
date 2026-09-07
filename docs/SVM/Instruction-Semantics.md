@@ -12,7 +12,8 @@
     - [2.2 pop](#22-pop)
     - [2.3 dup](#23-dup)
     - [2.4 swap](#24-swap)
-    - [2.5 rot](#25-rot)
+    - [2.5 rotD](#25-rotd)
+    - [2.6 rotU](#26-rotu)
 - [3. Memory](#3-memory)
     - [3.1 load](#31-load)
     - [3.2 loadB](#32-loadb)
@@ -130,15 +131,33 @@
 
 ---
 
-### 2.5 rot
+### 2.5 rotD
 
-**Stack:** `[x, y, z]→ [y, z, x]`
+**Operands:** `<immediate>`
+
+**Stack:** `[a, b, ..., z] → [b, ..., z, a]`
 
 **Semantics:**
-- Rotates the top three values of the operand stack. (pulls third value to the top)
+- Rotates the top `<immediate>` values of the operand stack downwards by one position, moving the bottom of the rotated section to the top of the operand stack.
 
 **Type Rules:**
-- The types of `x`, `y`, and `z` are unchanged
+- `<immediate>` must be larger than or equal to `3`
+- `<immediate>` must be less than or equal to `1024`
+
+---
+
+### 2.6 rotU
+
+**Operands:** `<immediate>`
+
+**Stack:** `[a, ..., y, z] → [z, a, ..., y]`
+
+**Semantics:**
+- Rotates the top `<immediate>` values of the operand stack upwards by one position, moving the top of the operand stack to the bottom of the rotated section.
+
+**Type Rules:**
+- `<immediate>` must be larger than or equal to `3`
+- `<immediate>` must be less than or equal to `1024`
 
 ---
 

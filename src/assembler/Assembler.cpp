@@ -153,6 +153,8 @@ void assembler::Assembler::processInstruction(std::map<std::string, uint32_t>& u
             case AssemblerDefs::OperandType::IMMEDIATE: {
                 if (instruction.opcode == "loadL" || instruction.opcode == "storeL") {
                     codeSectionLength += 4;
+                } else if (instruction.opcode == "rotD" || instruction.opcode == "rotU") {
+                    codeSectionLength += 2;
                 } else {
                     codeSectionLength += this->calculateBytesFromType(type);
                 }
@@ -315,7 +317,7 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertInstructionToBy
         switch (operand.type) {
 
             case AssemblerDefs::OperandType::TYPE: {
-                bytecode.push_back(this->convertTypeToByte(operand.value));
+                bytecode.push_back(convertTypeToByte(operand.value));
                 dataType = operand.value;
                 break;
             }
@@ -325,19 +327,34 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertInstructionToBy
                 break;
             }
 
-            case AssemblerDefs::OperandType::STRING:
+            //case AssemblerDefs::OperandType::STRING:
             case AssemblerDefs::OperandType::IMMEDIATE: {
-                std::string typeToCheckAgainstImmediate = "";
-                if (instruction.opcode == "loadL") {
-                    typeToCheckAgainstImmediate = "i32"; // immediate of loadL is type i32
+
+                if (instruction.opcode == "rotD" || instruction.opcode == "rotU") {
+                    const auto value = std::stoll(operand.value.substr(1, operand.value.size()));
+                    // ensure immediate is within 3 and 1024
+                    if (value > 1024 || value < 3) {
+                        std::cerr << "Error found at Line " << instruction.lineNumber << std::endl;
+                        std::cerr << "Immediate is out of range for instruction " + instruction.opcode << std::endl;
+                        return std::nullopt;
+                    }
+                    const auto raw = static_cast<uint16_t>(value);
+                    for (int i = 0; i < 2; i++) {
+                        bytecode.push_back((raw >> (i * 8)) & 0xFF);
+                    }
                 } else {
-                    typeToCheckAgainstImmediate = dataType;
+                    std::string typeToCheckAgainstImmediate;
+                    if (instruction.opcode == "loadL") {
+                        typeToCheckAgainstImmediate = "i32"; // immediate of loadL is type i32
+                    } else {
+                        typeToCheckAgainstImmediate = dataType;
+                    }
+                    auto data = this->convertDataToBytes(typeToCheckAgainstImmediate, operand.value, instruction.lineNumber);
+                    if (!data.has_value()) {
+                        return std::nullopt;
+                    }
+                    this->pushBackVector(bytecode, data.value());
                 }
-                auto data = this->convertDataToBytes(typeToCheckAgainstImmediate, operand.value, instruction.lineNumber);
-                if (!data.has_value()) {
-                    return std::nullopt;
-                }
-                this->pushBackVector(bytecode, data.value());
                 break;
             }
 

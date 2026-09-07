@@ -55,7 +55,8 @@ private:
     void executePop();
     void executeDup();
     void executeSwap();
-    void executeRot();
+    void executeRotD();
+    void executeRotU();
 
     void executeLoad();
     void executeLoadB();
