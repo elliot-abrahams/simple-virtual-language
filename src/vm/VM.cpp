@@ -29,8 +29,6 @@ void VM::run(const std::vector<uint8_t>* bytecode) {
     // read bytecode
     this->readBytecode(bytecode);
 
-    // set HB
-    this->HB = bytecode->size() - BYTECODE_HEADER_SIZE;
     this->HP = this->HB;
 
     this->heapManager.initialiseHeap(&this->HP);
