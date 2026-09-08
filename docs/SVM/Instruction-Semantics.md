@@ -109,13 +109,17 @@
 
 ### 2.3 dup
 
-**Stack:** `[x] → [x, x]`
+**Operands:** `<immediate>`
+
+**Stack:** `[x, ...] → [x, ..., x]`
 
 **Semantics:**
-- Duplicates the top value of the operand stack
+- Duplicates the value `<immediate>` positions below the top of the operand stack. Where `0` refers to the top value.                                                                               
 
 **Type Rules:**
 - The duplicated value has the same type as the original value
+- `<immediate>` must be larger than or equal to `0`
+- `<immediate>` must be less than or equal to `1023`
 
 ---
 

@@ -106,10 +106,11 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     }
 
     // parse IMMEDIATE Token
-    if (instruction == "loadL" ||
-        instruction == "storeL" ||
+    if (instruction == "dup" ||
         instruction == "rotD" ||
-        instruction == "rotU"
+        instruction == "rotU" ||
+        instruction == "loadL" ||
+        instruction == "storeL"
     ) {
         auto optionalImmediate = this->parseImmediate();
         if (!optionalImmediate.has_value()) {
@@ -194,7 +195,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
         return std::nullopt;
     }
     if (instruction == "pop") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
-    if (instruction == "dup") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
+    if (instruction == "dup") return AssemblerDefs::Instruction{instruction, {immediate}, lineNumber};
     if (instruction == "swap") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "rotD") return AssemblerDefs::Instruction{instruction, {immediate}, lineNumber};
     if (instruction == "rotU") return AssemblerDefs::Instruction{instruction, {immediate}, lineNumber};

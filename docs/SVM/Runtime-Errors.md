@@ -211,6 +211,14 @@ attempted to push onto a full operand stack
 
 Occurs when an operation attempts to push a value onto a full operand stack.
 
+**Invalid operand stack access**
+
+```
+attempted to duplicate a value outside the operand stack
+```
+
+Occurs when the `dup` instruction attempts to access a value at an offset that is outside the current operand stack.
+
 **Invalid operand type**
 
 ```

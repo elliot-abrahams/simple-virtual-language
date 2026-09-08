@@ -151,10 +151,16 @@ void assembler::Assembler::processInstruction(std::map<std::string, uint32_t>& u
             }
 
             case AssemblerDefs::OperandType::IMMEDIATE: {
-                if (instruction.opcode == "loadL" || instruction.opcode == "storeL") {
-                    codeSectionLength += 4;
-                } else if (instruction.opcode == "rotD" || instruction.opcode == "rotU") {
+                if (
+                    instruction.opcode == "dup" ||
+                    instruction.opcode == "rotD" ||
+                    instruction.opcode == "rotU") {
                     codeSectionLength += 2;
+                } else if (
+                    instruction.opcode == "loadL" ||
+                    instruction.opcode == "storeL"
+                ) {
+                    codeSectionLength += 4;
                 } else {
                     codeSectionLength += this->calculateBytesFromType(type);
                 }
@@ -332,7 +338,7 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertInstructionToBy
 
                 if (instruction.opcode == "rotD" || instruction.opcode == "rotU") {
                     const auto value = std::stoll(operand.value.substr(1, operand.value.size()));
-                    // ensure immediate is within 3 and 1024
+                    // ensure immediate is between 3 and 1024 (inclusive)
                     if (value > 1024 || value < 3) {
                         std::cerr << "Error found at Line " << instruction.lineNumber << std::endl;
                         std::cerr << "Immediate is out of range for instruction " + instruction.opcode << std::endl;
@@ -342,6 +348,20 @@ std::optional<std::vector<uint8_t>> assembler::Assembler::convertInstructionToBy
                     for (int i = 0; i < 2; i++) {
                         bytecode.push_back((raw >> (i * 8)) & 0xFF);
                     }
+
+                } else if (instruction.opcode == "dup") {
+                    const auto value = std::stoll(operand.value.substr(1, operand.value.size()));
+                    // ensure immediate is between 0 and 1023 (inclusive)
+                    if (value > 1023 || value < 0) {
+                        std::cerr << "Error found at Line " << instruction.lineNumber << std::endl;
+                        std::cerr << "Immediate is out of range for instruction " + instruction.opcode << std::endl;
+                        return std::nullopt;
+                    }
+                    const auto raw = static_cast<uint16_t>(value);
+                    for (int i = 0; i < 2; i++) {
+                        bytecode.push_back((raw >> (i * 8)) & 0xFF);
+                    }
+
                 } else {
                     std::string typeToCheckAgainstImmediate;
                     if (instruction.opcode == "loadL") {

@@ -417,8 +417,22 @@ void VM::executePop() {
 }
 
 void VM::executeDup() {
-    const Value val = this->operandStack.peek(&this->runtimeError); // get top value of operand stack
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(val.type), val.rawValue); // push that value onto the operand stack
+    // read depth of duplication
+    uint8_t depth = 0;
+    for (int i = 0; i < 2; i++) {
+        depth = depth | this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++) >> (i * 8) & 0xFF;
+    }
+
+    if (depth >= this->operandStack.getStack()->size()) {
+        this->runtimeError = RuntimeError{
+            RuntimeErrorType::INTERNAL,
+            "attempted to duplicate a value outside the operand stack"
+        };
+        throw std::runtime_error("");
+    }
+
+    const Value valueToDuplicate = this->operandStack.getStack()->at((this->operandStack.getStack()->size() - depth) - 1);
+    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(valueToDuplicate.type), valueToDuplicate.rawValue); // push that value onto the operand stack
 }
 
 void VM::executeSwap() {
