@@ -43,8 +43,8 @@
 |----------|--------|-------|--------------------------|---------------------------------------------------|---------------------------------------------------------------------------------|
 | load     | 0x08   | 2     | `<type>`                 | [addr] → [value]                                  | Loads a value of the specified `<type>` from memory.                            |
 | loadB    | 0x09   | 1     |                          | [addr] → [value]                                  | Loads a single byte from memory.                                                |
-| loadG    | 0x0a   | 6     | `<label>`                | [] → [value]                                      | Loads a value from the statically allocated data region.                        |
-| loadL    | 0x0b   | 5     | `<type>` + `<immediate>` | [] → [value]                                      | Loads a values from the current stack frame.                                    |
+| loadG    | 0x0a   | 5     | `<label>`                | [] → [value]                                      | Loads a value from the statically allocated data region.                        |
+| loadL    | 0x0b   | 6     | `<type>` + `<immediate>` | [] → [value]                                      | Loads a values from the current stack frame.                                    |
 | store    | 0x0c   | 1     |                          | [addr, value] → []                                | Stores a value in memory.                                                       |
 | storeB   | 0x0d   | 1     |                          | [addr, value] → []                                | Stores the least significant byte of `<val>` in memory.                         |
 | storeG   | 0x0e   | 5     | `<label>`                | [value] → []                                      | Stores a value in the statically allocated data region.                         |
