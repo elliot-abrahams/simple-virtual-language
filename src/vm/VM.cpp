@@ -995,11 +995,13 @@ void VM::dumpState() const {
     std::cerr << "  SP: 0x" << std::hex << this->SP << "\n";
 
     std::cerr << "\nOperand Stack (bottom -> top):\n";
-    for (int i = 0; i < stack->size(); i++) {
+
+    for (size_t i = 0; i < stack->size(); i++) {
         std::cerr << "0x" << std::hex << i << ": ";
 
-        std::visit([](auto&& val){
-            std::cerr << std::dec << val << "\n";
+        std::visit([](auto&& val) {
+            std::cerr << "0x" << std::hex << val;
+            std::cerr << " (" << std::dec << val << ")\n";
         }, stack->at(i).toTyped());
     }
 
