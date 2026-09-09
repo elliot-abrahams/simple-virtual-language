@@ -107,7 +107,7 @@ Occurs when an array is accessed using and index outside its valid range.
 
 **Messages:**
 ```
-Index <array_index> out of range for length <array_size>
+index <array_index> out of range for array with size <array_size>
 ```
 
 ---

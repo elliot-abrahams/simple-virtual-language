@@ -907,7 +907,7 @@ void VM::executeThrow() {
                 static_cast<uint8_t>(arrayLength.type)
             );
 
-            const std::string errorMsg = "Index " + arrayIndex.toString() + " out of range for length " + arrayLength.toString();
+            const std::string errorMsg = "index " + arrayIndex.toString() + " out of range for array with size " + arrayLength.toString();
             this->runtimeError = RuntimeError{
                 RuntimeErrorType::EXPLICIT_ARRAY_INDEX_OUT_OF_RANGE,
                 errorMsg
