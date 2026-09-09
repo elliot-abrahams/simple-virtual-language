@@ -156,7 +156,7 @@ TEST(CGT, INVALID_I32_UI32) {
         cgt
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
 TEST(CGT, INVALID_I64_UI64) {
@@ -166,7 +166,7 @@ TEST(CGT, INVALID_I64_UI64) {
         cgt
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
 TEST(CGT, INVALID_F32_F64) {
@@ -176,7 +176,7 @@ TEST(CGT, INVALID_F32_F64) {
         cgt
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
 TEST(CGT, INVALID_I32_PTR) {
@@ -189,7 +189,7 @@ TEST(CGT, INVALID_I32_PTR) {
     .data
     $x: i32 5
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
 TEST(CGT, INVALID_UNDERFLOW_BY_ONE) {
@@ -198,7 +198,7 @@ TEST(CGT, INVALID_UNDERFLOW_BY_ONE) {
         cgt
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
 TEST(CGT, INVALID_UNDERFLOW_BY_TWO) {
@@ -206,5 +206,5 @@ TEST(CGT, INVALID_UNDERFLOW_BY_TWO) {
         cgt
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }

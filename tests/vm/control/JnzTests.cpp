@@ -211,5 +211,5 @@ TEST(JNZ, INVALID_UNDERFLOW) {
         halt
     $l:
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }

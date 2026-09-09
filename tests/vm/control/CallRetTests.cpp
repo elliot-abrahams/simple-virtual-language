@@ -106,7 +106,7 @@ TEST(CALL_RET, INVALID_RET_UNDERFLOW) {
         ret
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
 TEST(CALL_RET, INVALID_OVERFLOW) {
@@ -121,5 +121,5 @@ TEST(CALL_RET, INVALID_OVERFLOW) {
         call $method
         ret
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::STACK_OVERFLOW);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::STACK_OVERFLOW);
 }

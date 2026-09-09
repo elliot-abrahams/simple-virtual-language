@@ -123,7 +123,8 @@ namespace AssemblerDefs {
 
     inline const std::map<std::string, uint8_t> errorRef {
         {"array_index_out_of_range", 0x00},
-        {"negative_array_size", 0x01}
+        {"negative_array_size", 0x01},
+        {"array_initialiser_size", 0x02}
     };
 
     enum class OperandType {

@@ -54,7 +54,7 @@ void EXPECT_N_OPERANDS_OF_SAME_TYPE_VM_STACK_EQ(
     }
 }
 
-inline void EXPECT_INTERNAL_RUNTIME_ERROR(
+inline void EXPECT_RUNTIME_ERROR(
     const std::string& source,
     const RuntimeErrorType errorType
 ) {
@@ -99,7 +99,7 @@ void EXPECT_OPERAND_VM_STACK_EQ_WITH_CONSOLE_INPUT(
     }
 }
 
-inline void EXPECT_INTERNAL_RUNTIME_ERROR_WITH_CONSOLE_INPUT(
+inline void EXPECT_RUNTIME_ERROR_WITH_CONSOLE_INPUT(
     const std::string& source,
     const RuntimeErrorType errorType,
     const std::string& consoleInput

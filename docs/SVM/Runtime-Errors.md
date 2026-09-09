@@ -9,7 +9,8 @@
   - [2.3 Internal Runtime Errors](#23-internal-runtime-errors)
 - [3. Explicit Runtime Errors](#3-explicit-runtime-errors)
   - [3.1 ArrayIndexOutOfRangeError](#31-arrayindexoutofrangeerror)
-  - [3.2 NegativeArraySize](#32-negativearraysize)
+  - [3.2 NegativeArraySizeError](#32-negativearraysizeerror)
+  - [3.3 ArrayInitialiserSizeError](#33-arrayinitialisersizeerror)
 - [4. Implicit Runtime Errors](#4-implicit-runtime-errors)
   - [4.1 DivisionByZeroError](#41-divisionbyzeroerror)
   - [4.2 OutOfRangeError](#42-outofrangeerror)
@@ -93,25 +94,25 @@ Occurs when an array is accessed using and index outside its valid range.
 
 **ID:** `0x00`
 
-**Stack:** `[array_length, array_index] → []`
+**Stack:** `[array_size, array_index] → []`
 
 **Semantics:**
 - Throws `ArrayIndexOutOfRangeError`
 - Terminates execution of the SVM
-- Uses `array_length` and `array_index` to construct the error message
+- Uses `array_size` and `array_index` to construct the error message
 
 **Type Rules:**
-- `array_length` must have type `ui32`
+- `array_size` must have type `ui32`
 - `array_index` must be an integer type
 
 **Messages:**
 ```
-Index <array_index> out of range for length <array_length>
+Index <array_index> out of range for length <array_size>
 ```
 
 ---
 
-### 3.2 NegativeArraySize
+### 3.2 NegativeArraySizeError
 
 Occurs when an array is accessed using and index outside its valid range.
 
@@ -119,19 +120,44 @@ Occurs when an array is accessed using and index outside its valid range.
 
 **ID:** `0x01`
 
-**Stack:** `[array_index] → []`
+**Stack:** `[array_size] → []`
 
 **Semantics:**
 - Throws `NegativeArraySizeError`
 - Terminates execution of the SVM
-- Uses `array_index` to construct the error message
+- Uses `array_size` to construct the error message
 
 **Type Rules:**
-- `array_index` must be an integer type
+- `array_size` must be an integer type
 
 **Messages:**
 ```
-NegativeArraySizeError: cannot create array with size <array_index>
+cannot create array with size <array_size>
+```
+
+---
+
+### 3.3 ArrayInitialiserSizeError
+
+Occurs when the array initialiser contains more elements than the size of the array.
+
+**Error Ref:** `array_initialiser_size`
+
+**ID:** `0x02`
+
+**Stack:** `[array_size] → []`
+
+**Semantics:**
+- Throws `ArrayInitialiserSizeError`
+- Terminates execution of the SVM
+- Uses `array_size` to construct the error message
+
+**Type Rules:**
+- `array_size` must have type `ui32`
+
+**Messages:**
+```
+array initialiser contains too many elements for array with size <array_size>
 ```
 
 ---

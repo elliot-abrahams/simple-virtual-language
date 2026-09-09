@@ -129,7 +129,7 @@ TEST(DUP, INVALID_UNDERFLOW_BY_ONE) {
         dup #0
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }
 
 TEST(DUP, INVALID_UNDERFLOW_BY_TWO) {
@@ -138,5 +138,5 @@ TEST(DUP, INVALID_UNDERFLOW_BY_TWO) {
         dup #1
         halt
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }

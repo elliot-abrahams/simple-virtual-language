@@ -101,5 +101,5 @@ TEST(LOADG_STOREG, INVALID_STOREG_UNDERFLOW) {
     .data
     $x: i32 5
     )";
-    EXPECT_INTERNAL_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
+    EXPECT_RUNTIME_ERROR(assembly, RuntimeErrorType::INTERNAL);
 }

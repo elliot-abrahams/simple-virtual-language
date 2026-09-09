@@ -131,7 +131,7 @@ TEST(ROT_D, I32_4) {
 }
 
 TEST(ROT_D, INVALID_UNDERFLOW_BY_ONE) {
-    EXPECT_INTERNAL_RUNTIME_ERROR(
+    EXPECT_RUNTIME_ERROR(
         R"(
             push i32 #5
             push i32 #2
@@ -143,7 +143,7 @@ TEST(ROT_D, INVALID_UNDERFLOW_BY_ONE) {
 }
 
 TEST(ROT_D, INVALID_UNDERFLOW_BY_TWO) {
-    EXPECT_INTERNAL_RUNTIME_ERROR(
+    EXPECT_RUNTIME_ERROR(
         R"(
             push i32 #5
             rotD #3
@@ -154,7 +154,7 @@ TEST(ROT_D, INVALID_UNDERFLOW_BY_TWO) {
 }
 
 TEST(ROT_D, INVALID_UNDERFLOW_BY_THREE) {
-    EXPECT_INTERNAL_RUNTIME_ERROR(
+    EXPECT_RUNTIME_ERROR(
         R"(
             rotD #3
             halt

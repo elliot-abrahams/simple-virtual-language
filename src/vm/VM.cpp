@@ -915,7 +915,7 @@ void VM::executeThrow() {
             throw std::runtime_error{""};
         }
         case 0x01: { // NegativeArraySizeError
-            const Value arrayIndex = this->operandStack.pop(&this->runtimeError);
+            const Value arraySize = this->operandStack.pop(&this->runtimeError);
 
             checkType(
                 "throw negative_array_size",
@@ -925,12 +925,29 @@ void VM::executeThrow() {
                     static_cast<uint8_t>(ISA::Type::I64),
                     static_cast<uint8_t>(ISA::Type::UI64)
                 },
-                static_cast<uint8_t>(arrayIndex.type)
+                static_cast<uint8_t>(arraySize.type)
             );
 
-            const std::string errorMsg = "cannot create array with size " + arrayIndex.toString();
+            const std::string errorMsg = "cannot create array with size " + arraySize.toString();
             this->runtimeError = RuntimeError{
                 RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_SIZE,
+                errorMsg
+            };
+            throw std::runtime_error{""};
+        }
+        case 0x02: { // ArrayInitialiserSizeError
+            const Value arraySize = this->operandStack.pop(&this->runtimeError);
+            checkType(
+                "throw array_initialiser_size",
+                {
+                    static_cast<uint8_t>(ISA::Type::UI32),
+                },
+                static_cast<uint8_t>(arraySize.type)
+            );
+
+            const std::string errorMsg = "array initialiser contains too many elements for array with size " + arraySize.toString();
+            this->runtimeError = RuntimeError{
+                RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_SIZE,
                 errorMsg
             };
             throw std::runtime_error{""};
