@@ -19,16 +19,46 @@ TEST(STM_VAR_DECL, BOOL_INIT) {
     ASSERT_SEMANTICALLY_VALID("bool x = true;");
 }
 
+TEST(STM_VAR_DECL, INT_ARRAY_INIT) {
+    ASSERT_SEMANTICALLY_VALID("int[] x = new int[3];");
+}
+
+TEST(STM_VAR_DECL, FLOAT_ARRAY_INIT) {
+    ASSERT_SEMANTICALLY_VALID("float[] x = new float[3];");
+}
+
+TEST(STM_VAR_DECL, BOOL_ARRAY_INIT) {
+    ASSERT_SEMANTICALLY_VALID("bool[] x = new bool[3];");
+}
+
 TEST(STM_VAR_DECL, INVALID_ASSIGN_BOOL_TO_INT) {
-    const auto testCode = R"(
-        int x = true;
-    )";
-    ASSERT_THROWS_TYPE_ERROR(testCode);
+    ASSERT_THROWS_TYPE_ERROR("int x = true;");
 }
 
 TEST(STM_VAR_DECL, INVALID_ASSIGN_FLOAT_TO_BOOL) {
-    const auto testCode = R"(
-        bool x = 5.5f;
-    )";
-    ASSERT_THROWS_TYPE_ERROR(testCode);
+    ASSERT_THROWS_TYPE_ERROR("bool x = 5.5f;");
+}
+
+TEST(STM_VAR_DECL, INVALID_ASSIGN_INT_TO_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR("int[] x = 5;");
+}
+
+TEST(STM_VAR_DECL, INVALID_ASSIGN_FLOAT_TO_FLOAT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR("float[] x = 5.0f;");
+}
+
+TEST(STM_VAR_DECL, INVALID_ASSIGN_BOOL_TO_BOOL_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR("bool[] x = true;");
+}
+
+TEST(STM_VAR_DECL, INVALID_ASSIGN_INT_ARRAY_TO_INT) {
+    ASSERT_THROWS_TYPE_ERROR("int x = new int[3];");
+}
+
+TEST(STM_VAR_DECL, INVALID_ASSIGN_FLOAT_ARRAY_TO_FLOAT) {
+    ASSERT_THROWS_TYPE_ERROR("float x = new float[3];");
+}
+
+TEST(STM_VAR_DECL, INVALID_ASSIGN_BOOL_ARRAY_TO_BOOL) {
+    ASSERT_THROWS_TYPE_ERROR("bool x = new bool[3];");
 }

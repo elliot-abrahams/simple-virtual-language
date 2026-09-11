@@ -9,6 +9,8 @@ enum class TokenKind {
     RBR,
     LCBR,
     RCBR,
+    LSQBR,
+    RSQBR,
 
     EQUAL,
     PLUS,
@@ -36,13 +38,14 @@ enum class TokenKind {
     CONTINUE,
     BREAK,
     RETURN,
+    NEW,
 
-    INTEGER_TYPE,
+    INT_TYPE,
     FLOAT_TYPE,
     BOOL_TYPE,
     VOID_TYPE,
 
-    INTEGER_LITERAL,
+    INT_LITERAL,
     FLOAT_LITERAL,
     BOOL_LITERAL,
 
@@ -66,6 +69,8 @@ struct Token {
             case TokenKind::RBR: return ")";
             case TokenKind::LCBR: return "{";
             case TokenKind::RCBR: return "}";
+            case TokenKind::LSQBR: return "[";
+            case TokenKind::RSQBR: return "]";
 
             case TokenKind::EQUAL: return "=";
             case TokenKind::PLUS: return "+";
@@ -93,13 +98,14 @@ struct Token {
             case TokenKind::CONTINUE: return "continue";
             case TokenKind::BREAK: return "break";
             case TokenKind::RETURN: return "return";
+            case TokenKind::NEW: return "new";
 
-            case TokenKind::INTEGER_TYPE: return "int";
+            case TokenKind::INT_TYPE: return "int";
             case TokenKind::FLOAT_TYPE: return "float";
             case TokenKind::BOOL_TYPE: return "bool";
             case TokenKind::VOID_TYPE: return "void";
 
-            case TokenKind::INTEGER_LITERAL: return "integer literal";
+            case TokenKind::INT_LITERAL: return "integer literal";
             case TokenKind::FLOAT_LITERAL: return "float literal";
             case TokenKind::BOOL_LITERAL: return "bool literal";
 

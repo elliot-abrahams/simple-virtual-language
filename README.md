@@ -36,6 +36,7 @@ Assembly Language    (.svma)
 - Functions and function overloading
 - Control flow (`if`, `while`, `break`, `continue`)
 - Integer, floating-point and boolean types
+- Arrays
 - Implicit and explicit type conversions
 - Arithmetic, comparison and logical operators
 - Runtime error reporting with source locations and stack traces
@@ -233,7 +234,6 @@ tests        Unit and Integration tests
 
 - Character and string types
 - Long and double types
-- Arrays
 - User-defined types (e.g. structs) 
 - Additional built-in functions
 - Additional VM native functions

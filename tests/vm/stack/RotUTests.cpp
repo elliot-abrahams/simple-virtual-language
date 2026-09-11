@@ -14,17 +14,6 @@ TEST(ROT_U, I32_3) {
         std::vector{int32_t(2), int32_t(1), int32_t(3)}
     );
 }
-/*
-top
-3
-2
-1
-
-res
-2
-1
-3
-*/
 
 TEST(ROT_U, UI32_3) {
     EXPECT_N_OPERANDS_OF_SAME_TYPE_VM_STACK_EQ(

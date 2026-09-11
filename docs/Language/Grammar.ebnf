@@ -10,7 +10,7 @@ GRAMMAR RULES
 
 program                     = { statement | function_decl } ;
 
-function_decl               = ( type | VOID_TYPE ), IDENTIFIER, LBR, [ parameter_list ], RBR, block ;
+function_decl               = return_type, IDENTIFIER, LBR, [ parameter_list ], RBR, block ;
 
 parameter_list              = parameter, { COMMA, parameter } ;
 
@@ -64,6 +64,7 @@ unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
 
 primary_expression          = function_call
                             | var_access
+                            | new_expression
                             | literal
                             | LBR, expression, RBR ;
 
@@ -71,13 +72,26 @@ function_call               = IDENTIFIER, LBR, [ argument_list ], RBR ;
 
 argument_list               = expression, { COMMA, expression } ;
 
-var_access                  = IDENTIFIER ;
+var_access                  = IDENTIFIER, { index } ;
 
-type                        = INTEGER_TYPE
+new_expression              = NEW, primitive_type, index, { index }, [ array_initialiser ] ;
+
+index                       = LSQBR, expression, RSQBR ;
+
+array_initialiser           = LCBR, [ array_initialiser_element, { COMMA, array_initialiser_element } ], RCBR ;
+
+array_initialiser_element   = expression
+                            | array_initialiser ;
+
+return_type                 = type | VOID ;
+
+type                        = primitive_type, { LSQBR, RSQBR } ;
+
+primitive_type              = INT_TYPE
                             | FLOAT_TYPE
                             | BOOL_TYPE ;
 
-literal                     = INTEGER_LITERAL
+literal                     = INT_LITERAL
                             | FLOAT_LITERAL
                             | BOOL_LITERAL ;
 
@@ -93,6 +107,8 @@ LBR                         = "("
 RBR                         = ")"
 LCBR                        = "{"
 RCBR                        = "}"
+LSQBR                       = "["
+RSQBR                       = "]"
 
 EQUAL                       = "="
 PLUS                        = "+"
@@ -118,13 +134,14 @@ WHILE                       = "while"
 CONTINUE                    = "continue"
 BREAK                       = "break"
 RETURN                      = "return"
+NEW                         = "new"
 
-INTEGER_TYPE                = "int"
+INT_TYPE                    = "int"
 FLOAT_TYPE                  = "float"
 BOOL_TYPE                   = "bool"
 VOID_TYPE                   = "void"
 
-INTEGER_LITERAL             = "[0-9]+"
+INT_LITERAL                 = "[0-9]+"
 FLOAT_LITERAL               = "[0-9]+\.[0-9]+f"
 BOOL_LITERAL                = "true|false"
 

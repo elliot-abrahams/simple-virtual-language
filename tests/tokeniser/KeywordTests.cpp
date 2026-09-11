@@ -27,8 +27,12 @@ TEST(KEYWORD, RETURN) {
     ASSERT_TOKEN_EQ("return", TokenKind::RETURN, "return");
 }
 
+TEST(KEYWORD, NEW) {
+    ASSERT_TOKEN_EQ("new", TokenKind::NEW, "new");
+}
+
 TEST(KEYWORD, INT_TYPE) {
-    ASSERT_TOKEN_EQ("int", TokenKind::INTEGER_TYPE, "int");
+    ASSERT_TOKEN_EQ("int", TokenKind::INT_TYPE, "int");
 }
 
 TEST(KEYWORD, FLOAT_TYPE) {

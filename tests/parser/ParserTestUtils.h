@@ -1,11 +1,17 @@
 #ifndef SVM_PARSERTESTUTILS_H
 #define SVM_PARSERTESTUTILS_H
 
+#include "ParserTestUtils.h"
 #include "../../src/compiler/Compiler.h"
 #include "../../src/include/Error.h"
 
 namespace parserTest {
+    struct ExpectedIndex;
+    struct ExpectedArrayInitialiser;
+    struct ExpectedExpr;
     struct ExpectedBlock;
+
+    using ArrayInitialiserElement = std::variant<std::unique_ptr<ExpectedExpr>, std::unique_ptr<ExpectedArrayInitialiser>>;
 
     struct ExpectedStm {
         virtual ~ExpectedStm() = default;
@@ -13,6 +19,13 @@ namespace parserTest {
 
     struct ExpectedExpr {
         virtual ~ExpectedExpr() = default;
+    };
+
+    struct Type {
+        const compiler::Type type;
+        const unsigned int expectedDimension;
+
+        Type(const compiler::Type type, const unsigned int expectedDimension) : type(type), expectedDimension(expectedDimension) {}
     };
 
     struct ExpectedIntegerLiteral final : ExpectedExpr {
@@ -39,16 +52,41 @@ namespace parserTest {
         ExpectedIdentifier(const std::string& name) : name(name) {}
     };
 
-    struct ExpectedExprIdentifier final : ExpectedExpr {
+    struct ExpectedExprVarAccess final : ExpectedExpr {
         const std::string name;
+        const std::vector<std::unique_ptr<ExpectedIndex>> indices;
 
-        ExpectedExprIdentifier(const std::string& name) : name(name) {}
+        ExpectedExprVarAccess(const std::string& name, std::vector<std::unique_ptr<ExpectedIndex>> indices) :
+        name(name), indices(std::move(indices)) {}
     };
 
     struct ExpectedVarAccess final {
         const std::string name;
 
         ExpectedVarAccess(const std::string& name) : name(name) {}
+    };
+
+    struct ExpectedArrayInitialiser final {
+        const std::vector<ArrayInitialiserElement> expectedElements;
+
+        ExpectedArrayInitialiser(std::vector<ArrayInitialiserElement> expectedElements) :
+            expectedElements(std::move(expectedElements)) {}
+    };
+
+    struct ExpectedIndex final {
+        const std::unique_ptr<ExpectedExpr> index;
+
+        ExpectedIndex(std::unique_ptr<ExpectedExpr> index) :
+            index(std::move(index)) {}
+    };
+
+    struct ExpectedExprNew final : ExpectedExpr {
+        const std::unique_ptr<Type> type;
+        const std::vector<std::unique_ptr<ExpectedIndex>> expectedArrayDimensions;
+        const std::unique_ptr<ExpectedArrayInitialiser> optionalInitialiser;
+
+        ExpectedExprNew(std::unique_ptr<Type> type, std::vector<std::unique_ptr<ExpectedIndex>> expectedArrayDimensions, std::unique_ptr<ExpectedArrayInitialiser> optionalInitialiser) :
+            type(std::move(type)), expectedArrayDimensions(std::move(expectedArrayDimensions)), optionalInitialiser(std::move(optionalInitialiser)) {}
     };
 
     struct ExpectedFunctionCallExpr final : ExpectedExpr {
@@ -62,12 +100,12 @@ namespace parserTest {
     };
 
     struct ExpectedCastExpr final : ExpectedExpr {
-        const compiler::Type expectedType;
+        const std::unique_ptr<Type> expectedType;
         const std::unique_ptr<ExpectedExpr> expectedExpr;
 
-        ExpectedCastExpr(const compiler::Type& expectedType,
+        ExpectedCastExpr(std::unique_ptr<Type> expectedType,
             std::unique_ptr<ExpectedExpr> expectedExpr) :
-        expectedType(expectedType),
+        expectedType(std::move(expectedType)),
         expectedExpr(std::move(expectedExpr)) {}
     };
 
@@ -149,14 +187,14 @@ namespace parserTest {
     };
 
     struct ExpectedVarDecl final : ExpectedStm {
-        const compiler::Type expectedType;
+        const std::unique_ptr<Type> expectedType;
         const std::string expectedName;
         const std::unique_ptr<ExpectedExpr> expectedOptionalInitialiser;
 
-        ExpectedVarDecl(const compiler::Type expectedType,
+        ExpectedVarDecl(std::unique_ptr<Type> expectedType,
             const std::string& expectedName,
             std::unique_ptr<ExpectedExpr> expectedOptionalInitialiser) :
-        expectedType(expectedType),
+        expectedType(std::move(expectedType)),
         expectedName(expectedName),
         expectedOptionalInitialiser(std::move(expectedOptionalInitialiser)) {}
     };
@@ -169,26 +207,26 @@ namespace parserTest {
     };
 
     struct ExpectedParameter final {
-        const compiler::Type expectedType;
+        const std::unique_ptr<Type> expectedType;
         const std::string expectedParameterName;
 
-        ExpectedParameter(const compiler::Type expectedType,
+        ExpectedParameter(std::unique_ptr<Type> expectedType,
             const std::string& expectedParameterName) :
-        expectedType(expectedType),
+        expectedType(std::move(expectedType)),
         expectedParameterName(expectedParameterName) {}
     };
 
     struct ExpectedFunctionDecl final {
-        const compiler::Type expectedReturnType;
+        const std::unique_ptr<Type> expectedReturnType;
         const std::string expectedFunctionName;
         const std::vector<std::unique_ptr<ExpectedParameter>> expectedParameters;
         const std::unique_ptr<ExpectedBlock> expectedBody;
 
-        ExpectedFunctionDecl(const compiler::Type expectedReturnType,
+        ExpectedFunctionDecl(std::unique_ptr<Type> expectedReturnType,
             const std::string& expectedFunctionName,
             std::vector<std::unique_ptr<ExpectedParameter>>& expectedParameters,
             std::unique_ptr<ExpectedBlock> expectedBody) :
-        expectedReturnType(expectedReturnType),
+        expectedReturnType(std::move(expectedReturnType)),
         expectedFunctionName(expectedFunctionName),
         expectedParameters(std::move(expectedParameters)),
         expectedBody(std::move(expectedBody)) {}
@@ -211,6 +249,32 @@ namespace parserTest {
         return compiler::Compiler::testParsing(sourceCode);
     }
 
+    inline void ASSERT_EXPR_EQ(const ExpectedExpr& expectedExpr, const ast::Expr& actualExpr);
+
+    inline void ASSERT_TYPE_EQ(const Type& expectedType, const ast::TypeInfo& actualType) {
+        ASSERT_EQ(expectedType.type, actualType.type);
+        ASSERT_EQ(expectedType.expectedDimension, actualType.dimension);
+    }
+
+    inline void ASSERT_ARRAY_INITIALISER_EQ(const ExpectedArrayInitialiser& expectedArrayInitialiser, const ast::ArrayInitialiser& actualArrayInitialiser) {
+        ASSERT_EQ(expectedArrayInitialiser.expectedElements.size(), actualArrayInitialiser.elements.size());
+
+        for (int i = 0; i < expectedArrayInitialiser.expectedElements.size(); i++) {
+            if (std::holds_alternative<std::unique_ptr<ExpectedArrayInitialiser>>(expectedArrayInitialiser.expectedElements[i])) {
+                if (std::holds_alternative<std::unique_ptr<ast::ArrayInitialiser>>(actualArrayInitialiser.elements[i])) {
+                    ASSERT_ARRAY_INITIALISER_EQ(*std::get<std::unique_ptr<ExpectedArrayInitialiser>>(expectedArrayInitialiser.expectedElements[i]), *std::get<std::unique_ptr<ast::ArrayInitialiser>>(actualArrayInitialiser.elements[i]));
+                } else {
+                    FAIL();
+                }
+            } else {
+                if (std::holds_alternative<std::unique_ptr<ast::ArrayInitialiser>>(actualArrayInitialiser.elements[i])) {
+                    FAIL();
+                }
+                ASSERT_EXPR_EQ(*std::get<std::unique_ptr<ExpectedExpr>>(expectedArrayInitialiser.expectedElements[i]), *std::get<std::unique_ptr<ast::Expr>>(actualArrayInitialiser.elements[i]));
+            }
+        }
+    }
+
     inline void ASSERT_VAR_ACCESS_EQ(const ExpectedVarAccess& expectedVarAccess, const ast::VarAccess& actualVarAccess) {
         ASSERT_EQ(expectedVarAccess.name, actualVarAccess.identifier->name);
     }
@@ -231,10 +295,15 @@ namespace parserTest {
             ASSERT_NE(actualBoolLiteral, nullptr);
             ASSERT_EQ(actualBoolLiteral->value, expectedBoolLiteral->value);
 
-        } else if (auto* expectedIdentifier = dynamic_cast<const ExpectedExprIdentifier*>(&expectedExpr)) {
-            auto* actualIdentifier = dynamic_cast<const ast::ExprIdentifier*>(&actualExpr);
-            ASSERT_NE(actualIdentifier, nullptr);
-            ASSERT_EQ(actualIdentifier->name, expectedIdentifier->name);
+        } else if (auto* expectedVarAccess = dynamic_cast<const ExpectedExprVarAccess*>(&expectedExpr)) {
+            auto* actualVarAccess = dynamic_cast<const ast::ExprVarAccess*>(&actualExpr);
+            ASSERT_NE(actualVarAccess, nullptr);
+            ASSERT_EQ(actualVarAccess->name, expectedVarAccess->name);
+
+            ASSERT_EQ(expectedVarAccess->indices.size(), actualVarAccess->indices.size());
+            for (int i = 0; i < expectedVarAccess->indices.size(); i++) {
+                ASSERT_EXPR_EQ(*expectedVarAccess->indices[i]->index, *actualVarAccess->indices[i]->index);
+            }
 
         } else if (auto* expectedBinaryExpr = dynamic_cast<const ExpectedBinaryExpr*>(&expectedExpr)) {
             auto* actualBinaryExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&actualExpr);
@@ -252,7 +321,7 @@ namespace parserTest {
         } else if (auto* expectedCastExpression = dynamic_cast<const ExpectedCastExpr*>(&expectedExpr)) {
             auto* actualCastExpr = dynamic_cast<const ast::ExprCast*>(&actualExpr);
             ASSERT_NE(actualCastExpr, nullptr);
-            ASSERT_EQ(expectedCastExpression->expectedType, actualCastExpr->typeInfo->type);
+            ASSERT_TYPE_EQ(*expectedCastExpression->expectedType, *actualCastExpr->typeInfo);
             ASSERT_EXPR_EQ(*expectedCastExpression->expectedExpr, *actualCastExpr->expr);
 
         } else if (auto* expectedFunctionCallExpr = dynamic_cast<const ExpectedFunctionCallExpr*>(&expectedExpr)) {
@@ -264,13 +333,29 @@ namespace parserTest {
                 ASSERT_EXPR_EQ(*expectedFunctionCallExpr->expectedArguments[i], *actualFunctionCallExpr->arguments[i]);
             }
 
+        } else if (auto* expectedNewExpr = dynamic_cast<const ExpectedExprNew*>(&expectedExpr)) {
+            auto* actualNewExpr = dynamic_cast<const ast::ExprNew*>(&actualExpr);
+            ASSERT_NE(actualNewExpr, nullptr);
+            ASSERT_TYPE_EQ(*expectedNewExpr->type, *actualNewExpr->typeInfo);
+
+            ASSERT_EQ(expectedNewExpr->expectedArrayDimensions.size(), actualNewExpr->arrayDimensions.size());
+            for (size_t i = 0; i < expectedNewExpr->expectedArrayDimensions.size(); ++i) {
+                ASSERT_EXPR_EQ(*expectedNewExpr->expectedArrayDimensions[i]->index, *actualNewExpr->arrayDimensions[i]->index);
+            }
+
+            if (expectedNewExpr->optionalInitialiser == nullptr) {
+                ASSERT_EQ(actualNewExpr->optionalInitialiser, nullptr);
+            } else {
+                ASSERT_ARRAY_INITIALISER_EQ(*expectedNewExpr->optionalInitialiser, *actualNewExpr->optionalInitialiser);
+            }
+
         } else {
             FAIL();
         }
     }
 
     inline void ASSERT_VAR_DECL_EQ(const ExpectedVarDecl& expectedVarDecl, const ast::StmVarDecl& actualVarDecl) {
-        ASSERT_EQ(expectedVarDecl.expectedType, actualVarDecl.typeInfo->type);
+        ASSERT_TYPE_EQ(*expectedVarDecl.expectedType, *actualVarDecl.typeInfo);
         ASSERT_EQ(expectedVarDecl.expectedName, actualVarDecl.identifier->name);
 
         if (expectedVarDecl.expectedOptionalInitialiser == nullptr) {
@@ -349,12 +434,12 @@ namespace parserTest {
     }
 
     inline void ASSERT_PARAMETER_EQ(const ExpectedParameter& expectedParameter, const ast::Parameter& actualParameter) {
-        ASSERT_EQ(expectedParameter.expectedType, actualParameter.typeInfo->type);
+        ASSERT_TYPE_EQ(*expectedParameter.expectedType, *actualParameter.typeInfo);
         ASSERT_EQ(expectedParameter.expectedParameterName, expectedParameter.expectedParameterName);
     }
 
     inline void ASSERT_FUNCTION_DECL_EQ(const ExpectedFunctionDecl& expectedFunctionDecl, const ast::FunctionDecl& actualFunctionDecl) {
-        ASSERT_EQ(expectedFunctionDecl.expectedReturnType, actualFunctionDecl.returnTypeInfo->type);
+        ASSERT_TYPE_EQ(*expectedFunctionDecl.expectedReturnType, *actualFunctionDecl.returnTypeInfo);
         ASSERT_EQ(expectedFunctionDecl.expectedFunctionName, actualFunctionDecl.identifier->name);
 
         ASSERT_EQ(expectedFunctionDecl.expectedParameters.size(), actualFunctionDecl.parameters.size());

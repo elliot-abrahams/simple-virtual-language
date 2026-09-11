@@ -1,52 +1,56 @@
 #include <gtest/gtest.h>
 #include "../ParserTestUtils.h"
 
+using namespace parserTest;
+
 TEST(STM_IF, IF) {
     const auto testCode = R"(
         if (true) {}
     )";
-    const auto program = parserTest::PARSE(testCode);
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> ifBlockExpectedStatements;
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
     expectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedIfStm>(
-            std::make_unique<parserTest::ExpectedBoolLiteral>(
+        std::make_unique<ExpectedIfStm>(
+            std::make_unique<ExpectedBoolLiteral>(
                 true
             ),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
             nullptr
         )
     );
-    std::vector<std::unique_ptr<parserTest::ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<parserTest::ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
-    parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
 TEST(STM_IF, IF_BINARY_EXPR) {
     const auto testCode = R"(
         if (x > 5) {}
     )";
-    const auto program = parserTest::PARSE(testCode);
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> ifBlockExpectedStatements;
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
+    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
+
     expectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedIfStm>(
-            std::make_unique<parserTest::ExpectedBinaryExpr>(
+        std::make_unique<ExpectedIfStm>(
+            std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::GREATER_THAN,
-                std::make_unique<parserTest::ExpectedExprIdentifier>("x"),
-                std::make_unique<parserTest::ExpectedIntegerLiteral>(5)
+                std::make_unique<ExpectedExprVarAccess>("x", std::move(expectedIndices)),
+                std::make_unique<ExpectedIntegerLiteral>(5)
             ),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
             nullptr
         )
     );
-    std::vector<std::unique_ptr<parserTest::ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<parserTest::ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
-    parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
 TEST(STM_IF, IF_BODY) {
@@ -55,30 +59,30 @@ TEST(STM_IF, IF_BODY) {
             int x;
         }
     )";
-    const auto program = parserTest::PARSE(testCode);
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> ifBlockExpectedStatements;
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
     ifBlockExpectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedVarDecl>(
-            compiler::Type::INT,
-            "x",
+        std::make_unique<ExpectedVarDecl>(
+                std::make_unique<Type>(compiler::Type::INT, 0),
+                "x",
             nullptr
         )
     );
     expectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedIfStm>(
-            std::make_unique<parserTest::ExpectedBoolLiteral>(
+        std::make_unique<ExpectedIfStm>(
+            std::make_unique<ExpectedBoolLiteral>(
                 true
             ),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
             nullptr
         )
     );
-    std::vector<std::unique_ptr<parserTest::ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<parserTest::ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
-    parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
 TEST(STM_IF, ELSE) {
@@ -86,27 +90,29 @@ TEST(STM_IF, ELSE) {
         if (x > 5) {
         } else {}
     )";
-    const auto program = parserTest::PARSE(testCode);
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> emptyListOfStatements;
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> emptyListOfStatements;
+    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
+
     expectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedIfStm>(
-            std::make_unique<parserTest::ExpectedBinaryExpr>(
+        std::make_unique<ExpectedIfStm>(
+            std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::GREATER_THAN,
-                std::make_unique<parserTest::ExpectedExprIdentifier>("x"),
-                std::make_unique<parserTest::ExpectedIntegerLiteral>(5)
+                std::make_unique<ExpectedExprVarAccess>("x", std::move(expectedIndices)),
+                std::make_unique<ExpectedIntegerLiteral>(5)
             ),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedBlock>(
                 emptyListOfStatements
             ),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedBlock>(
                 emptyListOfStatements
             )
         )
     );
-    std::vector<std::unique_ptr<parserTest::ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<parserTest::ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
-    parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
 TEST(STM_IF, ELSE_BODY) {
@@ -116,35 +122,37 @@ TEST(STM_IF, ELSE_BODY) {
             int x;
         }
     )";
-    const auto program = parserTest::PARSE(testCode);
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> ifBlockExpectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> elseBlockExpectedStatements;
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> elseBlockExpectedStatements;
+    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
+
     elseBlockExpectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedVarDecl>(
-            compiler::Type::INT,
-            "x",
+        std::make_unique<ExpectedVarDecl>(
+                std::make_unique<Type>(compiler::Type::INT, 0),
+                "x",
             nullptr
         )
     );
     expectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedIfStm>(
-            std::make_unique<parserTest::ExpectedBinaryExpr>(
+        std::make_unique<ExpectedIfStm>(
+            std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::GREATER_THAN,
-                std::make_unique<parserTest::ExpectedExprIdentifier>("x"),
-                std::make_unique<parserTest::ExpectedIntegerLiteral>(5)
+                std::make_unique<ExpectedExprVarAccess>("x", std::move(expectedIndices)),
+                std::make_unique<ExpectedIntegerLiteral>(5)
             ),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedBlock>(
                 elseBlockExpectedStatements
             )
         )
     );
-    std::vector<std::unique_ptr<parserTest::ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<parserTest::ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
-    parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
 TEST(STM_IF, ELSE_IF) {
@@ -152,30 +160,32 @@ TEST(STM_IF, ELSE_IF) {
         if (false) {
         } else if (b) {}
     )";
-    const auto program = parserTest::PARSE(testCode);
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> ifBlockExpectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> elseBlockExpectedStatements;
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> elseBlockExpectedStatements;
+    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
+
     expectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedIfStm>(
-            std::make_unique<parserTest::ExpectedBoolLiteral>(
+        std::make_unique<ExpectedIfStm>(
+            std::make_unique<ExpectedBoolLiteral>(
                 false
             ),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
-            std::make_unique<parserTest::ExpectedIfStm>(
-                std::make_unique<parserTest::ExpectedExprIdentifier>("b"),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedIfStm>(
+                std::make_unique<ExpectedExprVarAccess>("b", std::move(expectedIndices)),
+            std::make_unique<ExpectedBlock>(
                 elseBlockExpectedStatements
             ),
             nullptr
             )
         )
     );
-    std::vector<std::unique_ptr<parserTest::ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<parserTest::ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
-    parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
 TEST(STM_IF, ELSE_IF_BODY) {
@@ -186,79 +196,81 @@ TEST(STM_IF, ELSE_IF_BODY) {
             int x;
         }
     )";
-    const auto program = parserTest::PARSE(testCode);
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> ifBlockExpectedStatements;
-    std::vector<std::unique_ptr<parserTest::ExpectedStm>> elseIfBlockExpectedStatements;
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
+    std::vector<std::unique_ptr<ExpectedStm>> elseIfBlockExpectedStatements;
+    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
+
     elseIfBlockExpectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedVarDecl>(
-            compiler::Type::INT,
-            "x",
+        std::make_unique<ExpectedVarDecl>(
+                std::make_unique<Type>(compiler::Type::INT, 0),
+                "x",
             nullptr
         )
     );
     expectedStatements.push_back(
-        std::make_unique<parserTest::ExpectedIfStm>(
-            std::make_unique<parserTest::ExpectedBoolLiteral>(
+        std::make_unique<ExpectedIfStm>(
+            std::make_unique<ExpectedBoolLiteral>(
                 false
             ),
-            std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
-            std::make_unique<parserTest::ExpectedIfStm>(
-                std::make_unique<parserTest::ExpectedExprIdentifier>("b"),
-                std::make_unique<parserTest::ExpectedBlock>(
+            std::make_unique<ExpectedIfStm>(
+                std::make_unique<ExpectedExprVarAccess>("b", std::move(expectedIndices)),
+                std::make_unique<ExpectedBlock>(
                     elseIfBlockExpectedStatements
                 ),
                 nullptr
             )
         )
     );
-    std::vector<std::unique_ptr<parserTest::ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<parserTest::ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
-    parserTest::ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
 TEST(STM_IF, INVALID_MISSING_CONDITION_AND_BLOCK) {
     const auto testCode = R"(
         if
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(STM_IF, INVALID_MISSING_LBR) {
     const auto testCode = R"(
         if true) {}
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(STM_IF, INVALID_MISSING_RBR) {
     const auto testCode = R"(
         if (true {}
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(STM_IF, INVALID_MISSING_CONDITION) {
     const auto testCode = R"(
         if () {}
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(STM_IF, INVALID_MISSING_LCBR) {
     const auto testCode = R"(
         if (true) }
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(STM_IF, INVALID_MISSING_RCBR) {
     const auto testCode = R"(
         if (true) {
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(STM_IF, INVALID_ELSE_MISSING_LCBR) {
@@ -266,7 +278,7 @@ TEST(STM_IF, INVALID_ELSE_MISSING_LCBR) {
         if (true) {
         } else }
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(STM_IF, INVALID_ELSE_MISSING_RCBR) {
@@ -274,14 +286,14 @@ TEST(STM_IF, INVALID_ELSE_MISSING_RCBR) {
         if (true) {
         } else {
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(STM_IF, INVALID_IF_STM) {
     const auto testCode = R"(
         if (true) x = 5;
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(STM_IF, INVALID_ELSE_STM) {
@@ -289,5 +301,5 @@ TEST(STM_IF, INVALID_ELSE_STM) {
         if (true) {
         } else x = 5;
     )";
-    ASSERT_THROW(parserTest::PARSE(testCode), SyntaxError);
+    ASSERT_THROW(PARSE(testCode), SyntaxError);
 }

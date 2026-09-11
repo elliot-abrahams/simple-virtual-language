@@ -15,13 +15,13 @@ namespace compiler {
         std::unique_ptr<ast::Program> parseProgram() const;
 
     private:
-        std::unique_ptr<ast::FunctionDecl> parseFunctionDecl() const;
+        std::unique_ptr<ast::FunctionDecl> parseFunctionDecl(std::unique_ptr<ast::TypeInfo> returnType) const;
         std::vector<std::unique_ptr<ast::Parameter>> parseParameterList() const;
         std::unique_ptr<ast::Parameter> parseParameter() const;
 
         std::unique_ptr<ast::Stm> parseStm() const;
         std::unique_ptr<ast::Block> parseBlock() const;
-        std::unique_ptr<ast::StmVarDecl> parseVarDecl() const;
+        std::unique_ptr<ast::StmVarDecl> parseVarDecl(std::unique_ptr<ast::TypeInfo> type) const;
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
         std::unique_ptr<ast::IfStm> parseIfStatement() const;
         std::unique_ptr<ast::WhileStm> parseWhileStatement() const;
@@ -42,10 +42,16 @@ namespace compiler {
         std::unique_ptr<ast::FunctionCall> parseFunctionCall() const;
         std::vector<std::unique_ptr<ast::Expr>> parseArgumentList() const;
         std::unique_ptr<ast::VarAccess> parseVarAccess() const;
-        std::unique_ptr<ast::ExprIdentifier> parseExprIdentifier() const;
+        std::unique_ptr<ast::ExprVarAccess> parseExprVarAccess() const;
+        std::unique_ptr<ast::ExprNew> parseExprNew() const;
+        std::unique_ptr<ast::Index> parseIndex() const;
+        std::unique_ptr<ast::ArrayInitialiser> parseArrayInitialiser() const;
+        ast::ArrayInitialiserElement parseArrayInitialiserElement() const;
 
         std::unique_ptr<ast::Identifier> parseIdentifier() const;
+        std::unique_ptr<ast::TypeInfo> parseReturnType() const;
         std::unique_ptr<ast::TypeInfo> parseType() const;
+        std::unique_ptr<ast::TypeInfo> parsePrimitiveType(const unsigned int dimension) const;
         std::unique_ptr<ast::Expr> parseLiteral() const;
         std::unique_ptr<ast::AssignmentOperatorInfo> parseAssignmentOperator() const;
 

@@ -1,6 +1,7 @@
 #include "AssemblyEmitter.h"
 
 #include <iomanip>
+#include <iostream>
 #include <ostream>
 
 compiler::AssemblyEmitter::AssemblyEmitter(const std::string& filepath) {
@@ -50,12 +51,13 @@ void compiler::AssemblyEmitter::emitProgram(const std::vector<AssemblyItem> &ass
     this->emitBuiltinData(requiredBuiltinData);
 }
 
-void compiler::AssemblyEmitter::emitDirective(const Directive directive, const std::unordered_set<BuiltinFunctionId>& requiredBuiltinFunctions) {
+void compiler::AssemblyEmitter::emitDirective(const Directive& directive, const std::unordered_set<BuiltinFunctionId>& requiredBuiltinFunctions) {
     switch (directive) {
         case Directive::DATA:
 
             this->emitBuiltinFunctions(requiredBuiltinFunctions);
 
+            this->emit("");
             this->emit(".data");
     }
 }
@@ -70,7 +72,7 @@ void compiler::AssemblyEmitter::emitInstruction(const Instruction &instruction) 
     // OPERANDS
     for (const auto operand : instruction.operands) {
         assemblyLine += ' ';
-        assemblyLine += this->emitOperand(operand);
+        assemblyLine += this->emitOperand(operand, instruction.opcode);
     }
 
     this->emitWithDoubleIndent(assemblyLine);
@@ -88,7 +90,7 @@ void compiler::AssemblyEmitter::emitInstruction(const Instruction &instruction) 
     });
 }
 
-std::string compiler::AssemblyEmitter::emitOpcode(const Opcode opcode) {
+std::string compiler::AssemblyEmitter::emitOpcode(const Opcode& opcode) {
     this->currentAddress++;
     switch (opcode) {
         case Opcode::NOP: return"nop";
@@ -98,6 +100,8 @@ std::string compiler::AssemblyEmitter::emitOpcode(const Opcode opcode) {
         case Opcode::POP: return "pop";
         case Opcode::DUP: return "dup";
         case Opcode::SWAP: return "swap";
+        case Opcode::ROTD: return "rotD";
+        case Opcode::ROTU: return "rotU";
 
         case Opcode::LOAD: return "load";
         case Opcode::LOADB: return "loadB";
@@ -137,11 +141,12 @@ std::string compiler::AssemblyEmitter::emitOpcode(const Opcode opcode) {
         case Opcode::CGE: return "cge";
 
         case Opcode::CONV: return "conv";
+        case Opcode::THROW: return "throw";
     }
     return "";
 }
 
-std::string compiler::AssemblyEmitter::emitOperand(const Operand &operand) {
+std::string compiler::AssemblyEmitter::emitOperand(const Operand &operand, const Opcode &opcode) {
     // ASSEMBLY TYPE
     if (std::holds_alternative<AssemblyType>(operand)) {
         return this->emitType(std::get<AssemblyType>(operand));
@@ -149,7 +154,7 @@ std::string compiler::AssemblyEmitter::emitOperand(const Operand &operand) {
 
     // IMMEDIATE
     if (std::holds_alternative<Immediate>(operand)) {
-        return "#" + this->emitNumber(std::get<Immediate>(operand).value);
+        return "#" + this->emitNumber(std::get<Immediate>(operand).value, &opcode);
     }
 
     // LABEL_REF
@@ -162,43 +167,81 @@ std::string compiler::AssemblyEmitter::emitOperand(const Operand &operand) {
     if (std::holds_alternative<NativeRef>(operand)) {
         return this->emitNativeRef(std::get<NativeRef>(operand));
     }
+
+    // ERROR_REF
+    if (std::holds_alternative<ErrorRef>(operand)) {
+        return this->emitErrorRef(std::get<ErrorRef>(operand));
+    }
+
     return "";
 }
 
-std::string compiler::AssemblyEmitter::emitNumber(const Number number) {
+std::string compiler::AssemblyEmitter::emitNumber(const Number& number, const Opcode* opcode) {
+    bool addressHandled = true;
+    if (opcode == nullptr) {
+        addressHandled = false;
+    } else {
+        switch (*opcode) {
+            case Opcode::DUP:
+            case Opcode::ROTD:
+            case Opcode::ROTU: {
+                this->currentAddress += 2;
+                break;
+            }
+            case Opcode::LOADL:
+            case Opcode::STOREL: {
+                this->currentAddress += 4;
+                break;
+            }
+            default: {
+                addressHandled = false;
+            }
+        }
+    }
+
     if (std::holds_alternative<int32_t>(number.value)) {
-        this->currentAddress += 4;
+        if (!addressHandled) this->currentAddress += 4;
         return std::to_string(std::get<int32_t>(number.value));
     }
     if (std::holds_alternative<uint32_t>(number.value)) {
-        this->currentAddress += 4;
+        if (!addressHandled) this->currentAddress += 4;
         return std::to_string(std::get<uint32_t>(number.value));
     }
     if (std::holds_alternative<int64_t>(number.value)) {
-        this->currentAddress += 8;
+        if (!addressHandled) this->currentAddress += 8;
         return std::to_string(std::get<int64_t>(number.value));
     }
     if (std::holds_alternative<uint64_t>(number.value)) {
-        this->currentAddress += 8;
+        if (!addressHandled) this->currentAddress += 8;
         return std::to_string(std::get<uint64_t>(number.value));
     }
     if (std::holds_alternative<float>(number.value)) {
-        this->currentAddress += 4;
+        if (!addressHandled) this->currentAddress += 4;
         return std::to_string(std::get<float>(number.value));
     }
     if (std::holds_alternative<double>(number.value)) {
-        this->currentAddress += 8;
+        if (!addressHandled) this->currentAddress += 8;
         return std::to_string(std::get<double>(number.value));
     }
     return "";
 }
 
-std::string compiler::AssemblyEmitter::emitNativeRef(const NativeRef nativeRef) {
+std::string compiler::AssemblyEmitter::emitNativeRef(const NativeRef& nativeRef) {
     this->currentAddress++;
     switch (nativeRef) {
         case NativeRef::EXIT: return "exit";
         case NativeRef::PRINT: return "print";
         case NativeRef::PRINT_STR: return "print_str";
+    }
+    return "";
+}
+
+std::string compiler::AssemblyEmitter::emitErrorRef(const ErrorRef& errorRef) {
+    this->currentAddress++;
+    switch (errorRef) {
+        case ErrorRef::ARRAY_INDEX_OUT_OF_RANGE: return "array_index_out_of_range";
+        case ErrorRef::NEGATIVE_ARRAY_SIZE: return "negative_array_size";
+        case ErrorRef::ARRAY_INITIALISER_SIZE: return "array_initialiser_size";
     }
     return "";
 }
@@ -247,9 +290,9 @@ void compiler::AssemblyEmitter::emitDataDef(const DataDef &dataDef) {
     std::string dataValue = "";
 
     if (std::holds_alternative<Number>(dataDef.value)) {
-        dataValue = this->emitNumber(std::get<Number>(dataDef.value));
+        dataValue = this->emitNumber(std::get<Number>(dataDef.value), nullptr);
     } else if (std::holds_alternative<std::string>(dataDef.value)) {
-        dataValue = "\"" + std::get<std::string>(dataDef.value) + "\"";
+        dataValue = std::get<std::string>(dataDef.value);
     }
 
     this->emitWithSingleIdent(this->emitLabelDef(dataDef.name) + " " + this->emitType(dataDef.type) + " " + dataValue);

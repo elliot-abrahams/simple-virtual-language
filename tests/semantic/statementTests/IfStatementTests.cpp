@@ -23,3 +23,10 @@ TEST(STM_IF, INVALID_FLOAT_CONDITION) {
         )"
     );
 }
+
+TEST(STM_IF, INVALID_BOOL_ARRAY_CONDITION) {
+    ASSERT_THROWS_TYPE_ERROR(R"(
+            if (new bool[3]) {}
+        )"
+    );
+}

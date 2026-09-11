@@ -27,6 +27,14 @@ TEST(SYMBOL, RCBR) {
     ASSERT_TOKEN_EQ("}", TokenKind::RCBR, "}");
 }
 
+TEST(SYMBOL, LSQBR) {
+    ASSERT_TOKEN_EQ("[", TokenKind::LSQBR, "[");
+}
+
+TEST(SYMBOL, RSQBR) {
+    ASSERT_TOKEN_EQ("]", TokenKind::RSQBR, "]");
+}
+
 TEST(SYMBOL, EQUAL) {
     ASSERT_TOKEN_EQ("=", TokenKind::EQUAL, "=");
 }

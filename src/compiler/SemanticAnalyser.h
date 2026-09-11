@@ -20,7 +20,7 @@ namespace compiler {
 
     private:
         void processFunctionDecl(const ast::FunctionDecl& functionDecl);
-        std::vector<Type> processParameterList(const std::vector<std::unique_ptr<ast::Parameter>>& parameterList);
+        std::vector<SemanticType> processParameterList(const std::vector<std::unique_ptr<ast::Parameter>>& parameterList);
 
         SemanticAnalysisResult processStm(Scope* scope, const ast::Stm& stm);
         SemanticAnalysisResult processBlock(const ast::Block& block, const ScopeKind scopeKind);
@@ -34,19 +34,22 @@ namespace compiler {
         SemanticAnalysisResult processFunctionCallStatement(Scope* scope, const ast::FunctionCallStm& functionCallStm);
         SemanticAnalysisResult processReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
 
-        Type checkExprType(Scope* scope, const ast::Expr& expr);
-        SemanticAnalysisResult processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
-        FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
+        void processIndex(Scope* scope, const ast::Index& index);
+        unsigned int resolveAccessArrayDepth(const SemanticType& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const;
 
-        static bool canImplicitlyConvert(const Type from, const Type to);
+        SemanticType checkExprType(Scope* scope, const ast::Expr& expr);
+        SemanticAnalysisResult processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const;
+        FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const;
+
+        static bool canImplicitlyConvert(const SemanticType& from, const SemanticType& to);
         Symbol* checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) const;
 
-        static std::string typeToString(const Type& type);
+        static std::string typeToString(const SemanticType& type);
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
-        void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const Type leftType, const Type rightType) const;
-        void checkType(const std::vector<Type>& expectedTypes, const Type& actualType, const size_t line, const size_t column) const;
-        static std::string functionSignatureToString(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes);
+        void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const SemanticType& leftType, const SemanticType& rightType) const;
+        void checkType(const std::vector<SemanticType>& expectedTypes, const SemanticType& actualType, const size_t line, const size_t column) const;
+        static std::string functionSignatureToString(const std::string& functionIdentifier, const std::vector<SemanticType>& parameterTypes);
 
         SymbolTable* symbolTable;
         const std::filesystem::path *path;

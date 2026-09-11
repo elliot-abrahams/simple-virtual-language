@@ -4,11 +4,11 @@
 using namespace tokeniserTest;
 
 TEST(LITERAL, INT_ONE_DIGIT) {
-    ASSERT_TOKEN_EQ("0", TokenKind::INTEGER_LITERAL, "0");
+    ASSERT_TOKEN_EQ("0", TokenKind::INT_LITERAL, "0");
 }
 
 TEST(LITERAL, INT_MULTI_DIGI) {
-    ASSERT_TOKEN_EQ("123", TokenKind::INTEGER_LITERAL, "123");
+    ASSERT_TOKEN_EQ("123", TokenKind::INT_LITERAL, "123");
 }
 
 TEST(LITERAL, FLOAT) {

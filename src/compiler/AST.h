@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <variant>
 
 #include "SymbolTable.h"
 #include "LanguageTypes.h"
@@ -12,6 +13,8 @@ namespace compiler {
 }
 
 namespace ast {
+    struct Index;
+    struct ArrayInitialiser;
     struct Block;
 
     struct ASTNode {
@@ -30,7 +33,7 @@ namespace ast {
     };
 
     struct Expr : ASTNode {
-        mutable compiler::Type resultingType;
+        mutable compiler::SemanticType resultingType;
         using ASTNode::ASTNode;
         virtual ~Expr() = default;
     };
@@ -61,9 +64,10 @@ namespace ast {
 
     struct TypeInfo final : ASTNode {
         const compiler::Type type;
+        unsigned int dimension;
 
-        TypeInfo(const uint32_t line, const uint16_t column, const compiler::Type type) :
-            ASTNode(line, column), type(type) {}
+        TypeInfo(const uint32_t line, const uint16_t column, const compiler::Type type, const unsigned int dimension) :
+            ASTNode(line, column), type(type), dimension(dimension) {}
     };
 
     struct AssignmentOperatorInfo final : ASTNode {
@@ -95,20 +99,59 @@ namespace ast {
             name(std::move(name)) {}
     };
 
-    struct ExprIdentifier final : Expr {
+    struct ExprVarAccess final : Expr {
         const std::string name;
+        const std::vector<std::unique_ptr<Index>> indices;
 
-        ExprIdentifier(const uint32_t line, const uint16_t column, std::string name) :
+        ExprVarAccess(const uint32_t line, const uint16_t column, std::string name, std::vector<std::unique_ptr<Index>> indices) :
             Expr(line, column),
-            name(std::move(name)) {}
+            name(std::move(name)),
+            indices(std::move(indices)) {}
+    };
+
+    using ArrayInitialiserElement = std::variant<
+            std::unique_ptr<Expr>,
+            std::unique_ptr<ArrayInitialiser>
+    >;
+
+    struct ArrayInitialiser final : ASTNode {
+        const std::vector<ArrayInitialiserElement> elements;
+
+        ArrayInitialiser(const uint32_t line, const uint16_t column, std::vector<ArrayInitialiserElement> elements) :
+            ASTNode(line, column), elements(std::move(elements)) {}
+    };
+
+    struct Index final : ASTNode {
+        const std::unique_ptr<Expr> index;
+
+        Index(const uint32_t line, const uint16_t column, std::unique_ptr<Expr> index) :
+            ASTNode(line, column), index(std::move(index)) {}
+    };
+
+    struct ExprNew final : Expr {
+        const std::unique_ptr<TypeInfo> typeInfo;
+        const std::vector<std::unique_ptr<Index>> arrayDimensions;
+        const std::unique_ptr<ArrayInitialiser> optionalInitialiser;
+
+        ExprNew(const uint32_t line,
+                const uint16_t column,
+                std::unique_ptr<TypeInfo> typeInfo,
+                std::vector<std::unique_ptr<Index>>& arrayDimensions,
+                std::unique_ptr<ArrayInitialiser> optionalInitialiser) :
+            Expr(line, column),
+            typeInfo(std::move(typeInfo)),
+            arrayDimensions(std::move(arrayDimensions)),
+            optionalInitialiser(std::move(optionalInitialiser)) {}
     };
 
     struct VarAccess final : ASTNode {
         const std::unique_ptr<Identifier> identifier;
+        const std::vector<std::unique_ptr<Index>> indices;
 
-        VarAccess(const uint32_t line, const uint16_t column, std::unique_ptr<Identifier> identifier) :
+        VarAccess(const uint32_t line, const uint16_t column, std::unique_ptr<Identifier> identifier, std::vector<std::unique_ptr<Index>> indices) :
             ASTNode(line, column),
-            identifier(std::move(identifier)) {}
+            identifier(std::move(identifier)),
+            indices(std::move(indices)) {}
     };
 
     struct FunctionCall final : Expr {

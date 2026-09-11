@@ -93,6 +93,8 @@ set(Parser_Sources
         parser/expressionTests/UnaryExpressionTests.cpp
         parser/expressionTests/CastExpressionTests.cpp
         parser/expressionTests/FunctionCallExpressionTests.cpp
+        parser/expressionTests/NewExpressionTests.cpp
+        parser/expressionTests/VarAccessTests.cpp
 
         parser/ParserTestUtils.h
         parser/ParserTests.cpp
@@ -155,6 +157,8 @@ set(Semantic_Sources
         semantic/expressionTests/UnaryExpressionTests.cpp
         semantic/expressionTests/CastExpressionTests.cpp
         semantic/expressionTests/FunctionCallExpressionTests.cpp
+        semantic/expressionTests/NewExpressionTests.cpp
+        semantic/expressionTests/VarAccessTests.cpp
 
         semantic/SemanticTestUtils.h
         semantic/SemanticTests.cpp
@@ -179,6 +183,8 @@ set(Integration_Sources
         integration/builtinFunctionTests/printTests.cpp
         integration/builtinFunctionTests/exitTests.cpp
 
+        integration/ArrayTests.cpp
+
         integration/FunctionTests.cpp
         integration/ScopeTests.cpp
 
@@ -190,6 +196,7 @@ set(Integration_Sources
         integration/expressionTests/BinaryExpressionTests.cpp
         integration/expressionTests/UnaryExpressionTests.cpp
         integration/expressionTests/castExpressionTests.cpp
+        integration/expressionTests/VarAccessTests.cpp
 
         integration/IntegrationTestUtils.h
         integration/IntegrationTests.cpp

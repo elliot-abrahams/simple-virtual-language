@@ -10,6 +10,15 @@ namespace compiler {
         VOID_RETURN_TYPE
     };
 
+    struct SemanticType {
+        Type type;
+        unsigned int dimension;
+
+        int getSize() {
+            return 4;
+        }
+    };
+
     enum class AssignmentOperator {
         EQUAL
     };

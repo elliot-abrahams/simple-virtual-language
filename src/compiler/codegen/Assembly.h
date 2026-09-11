@@ -20,6 +20,8 @@ namespace compiler {
         POP,
         DUP,
         SWAP,
+        ROTD,
+        ROTU,
 
         LOAD,
         LOADB,
@@ -58,7 +60,8 @@ namespace compiler {
         CGT,
         CGE,
 
-        CONV
+        CONV,
+        THROW
     };
 
     enum class AssemblyType {
@@ -85,6 +88,12 @@ namespace compiler {
         EXIT,
         PRINT,
         PRINT_STR
+    };
+
+    enum class ErrorRef {
+        ARRAY_INDEX_OUT_OF_RANGE,
+        NEGATIVE_ARRAY_SIZE,
+        ARRAY_INITIALISER_SIZE
     };
 
     enum class MethodDefType {
@@ -126,7 +135,8 @@ namespace compiler {
         AssemblyType,
         Immediate,
         LabelRef,
-        NativeRef
+        NativeRef,
+        ErrorRef
     >;
 
     struct Instruction {

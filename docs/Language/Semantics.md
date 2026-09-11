@@ -8,7 +8,8 @@
     - [2.2 Float Type](#22-float-type)
     - [2.3 Bool Type](#23-bool-type)
     - [2.4 Void Type](#24-void-type)
-    - [2.5 Implicit Conversion](#25-implicit-conversion)
+    - [2.5 Array Types](#25-array-types)
+    - [2.6 Implicit Conversion](#26-implicit-conversion)
 - [3. Variables](#3-variables)
   - [3.1 Variable Declaration](#31-variable-declaration)
   - [3.2 Variable Initialisation](#32-variable-initialisation)
@@ -29,6 +30,7 @@
   - [5.7 Unary Operators](#57-unary-operators)
   - [5.8 Function Calls](#58-function-calls)
   - [5.9 Cast Expressions](#59-cast-expressions)
+  - [5.10 New Expressions](#510-new-expressions)
 - [6. Functions](#6-functions)
   - [6.1 Function Declarations](#61-function-declarations)
   - [6.2 Parameters](#62-parameters)
@@ -63,11 +65,13 @@ A program is semantically valid only if all applicable semantic rules are satisf
 
 ## 2. Types
 
-SV provides the following types:
+SV provides the following primitive types:
 - `int`
 - `float`
 - `bool`
 - `void`
+
+SV also provides array types.
 
 `void` is only permitted as a function return type.
 
@@ -91,13 +95,31 @@ A boolean value is either `true` or `false`.
 
 `void` may only be used as the return type of a function.
 
-### 2.5 Implicit Conversion
+### 2.5 Array Types
+
+An array type consists of an element type and one or more dimensions.
+
+Array types are written by appending `[]` to a type.
+
+The number of `[]` pairs determines the array's dimension.
+
+An array's base type is the primitive type contained at its deepest level.
+
+For example:
+```
+int[][] arr;
+```
+has base type `int` and dimension `2`.
+
+### 2.6 Implicit Conversion
 
 SV supports implicit conversion between certain types.
 
 An implicit conversion is performed when an expression is used in a context where its type differs from the expected type and a valid implicit conversion exists.
 
-The only implicit conversions supported is:
+Array types cannot be implicitly converted to other array types.
+
+The only implicit conversion supported is:
 
 | Source Type | Target Type |
 |-------------|-------------|
@@ -107,7 +129,7 @@ For example:
 ```
 float x = 5; 
 ```
-The `int` value `10` is implicitly converted to `float`.
+The `int` value `5` is implicitly converted to `float`.
 
 Implicit conversion may be required when:
 - Initialising a variable
@@ -141,6 +163,7 @@ For example:
 int x = 10;
 float y = 10;
 bool z = true;
+int[] arr = new int[3];
 ```
 
 A variable declared without an initialiser is uninitialised.
@@ -154,27 +177,71 @@ For example, the following is invalid:
 int x = x;
 ```
 
+Array variables contain a reference to an array rather than the array itself.
+
+For example:
+```
+int [] arr = new int[2]{1, 2};
+int[] copy = arr;
+
+copy[0] = 5;
+
+print(arr[0]); // 5
+```
+Both `arr` and `copy` refer to the same array. Modifying the array through either variable is therefore visible through the other variable.
+
 ### 3.3 Variable Assignment
 
-An assignment stores the resulting value of an expression in an existing variable.
+An assignment stores the resulting value of an expression in an existing variable or array element.
 
 The target variable must be visible from the current scope.
+
+For an array element, the array variable must be visible and the number of indices cannot exceed its array dimension.
 
 The resulting type of the expression must either match the variable's type or be implicitly convertible to it.
 
 A successful assignment initialises the target variable if it was previously uninitialised.
 
+Assigning an array to another array variable copies the array reference rather than the contents of the array.
+
 ### 3.4 Variable access
 
 A variable access evaluates to the value stored in the referenced variable.
 
-The resulting type of a variable access is the declared type of the variable.
-
 The variable must be visible from the current scope.
+
+Global variables are visible from function bodies regardless of their position in the source file. However, a global variable must still be initialised before it is accessed.
 
 A variable must be initialised before its value is accessed.
 
-Global variables are visible from function bodies regardless of their position in the source file. However, a global variable must still be initialised before it is accessed.
+For a non-array variable, the resulting type is the declared type of the variable.
+
+For an array variable, zero or more indices may be applied to access an array or an array element.
+
+Each index must have type `int`.
+
+The index value is checked at runtime. An index outside the bounds of the array results in a runtime error.
+
+Each index reduces the resulting array dimension by one.
+
+For example:
+```
+int[][] = new int[2][3];
+
+arr        // has type int[][]
+arr[0]     // has type int[]
+arr[0][1]  // has type int
+```
+
+The number of indices cannot exceed the variable's array dimension.
+
+For example:
+```
+int[][] arr = new int[2][3];
+
+arr[0][1]    // valid
+arr[0][1][0] // invalid
+```
 
 ---
 
@@ -272,7 +339,7 @@ Each literal has a fixed resulting type.
 
 A variable access produces the value stored in the referenced variable.
 
-The resulting type is the declared type of the variable.
+The resulting type is the declared type of the variable, reduced by one dimension for each array index.
 
 See [Section 3.4](#34-variable-access) for the rules governing variable access.
 
@@ -384,11 +451,69 @@ The resulting type of a cast expression is the type specified by the cast.
 
 Conversions can only be made between numeric types.
 
+Array types cannot be used as either the source or target type of a cast.
+
+### 5.10 New Expressions
+
+A new expression creates an array of the specified type and dimensions.
+
+The type specified by a new expression must be a primitive type followed by one or more array dimensions.
+
+Each array dimension is an expression and must have type `int`.
+
+Each dimension must evaluate to a non-negative value at runtime. A negative dimension results in a runtime error.
+
+Newly allocated array elements are initialised to their default value:
+
+| Element Type | Default Value |
+|--------------|---------------|
+| `int`        | `0`           |
+| `float`      | `0.0`         |
+| `bool`       | `false`       |
+
+An array may optionally contain an array initialiser.
+
+For a one-dimensional array, the initialiser contains expressions:
+```
+int [] arr = new int[3]{1, 2, 3};
+```
+
+The expressions must be compatible with the array's element type.
+
+For multidimensional arrays, nested array initialisers are used:
+```
+int[][] arr = new int[2][2]{
+    {1, 2},
+    {3, 4}
+};
+```
+
+An array initialiser must have the correct nesting depth.
+
+For example:
+```
+int[][] arr = new int[2][2]{1, 2, 3, 4};
+```
+is invalid.
+
+An initialiser may contain fewer elements than the corresponding array dimension. Elements without an explicitly provided initialiser retain their default value.
+
+For example:
+```
+int[] arr = new int[3]{1, 2};
+```
+produces an array equivalent to:
+```
+{1, 2, 0}
+```
+
+A runtime error occurs if the initialiser contains more elements than the corresponding array dimension.
+
 ---
 
 ## 6. Functions
 
-A function has a name, parameter list return type, and body.
+A function has a name, parameter list, return type, and body.
 
 ### 6.1 Function Declarations
 
@@ -410,7 +535,9 @@ Each parameter has a type and an identifier.
 
 Parameters are considered initialised when the function begins execution.
 
-parameters are visible throughout the function body unless hidden by a declaration in a nested scope.
+Parameters are visible throughout the function body unless hidden by a declaration in a nested scope.
+
+When an array is passed as an argument, its array reference is passed to the function. The function therefore refers to the same array as the caller.
 
 ### 6.3 Function Overloading
 
@@ -507,17 +634,19 @@ For example:
 int x;
 float y;
 bool z;
+int[] arr;
 ```
 
 ### 7.4 Variable Assignment
 
-variable assignment is a statement that stores the resulting value of an expression in an existing variable.
+Variable assignment is a statement that stores the resulting value of an expression in an existing variable.
 
 See [Section 3.3](#33-variable-assignment) for assignment rules.
 
 For example:
 ```
 x = 10;
+arr = new int[3];
 ```
 
 ### 7.5 Function Call Statements
@@ -636,7 +765,7 @@ A `return` statement must only appear within a function.
 
 In a `non-void` function, a `return` statement must contain an expression.
 
-The resulting type of the expression mst either match the function's return type or be implicitly convertible to it.
+The resulting type of the expression must either match the function's return type or be implicitly convertible to it.
 
 In a `void` function, a `return` statement must not contain an expression.
 

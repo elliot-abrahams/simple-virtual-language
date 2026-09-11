@@ -1,6 +1,7 @@
 #include "SemanticAnalyser.h"
 
 #include <algorithm>
+#include <queue>
 
 #include "../include/Error.h"
 
@@ -46,9 +47,9 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
 
 void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& functionDecl) {
     // declare function in symbol table
-    const std::vector<Type> parameterTypes = this->processParameterList(functionDecl.parameters);
+    const std::vector<SemanticType> parameterTypes = this->processParameterList(functionDecl.parameters);
     const std::string functionSignature = functionSignatureToString(functionDecl.identifier->name, parameterTypes);
-    FunctionSymbol* functionSymbol = this->symbolTable->declareFunction(functionDecl.identifier->name, functionSignature, functionDecl.returnTypeInfo->type, parameterTypes);
+    FunctionSymbol* functionSymbol = this->symbolTable->declareFunction(functionDecl.identifier->name, functionSignature, SemanticType{functionDecl.returnTypeInfo->type, functionDecl.returnTypeInfo->dimension}, parameterTypes);
 
     if (functionSymbol == nullptr) {
         std::string errorMsg = "function '";
@@ -67,11 +68,11 @@ void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& fu
     functionDecl.functionSymbol = functionSymbol;
 }
 
-std::vector<compiler::Type> compiler::SemanticAnalyser::processParameterList(const std::vector<std::unique_ptr<ast::Parameter>> &parameterList) {
-    std::vector<Type> parameterTypes;
+std::vector<compiler::SemanticType> compiler::SemanticAnalyser::processParameterList(const std::vector<std::unique_ptr<ast::Parameter>> &parameterList) {
+    std::vector<SemanticType> parameterTypes;
 
     for (auto& parameter : parameterList) {
-        parameterTypes.push_back(parameter->typeInfo->type);
+        parameterTypes.push_back(SemanticType{parameter->typeInfo->type, parameter->typeInfo->dimension});
     }
     return parameterTypes;
 }
@@ -130,7 +131,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionBody
 
     // add parameters to the list of symbols in newScope
     for (int parameterIndex = 0; parameterIndex < functionDecl.parameters.size(); parameterIndex++) {
-        newScope->declareSymbol(functionDecl.parameters[parameterIndex]->identifier->name, functionDecl.parameters[parameterIndex]->typeInfo->type, parameterIndex + 1, true);
+        newScope->declareSymbol(functionDecl.parameters[parameterIndex]->identifier->name, SemanticType{functionDecl.parameters[parameterIndex]->typeInfo->type, functionDecl.parameters[parameterIndex]->typeInfo->dimension}, parameterIndex + 1, true);
     }
 
     bool alwaysReturns = false;
@@ -159,7 +160,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(S
     }
 
     // declare symbol (as uninitialised)
-    scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
+    scope->declareSymbol(varDecl.identifier->name, SemanticType{varDecl.typeInfo->type, varDecl.typeInfo->dimension}, 0, false);
 
     // if var decl does not have an initialiser
     if (varDecl.optionalInitialiser == nullptr) {
@@ -171,12 +172,12 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(S
     // set symbol as initialised after checking optional initialiser (prevents self initialisation)
     scope->lookup(varDecl.identifier->name).value()->isInitialised = true;
 
-    if (!canImplicitlyConvert(initializerType, varDecl.typeInfo->type)) {
+    if (!canImplicitlyConvert(initializerType, SemanticType{varDecl.typeInfo->type, varDecl.typeInfo->dimension})) {
         throw TypeError(
             this->path->string(),
             varDecl.optionalInitialiser->line,
             varDecl.optionalInitialiser->column,
-            "cannot assign " + typeToString(initializerType) + " to " + typeToString(varDecl.typeInfo->type)
+            "cannot assign " + typeToString(initializerType) + " to " + typeToString(SemanticType{varDecl.typeInfo->type, varDecl.typeInfo->dimension})
         );
     }
     return SemanticAnalysisResult{false};
@@ -190,26 +191,46 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
         assignment.varAccess->identifier->column
     );
 
+    if (assignment.varAccess->indices.size() > 0) {
+        // if array access check if array is initialised
+        if (!identifierSymbol->isInitialised) {
+            throw SemanticError(
+                this->path->string(),
+                assignment.varAccess->identifier->line,
+                assignment.varAccess->identifier->column,
+                "variable '" + assignment.varAccess->identifier->name + "' may not have been initialised"
+            );
+        }
+    }
+
     const auto exprType = this->checkExprType(scope, *assignment.expression);
 
-    if (!canImplicitlyConvert(exprType, identifierSymbol->type)) {
+    // check type of indices
+    for (const auto& index : assignment.varAccess->indices) {
+        this->processIndex(scope, *index);
+    }
+
+    // check var access index depth is smaller than the variable's dimensions
+    const unsigned int indexDepth = this->resolveAccessArrayDepth(SemanticType{identifierSymbol->type, identifierSymbol->dimension}, assignment.varAccess->indices);
+
+    if (!canImplicitlyConvert(exprType, SemanticType{identifierSymbol->type, indexDepth})) {
         throw TypeError(
             this->path->string(),
             assignment.line,
             assignment.column,
-            "cannot assign " + typeToString(exprType) + " to " + typeToString(identifierSymbol->type)
+            "cannot assign " + typeToString(exprType) + " to " + typeToString(SemanticType{identifierSymbol->type, identifierSymbol->dimension})
         );
     }
 
     // update isInitialised of identifier in symbol table
-    identifierSymbol->isInitialised = true;
+    if (!identifierSymbol->isInitialised) identifierSymbol->isInitialised = true;
     return SemanticAnalysisResult{false};
 }
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processIfStatement(Scope *scope, const ast::IfStm &ifStm) {
     // ensure condition type is bool
     const auto conditionType = this->checkExprType(scope, *ifStm.condition);
-    this->checkType({Type::BOOL}, conditionType, ifStm.condition->line, ifStm.condition->column);
+    this->checkType({SemanticType{Type::BOOL, 0}}, conditionType, ifStm.condition->line, ifStm.condition->column);
 
     const bool ifBlockAlwaysReturns = this->processBlock(*ifStm.ifBlock, ScopeKind::BLOCK).alwaysReturns;
 
@@ -223,7 +244,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processIfStatement(
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processWhileStatement(Scope* scope, const ast::WhileStm& whileStm) {
     // ensure condition type is bool
     const auto conditionType = this->checkExprType(scope, *whileStm.condition);
-    this->checkType({Type::BOOL}, conditionType, whileStm.condition->line, whileStm.condition->column);
+    this->checkType({SemanticType{Type::BOOL, 0}}, conditionType, whileStm.condition->line, whileStm.condition->column);
 
     this->processBlock(*whileStm.block, ScopeKind::WHILE);
     return SemanticAnalysisResult{false};
@@ -260,12 +281,12 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBreakStateme
 }
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCallStatement(Scope *scope, const ast::FunctionCallStm &functionCallStm) {
-    std::vector<Type> argumentTypes;
+    std::vector<SemanticType> argumentTypes;
     for (const auto& argument : functionCallStm.functionCall->arguments) {
         argumentTypes.push_back(this->checkExprType(scope, *argument));
     }
 
-    std::vector<FunctionSymbol>* functionSymbols = this->symbolTable->getFunctionSymbols(functionCallStm.functionCall->identifier->name, argumentTypes);
+    std::vector<FunctionSymbol>* functionSymbols = this->symbolTable->getFunctionSymbols(functionCallStm.functionCall->identifier->name);
 
     FunctionSymbol* functionSymbol = this->resolveFunctionCall(functionSymbols, *functionCallStm.functionCall, argumentTypes);
 
@@ -274,7 +295,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall
 
     functionCallStm.functionCall->resultingType = functionSymbol->returnType;
 
-    if (functionSymbol->returnType != Type::VOID_RETURN_TYPE) {
+    if (functionSymbol->returnType.type != Type::VOID_RETURN_TYPE) {
         throw SemanticError(
             this->path->string(),
             functionCallStm.line,
@@ -300,7 +321,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
     returnStm.functionSymbol = currentFunctionSymbol;
 
     if (returnStm.returnExpression == nullptr) { // return has no expression
-        if (currentFunctionSymbol->returnType != Type::VOID_RETURN_TYPE) {
+        if (currentFunctionSymbol->returnType.type != Type::VOID_RETURN_TYPE) {
             throw SemanticError(
                 this->path->string(),
                 returnStm.line,
@@ -311,9 +332,9 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
     } else {
         // return has expression
 
-        const Type exprType = this->checkExprType(scope, *returnStm.returnExpression);
+        const SemanticType exprType = this->checkExprType(scope, *returnStm.returnExpression);
 
-        if (currentFunctionSymbol->returnType == Type::VOID_RETURN_TYPE) { // function return type is void
+        if (currentFunctionSymbol->returnType.type == Type::VOID_RETURN_TYPE) { // function return type is void
             if (returnStm.returnExpression != nullptr) { // return has an expression
                 throw SemanticError(
                     this->path->string(),
@@ -337,38 +358,47 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
     return SemanticAnalysisResult{true};
 }
 
-compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
+void compiler::SemanticAnalyser::processIndex(Scope* scope, const ast::Index& index) {
+    const auto indexType = this->checkExprType(scope, *index.index);
+
+    if (indexType.type != Type::INT) {
+        throw TypeError(
+            this->path->string(),
+            index.index->line,
+            index.index->column,
+            "array index must have type int, but found " + typeToString(indexType)
+        );
+    }
+}
+
+unsigned int compiler::SemanticAnalyser::resolveAccessArrayDepth(const SemanticType& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const {
+    if (indices.size() > arrayType.dimension) {
+        throw TypeError(
+            this->path->string(),
+            indices[indices.size() - arrayType.dimension - 1]->line,
+            indices[indices.size() - arrayType.dimension - 1]->column,
+            "array required, but '" + typeToString(SemanticType{arrayType.type, 0}) + "' found"
+        );
+    }
+    return arrayType.dimension - indices.size();
+}
+
+compiler::SemanticType compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
-        intLit->resultingType = Type::INT;
-        return Type::INT;
+        intLit->resultingType = SemanticType{Type::INT, 0};
+        return SemanticType{Type::INT, 0};
     }
     if (auto* floatLit = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
-        floatLit->resultingType = Type::FLOAT;
-        return Type::FLOAT;
+        floatLit->resultingType = SemanticType{Type::FLOAT, 0};
+        return SemanticType{Type::FLOAT, 0};
     }
     if (auto* boolLit = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
-        boolLit->resultingType = Type::BOOL;
-        return Type::BOOL;
+        boolLit->resultingType = SemanticType{Type::BOOL, 0};
+        return SemanticType{Type::BOOL, 0};
     }
-    if (auto* exprIdent = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
-        // check if symbol has been initialised
-        const auto symbol = this->checkSymbolIsDefined(scope, exprIdent->name, exprIdent->line, exprIdent->column);
-        if (!symbol->isInitialised) {
-            throw SemanticError(
-                this->path->string(),
-                exprIdent->line,
-                exprIdent->column,
-                "variable '" + exprIdent->name + "' may not have been initialised"
-            );
-        }
-        // return type of expr identifier
-        expr.resultingType = symbol->type;
-        return symbol->type;
-    }
-
     if (auto* binaryOperator = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
-        const Type leftType = this->checkExprType(scope, *binaryOperator->left);
-        const Type rightType = this->checkExprType(scope, *binaryOperator->right);
+        const SemanticType leftType = this->checkExprType(scope, *binaryOperator->left);
+        const SemanticType rightType = this->checkExprType(scope, *binaryOperator->right);
 
         switch (binaryOperator->binaryOperatorInfo->binaryOperator) {
             case BinaryOperator::PLUS:
@@ -377,60 +407,65 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
             case BinaryOperator::DIVIDE:
             case BinaryOperator::MODULO: {
                 // ensure either operand is not bool
-                if (leftType == Type::BOOL || rightType == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                if (leftType.type == Type::BOOL || rightType.type == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
 
                 // result is float if either operand is a float or binary operator is divide
-                if ((leftType == Type::FLOAT || rightType == Type::FLOAT) ||
+                if ((leftType.type == Type::FLOAT || rightType.type == Type::FLOAT) ||
                     binaryOperator->binaryOperatorInfo->binaryOperator == BinaryOperator::DIVIDE
                 ) {
-                    binaryOperator->resultingType = Type::FLOAT;
-                    return Type::FLOAT;
+                    constexpr auto resultingType = SemanticType{Type::FLOAT, 0};
+                    binaryOperator->resultingType = resultingType;
+                    return resultingType;
                 }
-                binaryOperator->resultingType = Type::INT;
-                return Type::INT;
+                constexpr auto resultingType = SemanticType{Type::INT, 0};
+                binaryOperator->resultingType = resultingType;
+                return resultingType;
             }
 
             case BinaryOperator::INTEGER_DIVIDE: {
                 // ensure either operand is not bool
-                if (leftType == Type::BOOL || rightType == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                binaryOperator->resultingType = Type::INT;
-                return Type::INT;
+                if (leftType.type == Type::BOOL || rightType.type == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                constexpr auto resultingType = SemanticType{Type::INT, 0};
+                binaryOperator->resultingType = resultingType;
+                return resultingType;
             }
 
             case BinaryOperator::LOGICAL_OR:
             case BinaryOperator::LOGICAL_AND: {
-                if (leftType != Type::BOOL || rightType != Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                binaryOperator->resultingType = Type::BOOL;
-                return Type::BOOL;
+                if (leftType.type != Type::BOOL || rightType.type != Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                constexpr auto resultingType = SemanticType{Type::BOOL, 0};
+                binaryOperator->resultingType = resultingType;
+                return resultingType;
             }
 
             case BinaryOperator::LESS_THAN:
             case BinaryOperator::LESS_THAN_OR_EQUAL:
             case BinaryOperator::GREATER_THAN:
             case BinaryOperator::GREATER_THAN_OR_EQUAL: {
-                if (leftType == Type::BOOL || rightType == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                binaryOperator->resultingType = Type::BOOL;
-                return Type::BOOL;
+                if (leftType.type == Type::BOOL || rightType.type == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                constexpr auto resultingType = SemanticType{Type::BOOL, 0};
+                binaryOperator->resultingType = resultingType;
+                return resultingType;
             }
 
             default:
                 // EQUAL_EQUAL / NOT_EQUAL
 
                 // if either left or right type is bool and the other operand is not bool
-                if ((leftType == Type::BOOL || rightType == Type::BOOL) &&
-                    leftType != rightType
+                if ((leftType.type == Type::BOOL || rightType.type == Type::BOOL) &&
+                    leftType.type != rightType.type
                 ) {
                     throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
                 }
-
-                binaryOperator->resultingType = Type::BOOL;
-                return Type::BOOL;
+                constexpr auto resultingType = SemanticType{Type::BOOL, 0};
+                binaryOperator->resultingType = resultingType;
+                return resultingType;
         }
     }
     if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
-        const Type type = this->checkExprType(scope, *unaryOperator->expr);
+        const SemanticType exprType = this->checkExprType(scope, *unaryOperator->expr);
 
-        if (type == Type::BOOL) {
+        if (exprType.type == Type::BOOL) {
             if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::MINUS ||
                 unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::PLUS) {
 
@@ -447,41 +482,156 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
                     this->path->string(),
                     unaryOperator->line,
                     unaryOperator->column,
-                    "cannot apply '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type '" + typeToString(type) + "'"
+                    "cannot apply '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type '" + typeToString(exprType) + "'"
                 );
             }
         }
 
-        unaryOperator->resultingType = type;
-        return type;
+        unaryOperator->resultingType = exprType;
+        return exprType;
+    }
+
+    if (auto* varAccess = dynamic_cast<const ast::ExprVarAccess*>(&expr)) {
+        // check if symbol has been initialised
+        const auto symbol = this->checkSymbolIsDefined(scope, varAccess->name, varAccess->line, varAccess->column);
+        if (!symbol->isInitialised) {
+            throw SemanticError(
+                this->path->string(),
+                varAccess->line,
+                varAccess->column,
+                "variable '" + varAccess->name + "' may not have been initialised"
+            );
+        }
+
+        // get return type of var access
+
+        // check array access is smaller than the variable's dimension
+        const unsigned int indexDepth = this->resolveAccessArrayDepth(SemanticType{symbol->type, symbol->dimension}, varAccess->indices);
+
+        for (const auto& index : varAccess->indices) {
+            this->processIndex(scope, *index);
+        }
+
+        const auto resultingType = SemanticType{symbol->type, indexDepth};
+
+        expr.resultingType = resultingType;
+        return resultingType;
+    }
+
+    if (auto* newExpression = dynamic_cast<const ast::ExprNew*>(&expr)) {
+        for (const auto& index : newExpression->arrayDimensions) {
+            this->processIndex(scope, *index);
+        }
+
+        if (newExpression->optionalInitialiser != nullptr) {
+            std::queue<const std::unique_ptr<ast::ArrayInitialiser>*> initialisersToProcess;
+            std::queue<unsigned int> depths;
+
+            initialisersToProcess.push(&newExpression->optionalInitialiser);
+            depths.push(1);
+
+            while (!initialisersToProcess.empty()) {
+                // get first element in queue
+                const auto arrayInitialiser = initialisersToProcess.front();
+                initialisersToProcess.pop();
+                const auto depth = depths.front();
+                depths.pop();
+
+                // if initialiser requires a nested initialiser
+                if (depth < newExpression->arrayDimensions.size()) {
+                    // expecting each element to be an array initialiser
+                    // add each nested initialiser to queue
+                    for (const ast::ArrayInitialiserElement& element : arrayInitialiser->get()->elements) {
+                        if (std::holds_alternative<std::unique_ptr<ast::Expr>>(element)) {
+                            const auto expr = &std::get<std::unique_ptr<ast::Expr>>(element);
+                            unsigned int initialiserDepth = newExpression->arrayDimensions.size() - depth;
+                            throw TypeError(
+                                this->path->string(),
+                                expr->get()->line,
+                                expr->get()->column,
+                                "expected '" + typeToString(SemanticType{newExpression->typeInfo->type, initialiserDepth}) + "' but found '" + typeToString(SemanticType{newExpression->typeInfo->type, 0}) + "'"
+                            );
+                        }
+                        initialisersToProcess.push(&std::get<std::unique_ptr<ast::ArrayInitialiser>>(element));
+                        depths.push(depth + 1);
+                    }
+                } else {
+                    // expecting each element to be expr which can be converted to array base type
+                    for (const ast::ArrayInitialiserElement& element : arrayInitialiser->get()->elements) {
+                        if (std::holds_alternative<std::unique_ptr<ast::ArrayInitialiser>>(element)) {
+                            const auto initialiser = &std::get<std::unique_ptr<ast::ArrayInitialiser>>(element);
+                            throw TypeError(
+                                this->path->string(),
+                                initialiser->get()->line,
+                                initialiser->get()->column,
+                                "array initialiser exceeds array dimensions"
+                            );
+                        }
+                        // check expr is valid for array type
+                        const auto expr = &std::get<std::unique_ptr<ast::Expr>>(element);
+                        if (!canImplicitlyConvert(this->checkExprType(scope, *expr->get()), SemanticType{newExpression->typeInfo->type, 0})) {
+                            throw TypeError(
+                                this->path->string(),
+                                expr->get()->line,
+                                expr->get()->column,
+                                "expected '" + typeToString(SemanticType{newExpression->typeInfo->type, 0}) + "' but found '" + typeToString(expr->get()->resultingType) + "'"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        const auto resultingType = SemanticType{newExpression->typeInfo->type, newExpression->typeInfo->dimension};
+        newExpression->resultingType = resultingType;
+        return resultingType;
     }
 
     if (auto* castExpression = dynamic_cast<const ast::ExprCast*>(&expr)) {
-        const Type exprType = this->checkExprType(scope, *castExpression->expr);
+        const SemanticType exprType = this->checkExprType(scope, *castExpression->expr);
+
+        // if target's dimension is larger than zero
+        if (castExpression->typeInfo->dimension > 0) {
+            throw TypeError(
+                this->path->string(),
+                castExpression->typeInfo->line,
+                castExpression->typeInfo->column,
+                "cannot cast to array type '" + typeToString(SemanticType{castExpression->typeInfo->type, castExpression->typeInfo->dimension}) + "'"
+            );
+        }
+
+        // if expr's dimension is larger than zero
+        if (exprType.dimension > 0) {
+            throw TypeError(
+                this->path->string(),
+                castExpression->typeInfo->line,
+                castExpression->typeInfo->column,
+                "cannot cast from array type '" + typeToString(SemanticType{castExpression->typeInfo->type, castExpression->typeInfo->dimension}) + "'"
+            );
+        }
 
         // if either source or target type is bool
-        if (exprType == Type::BOOL || castExpression->typeInfo->type == Type::BOOL) {
+        if (exprType.type == Type::BOOL || castExpression->typeInfo->type == Type::BOOL) {
             throw TypeError(
                 this->path->string(),
                 castExpression->line,
                 castExpression->column,
-                "cannot cast from '" + typeToString(exprType) + "' to '" + typeToString(castExpression->typeInfo->type) + "'"
+                "cannot cast from '" + typeToString(exprType) + "' to '" + typeToString(SemanticType{castExpression->typeInfo->type, castExpression->typeInfo->dimension}) + "'"
             );
         }
 
-        castExpression->resultingType = castExpression->typeInfo->type;
-        return castExpression->typeInfo->type;
+        const auto resultingType = SemanticType{castExpression->typeInfo->type, 0};
+        castExpression->resultingType = resultingType;
+        return resultingType;
     }
 
     if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
-        std::vector<Type> argumentTypes;
+        std::vector<SemanticType> argumentTypes;
         for (const auto& argument : functionCall->arguments) {
             argumentTypes.push_back(this->checkExprType(scope, *argument));
         }
 
-        std::vector<FunctionSymbol>* functionSymbols = this->symbolTable->getFunctionSymbols(functionCall->identifier->name, argumentTypes);
-
-        FunctionSymbol* functionSymbol = this->resolveFunctionCall(functionSymbols, *functionCall, argumentTypes);
+        FunctionSymbol* functionSymbol = this->resolveFunctionCall(this->symbolTable->getFunctionSymbols(functionCall->identifier->name), *functionCall, argumentTypes);
 
         // process function
         this->processFunctionCall(functionSymbol, *functionCall, argumentTypes);
@@ -492,7 +642,7 @@ compiler::Type compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast
     throw std::runtime_error("Unknown expression type");
 }
 
-compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall &functionCall, const std::vector<Type>& argumentTypes) const {
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall &functionCall, const std::vector<SemanticType>& argumentTypes) const {
     if (functionSymbol == nullptr) { // if function is not defined
         std::string errorMsg = "function '";
         errorMsg += functionSignatureToString(functionCall.identifier->name, argumentTypes);
@@ -512,7 +662,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall
     return SemanticAnalysisResult{false};
 }
 
-compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::vector<FunctionSymbol> *functionSymbols, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const {
+compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::vector<FunctionSymbol> *functionSymbols, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const {
     FunctionSymbol* functionSymbol = nullptr;
 
     if (functionSymbols != nullptr) {
@@ -529,7 +679,9 @@ compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::v
             bool isSignatureIdentical = true;;
             // loop through each parameter
             for (size_t i = 0; i < symbol.parameterTypes.size(); i++) {
-                if (symbol.parameterTypes[i] == argumentTypes[i]) {
+                if (symbol.parameterTypes[i].type == argumentTypes[i].type &&
+                    symbol.parameterTypes[i].dimension == argumentTypes[i].dimension
+                ) {
                     continue;
                 }
                 isSignatureIdentical = false;
@@ -568,12 +720,13 @@ compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::v
     return functionSymbol;
 }
 
-bool compiler::SemanticAnalyser::canImplicitlyConvert(const Type from, const Type to) {
-    if (from == to) return true;
+bool compiler::SemanticAnalyser::canImplicitlyConvert(const SemanticType& from, const SemanticType& to) {
+    if (from.type == to.type && from.dimension == to.dimension) return true; // types are identical
+    if (from.dimension != 0 || to.dimension != 0) return false; // return false as array types cannot be implicity converted
 
-    switch (from) {
+    switch (from.type) {
         case Type::INT:
-            return to == Type::FLOAT;
+            return to.type == Type::FLOAT;
 
         case Type::FLOAT:
             return false;
@@ -600,13 +753,18 @@ compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope,
     return symbol.value();
 }
 
-std::string compiler::SemanticAnalyser::typeToString(const Type& type) {
-    switch (type) {
-        case Type::VOID_RETURN_TYPE: return "void";
-        case Type::INT: return "int";
-        case Type::FLOAT: return "float";
-        case Type::BOOL: return "bool";
+std::string compiler::SemanticAnalyser::typeToString(const SemanticType& type) {
+    std::string result;
+    switch (type.type) {
+        case Type::VOID_RETURN_TYPE: result += "void"; break;
+        case Type::INT: result += "int"; break;
+        case Type::FLOAT: result += "float"; break;
+        case Type::BOOL: result += "bool"; break;
     }
+    for (int i = 0; i < type.dimension; i++) {
+        result += "[]";
+    }
+    return result;
 }
 
 std::string compiler::SemanticAnalyser::binaryOperatorToString(const BinaryOperator &binaryOperator) {
@@ -639,7 +797,7 @@ std::string compiler::SemanticAnalyser::unaryOperatorToString(const UnaryOperato
     }
 }
 
-void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const Type leftType, const Type rightType) const {
+void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const SemanticType& leftType, const SemanticType& rightType) const {
     throw TypeError(
         this->path->string(),
         binaryOperator.line,
@@ -648,28 +806,31 @@ void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::Exp
     );
 }
 
-void compiler::SemanticAnalyser::checkType(const std::vector<Type>& expectedTypes, const Type &actualType, const size_t line, const size_t column) const {
-    if (std::count(expectedTypes.begin(), expectedTypes.end(), actualType) == 0) {
-
-        std::string string;
-
-        string += "Error: type mismatch";
-        string += "\nExpected: ";
-        for (Type expectedType : expectedTypes) {
-            string += typeToString(expectedType)  + " ";
+void compiler::SemanticAnalyser::checkType(const std::vector<SemanticType>& expectedTypes, const SemanticType &actualType, const size_t line, const size_t column) const {
+    for (const auto type : expectedTypes) {
+        if (type.type == actualType.type && type.dimension == actualType.dimension) {
+            return;
         }
-        string += "\nActual: " + typeToString(actualType);
-
-        throw TypeError(
-            this->path->string(),
-            line,
-            column,
-            string
-        );
     }
+
+    std::string string;
+
+    string += "Error: type mismatch";
+    string += "\nExpected: ";
+    for (SemanticType expectedType : expectedTypes) {
+        string += typeToString(expectedType)  + " ";
+    }
+    string += "\nActual: " + typeToString(actualType);
+
+    throw TypeError(
+        this->path->string(),
+        line,
+        column,
+        string
+    );
 }
 
-std::string compiler::SemanticAnalyser::functionSignatureToString(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes) {
+std::string compiler::SemanticAnalyser::functionSignatureToString(const std::string& functionIdentifier, const std::vector<SemanticType>& parameterTypes) {
     std::string result = "";
 
     result+= functionIdentifier + "(";
@@ -679,8 +840,8 @@ std::string compiler::SemanticAnalyser::functionSignatureToString(const std::str
     }
 
     for (int i = 1; i < parameterTypes.size(); i++) {
-        result+= ",";
-        result+= typeToString(parameterTypes.at(i));
+        result += ",";
+        result += typeToString(parameterTypes.at(i));
     }
 
     result+= ")";

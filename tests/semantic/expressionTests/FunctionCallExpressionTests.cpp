@@ -15,6 +15,18 @@ TEST(EXPR_FUNCTION_CALL, INT) {
     );
 }
 
+TEST(EXPR_FUNCTION_CALL, INT_ARRAY) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int[] foo() {
+                return new int[3];
+            }
+
+            int[] x = foo();
+        )"
+    );
+}
+
 TEST(EXPR_FUNCTION_CALL, INT_BINARY_EXPR) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
@@ -35,6 +47,18 @@ TEST(EXPR_FUNCTION_CALL, FLOAT) {
             }
 
             float x = foo();
+        )"
+    );
+}
+
+TEST(EXPR_FUNCTION_CALL, FLOAT_ARRAY) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            float[] foo() {
+                return new float[3];
+            }
+
+            float[] x = foo();
         )"
     );
 }
@@ -75,6 +99,18 @@ TEST(EXPR_FUNCTION_CALL, BOOL) {
     );
 }
 
+TEST(EXPR_FUNCTION_CALL, BOOL_ARRAY) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            bool[] foo() {
+                return new bool[3];
+            }
+
+            bool[] x = foo();
+        )"
+    );
+}
+
 TEST(EXPR_FUNCTION_CALL, BOOL_BINARY_EXPR) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
@@ -108,6 +144,26 @@ TEST(EXPR_FUNCTION_CALL, INVALID_RETURN_WRONG_TYPE) {
         R"(
             int foo() {
                 return 5.5f;
+            }
+        )"
+    );
+}
+
+TEST(EXPR_FUNCTION_CALL, INVALID_RETURN_WRONG_ARRAY_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] foo() {
+                return new float[3];
+            }
+        )"
+    );
+}
+
+TEST(EXPR_FUNCTION_CALL, INVALID_RETURN_WRONG_ARRAY_DIMENSION) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] foo() {
+                return new int[3][3];
             }
         )"
     );

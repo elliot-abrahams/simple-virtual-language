@@ -100,6 +100,16 @@ Token compiler::Tokeniser::readToken() {
             this->advance();
             return token;
         }
+        case '[': {
+            const Token token = Token{TokenKind::LSQBR, "[", this->line, this->column};
+            this->advance();
+            return token;
+        }
+        case ']': {
+            const Token token = Token{TokenKind::RSQBR, "]", this->line, this->column};
+            this->advance();
+            return token;
+        }
         case '=': {
             if (this->current + 1 < this->source.size() &&
                 this->source[this->current + 1] == '=') {
@@ -238,7 +248,9 @@ Token compiler::Tokeniser::readToken() {
                 if (image == "continue") return Token{TokenKind::CONTINUE, image, this->line, this->column - 8};
                 if (image == "break") return Token{TokenKind::BREAK, image, this->line, this->column - 5};
                 if (image == "return") return Token{TokenKind::RETURN, image, this->line, this->column - 6};
-                if (image == "int") return Token{TokenKind::INTEGER_TYPE, image, this->line, this->column - 3};
+                if (image == "new") return Token{TokenKind::NEW, image, this->line, this->column - 3};
+
+                if (image == "int") return Token{TokenKind::INT_TYPE, image, this->line, this->column - 3};
                 if (image == "float") return Token{TokenKind::FLOAT_TYPE, image, this->line, this->column - 5};
                 if (image == "void") return Token{TokenKind::VOID_TYPE, image, this->line, this->column - 4};
                 if (image == "bool") return Token{TokenKind::BOOL_TYPE, image, this->line, this->column - 4};
@@ -299,7 +311,7 @@ Token compiler::Tokeniser::readToken() {
                 }
 
                 const std::string image = std::string(source.substr(this->start, this->current - this->start));
-                auto token = Token{TokenKind::INTEGER_LITERAL, image, this->line, this->column - image.size()};
+                auto token = Token{TokenKind::INT_LITERAL, image, this->line, this->column - image.size()};
                 return token;
             }
 
