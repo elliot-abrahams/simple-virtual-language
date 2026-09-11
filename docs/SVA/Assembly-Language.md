@@ -335,14 +335,14 @@ SVMA has three categories of labels:
 
 A label name must match:
 ```
-\$[a-zA-Z_][a-zA-Z0-9_(),]*
+\$[a-zA-Z_][a-zA-Z0-9_()\[\],]*
 ```
 
 Examples:
 ```
 $loop
 $add_3 
-$value
+$value(),[]
 ```
 
 The `$` identifies the symbol as a label.
