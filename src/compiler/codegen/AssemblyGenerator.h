@@ -43,7 +43,7 @@ namespace compiler {
         void compileNewExpr(Scope* scope, const ast::ExprNew& newExpr);
 
         void compileArrayAlloc(Scope* scope, const ast::ExprNew& newExpr, unsigned int depth, SemanticType& typeAtDepth);
-        void compileArrayInitialiser(Scope* scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const uint8_t numberOfBitsOfDeepestElement);
+        void compileArrayInitialiser(Scope* scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const SemanticType& typeOfDeepestElement);
 
         void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
         void compileExprIdentifier(Scope* scope, const ast::ExprVarAccess& identifier);

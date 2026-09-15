@@ -109,6 +109,26 @@ TEST(ARRAY, INT_ARRAY_1D_INIT_FOUR) {
     );
 }
 
+TEST(ARRAY, FLOAT_ARRAY_1D_INIT) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            float[] arr = new float[3]{1.0f};
+            print(arr[0]);
+        )",
+        "1.0"
+    );
+}
+
+TEST(ARRAY, FLOAT_ARRAY_1D_INIT_IMPLICIT_CONVERSION) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            float[] arr = new float[3]{1};
+            print(arr[0]);
+        )",
+        "1.0"
+    );
+}
+
 TEST(ARRAY, INT_ARRAY_2D_INIT) {
     ASSERT_OUTPUT_EQ(
         R"(
@@ -235,7 +255,7 @@ TEST(ARRAY, INVALID_NEGATIVE_ARRAY_SIZE) {
         R"(
             int[] arr = new int[-1];
         )",
-        RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_SIZE,
+        RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_LENGTH,
         VMTestScenario::NONE
     );
 }
@@ -245,7 +265,7 @@ TEST(ARRAY, INVALID_1D_ARRAY_INITIALISER_HAS_TOO_MANY_ELEMENTS) {
         R"(
             int[] arr = new int[3]{1, 2, 3, 4};
         )",
-        RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_SIZE,
+        RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_LENGTH,
         VMTestScenario::NONE
     );
 }
@@ -255,7 +275,7 @@ TEST(ARRAY, INVALID_2D_ARRAY_INITIALISER_HAS_TOO_MANY_ELEMENTS_ONE) {
         R"(
             int[][] arr = new int[3][3]{{}, {}, {}, {}};
         )",
-        RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_SIZE,
+        RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_LENGTH,
         VMTestScenario::NONE
     );
 }
@@ -265,7 +285,7 @@ TEST(ARRAY, INVALID_2D_ARRAY_INITIALISER_HAS_TOO_MANY_ELEMENTS_TWO) {
         R"(
             int[][] arr = new int[3][3]{{1, 2, 3, 4}};
         )",
-        RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_SIZE,
+        RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_LENGTH,
         VMTestScenario::NONE
     );
 }

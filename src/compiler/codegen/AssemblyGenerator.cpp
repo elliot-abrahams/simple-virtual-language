@@ -903,8 +903,7 @@ void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNe
         });
         // [root_array_ptr, root_array_ptr]
 
-        const uint8_t numberOfBitsOfDeepestElement = SemanticType{newExpr.typeInfo->type, newExpr.typeInfo->dimension}.getSize();
-        this->compileArrayInitialiser(scope, *newExpr.optionalInitialiser, SourceLocation{0, newExpr.optionalInitialiser->line, newExpr.optionalInitialiser->column}, numberOfBitsOfDeepestElement);
+        this->compileArrayInitialiser(scope, *newExpr.optionalInitialiser, SourceLocation{0, newExpr.optionalInitialiser->line, newExpr.optionalInitialiser->column}, SemanticType{newExpr.typeInfo->type, newExpr.typeInfo->dimension});
         // [root_array_ptr]
     }
 }
@@ -1079,8 +1078,8 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
         {},
         *newExprSourceLocation
     });
-    // [root_array_ptr, nested_arrays_left_to_alloc, root_array_length - (nested_arrays_left_to_alloc)]
-    // [ptr           , ui32                       , ui32                                             ]
+    // [root_array_ptr, nested_arrays_left_to_alloc, root_array_length - nested_arrays_left_to_alloc]
+    // [ptr           , ui32                       , ui32                                           ]
 
     this->emit(Instruction{Opcode::PUSH,
         {
@@ -1089,15 +1088,15 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
         },
         *newExprSourceLocation
     });
-    // [root_array_ptr, nested_arrays_left_to_alloc, root_array_length - (nested_arrays_left_to_alloc), 4   ]
-    // [ptr           , ui32                       , ui32                                             , ui32]
+    // [root_array_ptr, nested_arrays_left_to_alloc, root_array_length - nested_arrays_left_to_alloc, element_size_of_root_array]
+    // [ptr           , ui32                       , ui32                                            , ui32                     ]
 
     this->emit(Instruction{Opcode::MUL,
         {},
         *newExprSourceLocation
     });
-    // [root_array_ptr, nested_arrays_left_to_alloc, root_array_length - (nested_arrays_left_to_alloc) * 4]
-    // [ptr           , ui32                       , ui32                                                 ]
+    // [root_array_ptr, nested_arrays_left_to_alloc, (root_array_length - nested_arrays_left_to_alloc) * element_size_of_root_array]
+    // [ptr           , ui32                       , ui32                                                                          ]
 
     this->emit(Instruction{Opcode::PUSH,
         {
@@ -1106,22 +1105,22 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
         },
         *newExprSourceLocation
     });
-    // [root_array_ptr, nested_arrays_left_to_alloc, (root_array_length - (nested_arrays_left_to_alloc) * 4), 4   ]
-    // [ptr           , ui32                       , ui32                                                   , ui32]
+    // [root_array_ptr, nested_arrays_left_to_alloc, (root_array_length - (nested_arrays_left_to_alloc) * element_size_of_root_array), 4   ]
+    // [ptr           , ui32                       , ui32                                                                            , ui32]
 
     this->emit(Instruction{Opcode::ADD,
         {},
         *newExprSourceLocation
     });
-    // [root_array_ptr, nested_arrays_left_to_alloc, (root_array_length - (nested_arrays_left_to_alloc) * 4) + 4]
-    // [ptr           , ui32                       , ui32                                                       ]
+    // [root_array_ptr, nested_arrays_left_to_alloc, (root_array_length - (nested_arrays_left_to_alloc) * element_size_of_root_array) + 4]
+    // [ptr           , ui32                       , ui32                                                                                ]
 
     this->emit(Instruction{Opcode::DUP,
         {Immediate{Number{static_cast<uint32_t>(2)}}},
         *newExprSourceLocation
     });
-    // [root_array_ptr, nested_arrays_left_to_alloc, (root_array_length - (nested_arrays_left_to_alloc) * 4) + 4, root_array_ptr]
-    // [ptr           , ui32                       , ui32                                                       , ptr           ]
+    // [root_array_ptr, nested_arrays_left_to_alloc, (root_array_length - (nested_arrays_left_to_alloc) * element_size_of_root_array) + 4, root_array_ptr]
+    // [ptr           , ui32                       , ui32                                                                                , ptr           ]
 
     this->emit(Instruction{Opcode::ADD,
         {},
@@ -1201,7 +1200,7 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
     // [ptr           ]
 }
 
-void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const uint8_t numberOfBitsOfDeepestElement) {
+void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const SemanticType& typeOfDeepestElement) {
 
     if (arrayInitialiser.elements.size() == 0) {
         this->emit(Instruction{Opcode::POP,
@@ -1330,7 +1329,7 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
             // [if not last element,                    ]
 
             if (std::get<std::unique_ptr<ast::ArrayInitialiser>>(arrayInitialiser.elements[index])->elements.size() > 0) {
-                this->compileArrayInitialiser(scope, *std::get<std::unique_ptr<ast::ArrayInitialiser>>(arrayInitialiser.elements[index]), optionalInitialiserSource, numberOfBitsOfDeepestElement);
+                this->compileArrayInitialiser(scope, *std::get<std::unique_ptr<ast::ArrayInitialiser>>(arrayInitialiser.elements[index]), optionalInitialiserSource, typeOfDeepestElement);
             } else {
                 this->emit(Instruction{Opcode::POP,
                     {},
@@ -1377,6 +1376,11 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
             // [ptr                , ptr           , type_of_value_to_store]
             // [if not last element,                                       ]
 
+            this->compileTypeConversionIfRequired(std::get<std::unique_ptr<ast::Expr>>(arrayInitialiser.elements[index])->resultingType.type, typeOfDeepestElement.type, optionalInitialiserSource);
+            // [ptr_to_element     , ptr_to_element, value_to_store        ]
+            // [ptr                , ptr           , type_of_element       ]
+            // [if not last element,                                       ]
+
             this->emit(Instruction{Opcode::STORE,
                 {},
                 optionalInitialiserSource
@@ -1393,7 +1397,7 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
                 this->emit(Instruction{Opcode::PUSH,
                     {
                         AssemblyType::UI32,
-                        Immediate{Number{static_cast<uint32_t>(numberOfBitsOfDeepestElement)}}
+                        Immediate{Number{static_cast<uint32_t>(typeOfDeepestElement.getSize())}}
                     },
                     optionalInitialiserSource
                 });
