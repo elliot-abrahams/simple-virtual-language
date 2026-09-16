@@ -33,7 +33,10 @@ TEST(STM_FUNCTION_CALL, FUNCTION_CALL_WITH_ONE_ARGUMENT) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedArguments.push_back(
-        std::make_unique<ExpectedIntegerLiteral>(5)
+        std::make_unique<ExpectedExprPostfix>(
+            std::make_unique<ExpectedIntegerLiteral>(5),
+            noExpectedIndices
+        )
     );
 
     expectedStatements.push_back(
@@ -59,9 +62,12 @@ TEST(STM_FUNCTION_CALL, NESTED_FUNCTION_CALL) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArgumentsBar;
 
     expectedArgumentsFoo.push_back(
-        std::make_unique<ExpectedFunctionCallExpr>(
-            "bar",
-            std::move(expectedArgumentsBar)
+        std::make_unique<ExpectedExprPostfix>(
+            std::make_unique<ExpectedFunctionCallExpr>(
+                "bar",
+                std::move(expectedArgumentsBar)
+            ),
+            noExpectedIndices
         )
     );
 
@@ -87,10 +93,16 @@ TEST(STM_FUNCTION_CALL, FUNCTION_CALL_WITH_TWO_ARGUMENTS) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedArguments.push_back(
-        std::make_unique<ExpectedIntegerLiteral>(5)
+        std::make_unique<ExpectedExprPostfix>(
+            std::make_unique<ExpectedIntegerLiteral>(5),
+            noExpectedIndices
+        )
     );
     expectedArguments.push_back(
-        std::make_unique<ExpectedBoolLiteral>(true)
+        std::make_unique<ExpectedExprPostfix>(
+            std::make_unique<ExpectedBoolLiteral>(true),
+            noExpectedIndices
+        )
     );
     expectedStatements.push_back(
         std::make_unique<ExpectedFunctionCallStm>(

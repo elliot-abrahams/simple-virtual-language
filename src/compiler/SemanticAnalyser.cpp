@@ -186,19 +186,19 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(S
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(Scope* scope, const ast::StmAssignment& assignment) {
     const auto identifierSymbol = this->checkSymbolIsDefined(
         scope,
-        assignment.varAccess->identifier->name,
-        assignment.varAccess->identifier->line,
-        assignment.varAccess->identifier->column
+        assignment.identifier->name,
+        assignment.identifier->line,
+        assignment.identifier->column
     );
 
-    if (assignment.varAccess->indices.size() > 0) {
-        // if array access check if array is initialised
+    if (assignment.indices.size() > 0) {
+        // check if array is initialised
         if (!identifierSymbol->isInitialised) {
             throw SemanticError(
                 this->path->string(),
-                assignment.varAccess->identifier->line,
-                assignment.varAccess->identifier->column,
-                "variable '" + assignment.varAccess->identifier->name + "' may not have been initialised"
+                assignment.identifier->line,
+                assignment.identifier->column,
+                "variable '" + assignment.identifier->name + "' may not have been initialised"
             );
         }
     }
@@ -206,12 +206,12 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
     const auto exprType = this->checkExprType(scope, *assignment.expression);
 
     // check type of indices
-    for (const auto& index : assignment.varAccess->indices) {
+    for (const auto& index : assignment.indices) {
         this->processIndex(scope, *index);
     }
 
     // check var access index depth is smaller than the variable's dimensions
-    const unsigned int indexDepth = this->resolveAccessArrayDepth(SemanticType{identifierSymbol->type, identifierSymbol->dimension}, assignment.varAccess->indices);
+    const unsigned int indexDepth = this->resolveAccessArrayDepth(SemanticType{identifierSymbol->type, identifierSymbol->dimension}, assignment.indices);
 
     if (!canImplicitlyConvert(exprType, SemanticType{identifierSymbol->type, indexDepth})) {
         throw TypeError(
@@ -377,7 +377,7 @@ unsigned int compiler::SemanticAnalyser::resolveAccessArrayDepth(const SemanticT
             this->path->string(),
             indices[indices.size() - arrayType.dimension - 1]->line,
             indices[indices.size() - arrayType.dimension - 1]->column,
-            "array required, but '" + typeToString(SemanticType{arrayType.type, 0}) + "' found"
+            "array required, but " + typeToString(SemanticType{arrayType.type, 0}) + " found"
         );
     }
     return arrayType.dimension - indices.size();
@@ -491,28 +491,60 @@ compiler::SemanticType compiler::SemanticAnalyser::checkExprType(Scope* scope, c
         return exprType;
     }
 
-    if (auto* varAccess = dynamic_cast<const ast::ExprVarAccess*>(&expr)) {
+    if (auto* exprPostfix = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
+        const auto exprType = this->checkExprType(scope, *exprPostfix->expression);
+
+        if (exprPostfix->indices.size() > 0) {
+
+            if (exprType.dimension == 0) {
+                throw TypeError(
+                    this->path->string(),
+                    exprPostfix->line,
+                    exprPostfix->column,
+                    "array required, but " + typeToString(exprType) + " found"
+                );
+            }
+
+            SemanticType resultingType = exprType;
+
+            resultingType.dimension -= exprPostfix->indices.size();
+
+            if (exprPostfix->indices.size() > exprType.dimension) {
+                throw TypeError(
+                    this->path->string(),
+                    exprPostfix->line,
+                    exprPostfix->column,
+                    "array required, but " + typeToString(exprType) + " found"
+                );
+            }
+
+            // process indices
+            for (const auto& index : exprPostfix->indices) {
+                this->processIndex(scope, *index);
+            }
+
+            exprPostfix->resultingType = resultingType;
+            return resultingType;
+        }
+        exprPostfix->resultingType = exprType;
+        return exprType;
+    }
+
+    if (auto* exprIdentifier = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
         // check if symbol has been initialised
-        const auto symbol = this->checkSymbolIsDefined(scope, varAccess->name, varAccess->line, varAccess->column);
+        const auto symbol = this->checkSymbolIsDefined(scope, exprIdentifier->identifier->name, exprIdentifier->line, exprIdentifier->column);
         if (!symbol->isInitialised) {
             throw SemanticError(
                 this->path->string(),
-                varAccess->line,
-                varAccess->column,
-                "variable '" + varAccess->name + "' may not have been initialised"
+                exprIdentifier->line,
+                exprIdentifier->column,
+                "variable '" + exprIdentifier->identifier->name + "' may not have been initialised"
             );
         }
 
-        // get return type of var access
+        // get return type of identifier
 
-        // check array access is smaller than the variable's dimension
-        const unsigned int indexDepth = this->resolveAccessArrayDepth(SemanticType{symbol->type, symbol->dimension}, varAccess->indices);
-
-        for (const auto& index : varAccess->indices) {
-            this->processIndex(scope, *index);
-        }
-
-        const auto resultingType = SemanticType{symbol->type, indexDepth};
+        const auto resultingType = SemanticType{symbol->type, symbol->dimension};
 
         expr.resultingType = resultingType;
         return resultingType;

@@ -94,7 +94,7 @@ set(Parser_Sources
         parser/expressionTests/CastExpressionTests.cpp
         parser/expressionTests/FunctionCallExpressionTests.cpp
         parser/expressionTests/NewExpressionTests.cpp
-        parser/expressionTests/VarAccessTests.cpp
+        parser/expressionTests/PostfixExpressionTests.cpp
 
         parser/ParserTestUtils.h
         parser/ParserTests.cpp
@@ -158,7 +158,7 @@ set(Semantic_Sources
         semantic/expressionTests/CastExpressionTests.cpp
         semantic/expressionTests/FunctionCallExpressionTests.cpp
         semantic/expressionTests/NewExpressionTests.cpp
-        semantic/expressionTests/VarAccessTests.cpp
+        semantic/expressionTests/PostfixExpressionTests.cpp
 
         semantic/SemanticTestUtils.h
         semantic/SemanticTests.cpp

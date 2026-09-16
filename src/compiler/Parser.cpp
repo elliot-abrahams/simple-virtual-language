@@ -209,18 +209,25 @@ std::unique_ptr<ast::StmVarDecl> compiler::Parser::parseVarDecl(std::unique_ptr<
 }
 
 /*
- *  assignment          = var_access, assignment_operator, expression, SEMI ;
+ *  assignment                  = IDENTIFIER, { index }, assignment_operator, expression, SEMI ;
  */
 std::unique_ptr<ast::StmAssignment> compiler::Parser::parseAssignment() const {
-    std::unique_ptr<ast::VarAccess> varAccess = this->parseVarAccess();
+    std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
+
+    std::vector<std::unique_ptr<ast::Index>> indices;
+    while (this->tokeniser->tok().kind == TokenKind::LSQBR) {
+        indices.push_back(this->parseIndex());
+    }
+
     std::unique_ptr<ast::AssignmentOperatorInfo> assignmentOperatorInfo = this->parseAssignmentOperator();
     std::unique_ptr<ast::Expr> expression = this->parseExpr();
     this->tokeniser->eat(TokenKind::SEMI);
 
     return std::make_unique<ast::StmAssignment>(
-        varAccess->line,
-        varAccess->column,
-        std::move(varAccess),
+        identifier->line,
+        identifier->column,
+        std::move(identifier),
+        indices,
         std::move(assignmentOperatorInfo),
         std::move(expression)
     );
@@ -638,7 +645,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
 /*
  *  unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
  *                              | LBR, type, RBR, unary_expression
- *                              | primary_expression ;
+ *                              | postfix_expression ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
     const auto token = this->tokeniser->tok();
@@ -701,12 +708,32 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
             std::move(expression)
         );
     }
-    return this->parsePrimaryExpression();
+    return this->parseExprPostfix();
 }
 
 /*
+ *  postfix_expression          = primary_expression, { index } ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
+    auto expression = this->parsePrimaryExpression();
+
+    std::vector<std::unique_ptr<ast::Index>> indices;
+    while (this->tokeniser->tok().kind == TokenKind::LSQBR) {
+        indices.push_back(this->parseIndex());
+    }
+
+    return std::make_unique<ast::ExprPostfix>(
+        expression->line,
+        expression->column,
+        std::move(expression),
+        indices
+    );
+}
+
+
+/*
  *  primary_expression          = function_call
- *                              | var_access
+ *                              | IDENTIFIER
  *                              | new_expression
  *                              | literal
  *                              | LBR, expression, RBR ;
@@ -724,7 +751,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
             if (this->tokeniser->lookAhead(1).kind == TokenKind::LBR) {
                 return this->parseFunctionCall();
             }
-            return this->parseExprVarAccess();
+            return this->parseExprIdentifier();
         }
 
         case TokenKind::NEW:
@@ -780,42 +807,15 @@ std::vector<std::unique_ptr<ast::Expr>> compiler::Parser::parseArgumentList() co
 }
 
 /*
- *  var_access                  = IDENTIFIER, { index } ;
+ *  IDENTIFIER ;
  */
-std::unique_ptr<ast::VarAccess> compiler::Parser::parseVarAccess() const {
-    std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
+std::unique_ptr<ast::ExprIdentifier> compiler::Parser::parseExprIdentifier() const {
+    auto identifier = this->parseIdentifier();
 
-    std::vector<std::unique_ptr<ast::Index>> indices;
-
-    while (this->tokeniser->tok().kind == TokenKind::LSQBR) {
-        indices.push_back(this->parseIndex());
-    }
-
-    return std::make_unique<ast::VarAccess>(
+    return std::make_unique<ast::ExprIdentifier>(
         identifier->line,
         identifier->column,
-        std::move(identifier),
-        std::move(indices)
-    );
-}
-
-/*
- *  var_access                  = IDENTIFIER, { index } ;
- */
-std::unique_ptr<ast::ExprVarAccess> compiler::Parser::parseExprVarAccess() const {
-    const Token exprIdentifier = this->tokeniser->tok();
-    this->tokeniser->next();
-
-    std::vector<std::unique_ptr<ast::Index>> indices;
-    while (this->tokeniser->tok().kind == TokenKind::LSQBR) {
-        indices.push_back(this->parseIndex());
-    }
-
-    return std::make_unique<ast::ExprVarAccess>(
-        exprIdentifier.line,
-        exprIdentifier.column,
-        std::string(exprIdentifier.image),
-        std::move(indices)
+        std::move(identifier)
     );
 }
 

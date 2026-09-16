@@ -15,7 +15,10 @@ TEST(EXPR_CAST, FLOAT_TO_INT) {
             "x",
             std::make_unique<ExpectedCastExpr>(
                 std::make_unique<Type>(compiler::Type::INT, 0),
-                std::make_unique<ExpectedFloatLiteral>(5.5f)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedFloatLiteral>(5.5f),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -36,7 +39,10 @@ TEST(EXPR_CAST, INT_TO_FLOAT) {
             "x",
             std::make_unique<ExpectedCastExpr>(
                 std::make_unique<Type>(compiler::Type::FLOAT, 0),
-                std::make_unique<ExpectedIntegerLiteral>(5)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(5),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -57,7 +63,10 @@ TEST(EXPR_CAST, BOOL_TO_BOOL) {
             "x",
             std::make_unique<ExpectedCastExpr>(
                 std::make_unique<Type>(compiler::Type::BOOL, 0),
-                std::make_unique<ExpectedBoolLiteral>(true)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedBoolLiteral>(true),
+                    noExpectedIndices
+                )
             )
         )
     );

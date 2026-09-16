@@ -37,13 +37,14 @@
     - [5.7.1 Positive Sign](#571-positive-sign)
     - [5.7.2 Negative Sign](#572-negative-sign)
     - [5.7.3 Logical NOT](#573-logical-not)
-  - [5.8 Function Calls](#58-function-calls)
-  - [5.9 Cast Expressions](#59-cast-expressions)
-  - [5.10 New Expressions](#510-new-expressions)
-    - [5.10.1 Array Dimension](#5101-array-dimension)
-    - [5.10.2 One Dimensional Array Allocation](#5102-one-dimensional-array-allocation)
-    - [5.10.3 Multidimensional Array Allocation](#5103-multidimensional-array-allocation)
-    - [5.10.4 Array Initialiser](#5104-array-initialiser)
+  - [5.8 Postfix Expression]()
+  - [5.9 Function Calls](#59-function-calls)
+  - [5.10 Cast Expressions](#510-cast-expressions)
+  - [5.11 New Expressions](#511-new-expressions)
+    - [5.11.1 Array Dimension](#5111-array-dimension)
+    - [5.11.2 One Dimensional Array Allocation](#5112-one-dimensional-array-allocation)
+    - [5.11.3 Multidimensional Array Allocation](#5113-multidimensional-array-allocation)
+    - [5.11.4 Array Initialiser](#5114-array-initialiser)
 - [6. Statements](#6-statements)
   - [6.1 Variable Declaration](#61-variable-declaration)
     - [6.1.1 Global Variable Declaration](#611-global-variable-declaration)
@@ -500,53 +501,6 @@ Where:
 - `[type]` is the assembly type of the local variable.
 - `[slot]` is the local variable's slot.
 
-#### 5.2.3 Array Access
-
-Array access evaluates each index and calculates the address of the selected element.
-
-For each index:
-
-1. The array length is loaded.
-2. The index expression is evaluated.
-3. The index is bounds checked
-4. The element address is calculated.
-5. If the index does not select the final dimension, the pointer to the nested array is loaded.
-6. If the index selects the final dimension, the element value is loaded.
-
-For a single-dimensional array:
-
-```
-    ; Stack: <array_ptr: ptr>
-    
-    {{array Index}}
-    ; Stack: <element_ptr: ptr>
-    
-    load [element_type]
-    ; Stack: <element: element_type>
-```
-
-For a multidimensional array:
-
-```
-    ; Stack: <array_ptr: ptr>
-    
-    {{Array Index}}
-    load ptr
-    ; Stack: <nested_array_ptr: ptr>
-    
-    {{Array Index}}
-    load ptr
-    ; Stack: <nested_array_ptr: ptr>
-    
-    ...
-    
-    {{Array Index}}
-    load [element_type]
-    ; Stack <element: element_type>
-```
-
-The `load ptr` instructions between indexes retrieve the nested array pointer stored in the selected element.
-
 ---
 
 ### 5.3 Arithmetic Expressions
@@ -791,7 +745,58 @@ Where:
 
 ---
 
-### 5.8 Function Calls
+### 5.8 Postfix Expressions
+
+The assembly for the base expression is generated first. Each index is then processed from left to right.
+
+For each index:
+1. The index expression is evaluated.
+2. The array length is loaded.
+3. The index is bounds checked.
+4. The element address is calculated.
+5. If the index does not select the final dimension, the pointer to the nested array is loaded.
+6. If the index selects the final dimension, the element value is loaded.
+
+For a single-dimensional array:
+
+```
+    {{Expression}}
+    ; Stack: <array_ptr: ptr>
+    
+    {{array Index}}
+    ; Stack: <element_ptr: ptr>
+    
+    load [element_type]
+    ; Stack: <element: element_type>
+```
+
+For a multidimensional array:
+
+```
+    {{Expression}}
+    ; Stack: <array_ptr: ptr>
+    
+    {{Array Index}}
+    load ptr
+    ; Stack: <nested_array_ptr: ptr>
+    
+    {{Array Index}}
+    load ptr
+    ; Stack: <nested_array_ptr: ptr>
+    
+    ...
+    
+    {{Array Index}}
+    load [element_type]
+    ; Stack <element: element_type>
+```
+
+Where:
+- `[element_type]` is the assembly type of the array element.
+
+The `load ptr` instructions between indexes retrieve the nested array pointer stored in the selected element.
+
+### 5.9 Function Calls
 
 Function arguments are evaluated from left to right.
 
@@ -818,7 +823,7 @@ Where:
 
 ---
 
-### 5.9 Cast Expressions
+### 5.10 Cast Expressions
 
 A cast expression uses `conv` to explicitly convert the result of the expression to the specified type.
 
@@ -835,7 +840,7 @@ If the result of the expression already has the target type, no instruction is g
 
 ---
 
-### 5.10 New Expressions
+### 5.11 New Expressions
 
 A `new` expression allocates an array on the heap and leaves a pointer to the resulting array on the operand stack.
 
@@ -862,7 +867,7 @@ A `new` expression is generated in two stages:
 
 The array pointer produced by the allocation stage remains as the result of the `new` expression.
 
-#### 5.10.1 Array Dimension
+#### 5.11.1 Array Dimension
 
 Each dimension expression is evaluated from right to left.
 
@@ -895,7 +900,7 @@ Where:
 
 The conversion to `ui32` occurs only after the negative value check. This prevents a negative signed value from being converted into a large unsigned value before its validity has been checked.
 
-#### 5.10.2 One Dimensional Array Allocation
+#### 5.11.2 One Dimensional Array Allocation
 
 A one-dimensional array is allocated by:
 
@@ -933,7 +938,7 @@ The result of the operation is therefore:
 <array_ptr: ptr>
 ```
 
-#### 5.10.3 Multidimensional Array Allocation
+#### 5.11.3 Multidimensional Array Allocation
 
 A multidimensional array is constructed recursively.
 
@@ -1215,7 +1220,7 @@ $end_nested_array_alloc_loop_[N1]:
 
 See [5.10.2 One Dimensional Array Allocation](#5102-one-dimensional-array-allocation) for the assembly generated for `[One Dimensional Array Allocation]`.
 
-#### 5.10.4 Array Initialiser
+#### 5.11.4 Array Initialiser
 
 An array initialiser is generated separately from array allocation.
 
@@ -1374,13 +1379,13 @@ The array initialiser then writes each expression into the corresponding element
     add
     
     dup #0
-    {{Expression (10)}}
+    {{Expression: 10}}
     store
     
     push ui32 #4
     add
     
-    {{Expression (20)}}
+    {{Expression: 20}}
     store
 ```
 
@@ -1419,13 +1424,13 @@ The resulting assembly is:
     add
     
     dup #0
-    {{Expression (10)}}
+    {{Expression: 10}}
     store
     
     push ui32 #4
     add
     
-    {{Expression (20)}}
+    {{Expression: 20}}
     store
 ```
 

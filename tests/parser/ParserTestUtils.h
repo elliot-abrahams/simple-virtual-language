@@ -11,6 +11,8 @@ namespace parserTest {
     struct ExpectedExpr;
     struct ExpectedBlock;
 
+    inline std::vector<std::unique_ptr<ExpectedIndex>> noExpectedIndices;
+
     using ArrayInitialiserElement = std::variant<std::unique_ptr<ExpectedExpr>, std::unique_ptr<ExpectedArrayInitialiser>>;
 
     struct ExpectedStm {
@@ -52,18 +54,11 @@ namespace parserTest {
         ExpectedIdentifier(const std::string& name) : name(name) {}
     };
 
-    struct ExpectedExprVarAccess final : ExpectedExpr {
-        const std::string name;
-        const std::vector<std::unique_ptr<ExpectedIndex>> indices;
+    struct ExpectedExprIdentifier final : ExpectedExpr {
+        const std::unique_ptr<ExpectedIdentifier> identifier;
 
-        ExpectedExprVarAccess(const std::string& name, std::vector<std::unique_ptr<ExpectedIndex>> indices) :
-        name(name), indices(std::move(indices)) {}
-    };
-
-    struct ExpectedVarAccess final {
-        const std::string name;
-
-        ExpectedVarAccess(const std::string& name) : name(name) {}
+        ExpectedExprIdentifier(std::unique_ptr<ExpectedIdentifier> identifier) :
+            identifier(std::move(identifier)) {}
     };
 
     struct ExpectedArrayInitialiser final {
@@ -107,6 +102,14 @@ namespace parserTest {
             std::unique_ptr<ExpectedExpr> expectedExpr) :
         expectedType(std::move(expectedType)),
         expectedExpr(std::move(expectedExpr)) {}
+    };
+
+    struct ExpectedExprPostfix final : ExpectedExpr {
+        const std::unique_ptr<ExpectedExpr> expectedExpression;
+        const std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
+
+        ExpectedExprPostfix(std::unique_ptr<ExpectedExpr> expectedExpression, std::vector<std::unique_ptr<ExpectedIndex>>& expectedIndices) :
+            expectedExpression(std::move(expectedExpression)), expectedIndices(std::move(expectedIndices)) {}
     };
 
     struct ExpectedUnaryExpr final : ExpectedExpr {
@@ -174,14 +177,17 @@ namespace parserTest {
     };
 
     struct ExpectedAssignment final : ExpectedStm {
-        const std::unique_ptr<ExpectedVarAccess> expectedVarAccess;
+        const std::unique_ptr<ExpectedIdentifier> expectedIdentifier;
+        const std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
         const compiler::AssignmentOperator assignmentOperator;
         const std::unique_ptr<ExpectedExpr> expectedExpr;
 
-        ExpectedAssignment(std::unique_ptr<ExpectedVarAccess> expectedVarAccess,
+        ExpectedAssignment(std::unique_ptr<ExpectedIdentifier> expectedIdentifier,
+            std::vector<std::unique_ptr<ExpectedIndex>>& expectedIndices,
             const compiler::AssignmentOperator assignmentOperator,
             std::unique_ptr<ExpectedExpr> expectedExpr) :
-        expectedVarAccess(std::move(expectedVarAccess)),
+        expectedIdentifier(std::move(expectedIdentifier)),
+        expectedIndices(std::move(expectedIndices)),
         assignmentOperator(assignmentOperator),
         expectedExpr(std::move(expectedExpr)) {}
     };
@@ -275,10 +281,6 @@ namespace parserTest {
         }
     }
 
-    inline void ASSERT_VAR_ACCESS_EQ(const ExpectedVarAccess& expectedVarAccess, const ast::VarAccess& actualVarAccess) {
-        ASSERT_EQ(expectedVarAccess.name, actualVarAccess.identifier->name);
-    }
-
     inline void ASSERT_EXPR_EQ(const ExpectedExpr& expectedExpr, const ast::Expr& actualExpr) {
         if (auto* expectedIntegerLiteral = dynamic_cast<const ExpectedIntegerLiteral*>(&expectedExpr)) {
             auto* actualIntegerLiteral = dynamic_cast<const ast::ExprIntegerLiteral*>(&actualExpr);
@@ -295,15 +297,10 @@ namespace parserTest {
             ASSERT_NE(actualBoolLiteral, nullptr);
             ASSERT_EQ(actualBoolLiteral->value, expectedBoolLiteral->value);
 
-        } else if (auto* expectedVarAccess = dynamic_cast<const ExpectedExprVarAccess*>(&expectedExpr)) {
-            auto* actualVarAccess = dynamic_cast<const ast::ExprVarAccess*>(&actualExpr);
+        } else if (auto* expectedIdentifier = dynamic_cast<const ExpectedExprIdentifier*>(&expectedExpr)) {
+            auto* actualVarAccess = dynamic_cast<const ast::ExprIdentifier*>(&actualExpr);
             ASSERT_NE(actualVarAccess, nullptr);
-            ASSERT_EQ(actualVarAccess->name, expectedVarAccess->name);
-
-            ASSERT_EQ(expectedVarAccess->indices.size(), actualVarAccess->indices.size());
-            for (int i = 0; i < expectedVarAccess->indices.size(); i++) {
-                ASSERT_EXPR_EQ(*expectedVarAccess->indices[i]->index, *actualVarAccess->indices[i]->index);
-            }
+            ASSERT_EQ(expectedIdentifier->identifier->name, actualVarAccess->identifier->name);
 
         } else if (auto* expectedBinaryExpr = dynamic_cast<const ExpectedBinaryExpr*>(&expectedExpr)) {
             auto* actualBinaryExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&actualExpr);
@@ -317,6 +314,17 @@ namespace parserTest {
             ASSERT_NE(actualUnaryExpr, nullptr);
             ASSERT_EQ(expectedUnaryExpr->unaryOperator, actualUnaryExpr->unaryOperatorInfo->unaryOperator);
             ASSERT_EXPR_EQ(*expectedUnaryExpr->expectedExpr, *actualUnaryExpr->expr);
+
+        } else if (auto* expectedExprPostfix = dynamic_cast<const ExpectedExprPostfix*>(&expectedExpr)) {
+            auto* actualExprPostfix = dynamic_cast<const ast::ExprPostfix*>(&actualExpr);
+            ASSERT_NE(actualExprPostfix, nullptr);
+            ASSERT_EXPR_EQ(*expectedExprPostfix->expectedExpression, *actualExprPostfix->expression);
+
+            ASSERT_EQ(expectedExprPostfix->expectedIndices.size(), actualExprPostfix->indices.size());
+
+            for (int i = 0; i < expectedExprPostfix->expectedIndices.size(); i++) {
+                ASSERT_EXPR_EQ(*expectedExprPostfix->expectedIndices[i]->index, *actualExprPostfix->indices[i]->index);
+            }
 
         } else if (auto* expectedCastExpression = dynamic_cast<const ExpectedCastExpr*>(&expectedExpr)) {
             auto* actualCastExpr = dynamic_cast<const ast::ExprCast*>(&actualExpr);
@@ -382,7 +390,14 @@ namespace parserTest {
         } else if (auto* expectedAssignment = dynamic_cast<const ExpectedAssignment*>(&expectedStm)) {
             auto* actualAssignment = dynamic_cast<const ast::StmAssignment*>(&actualStm);
             ASSERT_NE(actualAssignment, nullptr);
-            ASSERT_VAR_ACCESS_EQ(*expectedAssignment->expectedVarAccess, *actualAssignment->varAccess);
+            ASSERT_EQ(expectedAssignment->expectedIdentifier->name, actualAssignment->identifier->name);
+
+            ASSERT_EQ(expectedAssignment->expectedIndices.size(), actualAssignment->indices.size());
+
+            for (int i = 0; i < expectedAssignment->expectedIndices.size(); ++i) {
+                ASSERT_EXPR_EQ(*expectedAssignment->expectedIndices[i]->index, *actualAssignment->indices[i]->index);
+            }
+
             ASSERT_EQ(expectedAssignment->assignmentOperator, actualAssignment->assignmentOperatorInfo->assignmentOperator);
             ASSERT_EXPR_EQ(*expectedAssignment->expectedExpr, *actualAssignment->expression);
 

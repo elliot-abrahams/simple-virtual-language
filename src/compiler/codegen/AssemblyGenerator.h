@@ -39,6 +39,7 @@ namespace compiler {
         void compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& expr);
         void compileBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo);
         void compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr);
+        void compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr);
         void compileCastExpr(Scope* scope, const ast::ExprCast& castExpr);
         void compileNewExpr(Scope* scope, const ast::ExprNew& newExpr);
 
@@ -46,7 +47,7 @@ namespace compiler {
         void compileArrayInitialiser(Scope* scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const SemanticType& typeOfDeepestElement);
 
         void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
-        void compileExprIdentifier(Scope* scope, const ast::ExprVarAccess& identifier);
+        void compileExprIdentifier(Scope* scope, const ast::ExprIdentifier& exprIdentifier);
 
         void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
         void compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);

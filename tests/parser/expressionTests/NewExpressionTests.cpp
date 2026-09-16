@@ -13,7 +13,10 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_NO_INITIALISER) {
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(4)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedIntegerLiteral>(4),
+                noExpectedIndices
+            )
         )
     );
 
@@ -21,10 +24,13 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_NO_INITIALISER) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 1),
             "x",
-            std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 1),
-                std::move(arrayDimension),
-                nullptr
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprNew>(
+                    std::make_unique<Type>(compiler::Type::INT, 1),
+                    std::move(arrayDimension),
+                    nullptr
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -43,12 +49,18 @@ TEST(EXPR_NEW, TWO_INDICES_WITH_NO_INITIALISER) {
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(4)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedIntegerLiteral>(4),
+                noExpectedIndices
+            )
         )
     );
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(2)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedIntegerLiteral>(2),
+                noExpectedIndices
+            )
         )
     );
 
@@ -56,10 +68,13 @@ TEST(EXPR_NEW, TWO_INDICES_WITH_NO_INITIALISER) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 1),
             "x",
-            std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 2),
-                std::move(arrayDimension),
-                nullptr
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprNew>(
+                    std::make_unique<Type>(compiler::Type::INT, 2),
+                    std::move(arrayDimension),
+                    nullptr
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -80,7 +95,10 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_EMPTY_INITIALISER) {
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(4)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedIntegerLiteral>(4),
+                noExpectedIndices
+            )
         )
     );
 
@@ -88,10 +106,13 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_EMPTY_INITIALISER) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 1),
             "x",
-            std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 1),
-                std::move(arrayDimension),
-                std::move(expectedArrayInitialisers)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprNew>(
+                    std::make_unique<Type>(compiler::Type::INT, 1),
+                    std::move(arrayDimension),
+                    std::move(expectedArrayInitialisers)
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -112,27 +133,39 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_INITIALISER) {
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(4)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedIntegerLiteral>(4),
+                noExpectedIndices
+            )
         )
     );
 
     arrayInitialiserElements.emplace_back(
-        std::make_unique<ExpectedIntegerLiteral>(1)
+        std::make_unique<ExpectedExprPostfix>(
+            std::make_unique<ExpectedIntegerLiteral>(1),
+            noExpectedIndices
+        )
     );
     arrayInitialiserElements.emplace_back(
-        std::make_unique<ExpectedIntegerLiteral>(2)
+        std::make_unique<ExpectedExprPostfix>(
+            std::make_unique<ExpectedIntegerLiteral>(2),
+            noExpectedIndices
+        )
     );
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 1),
             "x",
-            std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 1),
-                std::move(arrayDimension),
-                std::make_unique<ExpectedArrayInitialiser>(
-                    std::move(arrayInitialiserElements)
-                )
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprNew>(
+                    std::make_unique<Type>(compiler::Type::INT, 1),
+                    std::move(arrayDimension),
+                    std::make_unique<ExpectedArrayInitialiser>(
+                        std::move(arrayInitialiserElements)
+                    )
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -154,23 +187,35 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_NESTED_INITIALISER) {
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(4)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedIntegerLiteral>(4),
+                noExpectedIndices
+            )
         )
     );
 
     nestedArrayInitialiser1.push_back(
-        std::make_unique<ExpectedIntegerLiteral>(1)
+        std::make_unique<ExpectedExprPostfix>(
+            std::make_unique<ExpectedIntegerLiteral>(1),
+            noExpectedIndices
+        )
     );
     nestedArrayInitialiser1.push_back(
-        std::make_unique<ExpectedIntegerLiteral>(2)
-    );
+    std::make_unique<ExpectedExprPostfix>(
+        std::make_unique<ExpectedIntegerLiteral>(2),
+        noExpectedIndices
+    )    );
 
     nestedArrayInitialiser2.push_back(
-        std::make_unique<ExpectedIntegerLiteral>(3)
-    );
+    std::make_unique<ExpectedExprPostfix>(
+        std::make_unique<ExpectedIntegerLiteral>(3),
+        noExpectedIndices
+    )    );
     nestedArrayInitialiser2.push_back(
-        std::make_unique<ExpectedIntegerLiteral>(4)
-    );
+    std::make_unique<ExpectedExprPostfix>(
+        std::make_unique<ExpectedIntegerLiteral>(4),
+        noExpectedIndices
+    )    );
 
     arrayInitialiser.emplace_back(
         std::make_unique<ExpectedArrayInitialiser>(std::move(nestedArrayInitialiser1))
@@ -183,12 +228,15 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_NESTED_INITIALISER) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 1),
             "x",
-            std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 1),
-                std::move(arrayDimension),
-                std::make_unique<ExpectedArrayInitialiser>(
-                    std::move(arrayInitialiser)
-                )
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprNew>(
+                    std::make_unique<Type>(compiler::Type::INT, 1),
+                    std::move(arrayDimension),
+                    std::make_unique<ExpectedArrayInitialiser>(
+                        std::move(arrayInitialiser)
+                    )
+                ),
+                noExpectedIndices
             )
         )
     );

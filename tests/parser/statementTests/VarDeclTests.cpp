@@ -139,8 +139,9 @@ TEST(STM_VAR_DECL, INT_LIT) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
-            std::make_unique<ExpectedIntegerLiteral>(
-                5
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedIntegerLiteral>(5),
+                noExpectedIndices
             )
         )
     );
@@ -159,8 +160,9 @@ TEST(STM_VAR_DECL, INT_FLOAT_LIT) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
-            std::make_unique<ExpectedFloatLiteral>(
-                5.5f
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedFloatLiteral>(5.5f),
+                noExpectedIndices
             )
         )
     );
@@ -179,8 +181,9 @@ TEST(STM_VAR_DECL, FLOAT_LIT) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::FLOAT, 0),
             "f",
-            std::make_unique<ExpectedFloatLiteral>(
-                5.5f
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedFloatLiteral>(5.5f),
+                noExpectedIndices
             )
         )
     );
@@ -199,8 +202,9 @@ TEST(STM_VAR_DECL, BOOL_LIT) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::BOOL, 0),
             "b",
-            std::make_unique<ExpectedBoolLiteral>(
-                true
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedBoolLiteral>(true),
+                noExpectedIndices
             )
         )
     );
@@ -221,9 +225,11 @@ TEST(STM_VAR_DECL, INT_IDENTIFIER_EXPR) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "b",
-            std::make_unique<ExpectedExprVarAccess>(
-                "x",
-                std::move(expectedIndices)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("x")
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -244,8 +250,11 @@ TEST(STM_VAR_DECL, INT_UNARY_EXPR) {
             "b",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::MINUS,
-                std::make_unique<ExpectedIntegerLiteral>(
-                    5
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(
+                        5
+                    ),
+                    noExpectedIndices
                 )
             )
         )
@@ -268,11 +277,13 @@ TEST(STM_VAR_DECL, INT_BINARY_EXPR) {
             "b",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::PLUS,
-                std::make_unique<ExpectedIntegerLiteral>(
-                    1
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(
-                    2
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
                 )
             )
         )
@@ -293,9 +304,12 @@ TEST(STM_VAR_DECL, INT_FUNCTION_CALL_EXPR) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "b",
-            std::make_unique<ExpectedFunctionCallExpr>(
-                "foo",
-                std::move(expectedArguments)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedFunctionCallExpr>(
+                    "foo",
+                    std::move(expectedArguments)
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -315,8 +329,12 @@ TEST(STM_VAR_DECL, INT_PAREN_INT_LIT) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "b",
-            std::make_unique<ExpectedIntegerLiteral>(
-                5
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(5),
+                    noExpectedIndices
+                    ),
+                noExpectedIndices
             )
         )
     );

@@ -99,14 +99,12 @@ namespace ast {
             name(std::move(name)) {}
     };
 
-    struct ExprVarAccess final : Expr {
-        const std::string name;
-        const std::vector<std::unique_ptr<Index>> indices;
+    struct ExprIdentifier final : Expr {
+        const std::unique_ptr<Identifier> identifier;
 
-        ExprVarAccess(const uint32_t line, const uint16_t column, std::string name, std::vector<std::unique_ptr<Index>> indices) :
+        ExprIdentifier(const uint32_t line, const uint16_t column, std::unique_ptr<Identifier> identifier) :
             Expr(line, column),
-            name(std::move(name)),
-            indices(std::move(indices)) {}
+            identifier(std::move(identifier)) {}
     };
 
     using ArrayInitialiserElement = std::variant<
@@ -144,16 +142,6 @@ namespace ast {
             optionalInitialiser(std::move(optionalInitialiser)) {}
     };
 
-    struct VarAccess final : ASTNode {
-        const std::unique_ptr<Identifier> identifier;
-        const std::vector<std::unique_ptr<Index>> indices;
-
-        VarAccess(const uint32_t line, const uint16_t column, std::unique_ptr<Identifier> identifier, std::vector<std::unique_ptr<Index>> indices) :
-            ASTNode(line, column),
-            identifier(std::move(identifier)),
-            indices(std::move(indices)) {}
-    };
-
     struct FunctionCall final : Expr {
         const std::unique_ptr<Identifier> identifier;
         const std::vector<std::unique_ptr<Expr>> arguments;
@@ -179,6 +167,19 @@ namespace ast {
             Expr(line, column),
             typeInfo(std::move(typeInfo)),
         expr(std::move(expr)) {}
+    };
+
+    struct ExprPostfix final : Expr {
+        const std::unique_ptr<Expr> expression;
+        const std::vector<std::unique_ptr<Index>> indices;
+
+        ExprPostfix(const uint32_t line,
+                    const uint16_t column,
+                    std::unique_ptr<Expr> expression,
+                    std::vector<std::unique_ptr<Index>>& indices) :
+            Expr(line, column),
+            expression(std::move(expression)),
+            indices(std::move(indices)) {}
     };
 
     struct ExprUnaryOperator final : Expr {
@@ -273,17 +274,20 @@ namespace ast {
     };
 
     struct StmAssignment final : Stm {
-        const std::unique_ptr<VarAccess> varAccess;
+        const std::unique_ptr<Identifier> identifier;
+        const std::vector<std::unique_ptr<Index>> indices;
         const std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo;
         const std::unique_ptr<Expr> expression;
 
         StmAssignment(const uint32_t line,
                     const uint16_t column,
-                    std::unique_ptr<VarAccess> varAccess,
+                    std::unique_ptr<Identifier> identifier,
+                    std::vector<std::unique_ptr<Index>>& indices,
                     std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo,
                     std::unique_ptr<Expr> expression) :
             Stm(line, column),
-            varAccess(std::move(varAccess)),
+            identifier(std::move(identifier)),
+            indices(std::move(indices)),
             assignmentOperatorInfo(std::move(assignmentOperatorInfo)),
             expression(std::move(expression)) {}
     };

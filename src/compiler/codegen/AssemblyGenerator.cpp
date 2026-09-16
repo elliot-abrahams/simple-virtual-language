@@ -327,10 +327,10 @@ void compiler::AssemblyGenerator::compileStmVarDecl(Scope* scope, const ast::Stm
 
 void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment) {
 
-    const auto symbol = scope->lookup(assignment.varAccess->identifier->name).value();
+    const auto symbol = scope->lookup(assignment.identifier->name).value();
 
 
-    if (assignment.varAccess->indices.size() == 0) {
+    if (assignment.indices.size() == 0) {
         this->compileExpr(scope, *assignment.expression);
         // convert expr to variable type
         this->compileTypeConversionIfRequired(assignment.expression->resultingType.type, symbol->type, SourceLocation{0, assignment.expression->line, assignment.expression->column});
@@ -338,7 +338,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
         if (symbol->isGlobal()) {
             // store result of expression in global variable
             this->emit(Instruction{Opcode::STOREG,
-                {LabelRef{assignment.varAccess->identifier->name}},
+                {LabelRef{assignment.identifier->name}},
                 SourceLocation{0, assignment.line, assignment.column}
             });
         } else {
@@ -353,7 +353,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
         if (symbol->isGlobal()) {
             // store result of expression in global variable
             this->emit(Instruction{Opcode::LOADG,
-                {LabelRef{assignment.varAccess->identifier->name}},
+                {LabelRef{assignment.identifier->name}},
                 SourceLocation{0, assignment.line, assignment.column}
             });
         } else {
@@ -369,13 +369,13 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
 
         SemanticType typeAtDepth = SemanticType{symbol->type, symbol->dimension};
 
-        for (int index = 0; index < assignment.varAccess->indices.size(); ++index) {
+        for (int index = 0; index < assignment.indices.size(); ++index) {
 
             typeAtDepth.dimension--;
 
-            this->compileArrayIndex(scope, *assignment.varAccess->indices[index], typeAtDepth);
+            this->compileArrayIndex(scope, *assignment.indices[index], typeAtDepth);
 
-            if (index < assignment.varAccess->indices.size() - 1) {
+            if (index < assignment.indices.size() - 1) {
 
                 // =============================================================
                 // load array element if not the deepest index
@@ -383,7 +383,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
 
                 this->emit(Instruction{Opcode::LOAD,
                     {AssemblyType::PTR},
-                    SourceLocation{0, assignment.varAccess->indices[index]->line, assignment.varAccess->indices[index]->column}
+                    SourceLocation{0, assignment.indices[index]->line, assignment.indices[index]->column}
                 });
             }
         }
@@ -517,7 +517,7 @@ void compiler::AssemblyGenerator::compileExpr(Scope* scope, const ast::Expr& exp
     if (auto* boolLiteral = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
         this->compileExprBoolLiteral(*boolLiteral);
     }
-    if (auto* identifier = dynamic_cast<const ast::ExprVarAccess*>(&expr)) {
+    if (auto* identifier = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
         this->compileExprIdentifier(scope, *identifier);
     }
     if (auto* binaryExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
@@ -525,6 +525,9 @@ void compiler::AssemblyGenerator::compileExpr(Scope* scope, const ast::Expr& exp
     }
     if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
         this->compileUnaryExpr(scope, *unaryExpr);
+    }
+    if (auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
+        this->compilePostfixExpr(scope, *postfixExpr);
     }
     if (auto* castExpr = dynamic_cast<const ast::ExprCast*>(&expr)) {
         this->compileCastExpr(scope, *castExpr);
@@ -793,6 +796,29 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
             this->emit(LabelDef{endNotLabel});
             break;
         }
+    }
+}
+
+void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr) {
+    this->compileExpr(scope, *expr.expression);
+
+    if (expr.indices.size() > 0) {
+        for (size_t i = 0; i < expr.indices.size(); ++i) {
+            this->compileArrayIndex(scope, *expr.indices[i], expr.resultingType);
+
+            if (i < expr.indices.size() - 1) {
+                this->emit(Instruction{Opcode::LOAD,
+                    {AssemblyType::PTR},
+                    SourceLocation{0, expr.expression->line, expr.expression->column}
+                });
+            }
+
+        }
+
+        this->emit(Instruction{Opcode::LOAD,
+            {toAssemblyType(expr.resultingType)},
+            SourceLocation{0, expr.expression->line, expr.expression->column}
+        });
     }
 }
 
@@ -1438,14 +1464,14 @@ void compiler::AssemblyGenerator::compileFunctionCall(Scope* scope, const ast::F
     }
 }
 
-void compiler::AssemblyGenerator::compileExprIdentifier(Scope* scope, const ast::ExprVarAccess& identifier) {
-    const auto symbol = scope->lookup(identifier.name).value();
+void compiler::AssemblyGenerator::compileExprIdentifier(Scope* scope, const ast::ExprIdentifier& exprIdentifier) {
+    const auto symbol = scope->lookup(exprIdentifier.identifier->name).value();
 
     if (symbol->isGlobal()) {
         // push global variable onto stack
         this->emit(Instruction{Opcode::LOADG,
-            {LabelRef{identifier.name}},
-            SourceLocation{0, identifier.line, identifier.column}
+            {LabelRef{exprIdentifier.identifier->name}},
+            SourceLocation{0, exprIdentifier.identifier->line, exprIdentifier.column}
         });
     } else {
         // push local variable onto stack
@@ -1454,29 +1480,8 @@ void compiler::AssemblyGenerator::compileExprIdentifier(Scope* scope, const ast:
                 toAssemblyType(SemanticType{symbol->type, symbol->dimension}),
                 Immediate{Number{symbol->localSlot}}
             },
-            SourceLocation{0, identifier.line, identifier.column}
+            SourceLocation{0, exprIdentifier.line, exprIdentifier.column}
         });
-    }
-
-    if (identifier.indices.size() > 0) {
-
-        SemanticType typeAtDepth = SemanticType{symbol->type, symbol->dimension};
-
-        for (const auto& index : identifier.indices) {
-
-            typeAtDepth.dimension--;
-
-            this->compileArrayIndex(scope, *index, typeAtDepth);
-
-            // =============================================================
-            // load array element
-            // =============================================================
-
-            this->emit(Instruction{Opcode::LOAD,
-                {toAssemblyType(typeAtDepth)},
-                SourceLocation{0, index->line, index->column}
-            });
-        }
     }
 }
 

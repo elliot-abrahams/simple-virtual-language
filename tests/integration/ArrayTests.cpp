@@ -243,10 +243,16 @@ TEST(ARRAY, INT_ARRAY_FUNCTION_RETURN) {
             int[] foo() {
                 return new int[2]{5, 6};
             }
-            int[] arr = foo();
-            print(arr[0]);
+            print(foo()[0]);
         )",
         "5"
+    );
+}
+
+TEST(ARRAY, NEW_EXPESSION_WITH_INDEX) {
+    ASSERT_OUTPUT_EQ(
+        "print(new int[3]{1, 2, 3}[1]);",
+        "2"
     );
 }
 

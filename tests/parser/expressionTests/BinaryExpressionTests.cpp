@@ -15,8 +15,14 @@ TEST(EXPR_BINARY, ADD) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::PLUS,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -37,8 +43,14 @@ TEST(EXPR_BINARY, SUBTRACT) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::MINUS,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -59,8 +71,14 @@ TEST(EXPR_BINARY, MULTIPLY) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::MULTIPLY,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -81,8 +99,14 @@ TEST(EXPR_BINARY, DIVIDE) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::DIVIDE,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -103,8 +127,14 @@ TEST(EXPR_BINARY, INTEGER_DIVIDE) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::INTEGER_DIVIDE,
-                std::make_unique<ExpectedIntegerLiteral>(5),
-                std::make_unique<ExpectedIntegerLiteral>(6)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(5),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(6),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -125,8 +155,14 @@ TEST(EXPR_BINARY, MODULO) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::MODULO,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -147,8 +183,14 @@ TEST(EXPR_BINARY, LOGICAL_OR) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::LOGICAL_OR,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -169,8 +211,14 @@ TEST(EXPR_BINARY, LOGICAL_AND) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::LOGICAL_AND,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -191,8 +239,14 @@ TEST(EXPR_BINARY, EQUAL) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::EQUAL_EQUAL,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -213,8 +267,14 @@ TEST(EXPR_BINARY, NOT_EQUAL) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::NOT_EQUAL,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -235,8 +295,14 @@ TEST(EXPR_BINARY, LESS_THAN) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::LESS_THAN,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -257,8 +323,14 @@ TEST(EXPR_BINARY, LESS_THAN_OR_EQUAL) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::LESS_THAN_OR_EQUAL,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -279,8 +351,14 @@ TEST(EXPR_BINARY, GREATER_THAN) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::GREATER_THAN,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -301,8 +379,14 @@ TEST(EXPR_BINARY, GREATER_THAN_OR_EQUAL) {
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::GREATER_THAN_OR_EQUAL,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
+                ),
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -325,10 +409,19 @@ TEST(EXPR_BINARY, ASSOCIATIVE_ADD) {
                 compiler::BinaryOperator::PLUS,
                 std::make_unique<ExpectedBinaryExpr>(
                     compiler::BinaryOperator::PLUS,
-                    std::make_unique<ExpectedIntegerLiteral>(1),
-                    std::make_unique<ExpectedIntegerLiteral>(2)
+                    std::make_unique<ExpectedExprPostfix>(
+                        std::make_unique<ExpectedIntegerLiteral>(1),
+                        noExpectedIndices
+                    ),
+                    std::make_unique<ExpectedExprPostfix>(
+                        std::make_unique<ExpectedIntegerLiteral>(2),
+                        noExpectedIndices
+                    )
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(3)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(3),
+                    noExpectedIndices
+                )
             )
         )
     );
@@ -351,10 +444,19 @@ TEST(EXPR_BINARY, ASSOCIATIVE_LOGICAL_AND) {
                 compiler::BinaryOperator::LOGICAL_AND,
                 std::make_unique<ExpectedBinaryExpr>(
                     compiler::BinaryOperator::LOGICAL_AND,
-                    std::make_unique<ExpectedIntegerLiteral>(1),
-                    std::make_unique<ExpectedIntegerLiteral>(2)
+                    std::make_unique<ExpectedExprPostfix>(
+                        std::make_unique<ExpectedIntegerLiteral>(1),
+                        noExpectedIndices
+                    ),
+                    std::make_unique<ExpectedExprPostfix>(
+                        std::make_unique<ExpectedIntegerLiteral>(2),
+                        noExpectedIndices
+                    )
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(3)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(3),
+                    noExpectedIndices
+                )
             )
         )
     );

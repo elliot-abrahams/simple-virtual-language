@@ -11,12 +11,16 @@ TEST(STM_ASSIGN, INT_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
-            std::make_unique<ExpectedVarAccess>(
+            std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
-            std::make_unique<ExpectedIntegerLiteral>(
-                5
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedIntegerLiteral>(
+                    5
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -33,12 +37,16 @@ TEST(STM_ASSIGN, FLOAT_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
-            std::make_unique<ExpectedVarAccess>(
+            std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
-            std::make_unique<ExpectedFloatLiteral>(
-                5.5f
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedFloatLiteral>(
+                    5.5f
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -55,12 +63,16 @@ TEST(STM_ASSIGN, BOOL_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
-            std::make_unique<ExpectedVarAccess>(
+            std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
-            std::make_unique<ExpectedBoolLiteral>(
-                false
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedBoolLiteral>(
+                    false
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -75,17 +87,19 @@ TEST(STM_ASSIGN, IDENTIFIER_EXPR) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
 
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
-            std::make_unique<ExpectedVarAccess>(
+            std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
-            std::make_unique<ExpectedExprVarAccess>(
-                "y",
-                std::move(expectedIndices)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("y")
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -102,14 +116,14 @@ TEST(STM_ASSIGN, UNARY_EXPR) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
-            std::make_unique<ExpectedVarAccess>(
-                "x"
-            ),
+            std::make_unique<ExpectedIdentifier>("x"),
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::MINUS,
-                std::make_unique<ExpectedIntegerLiteral>(
-                    5
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(5),
+                    noExpectedIndices
                 )
             )
         )
@@ -127,17 +141,18 @@ TEST(STM_ASSIGN, BINARY_EXPR) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
-            std::make_unique<ExpectedVarAccess>(
-                "x"
-            ),
+            std::make_unique<ExpectedIdentifier>("x"),
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::PLUS,
-                std::make_unique<ExpectedIntegerLiteral>(
-                    1
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(1),
+                    noExpectedIndices
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(
-                    2
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    noExpectedIndices
                 )
             )
         )
@@ -156,13 +171,17 @@ TEST(STM_ASSIGN, FUNCTION_CALL_EXPR) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
-            std::make_unique<ExpectedVarAccess>(
+            std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
-            std::make_unique<ExpectedFunctionCallExpr>(
-                "foo",
-                std::move(expectedArguments)
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedFunctionCallExpr>(
+                    "foo",
+                    std::move(expectedArguments)
+                ),
+                noExpectedIndices
             )
         )
     );
@@ -180,12 +199,17 @@ TEST(STM_ASSIGN, PAREN) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
-            std::make_unique<ExpectedVarAccess>(
+            std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
-            std::make_unique<ExpectedIntegerLiteral>(
-                5
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(5),
+                    noExpectedIndices
+                ),
+                noExpectedIndices
             )
         )
     );

@@ -13,10 +13,13 @@ TEST(EXPR_UNARY, INT_PLUS) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
-            std::make_unique<ExpectedUnaryExpr>(
+                std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::PLUS,
-                std::make_unique<ExpectedIntegerLiteral>(
-                    5
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(
+                        5
+                    ),
+                    noExpectedIndices
                 )
             )
         )
@@ -40,9 +43,11 @@ TEST(EXPR_UNARY, VARIABLE_PLUS) {
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::PLUS,
-                std::make_unique<ExpectedExprVarAccess>(
-                    "y",
-                    std::move(expectedIndices)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedExprIdentifier>(
+                        std::make_unique<ExpectedIdentifier>("y")
+                    ),
+                    noExpectedIndices
                 )
             )
         )
@@ -64,8 +69,9 @@ TEST(EXPR_UNARY, INT_MINUS) {
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::MINUS,
-                std::make_unique<ExpectedIntegerLiteral>(
-                    5
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(5),
+                    noExpectedIndices
                 )
             )
         )
@@ -87,8 +93,12 @@ TEST(EXPR_UNARY, INT_MINUS_PAREN) {
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::MINUS,
-                std::make_unique<ExpectedIntegerLiteral>(
-                    5
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedExprPostfix>(
+                        std::make_unique<ExpectedIntegerLiteral>(5),
+                        noExpectedIndices
+                    ),
+                    noExpectedIndices
                 )
             )
         )
@@ -110,13 +120,15 @@ TEST(EXPR_UNARY, VARIABLE_MINUS) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
-            std::make_unique<ExpectedUnaryExpr>(
-                compiler::UnaryOperator::MINUS,
-                std::make_unique<ExpectedExprVarAccess>(
-                    "y",
-                    std::move(expectedIndices)
-                )
-            )
+             std::make_unique<ExpectedUnaryExpr>(
+                 compiler::UnaryOperator::MINUS,
+                 std::make_unique<ExpectedExprPostfix>(
+                     std::make_unique<ExpectedExprIdentifier>(
+                         std::make_unique<ExpectedIdentifier>("y")
+                     ),
+                     noExpectedIndices
+                 )
+             )
         )
     );
     std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
@@ -136,8 +148,9 @@ TEST(EXPR_UNARY, INT_LOGICAL_NOT) {
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::LOGICAL_NOT,
-                std::make_unique<ExpectedIntegerLiteral>(
-                    5
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedIntegerLiteral>(5),
+                    noExpectedIndices
                 )
             )
         )
@@ -161,9 +174,11 @@ TEST(EXPR_UNARY, VARIABLE_LOGICAL_NOT) {
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::LOGICAL_NOT,
-                std::make_unique<ExpectedExprVarAccess>(
-                    "y",
-                    std::move(expectedIndices)
+                std::make_unique<ExpectedExprPostfix>(
+                    std::make_unique<ExpectedExprIdentifier>(
+                        std::make_unique<ExpectedIdentifier>("y")
+                    ),
+                    noExpectedIndices
                 )
             )
         )
@@ -187,8 +202,9 @@ TEST(EXPR_UNARY, INT_NESTED_LOGICAL_NOT) {
                 compiler::UnaryOperator::LOGICAL_NOT,
                 std::make_unique<ExpectedUnaryExpr>(
                     compiler::UnaryOperator::LOGICAL_NOT,
-                    std::make_unique<ExpectedIntegerLiteral>(
-                        5
+                    std::make_unique<ExpectedExprPostfix>(
+                        std::make_unique<ExpectedIntegerLiteral>(5),
+                        noExpectedIndices
                     )
                 )
             )
@@ -215,8 +231,9 @@ TEST(EXPR_UNARY, INT_NESTED_SIGN) {
                     compiler::UnaryOperator::PLUS,
                     std::make_unique<ExpectedUnaryExpr>(
                         compiler::UnaryOperator::MINUS,
-                        std::make_unique<ExpectedIntegerLiteral>(
-                        5
+                        std::make_unique<ExpectedExprPostfix>(
+                            std::make_unique<ExpectedIntegerLiteral>(5),
+                            noExpectedIndices
                         )
                     )
                 )

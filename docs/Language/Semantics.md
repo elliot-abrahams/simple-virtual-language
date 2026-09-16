@@ -28,9 +28,10 @@
   - [5.5 Equality Operators](#55-equality-operators)
   - [5.6 Logical Operators](#56-logical-operators)
   - [5.7 Unary Operators](#57-unary-operators)
-  - [5.8 Function Calls](#58-function-calls)
-  - [5.9 Cast Expressions](#59-cast-expressions)
-  - [5.10 New Expressions](#510-new-expressions)
+  - [5.8 Postfix Expressions](#58-postfix-expressions)
+  - [5.9 Function Calls](#59-function-calls)
+  - [5.10 Cast Expressions](#510-cast-expressions)
+  - [5.11 New Expressions](#511-new-expressions)
 - [6. Functions](#6-functions)
   - [6.1 Function Declarations](#61-function-declarations)
   - [6.2 Parameters](#62-parameters)
@@ -214,34 +215,7 @@ Global variables are visible from function bodies regardless of their position i
 
 A variable must be initialised before its value is accessed.
 
-For a non-array variable, the resulting type is the declared type of the variable.
-
-For an array variable, zero or more indices may be applied to access an array or an array element.
-
-Each index must have type `int`.
-
-The index value is checked at runtime. An index outside the bounds of the array results in a runtime error.
-
-Each index reduces the resulting array dimension by one.
-
-For example:
-```
-int[][] = new int[2][3];
-
-arr        // has type int[][]
-arr[0]     // has type int[]
-arr[0][1]  // has type int
-```
-
-The number of indices cannot exceed the variable's array dimension.
-
-For example:
-```
-int[][] arr = new int[2][3];
-
-arr[0][1]    // valid
-arr[0][1][0] // invalid
-```
+The resulting type is the declared type of the variable.
 
 ---
 
@@ -339,7 +313,7 @@ Each literal has a fixed resulting type.
 
 A variable access produces the value stored in the referenced variable.
 
-The resulting type is the declared type of the variable, reduced by one dimension for each array index.
+The resulting type is the declared type of the variable.
 
 See [Section 3.4](#34-variable-access) for the rules governing variable access.
 
@@ -433,7 +407,29 @@ The `!` operator can only be applied to a `bool` operand.
 
 The resulting type of unary expressions is the same as the operand's type.
 
-### 5.8 Function Calls
+### 5.8 Postfix Expressions
+
+A postfix expression evaluates its base expression and then applies each index in order.
+
+An index may only be applied to an array.
+
+The index expression must have type `int`.
+
+THe index is evaluated at runtime and must be within the bounds of the array. An index outside the bounds results in a runtime error.
+
+Each index reduces the resulting array type by one dimension.
+
+For example:
+
+```
+int[][] arr = new int[2][3];
+
+arr[0]      // has type int[]
+arr[0][1]   // has type int 
+
+```
+
+### 5.9 Function Calls
 
 A function call is an expression that evaluates to the return value of the selected function.
 
@@ -443,7 +439,7 @@ A function call with a `void` return type does not produce a value and therefore
 
 Function selection is defined in [Section 6.4](#64-function-resolution).
 
-### 5.9 Cast Expressions
+### 5.10 Cast Expressions
 
 A cast expression explicitly converts the resulting value of an expression to the specified type.
 
@@ -453,7 +449,7 @@ Conversions can only be made between numeric types.
 
 Array types cannot be used as either the source or target type of a cast.
 
-### 5.10 New Expressions
+### 5.11 New Expressions
 
 A new expression creates an array of the specified type and dimensions.
 

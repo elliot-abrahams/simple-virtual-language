@@ -30,7 +30,7 @@ block                       = LCBR, { statement }, RCBR ;
 
 var_decl                    = type, IDENTIFIER, [ EQUAL, expression ], SEMI ;
 
-assignment                  = var_access, assignment_operator, expression, SEMI ;
+assignment                  = IDENTIFIER, { index }, assignment_operator, expression, SEMI ;
 
 if_statement                = IF, LBR, expression, RBR, block, [ ELSE, ( block | if_statement ) ] ;
 
@@ -60,10 +60,12 @@ multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | INTEGER_
 
 unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
                             | LBR, type, RBR, unary_expression
-                            | primary_expression ;
+                            | postfix_expression ;
+
+postfix_expression          = primary_expression, { index } ;
 
 primary_expression          = function_call
-                            | var_access
+                            | IDENTIFIER
                             | new_expression
                             | literal
                             | LBR, expression, RBR ;
@@ -71,8 +73,6 @@ primary_expression          = function_call
 function_call               = IDENTIFIER, LBR, [ argument_list ], RBR ;
 
 argument_list               = expression, { COMMA, expression } ;
-
-var_access                  = IDENTIFIER, { index } ;
 
 new_expression              = NEW, primitive_type, index, { index }, [ array_initialiser ] ;
 
