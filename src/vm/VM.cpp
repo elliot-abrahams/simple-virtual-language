@@ -907,7 +907,7 @@ void VM::executeThrow() {
                 static_cast<uint8_t>(arrayLength.type)
             );
 
-            const std::string errorMsg = "index " + arrayIndex.toString() + " out of range for array with size " + arrayLength.toString();
+            const std::string errorMsg = "array index " + arrayIndex.toString() + " out of range for array with length " + arrayLength.toString();
             this->runtimeError = RuntimeError{
                 RuntimeErrorType::EXPLICIT_ARRAY_INDEX_OUT_OF_RANGE,
                 errorMsg
@@ -915,7 +915,7 @@ void VM::executeThrow() {
             throw std::runtime_error{""};
         }
         case 0x01: { // NegativeArraySizeError
-            const Value arraySize = this->operandStack.pop(&this->runtimeError);
+            const Value arrayLength = this->operandStack.pop(&this->runtimeError);
 
             checkType(
                 "throw negative_array_size",
@@ -925,29 +925,29 @@ void VM::executeThrow() {
                     static_cast<uint8_t>(ISA::Type::I64),
                     static_cast<uint8_t>(ISA::Type::UI64)
                 },
-                static_cast<uint8_t>(arraySize.type)
+                static_cast<uint8_t>(arrayLength.type)
             );
 
-            const std::string errorMsg = "cannot create array with size " + arraySize.toString();
+            const std::string errorMsg = "cannot create array with size " + arrayLength.toString();
             this->runtimeError = RuntimeError{
-                RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_SIZE,
+                RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_LENGTH,
                 errorMsg
             };
             throw std::runtime_error{""};
         }
         case 0x02: { // ArrayInitialiserSizeError
-            const Value arraySize = this->operandStack.pop(&this->runtimeError);
+            const Value arrayLength = this->operandStack.pop(&this->runtimeError);
             checkType(
                 "throw array_initialiser_size",
                 {
                     static_cast<uint8_t>(ISA::Type::UI32),
                 },
-                static_cast<uint8_t>(arraySize.type)
+                static_cast<uint8_t>(arrayLength.type)
             );
 
-            const std::string errorMsg = "array initialiser contains too many elements for array with size " + arraySize.toString();
+            const std::string errorMsg = "array initialiser contains too many elements for array with length " + arrayLength.toString();
             this->runtimeError = RuntimeError{
-                RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_SIZE,
+                RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_LENGTH,
                 errorMsg
             };
             throw std::runtime_error{""};

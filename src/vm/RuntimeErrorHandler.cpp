@@ -174,8 +174,8 @@ void RuntimeErrorHandler::outputStackTraceLine(const std::string& functionName, 
 std::string RuntimeErrorHandler::runtimeErrorTypeToString(const RuntimeErrorType& errorType) {
     switch (errorType) {
         case RuntimeErrorType::EXPLICIT_ARRAY_INDEX_OUT_OF_RANGE: return  "ArrayIndexOutOfRangeError";
-        case RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_SIZE: return  "NegativeArraySizeError";
-        case RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_SIZE: return  "ArrayInitialiserSizeError";
+        case RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_LENGTH: return  "NegativeArrayLengthError";
+        case RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_LENGTH: return  "ArrayInitialiserLengthError";
         case RuntimeErrorType::DIVISION_BY_ZERO: return "DivisionByZeroError";
         case RuntimeErrorType::OUT_OF_RANGE: return "OutOfRangeError";
         case RuntimeErrorType::STACK_OVERFLOW: return "StackOverflowError";

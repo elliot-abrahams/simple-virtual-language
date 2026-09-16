@@ -1,6 +1,8 @@
 #ifndef SVM_LANGUAGETYPES_H
 #define SVM_LANGUAGETYPES_H
 
+#include <cstdint>
+
 namespace compiler {
 
     enum class Type {
@@ -14,7 +16,7 @@ namespace compiler {
         Type type;
         unsigned int dimension;
 
-        int getSize() {
+        uint8_t getSize() const {
             return 4;
         }
     };

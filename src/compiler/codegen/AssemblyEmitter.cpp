@@ -240,8 +240,8 @@ std::string compiler::AssemblyEmitter::emitErrorRef(const ErrorRef& errorRef) {
     this->currentAddress++;
     switch (errorRef) {
         case ErrorRef::ARRAY_INDEX_OUT_OF_RANGE: return "array_index_out_of_range";
-        case ErrorRef::NEGATIVE_ARRAY_SIZE: return "negative_array_size";
-        case ErrorRef::ARRAY_INITIALISER_SIZE: return "array_initialiser_size";
+        case ErrorRef::NEGATIVE_ARRAY_SIZE: return "negative_array_length";
+        case ErrorRef::ARRAY_INITIALISER_SIZE: return "array_initialiser_length";
     }
     return "";
 }
@@ -315,7 +315,6 @@ void compiler::AssemblyEmitter::emitBuiltinFunctions(const std::unordered_set<Bu
         for (const auto& assembly : builtinFunction->functionBodyAssembly) {
             this->emitWithSingleIdent(assembly);
         }
-        this->emit("");
     }
 }
 
