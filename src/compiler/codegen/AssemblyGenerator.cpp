@@ -153,6 +153,8 @@ void compiler::AssemblyGenerator::compileArrayIndex(Scope *scope, const ast::Ind
     });
     // [root_array_ptr, root_array_length, array_index]
 
+    this->compileTypeConversionIfRequired(toAssemblyType(index.index->resultingType), AssemblyType::UI32, *indexSourceLocation);
+
     // =============================================================
     // throw index out of range error if index >= array_length
     // =============================================================
@@ -162,8 +164,6 @@ void compiler::AssemblyGenerator::compileArrayIndex(Scope *scope, const ast::Ind
         *indexSourceLocation
     });
     // [root_array_ptr, root_array_length, array_index, root_array_length]
-
-    this->compileTypeConversionIfRequired(AssemblyType::UI32, toAssemblyType(index.index->resultingType), *indexSourceLocation);
 
     this->emit(Instruction{Opcode::DUP,
         {Immediate{Number{static_cast<uint32_t>(1)}}},
@@ -213,8 +213,6 @@ void compiler::AssemblyGenerator::compileArrayIndex(Scope *scope, const ast::Ind
     });
     // [root_array_ptr, array_index]
 
-    this->compileTypeConversionIfRequired(toAssemblyType(index.index->resultingType), AssemblyType::UI32, *indexSourceLocation);
-
     // =============================================================
     // calculate ptr to array element
     // =============================================================
@@ -254,7 +252,6 @@ void compiler::AssemblyGenerator::compileArrayIndex(Scope *scope, const ast::Ind
         *indexSourceLocation
     });
     // [nested_array_ptr]
-
 }
 
 void compiler::AssemblyGenerator::compileStm(Scope* scope, const ast::Stm& stm) {
@@ -1319,22 +1316,24 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
         if (std::holds_alternative<std::unique_ptr<ast::ArrayInitialiser>>(arrayInitialiser.elements[index])) {
             // not at deepest level of initialiser
 
-            this->emit(Instruction{Opcode::LOAD,
-                {AssemblyType::PTR},
-                optionalInitialiserSource
-            });
-
-            // [ptr_to_element     , ptr_to_nested_array]
-            // [ptr                , ptr                ]
-            // [if not last element,                    ]
-
-            if (std::get<std::unique_ptr<ast::ArrayInitialiser>>(arrayInitialiser.elements[index])->elements.size() > 0) {
-                this->compileArrayInitialiser(scope, *std::get<std::unique_ptr<ast::ArrayInitialiser>>(arrayInitialiser.elements[index]), optionalInitialiserSource, typeOfDeepestElement);
-            } else {
+            if (std::get<std::unique_ptr<ast::ArrayInitialiser>>(arrayInitialiser.elements[index])->elements.empty()) {
                 this->emit(Instruction{Opcode::POP,
                     {},
                     optionalInitialiserSource
                 });
+                // [ptr_to_element     ]
+                // [ptr                ]
+                // [if not last element]
+            } else {
+                this->emit(Instruction{Opcode::LOAD,
+                    {AssemblyType::PTR},
+                    optionalInitialiserSource
+                });
+                // [ptr_to_element     , ptr_to_nested_array]
+                // [ptr                , ptr                ]
+                // [if not last element,                    ]
+
+                this->compileArrayInitialiser(scope, *std::get<std::unique_ptr<ast::ArrayInitialiser>>(arrayInitialiser.elements[index]), optionalInitialiserSource, typeOfDeepestElement);
             }
 
             // [ptr_to_element     ]
