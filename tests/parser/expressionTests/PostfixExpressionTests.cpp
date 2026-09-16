@@ -14,11 +14,8 @@ TEST(EXPR_POSTFIX, IDENTIFIER) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedExprIdentifier>(
-                    std::make_unique<ExpectedIdentifier>("y")
-                ),
-                noExpectedIndices
+            std::make_unique<ExpectedExprIdentifier>(
+                std::make_unique<ExpectedIdentifier>("y")
             )
         )
     );
@@ -37,10 +34,7 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX) {
 
     indices.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                noExpectedIndices
-            )
+            std::make_unique<ExpectedIntegerLiteral>(1)
         )
     );
 
@@ -71,18 +65,12 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_TWO_INDICES) {
 
     indices.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                noExpectedIndices
-            )
+            std::make_unique<ExpectedIntegerLiteral>(1)
         )
     );
     indices.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedIntegerLiteral>(5),
-                noExpectedIndices
-            )
+            std::make_unique<ExpectedIntegerLiteral>(5)
         )
     );
 
@@ -114,10 +102,7 @@ TEST(EXPR_POSTFIX, FUNCTION_CALL_EXPR_WITH_ONE_INDEX) {
 
     indices.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                noExpectedIndices
-            )
+            std::make_unique<ExpectedIntegerLiteral>(1)
         )
     );
 
@@ -150,22 +135,15 @@ TEST(EXPR_POSTFIX, NEW_EXPRESSION_WITH_ONE_INDEX) {
     std::vector<ArrayInitialiserElement> arrayInitialiserElements;
     std::unique_ptr<ExpectedArrayInitialiser> expectedArrayInitialiser = std::make_unique<ExpectedArrayInitialiser>(std::move(arrayInitialiserElements));
 
-
     indices.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                noExpectedIndices
-            )
+            std::make_unique<ExpectedIntegerLiteral>(1)
         )
     );
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedIntegerLiteral>(3),
-                noExpectedIndices
-            )
+            std::make_unique<ExpectedIntegerLiteral>(3)
         )
     );
 
@@ -198,10 +176,7 @@ TEST(EXPR_POSTFIX, PAREN_WITH_ONE_INDEX) {
 
     indices.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                noExpectedIndices
-            )
+            std::make_unique<ExpectedIntegerLiteral>(1)
         )
     );
 
@@ -210,11 +185,8 @@ TEST(EXPR_POSTFIX, PAREN_WITH_ONE_INDEX) {
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedExprPostfix>(
-                    std::make_unique<ExpectedIntegerLiteral>(1),
-                    noExpectedIndices
-                ),
-            indices
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                indices
             )
         )
     );

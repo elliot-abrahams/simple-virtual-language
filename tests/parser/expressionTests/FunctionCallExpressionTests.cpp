@@ -15,12 +15,9 @@ TEST(EXPR_FUNCTION_CALL, FUNCTION_CALL) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedFunctionCallExpr>(
-                    "foo",
-                    std::move(expectedArguments)
-                ),
-                noExpectedIndices
+            std::make_unique<ExpectedFunctionCallExpr>(
+                "foo",
+                std::move(expectedArguments)
             )
         )
     );
@@ -38,22 +35,16 @@ TEST(EXPR_FUNCTION_CALL, ONE_ARGUMENT) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedArguments.push_back(
-        std::make_unique<ExpectedExprPostfix>(
-            std::make_unique<ExpectedIntegerLiteral>(5),
-            noExpectedIndices
-        )
+        std::make_unique<ExpectedIntegerLiteral>(5)
     );
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedFunctionCallExpr>(
-                    "foo",
-                    std::move(expectedArguments)
-                ),
-                noExpectedIndices
+            std::make_unique<ExpectedFunctionCallExpr>(
+                "foo",
+                std::move(expectedArguments)
             )
         )
     );
@@ -72,12 +63,9 @@ TEST(EXPR_FUNCTION_CALL, NESTED_CALL) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArgumentsBar;
 
     expectedArgumentsFoo.push_back(
-        std::make_unique<ExpectedExprPostfix>(
-            std::make_unique<ExpectedFunctionCallExpr>(
-                "bar",
-                std::move(expectedArgumentsBar)
-            ),
-            noExpectedIndices
+        std::make_unique<ExpectedFunctionCallExpr>(
+            "bar",
+            std::move(expectedArgumentsBar)
         )
     );
 
@@ -85,12 +73,9 @@ TEST(EXPR_FUNCTION_CALL, NESTED_CALL) {
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedFunctionCallExpr>(
-                    "foo",
-                    std::move(expectedArgumentsFoo)
-                ),
-                noExpectedIndices
+            std::make_unique<ExpectedFunctionCallExpr>(
+                "foo",
+                std::move(expectedArgumentsFoo)
             )
         )
     );
@@ -108,28 +93,19 @@ TEST(EXPR_FUNCTION_CALL, TWO_ARGUMENTS) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedArguments.push_back(
-        std::make_unique<ExpectedExprPostfix>(
-            std::make_unique<ExpectedIntegerLiteral>(5),
-            noExpectedIndices
-        )
+        std::make_unique<ExpectedIntegerLiteral>(5)
     );
     expectedArguments.push_back(
-        std::make_unique<ExpectedExprPostfix>(
-            std::make_unique<ExpectedBoolLiteral>(true),
-            noExpectedIndices
-        )
+        std::make_unique<ExpectedBoolLiteral>(true)
     );
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
             std::make_unique<Type>(compiler::Type::INT, 0),
             "x",
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedFunctionCallExpr>(
-                    "foo",
-                    std::move(expectedArguments)
-                ),
-                noExpectedIndices
+            std::make_unique<ExpectedFunctionCallExpr>(
+                "foo",
+                std::move(expectedArguments)
             )
         )
     );

@@ -12,12 +12,7 @@ TEST(STM_IF, IF) {
     std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedBoolLiteral>(
-                    true
-                ),
-                noExpectedIndices
-            ),
+            std::make_unique<ExpectedBoolLiteral>(true),
             std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
@@ -41,16 +36,10 @@ TEST(STM_IF, IF_BINARY_EXPR) {
         std::make_unique<ExpectedIfStm>(
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::GREATER_THAN,
-                std::make_unique<ExpectedExprPostfix>(
                     std::make_unique<ExpectedExprIdentifier>(
-                        std::make_unique<ExpectedIdentifier>("x")
-                    ),
-                    noExpectedIndices
+                    std::make_unique<ExpectedIdentifier>("x")
                 ),
-                std::make_unique<ExpectedExprPostfix>(
-                    std::make_unique<ExpectedIntegerLiteral>(5),
-                    noExpectedIndices
-                )
+                std::make_unique<ExpectedIntegerLiteral>(5)
             ),
             std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
@@ -81,10 +70,7 @@ TEST(STM_IF, IF_BODY) {
     );
     expectedStatements.push_back(
         std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedBoolLiteral>(true),
-                noExpectedIndices
-            ),
+            std::make_unique<ExpectedBoolLiteral>(true),
             std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
@@ -109,16 +95,10 @@ TEST(STM_IF, ELSE) {
         std::make_unique<ExpectedIfStm>(
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::GREATER_THAN,
-                std::make_unique<ExpectedExprPostfix>(
-                    std::make_unique<ExpectedExprIdentifier>(
-                        std::make_unique<ExpectedIdentifier>("x")
-                    ),
-                    noExpectedIndices
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("x")
                 ),
-                std::make_unique<ExpectedExprPostfix>(
-                    std::make_unique<ExpectedIntegerLiteral>(5),
-                    noExpectedIndices
-                )
+                std::make_unique<ExpectedIntegerLiteral>(5)
             ),
             std::make_unique<ExpectedBlock>(
                 emptyListOfStatements
@@ -156,16 +136,10 @@ TEST(STM_IF, ELSE_BODY) {
         std::make_unique<ExpectedIfStm>(
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::GREATER_THAN,
-                std::make_unique<ExpectedExprPostfix>(
-                    std::make_unique<ExpectedExprIdentifier>(
-                        std::make_unique<ExpectedIdentifier>("x")
-                    ),
-                    noExpectedIndices
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("x")
                 ),
-                std::make_unique<ExpectedExprPostfix>(
-                    std::make_unique<ExpectedIntegerLiteral>(5),
-                    noExpectedIndices
-                )
+                std::make_unique<ExpectedIntegerLiteral>(5)
             ),
             std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
@@ -192,24 +166,18 @@ TEST(STM_IF, ELSE_IF) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedBoolLiteral>(false),
-                noExpectedIndices
-            ),
+            std::make_unique<ExpectedBoolLiteral>(false),
             std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
             std::make_unique<ExpectedIfStm>(
-                std::make_unique<ExpectedExprPostfix>(
-                    std::make_unique<ExpectedExprIdentifier>(
-                        std::make_unique<ExpectedIdentifier>("b")
-                    ),
-                    noExpectedIndices
-                ),
-                std::make_unique<ExpectedBlock>(
-                    elseBlockExpectedStatements
-                ),
-                nullptr
+            std::make_unique<ExpectedExprIdentifier>(
+                std::make_unique<ExpectedIdentifier>("b")
+            ),
+            std::make_unique<ExpectedBlock>(
+                elseBlockExpectedStatements
+            ),
+            nullptr
             )
         )
     );
@@ -240,19 +208,15 @@ TEST(STM_IF, ELSE_IF_BODY) {
     );
     expectedStatements.push_back(
         std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedBoolLiteral>(false),
-                noExpectedIndices
+            std::make_unique<ExpectedBoolLiteral>(
+                false
             ),
             std::make_unique<ExpectedBlock>(
                 ifBlockExpectedStatements
             ),
             std::make_unique<ExpectedIfStm>(
-                std::make_unique<ExpectedExprPostfix>(
-                    std::make_unique<ExpectedExprIdentifier>(
-                        std::make_unique<ExpectedIdentifier>("b")
-                    ),
-                    noExpectedIndices
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("b")
                 ),
                 std::make_unique<ExpectedBlock>(
                     elseIfBlockExpectedStatements

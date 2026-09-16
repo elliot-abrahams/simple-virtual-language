@@ -722,6 +722,10 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
         indices.push_back(this->parseIndex());
     }
 
+    if (indices.empty()) {
+        return expression;
+    }
+
     return std::make_unique<ast::ExprPostfix>(
         expression->line,
         expression->column,

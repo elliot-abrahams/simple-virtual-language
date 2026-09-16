@@ -29,10 +29,7 @@ TEST(STM_RETURN, RETURN_WITH_EXPRESSION) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedReturnStm>(
-            std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedIntegerLiteral>(5),
-                noExpectedIndices
-            )
+            std::make_unique<ExpectedIntegerLiteral>(5)
         )
     );
     std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
