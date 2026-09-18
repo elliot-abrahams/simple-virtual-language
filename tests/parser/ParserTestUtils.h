@@ -107,9 +107,10 @@ namespace parserTest {
     struct ExpectedExprPostfix final : ExpectedExpr {
         const std::unique_ptr<ExpectedExpr> expectedExpression;
         const std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
+        const std::optional<compiler::IncrementDecrementOperator> expectedIncDecOperator;
 
-        ExpectedExprPostfix(std::unique_ptr<ExpectedExpr> expectedExpression, std::vector<std::unique_ptr<ExpectedIndex>>& expectedIndices) :
-            expectedExpression(std::move(expectedExpression)), expectedIndices(std::move(expectedIndices)) {}
+        ExpectedExprPostfix(std::unique_ptr<ExpectedExpr> expectedExpression, std::vector<std::unique_ptr<ExpectedIndex>>& expectedIndices, const std::optional<compiler::IncrementDecrementOperator> expectedIncDecOperator) :
+            expectedExpression(std::move(expectedExpression)), expectedIndices(std::move(expectedIndices)), expectedIncDecOperator(expectedIncDecOperator) {}
     };
 
     struct ExpectedUnaryExpr final : ExpectedExpr {
@@ -324,6 +325,12 @@ namespace parserTest {
 
             for (int i = 0; i < expectedExprPostfix->expectedIndices.size(); i++) {
                 ASSERT_EXPR_EQ(*expectedExprPostfix->expectedIndices[i]->index, *actualExprPostfix->indices[i]->index);
+            }
+
+            ASSERT_EQ(expectedExprPostfix->expectedIncDecOperator.has_value(), actualExprPostfix->incDecOperator.has_value());
+
+            if (expectedExprPostfix->expectedIncDecOperator.has_value()) {
+                ASSERT_EQ(expectedExprPostfix->expectedIncDecOperator.value(), actualExprPostfix->incDecOperator.value()->incDecOperator);
             }
 
         } else if (auto* expectedCastExpression = dynamic_cast<const ExpectedCastExpr*>(&expectedExpr)) {

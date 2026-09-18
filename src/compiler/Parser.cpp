@@ -712,7 +712,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
 }
 
 /*
- *  postfix_expression          = primary_expression, { index } ;
+ *  postfix_expression          = primary_expression, { index }, [ INCREMENT | DECREMENT ] ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
     auto expression = this->parsePrimaryExpression();
@@ -722,7 +722,9 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
         indices.push_back(this->parseIndex());
     }
 
-    if (indices.empty()) {
+    auto incDecOp = this->parseIncrementDecrementOperator();
+
+    if (indices.empty() && !incDecOp.has_value()) {
         return expression;
     }
 
@@ -730,10 +732,10 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
         expression->line,
         expression->column,
         std::move(expression),
-        indices
+        indices,
+        incDecOp
     );
 }
-
 
 /*
  *  primary_expression          = function_call
@@ -1052,6 +1054,24 @@ std::unique_ptr<ast::AssignmentOperatorInfo> compiler::Parser::parseAssignmentOp
         );
     }
     this->handleUnexpectedToken(assignmentOperator);
+}
+
+/*
+ * [ INCREMENT | DECREMENT ]
+ */
+std::optional<std::unique_ptr<ast::IncrementDecrementOperatorInfo>> compiler::Parser::parseIncrementDecrementOperator() const {
+    const auto token = this->tokeniser->tok();
+    if (token.kind != TokenKind::INCREMENT && token.kind != TokenKind::DECREMENT) {
+        return std::nullopt;
+    }
+
+    this->tokeniser->next();
+
+    return std::make_unique<ast::IncrementDecrementOperatorInfo>(
+        token.line,
+        token.column,
+        token.kind == TokenKind::INCREMENT ? IncrementDecrementOperator::INCREMENT : IncrementDecrementOperator::DECREMENT
+    );
 }
 
 bool compiler::Parser::isTypeToken(const TokenKind& kind) {

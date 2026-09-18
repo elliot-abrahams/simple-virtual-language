@@ -14,7 +14,9 @@ enum class TokenKind {
 
     EQUAL,
     PLUS,
+    INCREMENT,
     MINUS,
+    DECREMENT,
     MULTIPLY,
     DIVIDE,
     INTEGER_DIVIDE,
@@ -74,7 +76,9 @@ struct Token {
 
             case TokenKind::EQUAL: return "=";
             case TokenKind::PLUS: return "+";
+            case TokenKind::INCREMENT: return "++";
             case TokenKind::MINUS: return "-";
+            case TokenKind::DECREMENT: return "--";
             case TokenKind::MULTIPLY: return "*";
             case TokenKind::DIVIDE: return "/";
             case TokenKind::INTEGER_DIVIDE: return "//";

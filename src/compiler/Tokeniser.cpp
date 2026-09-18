@@ -125,11 +125,27 @@ Token compiler::Tokeniser::readToken() {
             return token;
         }
         case '+': {
+            if (this->current + 1 < this->source.size() &&
+                this->source[this->current + 1] == '+') {
+
+                const Token token = Token{TokenKind::INCREMENT, "++", this->line, this->column};
+                this->advance();
+                this->advance();
+                return token;
+            }
             const Token token = Token{TokenKind::PLUS, "+", this->line, this->column};
             this->advance();
             return token;
         }
         case '-': {
+            if (this->current + 1 < this->source.size() &&
+                this->source[this->current + 1] == '-') {
+
+                const Token token = Token{TokenKind::DECREMENT, "--", this->line, this->column};
+                this->advance();
+                this->advance();
+                return token;
+            }
             const Token token = Token{TokenKind::MINUS, "-", this->line, this->column};
             this->advance();
             return token;

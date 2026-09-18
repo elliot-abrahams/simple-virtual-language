@@ -138,6 +138,60 @@ TEST(EXPR_POSTFIX, NEW_EXPRESSION_ONE_INDEX) {
     );
 }
 
+TEST(EXPR_POSTFIX, INCREMENT_VARIABLE) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            int y = x++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, DECREMENT_VARIABLE) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            int y = x--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INCREMENT_ARRAY_ELEMENT) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int[] arr = new int[3];
+            int x = arr[1]++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, DECREMENT_ARRAY_ELEMENT) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int[] arr = new int[3];
+            int x = arr[1]--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INCREMENT_FUNCTION_CALL_RETURNING_ARRAY) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int[] foo() { return new int[3]; }
+            int x = foo()[1]++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, DECREMENT_FUNCTION_CALL_RETURNING_ARRAY) {
+    ASSERT_SEMANTICALLY_VALID(
+    R"(
+            int[] foo() { return new int[3]; }
+            int x = foo()[1]--;
+        )"
+    );
+}
+
 TEST(EXPR_POSTFIX, INVALID_FLOAT_TO_INT) {
     ASSERT_THROWS_TYPE_ERROR(
         R"(
@@ -251,6 +305,180 @@ TEST(EXPR_POSTFIX, INVALID_BOOL_INDEX_EXPR) {
         R"(
             int[] x = new int[3];
             int y = x[false];
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_INT) {
+    ASSERT_THROWS_TYPE_ERROR(
+        "int x = 5++;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_FLOAT) {
+    ASSERT_THROWS_TYPE_ERROR(
+            "float x = 5.5f++;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_INT) {
+    ASSERT_THROWS_TYPE_ERROR(
+        "int x = 5--;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_FLOAT) {
+    ASSERT_THROWS_TYPE_ERROR(
+        "float x = 5.5f--;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_BOOL) {
+    ASSERT_THROWS_TYPE_ERROR(
+        "int x = true++;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_BOOL) {
+    ASSERT_THROWS_TYPE_ERROR(
+        "int x = true--;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_NEW_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+        "int x = new int[3]++;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_NEW_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+        "int x = new int[3]--;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+    R"(
+            int[] arr = new int[3];
+            int x = arr++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            int x = arr--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_NESTED_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+    R"(
+            int[][] arr = new int[3][3];
+            int x = arr[1]++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_NESED_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[][] arr = new int[3][3];
+            int x = arr[1]--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_NESTED_POSTFIX_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+    R"(
+            int x = 5;
+            int y = (x++)++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_NESED_POSTFIX_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            int y = (x--)--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_UNARY_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+    R"(
+            int x = 5;
+            int y = (-5)++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_UNARY_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+    R"(
+            int x = 5;
+            int y = (-5)--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_BINARY_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+    R"(
+            int x = 5;
+            int y = (1 + 2)++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_BINARY_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+    R"(
+            int x = 5;
+            int y = (1 + 2)--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_FUNCTION_CALL_RETURNING_INT) {
+    ASSERT_THROWS_TYPE_ERROR(
+    R"(
+            int foo() { return 5; }
+            int x = foo()++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_FUNCTION_CALL_RETURNING_INT) {
+    ASSERT_THROWS_TYPE_ERROR(
+    R"(
+            int foo() { return 5; }
+            int x = foo()--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_CAST_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            float x = 5.5f;
+            int y = ((int) x)++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_CAST_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            float x = 5.5f;
+            int y = ((int) x)--;
         )"
     );
 }

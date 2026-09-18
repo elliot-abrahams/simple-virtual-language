@@ -19,6 +19,10 @@ namespace compiler {
         uint8_t getSize() const {
             return 4;
         }
+
+        bool isNumeric() const {
+            return dimension == 0 && type == Type::INT || type == Type::FLOAT;
+        }
     };
 
     enum class AssignmentOperator {
@@ -49,6 +53,11 @@ namespace compiler {
         PLUS,
         MINUS,
         LOGICAL_NOT
+    };
+
+    enum class IncrementDecrementOperator {
+        INCREMENT,
+        DECREMENT
     };
 
 }

@@ -29,6 +29,8 @@
   - [5.6 Logical Operators](#56-logical-operators)
   - [5.7 Unary Operators](#57-unary-operators)
   - [5.8 Postfix Expressions](#58-postfix-expressions)
+    - [5.8.1 Indexing](#581-indexing)
+    - [5.8.2 Increment and Decrement](#582-increment-and-decrement)
   - [5.9 Function Calls](#59-function-calls)
   - [5.10 Cast Expressions](#510-cast-expressions)
   - [5.11 New Expressions](#511-new-expressions)
@@ -409,13 +411,15 @@ The resulting type of unary expressions is the same as the operand's type.
 
 ### 5.8 Postfix Expressions
 
-A postfix expression evaluates its base expression and then applies each index in order.
+A postfix expression evaluates its base expression and then applies each postfix operation in order.
+
+#### 5.8.1 Indexing
 
 An index may only be applied to an array.
 
 The index expression must have type `int`.
 
-THe index is evaluated at runtime and must be within the bounds of the array. An index outside the bounds results in a runtime error.
+The index is evaluated at runtime and must be within the bounds of the array. An index outside the bounds results in a runtime error.
 
 Each index reduces the resulting array type by one dimension.
 
@@ -428,6 +432,29 @@ arr[0]      // has type int[]
 arr[0][1]   // has type int 
 
 ```
+
+#### 5.8.2 Increment and Decrement
+
+The postfix increment operator `++` increments the value of an assignable expression by `1`.
+
+The postfix decrement operator `--` decrements the value if an assignable expression by `1`.
+
+An expression is assignable when it refers to a variable or array element.
+
+The `++` and `--` operators may only be applied to numeric types.
+
+The `++` and `--` operators produce the value of the inner expression before the increment or decrement is performed.
+
+For example:
+
+```
+int x = 5;
+
+int a = x++;  // a is 5, x is 6
+int b = x--;  // b is 6, x is 5
+```
+
+The resulting type of a postfix increment or decrement expression is the type of its inner expression.
 
 ### 5.9 Function Calls
 

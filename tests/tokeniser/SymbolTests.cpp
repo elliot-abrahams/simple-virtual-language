@@ -43,8 +43,16 @@ TEST(SYMBOL, PLUS) {
     ASSERT_TOKEN_EQ("+", TokenKind::PLUS, "+");
 }
 
+TEST(SYMBOL, INCREMENT) {
+    ASSERT_TOKEN_EQ("++", TokenKind::INCREMENT, "++");
+}
+
 TEST(SYMBOL, MINUS) {
     ASSERT_TOKEN_EQ("-", TokenKind::MINUS, "-");
+}
+
+TEST(SYMBOL, DECREMENT) {
+    ASSERT_TOKEN_EQ("--", TokenKind::DECREMENT, "--");
 }
 
 TEST(SYMBOL, MULTIPLY) {

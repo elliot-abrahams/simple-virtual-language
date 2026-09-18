@@ -12,6 +12,16 @@ namespace compiler {
         bool alwaysReturns = false;
     };
 
+    enum class ExprCategory {
+        VALUE,
+        ASSIGNABLE
+    };
+
+    struct SemanticExprResult {
+        SemanticType type;
+        ExprCategory category;
+    };
+
     class SemanticAnalyser {
     public:
         SemanticAnalyser(SymbolTable* symbolTable, const std::filesystem::path* filePath);
@@ -37,7 +47,7 @@ namespace compiler {
         void processIndex(Scope* scope, const ast::Index& index);
         unsigned int resolveAccessArrayDepth(const SemanticType& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const;
 
-        SemanticType checkExprType(Scope* scope, const ast::Expr& expr);
+        SemanticExprResult checkExprType(Scope* scope, const ast::Expr& expr);
         SemanticAnalysisResult processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const;
         FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const;
 
@@ -47,6 +57,8 @@ namespace compiler {
         static std::string typeToString(const SemanticType& type);
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
+        static std::string incrementDecrementOperatorToString(const IncrementDecrementOperator& incDecOperator);
+
         void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const SemanticType& leftType, const SemanticType& rightType) const;
         void checkType(const std::vector<SemanticType>& expectedTypes, const SemanticType& actualType, const size_t line, const size_t column) const;
         static std::string functionSignatureToString(const std::string& functionIdentifier, const std::vector<SemanticType>& parameterTypes);

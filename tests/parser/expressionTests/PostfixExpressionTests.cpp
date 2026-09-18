@@ -46,7 +46,8 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX) {
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("y")
                 ),
-                indices
+                indices,
+                std::nullopt
             )
         )
     );
@@ -82,7 +83,8 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_TWO_INDICES) {
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("y")
                 ),
-                indices
+                indices,
+                std::nullopt
             )
         )
     );
@@ -115,7 +117,8 @@ TEST(EXPR_POSTFIX, FUNCTION_CALL_EXPR_WITH_ONE_INDEX) {
                     "foo",
                     std::move(expectedArguments)
                 ),
-                indices
+                indices,
+                std::nullopt
             )
         )
     );
@@ -157,7 +160,8 @@ TEST(EXPR_POSTFIX, NEW_EXPRESSION_WITH_ONE_INDEX) {
                     std::move(arrayDimension),
                     std::move(expectedArrayInitialiser)
                 ),
-                indices
+                indices,
+                std::nullopt
             )
         )
     );
@@ -186,7 +190,92 @@ TEST(EXPR_POSTFIX, PAREN_WITH_ONE_INDEX) {
             "x",
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedIntegerLiteral>(1),
-                indices
+                indices,
+                std::nullopt
+            )
+        )
+    );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_POSTFIX, INCREMENT) {
+    const auto testCode = R"(
+        int y = x++;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::Type::INT, 0),
+            "y",
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("x")
+                ),
+                noExpectedIndices,
+                compiler::IncrementDecrementOperator::INCREMENT
+            )
+        )
+    );
+
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_POSTFIX, DECREMENT) {
+    const auto testCode = R"(
+        int y = x--;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::Type::INT, 0),
+            "y",
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("x")
+                ),
+                noExpectedIndices,
+                compiler::IncrementDecrementOperator::DECREMENT
+            )
+        )
+    );
+
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX_INCREMENT) {
+    const auto testCode = R"(
+        int x = y[1]++;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<std::unique_ptr<ExpectedIndex>> indices;
+
+    indices.push_back(
+        std::make_unique<ExpectedIndex>(
+            std::make_unique<ExpectedIntegerLiteral>(1)
+        )
+    );
+
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::Type::INT, 0),
+            "x",
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("y")
+                ),
+                indices,
+                compiler::IncrementDecrementOperator::INCREMENT
             )
         )
     );

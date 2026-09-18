@@ -53,7 +53,9 @@ namespace compiler {
         std::unique_ptr<ast::TypeInfo> parseType() const;
         std::unique_ptr<ast::TypeInfo> parsePrimitiveType(const unsigned int dimension) const;
         std::unique_ptr<ast::Expr> parseLiteral() const;
+
         std::unique_ptr<ast::AssignmentOperatorInfo> parseAssignmentOperator() const;
+        std::optional<std::unique_ptr<ast::IncrementDecrementOperatorInfo>> parseIncrementDecrementOperator() const;
 
         static bool isTypeToken(const TokenKind& kind);
 

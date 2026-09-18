@@ -8,6 +8,12 @@
 
 
 namespace compiler {
+
+    enum class ExprResult {
+        VALUE,
+        PTR
+    };
+
     class AssemblyGenerator {
     public:
         AssemblyGenerator(SymbolTable* symbolTable);
@@ -35,19 +41,19 @@ namespace compiler {
         void compileFunctionCallStatement(Scope* scope, const ast::FunctionCallStm& functionCallStm);
         void compileReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
 
-        void compileExpr(Scope* scope, const ast::Expr& expr);
+        void compileExpr(Scope* scope, const ast::Expr& expr, const ExprResult exprResult);
         void compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& expr);
         void compileBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo);
         void compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr);
-        void compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr);
+        void compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr, const ExprResult exprResult);
         void compileCastExpr(Scope* scope, const ast::ExprCast& castExpr);
         void compileNewExpr(Scope* scope, const ast::ExprNew& newExpr);
 
         void compileArrayAlloc(Scope* scope, const ast::ExprNew& newExpr, unsigned int depth, SemanticType& typeAtDepth);
         void compileArrayInitialiser(Scope* scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const SemanticType& typeOfDeepestElement);
 
-        void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
-        void compileExprIdentifier(Scope* scope, const ast::ExprIdentifier& exprIdentifier);
+        void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall, const ExprResult exprResult);
+        void compileExprIdentifier(Scope* scope, const ast::ExprIdentifier& exprIdentifier, const ExprResult exprResult);
 
         void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
         void compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);

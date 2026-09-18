@@ -196,6 +196,7 @@ set(Integration_Sources
         integration/expressionTests/PrecedenceTests.cpp
         integration/expressionTests/BinaryExpressionTests.cpp
         integration/expressionTests/UnaryExpressionTests.cpp
+        integration/expressionTests/PostfixExpressionTests.cpp
         integration/expressionTests/castExpressionTests.cpp
         integration/expressionTests/VarAccessTests.cpp
 

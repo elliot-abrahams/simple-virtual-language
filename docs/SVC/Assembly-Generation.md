@@ -37,7 +37,7 @@
     - [5.7.1 Positive Sign](#571-positive-sign)
     - [5.7.2 Negative Sign](#572-negative-sign)
     - [5.7.3 Logical NOT](#573-logical-not)
-  - [5.8 Postfix Expression]()
+  - [5.8 Postfix Expression](#58-postfix-expressions)
   - [5.9 Function Calls](#59-function-calls)
   - [5.10 Cast Expressions](#510-cast-expressions)
   - [5.11 New Expressions](#511-new-expressions)
@@ -431,7 +431,9 @@ If the value already has the target type, no conversion instruction is generated
 
 ## 5. Expressions
 
-Every expression generates assembly that leaves its resulting value on the operand stack.
+Expressions normally produce their resulting value on the operand stack.
+
+Some expressions may instead be generated to produce the address of their resulting value when the address is required by the surrounding operation. This allows operations such as increment and decrement to modify the value in memory.
 
 ### 5.1 Literals
 
@@ -476,25 +478,50 @@ Where:
 
 ### 5.2 Variable Access
 
+A variable access expression normally produces the value stored in the referenced variable.
+
+When the variable is used as the target of an operation that modifies its value, the variable access produces the address of the variable instead.
+
+For example:
+
+```
+int x = 5;
+int y = x++;   // the location of x is required to increment the variable
+```
+
 #### 5.2.1 Global Variable Access
 
-A global variable is loaded using `loadG`.
+A global variable is loaded using `loadG` when its value is required.
 
 ```
     loadG $[identifier]
 ```
 
+When the address of a global variable is required, its address is pushed using `push`.
+
+```
+    push ptr $[identifier]
+```
+
 Where:
 - `[identifier]` is the identifier of the global variable.
+
+
 
 The value loaded onto the operand stack has the assembly type of the variable.
 
 #### 5.2.2 Local Variable Access
 
-A local variable is loaded using `loadL`.
+A local variable is loaded using `loadL` when its value is required.
 
 ```
     loadL [type] #[slot]
+```
+
+When the address of a local variable is required, it is produced using `addrL`.
+
+```
+    addrL #[slot]
 ```
 
 Where:
@@ -747,7 +774,9 @@ Where:
 
 ### 5.8 Postfix Expressions
 
-The assembly for the base expression is generated first. Each index is then processed from left to right.
+A postfix expression evaluates its base expression and then applies each postfix operation in order.
+
+#### 5.8.1 Indexing
 
 For each index:
 1. The index expression is evaluated.
@@ -755,9 +784,9 @@ For each index:
 3. The index is bounds checked.
 4. The element address is calculated.
 5. If the index does not select the final dimension, the pointer to the nested array is loaded.
-6. If the index selects the final dimension, the element value is loaded.
+6. If the index selects the final dimension, the element value is loaded unless the address of the element is required by the surrounding expression.
 
-For a single-dimensional array:
+For a single-dimensional array, when the element's value is required:
 
 ```
     {{Expression}}
@@ -770,7 +799,17 @@ For a single-dimensional array:
     ; Stack: <element: element_type>
 ```
 
-For a multidimensional array:
+For a single-dimensional array, when the address of the element is required:
+
+```
+    {{Expression}}
+    ; Stack: <array_ptr: ptr>
+    
+    {{array Index}}
+    ; Stack: <element_ptr: ptr>
+```
+
+For a multidimensional array, when the element's value is required:
 
 ```
     {{Expression}}
@@ -791,10 +830,83 @@ For a multidimensional array:
     ; Stack <element: element_type>
 ```
 
+For a multidimensional array, when the address of the element is required:
+
+```
+    {{Expression}}
+    ; Stack: <array_ptr: ptr>
+    
+    {{Array Index}}
+    load ptr
+    ; Stack: <nested_array_ptr: ptr>
+    
+    {{Array Index}}
+    load ptr
+    ; Stack: <nested_array_ptr: ptr>
+    
+    ...
+    
+    {{Array Index}}
+    ; Stack <element_ptr: ptr>
+```
+
 Where:
 - `[element_type]` is the assembly type of the array element.
 
 The `load ptr` instructions between indexes retrieve the nested array pointer stored in the selected element.
+
+#### 5.8.2 Increment and Decrement
+
+The increment and decrement operators require the address of the value being modified.
+
+The inner expression is therefore generated to produce its address rather than its value. The current value is then loaded from the address, incremented, or decremented, and stored back at the same address.
+
+The increment operator is generated as:
+
+```
+    ; Stack: <ptr: ptr>
+    
+    dup #0
+    load [type]
+    ; Stack: <ptr: ptr, value: type>
+    
+    swap
+    dup #1
+    ; Stack: <value: type, ptr: ptr, value: type>
+    
+    push [type] #1
+    add
+    ; Stack: <value: type, ptr: ptr, value + 1: type>
+    
+    store
+    ; Stack: <value: type>
+```
+
+The decrement operator is generated as:
+
+```
+    ; Stack: <ptr: ptr>
+    
+    dup #0
+    load [type]
+    ; Stack: <ptr: ptr, value: type>
+    
+    swap
+    dup #1
+    ; Stack: <value: type, ptr: ptr, value: type>
+    
+    push [type] #1
+    sub
+    ; Stack: <value: type, ptr: ptr, value - 1: type>
+    
+    store
+    ; Stack: <value: type>
+```
+
+The old value remains on the operand stack because postfix increment and decrement produce the value before the update.
+
+Where:
+- `[type]` is the resulting assembly type of the inner expression.
 
 ### 5.9 Function Calls
 

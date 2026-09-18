@@ -1,6 +1,7 @@
 #ifndef SVM_AST_H
 #define SVM_AST_H
 #include <memory>
+#include <utility>
 #include <vector>
 #include <string>
 #include <variant>
@@ -91,6 +92,13 @@ namespace ast {
             ASTNode(line, column), unaryOperator(unaryOperator) {}
     };
 
+    struct IncrementDecrementOperatorInfo final : ASTNode {
+        const compiler::IncrementDecrementOperator incDecOperator;
+
+        IncrementDecrementOperatorInfo(const uint32_t line, const uint16_t column, const compiler::IncrementDecrementOperator incDecOperator) :
+            ASTNode(line, column), incDecOperator(incDecOperator) {}
+    };
+
     struct Identifier final : ASTNode {
         const std::string name;
 
@@ -172,14 +180,17 @@ namespace ast {
     struct ExprPostfix final : Expr {
         const std::unique_ptr<Expr> expression;
         const std::vector<std::unique_ptr<Index>> indices;
+        const std::optional<std::unique_ptr<IncrementDecrementOperatorInfo>> incDecOperator;
 
         ExprPostfix(const uint32_t line,
                     const uint16_t column,
                     std::unique_ptr<Expr> expression,
-                    std::vector<std::unique_ptr<Index>>& indices) :
+                    std::vector<std::unique_ptr<Index>>& indices,
+                    std::optional<std::unique_ptr<IncrementDecrementOperatorInfo>>& incDecOperator) :
             Expr(line, column),
             expression(std::move(expression)),
-            indices(std::move(indices)) {}
+            indices(std::move(indices)),
+            incDecOperator(std::move(incDecOperator)) {}
     };
 
     struct ExprUnaryOperator final : Expr {

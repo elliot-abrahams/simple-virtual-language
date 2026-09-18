@@ -2,6 +2,7 @@ NOTATION:
 
 [] → optional (zero or one)
 {} → zero or more
+() → grouping
 |  → alternative
 
 
@@ -62,7 +63,7 @@ unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
                             | LBR, type, RBR, unary_expression
                             | postfix_expression ;
 
-postfix_expression          = primary_expression, { index } ;
+postfix_expression          = primary_expression, { index }, [ INCREMENT | DECREMENT ] ;
 
 primary_expression          = function_call
                             | IDENTIFIER
@@ -112,7 +113,9 @@ RSQBR                       = "]"
 
 EQUAL                       = "="
 PLUS                        = "+"
+INCREMENT                   = "++"
 MINUS                       = "-"
+DECREMENT                   = "--"
 MULTIPLY                    = "*"
 DIVIDE                      = "/"
 INTEGER_DIVIDE              = "//"
