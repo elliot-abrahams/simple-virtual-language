@@ -111,6 +111,7 @@ std::string compiler::AssemblyEmitter::emitOpcode(const Opcode& opcode) {
         case Opcode::STOREB: return "storeB";
         case Opcode::STOREG: return "storeG";
         case Opcode::STOREL: return "storeL";
+        case Opcode::ADDRL: return "addrL";
         case Opcode::ALLOC: return "alloc";
         case Opcode::FREE: return "free";
 

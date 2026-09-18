@@ -31,6 +31,7 @@ namespace compiler {
         STOREB,
         STOREG,
         STOREL,
+        ADDRL,
         ALLOC,
         FREE,
 
