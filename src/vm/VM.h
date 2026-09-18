@@ -66,6 +66,7 @@ private:
     void executeStoreB();
     void executeStoreG();
     void executeStoreL();
+    void executeAddrL();
     void executeAlloc();
     void executeFree();
 
@@ -100,6 +101,8 @@ private:
 
     uint8_t fetchType();
     uint64_t fetchOperand(const uint8_t type);
+
+    uint32_t calculateAndValidateFrameAddress(const uint64_t rawFrameSlotOffset);
 
     void validateFrameAccess(const int32_t offset);
 

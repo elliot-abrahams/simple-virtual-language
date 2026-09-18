@@ -49,49 +49,50 @@
 | storeB   | 0x0d   | 1     |                          | [addr, value] → []                                | Stores the least significant byte of `<val>` in memory.                         |
 | storeG   | 0x0e   | 5     | `<label>`                | [value] → []                                      | Stores a value in the statically allocated data region.                         |
 | storeL   | 0x0f   | 5     | `<immediate>`            | [value] → []                                      | Stores a value in the current stack frame.                                      |
-| alloc    | 0x10   | 1     |                          | [size] → [addr]                                   | Allocates a block of heap memory and pushes its address onto the operand stack. |
-| free     | 0x11   | 1     |                          | [addr] → []                                       | Deallocates a previously allocated heap block starting from `<addr>`.           |
+| addrL    | 0x10   | 5     | `<immediate>`            | [] → [addr]                                       | Pushes the address of a slot in the current stack frame onto the operand stack. |
+| alloc    | 0x11   | 1     |                          | [size] → [addr]                                   | Allocates a block of heap memory and pushes its address onto the operand stack. |
+| free     | 0x12   | 1     |                          | [addr] → []                                       | Deallocates a previously allocated heap block starting from `<addr>`.           |
 
 ### 1.4 Control
 
 | Mnemonic | Opcode | Bytes | Operands       | operand stack [bottom ... top] → [bottom ... top] | Description                                                       |
 |----------|--------|-------|----------------|---------------------------------------------------|-------------------------------------------------------------------|
-| native   | 0x12   | 2     | `<native_ref>` | [...] → [...] (depends on the invoked function)   | Invokes a native function provided by the VM.                     |
-| call     | 0x13   | 5     | `<label>`      | [arg1, arg2, ..., argn] → []                      | Calls a method and creates a new stack frame.                     |
-| ret      | 0x14   | 1     |                |                                                   | Returns from the current method and destroys current stack frame. |
-| jmp      | 0x15   | 5     | `<label>`      |                                                   | Jump to `<label>` unconditionally.                                |
-| jez      | 0x16   | 5     | `<label>`      | [value] → []                                      | Jump to `<label>` if value is zero                                |
-| jnz      | 0x17   | 5     | `<label>`      | [value] → []                                      | Jump to `<label>` if value is not zero.                           |
+| native   | 0x13   | 2     | `<native_ref>` | [...] → [...] (depends on the invoked function)   | Invokes a native function provided by the VM.                     |
+| call     | 0x14   | 5     | `<label>`      | [arg1, arg2, ..., argn] → []                      | Calls a method and creates a new stack frame.                     |
+| ret      | 0x15   | 1     |                |                                                   | Returns from the current method and destroys current stack frame. |
+| jmp      | 0x16   | 5     | `<label>`      |                                                   | Jump to `<label>` unconditionally.                                |
+| jez      | 0x17   | 5     | `<label>`      | [value] → []                                      | Jump to `<label>` if value is zero                                |
+| jnz      | 0x18   | 5     | `<label>`      | [value] → []                                      | Jump to `<label>` if value is not zero.                           |
 
 ### 1.5 Arithmetic
 
 | Mnemonic | Opcode | Bytes | Operands | Operand Stack [bottom ... top] → [bottom ... top] | Description                                                  |
 |----------|--------|-------|----------|---------------------------------------------------|--------------------------------------------------------------|
-| add      | 0x18   | 1     |          | [x, y] → [x + y]                                  | Adds two values.                                             |
-| sub      | 0x19   | 1     |          | [x, y] → [x - y]                                  | Subtracts one value from another.                            |
-| mul      | 0x1a   | 1     |          | [x, y] → [x * y]                                  | Multiplies two values.                                       |
-| div      | 0x1b   | 1     |          | [x, y] → [x / y]                                  | Divides one value by another.                                |
-| mod      | 0x1c   | 1     |          | [x, y] → [x % y]                                  | Computes the remainder of a division.                        |
-| not      | 0x1d   | 1     |          | [x] → [~x]                                        | Performs a bitwise NOT.                                      |
-| and      | 0x1e   | 1     |          | [x, y] → [x & y]                                  | Performs a bitwise AND.                                      |
-| orr      | 0x1f   | 1     |          | [x, y] → [x \| y]                                 | Performs a bitwise OR.                                       |                                             
-| xor      | 0x20   | 1     |          | [x, y] → [x ^ y]                                  | Performs a bitwise XOR.                                      |
-| shl      | 0x21   | 1     |          | [x, y] → [x << y]                                 | Performs a logical left shift.                               |
-| shr      | 0x22   | 1     |          | [x, y] → [x >> y]                                 | Performs a logical right shift.                              |
-| sar      | 0x23   | 1     |          | [x, y] → [x >> y]                                 | Performs an arithmetic right shift.                          |                                                                   |
-| ceq      | 0x24   | 1     |          | [x, y] → [x == y]                                 | Compares two values for equality.                            |
-| cne      | 0x25   | 1     |          | [x, y] → [x != y]                                 | Compares two values for inequality.                          |
-| clt      | 0x26   | 1     |          | [x, y] → [x < y]                                  | Tests whether one value is less than another.                |
-| cle      | 0x27   | 1     |          | [x, y] → [x <= y]                                 | Tests whether one value is less than or equal to another.    |
-| cgt      | 0x28   | 1     |          | [x, y] → [x > y]                                  | Tests whether one value is greater than another.             |
-| cge      | 0x29   | 1     |          | [x, y] → [x >= y]                                 | Tests whether one value is greater than or equal to another. |
+| add      | 0x19   | 1     |          | [x, y] → [x + y]                                  | Adds two values.                                             |
+| sub      | 0x1a   | 1     |          | [x, y] → [x - y]                                  | Subtracts one value from another.                            |
+| mul      | 0x1b   | 1     |          | [x, y] → [x * y]                                  | Multiplies two values.                                       |
+| div      | 0x1c   | 1     |          | [x, y] → [x / y]                                  | Divides one value by another.                                |
+| mod      | 0x1d   | 1     |          | [x, y] → [x % y]                                  | Computes the remainder of a division.                        |
+| not      | 0x1e   | 1     |          | [x] → [~x]                                        | Performs a bitwise NOT.                                      |
+| and      | 0x1f   | 1     |          | [x, y] → [x & y]                                  | Performs a bitwise AND.                                      |
+| orr      | 0x20   | 1     |          | [x, y] → [x \| y]                                 | Performs a bitwise OR.                                       |                                             
+| xor      | 0x21   | 1     |          | [x, y] → [x ^ y]                                  | Performs a bitwise XOR.                                      |
+| shl      | 0x22   | 1     |          | [x, y] → [x << y]                                 | Performs a logical left shift.                               |
+| shr      | 0x23   | 1     |          | [x, y] → [x >> y]                                 | Performs a logical right shift.                              |
+| sar      | 0x24   | 1     |          | [x, y] → [x >> y]                                 | Performs an arithmetic right shift.                          |                                                                   |
+| ceq      | 0x25   | 1     |          | [x, y] → [x == y]                                 | Compares two values for equality.                            |
+| cne      | 0x26   | 1     |          | [x, y] → [x != y]                                 | Compares two values for inequality.                          |
+| clt      | 0x27   | 1     |          | [x, y] → [x < y]                                  | Tests whether one value is less than another.                |
+| cle      | 0x28   | 1     |          | [x, y] → [x <= y]                                 | Tests whether one value is less than or equal to another.    |
+| cgt      | 0x29   | 1     |          | [x, y] → [x > y]                                  | Tests whether one value is greater than another.             |
+| cge      | 0x2a   | 1     |          | [x, y] → [x >= y]                                 | Tests whether one value is greater than or equal to another. |
 
 ### 1.6 Other
 
 | Mnemonic | Opcode | Bytes | Operands      | Operand Stack [bottom ... top] → [bottom ... top] | Description                                                                                  |
 |----------|--------|-------|---------------|---------------------------------------------------|----------------------------------------------------------------------------------------------|
-| conv     | 0x2a   | 2     | `<type>`      | [x] → [y]                                         | Converts the top value of the operand stack to the specified `<type>` and pushes the result. |
-| throw    | 0x2b   | 2     | `<error_ref>` | [...] → [] (depends on the error thrown)          | Throws a runtime error.                                                                      |
+| conv     | 0x2b   | 2     | `<type>`      | [x] → [y]                                         | Converts the top value of the operand stack to the specified `<type>` and pushes the result. |
+| throw    | 0x2c   | 2     | `<error_ref>` | [...] → [] (depends on the error thrown)          | Throws a runtime error.                                                                      |
 
 ---
 

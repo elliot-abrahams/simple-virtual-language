@@ -110,7 +110,8 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
         instruction == "rotD" ||
         instruction == "rotU" ||
         instruction == "loadL" ||
-        instruction == "storeL"
+        instruction == "storeL" ||
+        instruction == "addrL"
     ) {
         auto optionalImmediate = this->parseImmediate();
         if (!optionalImmediate.has_value()) {
@@ -169,8 +170,8 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
         }
     }
 
-    // check immediate of loadL / storeL is non-zero
-    if (instruction == "loadL" || instruction == "storeL") {
+    // check immediate of loadL / storeL / addrL is non-zero
+    if (instruction == "loadL" || instruction == "storeL" || instruction == "addrL") {
         if (immediate.value == "#0") {
             printError(std::string("immediate value #0 is invalid for " + instruction), lineNumber);
             return std::nullopt;
@@ -212,6 +213,7 @@ std::optional<AssemblerDefs::Statement> assembler::Parser::parseInstruction() {
     if (instruction == "storeB") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "storeG") return AssemblerDefs::Instruction{instruction, {labelRef}, lineNumber};
     if (instruction == "storeL") return AssemblerDefs::Instruction{instruction, {immediate}, lineNumber};
+    if (instruction == "addrL") return AssemblerDefs::Instruction{instruction, {immediate}, lineNumber};
     if (instruction == "alloc") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
     if (instruction == "free") return AssemblerDefs::Instruction{instruction, {}, lineNumber};
 

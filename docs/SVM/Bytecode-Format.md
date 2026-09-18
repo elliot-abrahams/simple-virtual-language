@@ -321,7 +321,7 @@ native exit
 
 Is encoded as:
 ```
-0x12 0x00
+0x13 0x00
 ```
 
 ### 5.7 Error Reference Encoding
@@ -341,7 +341,7 @@ throw array_index_out_of_range
 
 Is encoded as:
 ```
-0x2B 0x00
+0x2C 0x00
 ```
 
 ---
@@ -603,7 +603,7 @@ A code address is calculated from a bytecode file index by subtracting `8`.
 
 The `jmp` instruction has the following layout
 ```
-[0x13] [4-byte address]
+[0x16] [4-byte address]
 ```
 
 The following assembly code:
@@ -616,7 +616,7 @@ Is encoded as:
 ```
 VM Address: Bytecode Index: Bytecode
     
-0x00: 08: 0x15    ; jmp
+0x00: 08: 0x16    ; jmp
 0x01: 09: 0x00    ; $loop
 0x02: 10: 0x00
 0x03: 11: 0x00
@@ -678,7 +678,7 @@ A method address is calculated from the bytecode file index by subtracting `20`.
 
 The `call` instruction has the following layout:
 ```
-[0x13] [4-byte address]
+[0x14] [4-byte address]
 ```
 
 The following assembly code:
@@ -696,7 +696,7 @@ Is encoded as:
 ```
 VM Address: Bytecode Index: Bytecode
     
-0x00: 08: 0x13    ; call
+0x00: 08: 0x14    ; call
 0x01: 09: 0x05    ; $foo
 0x02: 10: 0x00
 0x03: 11: 0x00
@@ -706,7 +706,7 @@ VM Address: Bytecode Index: Bytecode
 0x07: 15: 0x00
 0x08: 16: 0x00
 0x09: 17: 0x00
-0x0A: 18: 0x14    ; ret
+0x0A: 18: 0x15    ; ret
 ```
 
 ### 9.9 Complete Example
@@ -774,7 +774,7 @@ VM Address: Bytecode Index: Bytecode
 0x0C: 32: 0x00
 0x0D: 33: 0x00
 0x0E: 34: 0x00
-0x0F: 35: 0x13    ; call
+0x0F: 35: 0x14    ; call
 0x10: 36: 0x1D    ; $add
 0x11: 37: 0x00
 0x12: 38: 0x00
@@ -785,7 +785,7 @@ VM Address: Bytecode Index: Bytecode
 0x17: 43: 0x00
 0x18: 44: 0x00
 0x19: 45: 0x00
-0x1A: 46: 0x12    ; native
+0x1A: 46: 0x13    ; native
 0x1B: 47: 0x03    ; print_str
 0x1C: 48: 0x01    ; halt
 0x1D: 49: 0x02    ; args 2
@@ -805,8 +805,8 @@ VM Address: Bytecode Index: Bytecode
 0x2B: 63: 0x00 
 0x2C: 64: 0x00
 0x2D: 65: 0x00
-0x2E: 66: 0x18    ; add
-0x2F: 67: 0x14    ; ret
+0x2E: 66: 0x19    ; add
+0x2F: 67: 0x15    ; ret
 0x30: 68: 0x02    ; i64
 0x31: 69: 0xC8    ; #200
 0x32: 70: 0x00 
@@ -884,7 +884,7 @@ VM Address: Bytecode Index: Bytecode
       17: 0x00
       18: 0x00
       19: 0x00
-0x00: 20: 0x13    ; call
+0x00: 20: 0x14    ; call
 0x01: 21: 0x06    ; $push_5
 0x02: 22: 0x00
 0x03: 23: 0x00
@@ -901,7 +901,7 @@ VM Address: Bytecode Index: Bytecode
 0x0E: 34: 0x00    
 0x0F: 35: 0xA0
 0x10: 36: 0x40
-0x11: 37: 0x14    ; ret 
+0x11: 37: 0x15    ; ret 
 0x12: 38: 0x00    ; source.sourceId
 0x13: 39: 0x00
 0x14: 40: 0x07    ; length of source.path

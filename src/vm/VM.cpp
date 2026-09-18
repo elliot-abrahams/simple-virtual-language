@@ -348,6 +348,7 @@ void VM::execute() {
         case ISA::Opcode::STOREB: this->executeStoreB(); break; // storeB
         case ISA::Opcode::STOREG: this->executeStoreG(); break; // storeG
         case ISA::Opcode::STOREL: this->executeStoreL(); break; // storeL
+        case ISA::Opcode::ADDRL: this->executeAddrL(); break;
         case ISA::Opcode::ALLOC: this->executeAlloc(); break; // alloc
         case ISA::Opcode::FREE: this->executeFree(); break; // free
 
@@ -526,14 +527,8 @@ void VM::executeLoadG() {
 void VM::executeLoadL() {
     const uint8_t type = this->fetchType(); // read type operand
     const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
-    const int32_t offset = TypeConversions::rawToI32(rawOffset);
 
-    // enforce offset is within current frame's bounds
-    this->validateFrameAccess(offset);
-
-    const uint32_t address = this->FP + (static_cast<int32_t>(offset) * 8); // calculate address from given operand immediate
-
-    const uint64_t local = this->memoryManager.read64(&this->runtimeError, MemoryAccessScope::CALL_STACK, address); // get local value from memory
+    const uint64_t local = this->memoryManager.read64(&this->runtimeError, MemoryAccessScope::CALL_STACK, this->calculateAndValidateFrameAddress(rawOffset)); // get local value from memory
 
     this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(type), local); // push local value onto operand stack
 }
@@ -581,16 +576,15 @@ void VM::executeStoreG() {
 
 void VM::executeStoreL() {
     const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
-    const int32_t offset = TypeConversions::rawToI32(rawOffset);
-
-    // enforce offset is within current frame's bounds
-    this->validateFrameAccess(offset);
 
     const Value value = this->operandStack.pop(&this->runtimeError); // pop value from operand stack to store
 
-    const uint32_t address = this->FP + (static_cast<int32_t>(offset) * 8); // calculate address from given operand immediate
+    this->memoryManager.write64(&this->runtimeError, MemoryAccessScope::CALL_STACK, this->calculateAndValidateFrameAddress(rawOffset), value.rawValue); // store value from operand stack to memory
+}
 
-    this->memoryManager.write64(&this->runtimeError, MemoryAccessScope::CALL_STACK, address, value.rawValue); // store value from operand stack to memory
+void VM::executeAddrL() {
+    const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
+    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(ISA::Type::PTR), this->calculateAndValidateFrameAddress(rawOffset));
 }
 
 void VM::executeAlloc() {
@@ -1030,7 +1024,10 @@ void VM::checkType(const std::string &instructionMnemonic, const std::vector<uin
     }
 }
 
-void VM::validateFrameAccess(const int32_t offset) {
+uint32_t VM::calculateAndValidateFrameAddress(const uint64_t rawFrameSlotOffset) {
+    const int32_t frameSlotOffset = TypeConversions::rawToI32(rawFrameSlotOffset);
+
+    // enforce offset is within current frame's bounds
     const FrameInfo* frameInfo = this->callStackManager.peekFrameInfo();
     if (frameInfo == nullptr) {
         this->runtimeError = RuntimeError{
@@ -1039,8 +1036,8 @@ void VM::validateFrameAccess(const int32_t offset) {
         };
         throw std::runtime_error{""};
     }
-    if (offset > 0 && offset > static_cast<int32_t>(frameInfo->numberOfArguments) ||
-        -offset > static_cast<int32_t>(frameInfo->numberOfLocals)
+    if (frameSlotOffset > 0 && frameSlotOffset > static_cast<int32_t>(frameInfo->numberOfArguments) ||
+        -frameSlotOffset > static_cast<int32_t>(frameInfo->numberOfLocals)
     ) {
         this->runtimeError = RuntimeError{
             RuntimeErrorType::INTERNAL,
@@ -1048,4 +1045,7 @@ void VM::validateFrameAccess(const int32_t offset) {
         };
         throw std::runtime_error{""};
     }
+
+    // calculate address of frame slot using the given offset
+    return this->FP + (static_cast<int32_t>(frameSlotOffset) * 8);
 }

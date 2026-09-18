@@ -40,6 +40,7 @@ set(VM_Sources
         vm/control/NativeTests.cpp
 
         vm/memory/AllocFreeTests.cpp
+        vm/memory/AddrL.cpp
         vm/memory/LoadLStoreLTests.cpp
         vm/memory/LoadGStoreGTests.cpp
         vm/memory/LoadBStoreBTests.cpp

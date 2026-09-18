@@ -23,8 +23,9 @@
     - [3.6 storeB](#36-storeb)
     - [3.7 storeG](#37-storeg)
     - [3.8 storeL](#38-storel)
-    - [3.9 alloc](#39-alloc)
-    - [3.10 free](#310-free)
+    - [3.9 addrL](#39-addrl)
+    - [3.10 alloc](#310-alloc)
+    - [3.11 free](#311-free)
 - [4. Control](#4-control)
     - [4.1 native](#41-native)
     - [4.2 call](#42-call)
@@ -295,7 +296,26 @@
 
 ---
 
-### 3.9 alloc
+### 3.9 addrL
+
+**Operands:** `<immediate>`
+
+**Stack:** `[] → [addr]`
+
+**Semantics:**
+- Pushes the address of a lost in the current stack frame onto the operand stack
+- `<immediate>` identifies the stack frame slot
+- Positive values of `<immediate>` identify method arguments
+- Negative values of `<immediate>` identify local variables
+
+**Type Rules:**
+- `<immediate>` is a 4 byte value
+- `<immediate>` must identify a slot within the current stack frame.
+- `addr` has type `ptr`
+
+---
+
+### 3.10 alloc
 
 **Stack:** `[size] → [addr]`
 
@@ -315,7 +335,7 @@ See Section 6.2 of `Execution-Model.md` for more details on allocation behaviour
 
 ---
 
-### 3.10 free
+### 3.11 free
 
 **Stack:** `[addr] → []`
 
