@@ -474,24 +474,31 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
     if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
         const auto exprTypeResult = this->checkExprType(scope, *unaryOperator->expr);
 
-        if (exprTypeResult.type.type == Type::BOOL) {
-            if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::MINUS ||
-                unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::PLUS) {
+        // if operator is logical not and (type is not bool or type is an array)
+        // OR
+        // if operator is not logical not and (types is not numeric)
+        if ((unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT &&
+                        (exprTypeResult.type.type != Type::BOOL || exprTypeResult.type.dimension > 0)) ||
+             (unaryOperator->unaryOperatorInfo->unaryOperator != UnaryOperator::LOGICAL_NOT && !exprTypeResult.type.isNumeric())
+        ) {
+            throw TypeError(
+                this->path->string(),
+                unaryOperator->line,
+                unaryOperator->column,
+                "cannot apply operator'" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type '" + typeToString(exprTypeResult.type) + "'"
+            );
+        }
 
+        // if operator is increment or decrement and expression is not assignable
+        if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ||
+            unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT
+        ) {
+            if (exprTypeResult.category != ExprCategory::ASSIGNABLE) {
                 throw TypeError(
                     this->path->string(),
-                    unaryOperator->line,
-                    unaryOperator->column,
-                    "cannot apply '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type 'bool'"
-                );
-            }
-        } else { // expr is not of type bool
-            if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT) {
-                throw TypeError(
-                    this->path->string(),
-                    unaryOperator->line,
-                    unaryOperator->column,
-                    "cannot apply '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type '" + typeToString(exprTypeResult.type) + "'"
+                    unaryOperator->unaryOperatorInfo->line,
+                    unaryOperator->unaryOperatorInfo->column,
+                    "cannot apply operator '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to a non-assignable expression"
                 );
             }
         }
@@ -531,14 +538,14 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
                 this->processIndex(scope, *index);
             }
         }
-        if (exprPostfix->incDecOperator != nullptr) {
+        if (exprPostfix->unaryOperatorInfo != nullptr) {
             // throw error if
             // expr type is not numeric
             // OR
             // expression is not assignable
 
             if (exprTypeResult.category != ExprCategory::ASSIGNABLE || !exprTypeResult.type.isNumeric()) {
-                std::string errorMessage = "cannot apply operator '" + incrementDecrementOperatorToString(exprPostfix->incDecOperator->incDecOperator) + "' ";
+                std::string errorMessage = "cannot apply operator '" + unaryOperatorToString(exprPostfix->unaryOperatorInfo->unaryOperator) + "' ";
                 errorMessage += exprTypeResult.category != ExprCategory::ASSIGNABLE || exprTypeResult.type.dimension > 0 ? "to a non-assignable expression" : "to type '" + typeToString(exprPostfix->expression->resultingType) + "'";
 
                 throw TypeError(
@@ -560,7 +567,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         return SemanticExprResult{
             exprTypeResult.type,
             exprTypeResult.category == ExprCategory::ASSIGNABLE &&
-                exprPostfix->incDecOperator == nullptr &&
+                exprPostfix->unaryOperatorInfo == nullptr &&
                 exprTypeResult.type.dimension == 0
             ? ExprCategory::ASSIGNABLE : ExprCategory::VALUE
         };
@@ -865,13 +872,8 @@ std::string compiler::SemanticAnalyser::unaryOperatorToString(const UnaryOperato
         case UnaryOperator::PLUS: return "+";
         case UnaryOperator::MINUS: return "-";
         case UnaryOperator::LOGICAL_NOT: return "!";
-    }
-}
-
-std::string compiler::SemanticAnalyser::incrementDecrementOperatorToString(const IncrementDecrementOperator &incDecOperator) {
-    switch (incDecOperator) {
-        case IncrementDecrementOperator::INCREMENT: return "++";
-        case IncrementDecrementOperator::DECREMENT: return "--";
+        case UnaryOperator::INCREMENT: return "++";
+        case UnaryOperator::DECREMENT: return "--";
     }
 }
 

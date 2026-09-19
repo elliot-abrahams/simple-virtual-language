@@ -209,7 +209,6 @@ TEST(STM_VAR_DECL, INT_IDENTIFIER_EXPR) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(

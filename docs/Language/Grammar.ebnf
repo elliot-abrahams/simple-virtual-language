@@ -61,7 +61,7 @@ multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | INTEGER_
 
 unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
                             | LBR, type, RBR, unary_expression
-                            | postfix_expression ;
+                            | [ INCREMENT | DECREMENT ], postfix_expression ;
 
 postfix_expression          = primary_expression, { index }, [ INCREMENT | DECREMENT ] ;
 

@@ -57,7 +57,6 @@ namespace compiler {
         static std::string typeToString(const SemanticType& type);
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
-        static std::string incrementDecrementOperatorToString(const IncrementDecrementOperator& incDecOperator);
 
         void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const SemanticType& leftType, const SemanticType& rightType) const;
         void checkType(const std::vector<SemanticType>& expectedTypes, const SemanticType& actualType, const size_t line, const size_t column) const;

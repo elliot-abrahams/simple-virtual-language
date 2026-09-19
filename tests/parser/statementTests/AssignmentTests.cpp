@@ -9,13 +9,12 @@ TEST(STM_ASSIGN, INT_LIT) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
             std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
-            expectedIndices,
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedIntegerLiteral>(
                 5
@@ -33,13 +32,12 @@ TEST(STM_ASSIGN, FLOAT_LIT) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
             std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
-            expectedIndices,
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedFloatLiteral>(
                 5.5f
@@ -57,13 +55,12 @@ TEST(STM_ASSIGN, BOOL_LIT) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
             std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
-            expectedIndices,
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedBoolLiteral>(
                 false
@@ -81,14 +78,13 @@ TEST(STM_ASSIGN, IDENTIFIER_EXPR) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
 
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
             std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
-            expectedIndices,
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("y")
@@ -106,13 +102,12 @@ TEST(STM_ASSIGN, UNARY_EXPR) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
             std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
-            expectedIndices,
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::MINUS,
@@ -133,13 +128,12 @@ TEST(STM_ASSIGN, BINARY_EXPR) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
             std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
-            expectedIndices,
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::PLUS,
@@ -160,13 +154,12 @@ TEST(STM_ASSIGN, FUNCTION_CALL_EXPR) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
             std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
-            expectedIndices,
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedFunctionCallExpr>(
                 "foo",
@@ -186,13 +179,12 @@ TEST(STM_ASSIGN, PAREN) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
     expectedStatements.push_back(
         std::make_unique<ExpectedAssignment>(
             std::make_unique<ExpectedIdentifier>(
                 "x"
             ),
-            expectedIndices,
+            noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedIntegerLiteral>(5)
         )

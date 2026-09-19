@@ -31,7 +31,6 @@ TEST(STM_WHILE, WHILE_BINARY_EXPR) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedStm>> expectedWhileBlock;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
 
     expectedStatements.push_back(
         std::make_unique<ExpectedWhileStm>(

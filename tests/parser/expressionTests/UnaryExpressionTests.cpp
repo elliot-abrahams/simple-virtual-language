@@ -32,7 +32,6 @@ TEST(EXPR_UNARY, VARIABLE_PLUS) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
@@ -103,7 +102,6 @@ TEST(EXPR_UNARY, VARIABLE_MINUS) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
@@ -151,7 +149,6 @@ TEST(EXPR_UNARY, VARIABLE_LOGICAL_NOT) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
@@ -214,6 +211,54 @@ TEST(EXPR_UNARY, INT_NESTED_SIGN) {
                         compiler::UnaryOperator::MINUS,
                         std::make_unique<ExpectedIntegerLiteral>(5)
                     )
+                )
+            )
+        )
+    );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_UNARY, INCREMENT) {
+    const auto testCode = R"(
+        int x = ++y;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::Type::INT, 0),
+            "x",
+            std::make_unique<ExpectedUnaryExpr>(
+                compiler::UnaryOperator::INCREMENT,
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("y")
+                )
+            )
+        )
+    );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_UNARY, DECREMENT) {
+    const auto testCode = R"(
+        int x = --y;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::Type::INT, 0),
+            "x",
+            std::make_unique<ExpectedUnaryExpr>(
+                compiler::UnaryOperator::DECREMENT,
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("y")
                 )
             )
         )

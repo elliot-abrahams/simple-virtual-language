@@ -397,17 +397,40 @@ The resulting type is always `bool`.
 
 The unary operators are:
 
-| Operator | Purpose       |
-|----------|---------------|
-| `+`      | Positive sign |
-| `-`      | Negative sign |
-| `!`      | Logical NOT   |
+| Operator | Purpose          |
+|----------|------------------|
+| `+`      | Positive sign    |
+| `-`      | Negative sign    |
+| `!`      | Logical NOT      |
+| `++`     | Prefix increment |
+| `--`     | Prefix decrement |
 
 The `+` and `-` operators can only be applied to numeric operands.
 
 The `!` operator can only be applied to a `bool` operand.
 
-The resulting type of unary expressions is the same as the operand's type.
+The prefix increment operator `++` increments the value of its base expression by `1`.
+
+The prefix decrement operator `--` decrements the value of its base expression by `1`.
+
+For prefix increment and decrement, the base expression must be an assignable expression.
+
+An expression is assignable when it refers to a variable or array element.
+
+The `++` and `--` operators may only be applied to numeric types.
+
+The `++` and `--` operators produce the value of the base expression after the increment or decrement has been performed.
+
+For example:
+
+```
+int x = 5;
+
+int a = ++x; // x = 6, a = 6
+int b = --x; // x = 5, b = 5
+```
+
+The resulting type of unary expressions is the resulting type of its base expression.
 
 ### 5.8 Postfix Expressions
 
@@ -423,6 +446,8 @@ The index is evaluated at runtime and must be within the bounds of the array. An
 
 Each index reduces the resulting array type by one dimension.
 
+The resulting type of this expression is the type of the selected element.
+
 For example:
 
 ```
@@ -430,20 +455,21 @@ int[][] arr = new int[2][3];
 
 arr[0]      // has type int[]
 arr[0][1]   // has type int 
-
 ```
 
 #### 5.8.2 Increment and Decrement
 
-The postfix increment operator `++` increments the value of an assignable expression by `1`.
+The postfix increment operator `++` increments the value of its base expression by `1`.
 
-The postfix decrement operator `--` decrements the value if an assignable expression by `1`.
+The postfix decrement operator `--` decrements the value of its base expression by `1`.
+
+For postfix increment and decrement, the base expression must be an assignable expression.
 
 An expression is assignable when it refers to a variable or array element.
 
 The `++` and `--` operators may only be applied to numeric types.
 
-The `++` and `--` operators produce the value of the inner expression before the increment or decrement is performed.
+The `++` and `--` operators produce the value of the base expression before the increment or decrement is performed.
 
 For example:
 
@@ -454,7 +480,7 @@ int a = x++;  // a is 5, x is 6
 int b = x--;  // b is 6, x is 5
 ```
 
-The resulting type of a postfix increment or decrement expression is the type of its inner expression.
+The resulting type of a postfix increment or decrement expression is the resulting type of its base expression.
 
 ### 5.9 Function Calls
 

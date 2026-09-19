@@ -41,7 +41,6 @@ TEST(EXPR_NEW, TWO_INDICES_WITH_NO_INITIALISER) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedIndex>> arrayDimension;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
@@ -79,7 +78,6 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_EMPTY_INITIALISER) {
     std::vector<std::unique_ptr<ExpectedIndex>> arrayDimension;
     std::vector<ArrayInitialiserElement> arrayInitialiserElements;
     std::unique_ptr<ExpectedArrayInitialiser> expectedArrayInitialisers = std::make_unique<ExpectedArrayInitialiser>(std::move(arrayInitialiserElements));
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
@@ -112,7 +110,6 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_INITIALISER) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedIndex>> arrayDimension;
     std::vector<ArrayInitialiserElement> arrayInitialiserElements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
@@ -155,7 +152,6 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_NESTED_INITIALISER) {
     std::vector<ArrayInitialiserElement> arrayInitialiser;
     std::vector<ArrayInitialiserElement> nestedArrayInitialiser1;
     std::vector<ArrayInitialiserElement> nestedArrayInitialiser2;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(

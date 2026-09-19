@@ -645,7 +645,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
 /*
  *  unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
  *                              | LBR, type, RBR, unary_expression
- *                              | postfix_expression ;
+ *                              | [ INCREMENT | DECREMENT ], postfix_expression ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
     const auto token = this->tokeniser->tok();
@@ -708,6 +708,39 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
             std::move(expression)
         );
     }
+
+    if (token.kind == TokenKind::INCREMENT || token.kind == TokenKind::DECREMENT) {
+        std::unique_ptr<ast::UnaryOperatorInfo> unaryOperatorInfo = nullptr;
+
+        switch (token.kind) {
+            case TokenKind::INCREMENT: {
+                unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
+                    token.line,
+                    token.column,
+                    UnaryOperator::INCREMENT
+                );
+                break;
+            }
+            case TokenKind::DECREMENT: {
+                unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
+                    token.line,
+                    token.column,
+                    UnaryOperator::DECREMENT
+                );
+                break;
+            }
+        }
+        this->tokeniser->next();
+        auto expression = this->parseExprPostfix();
+
+        return std::make_unique<ast::ExprUnaryOperator>(
+            unaryOperatorInfo->line,
+            unaryOperatorInfo->column,
+            std::move(unaryOperatorInfo),
+            std::move(expression)
+        );
+    }
+
     return this->parseExprPostfix();
 }
 
@@ -1059,7 +1092,7 @@ std::unique_ptr<ast::AssignmentOperatorInfo> compiler::Parser::parseAssignmentOp
 /*
  * [ INCREMENT | DECREMENT ]
  */
-std::unique_ptr<ast::IncrementDecrementOperatorInfo> compiler::Parser::parseIncrementDecrementOperator() const {
+std::unique_ptr<ast::UnaryOperatorInfo> compiler::Parser::parseIncrementDecrementOperator() const {
     const auto token = this->tokeniser->tok();
     if (token.kind != TokenKind::INCREMENT && token.kind != TokenKind::DECREMENT) {
         return nullptr;
@@ -1067,10 +1100,10 @@ std::unique_ptr<ast::IncrementDecrementOperatorInfo> compiler::Parser::parseIncr
 
     this->tokeniser->next();
 
-    return std::make_unique<ast::IncrementDecrementOperatorInfo>(
+    return std::make_unique<ast::UnaryOperatorInfo>(
         token.line,
         token.column,
-        token.kind == TokenKind::INCREMENT ? IncrementDecrementOperator::INCREMENT : IncrementDecrementOperator::DECREMENT
+        token.kind == TokenKind::INCREMENT ? UnaryOperator::INCREMENT : UnaryOperator::DECREMENT
     );
 }
 

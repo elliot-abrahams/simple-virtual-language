@@ -216,7 +216,7 @@ TEST(EXPR_POSTFIX, INCREMENT) {
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
                 noExpectedIndices,
-                compiler::IncrementDecrementOperator::INCREMENT
+                compiler::UnaryOperator::INCREMENT
             )
         )
     );
@@ -242,7 +242,7 @@ TEST(EXPR_POSTFIX, DECREMENT) {
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
                 noExpectedIndices,
-                compiler::IncrementDecrementOperator::DECREMENT
+                compiler::UnaryOperator::DECREMENT
             )
         )
     );
@@ -275,7 +275,7 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX_INCREMENT) {
                     std::make_unique<ExpectedIdentifier>("y")
                 ),
                 indices,
-                compiler::IncrementDecrementOperator::INCREMENT
+                compiler::UnaryOperator::INCREMENT
             )
         )
     );

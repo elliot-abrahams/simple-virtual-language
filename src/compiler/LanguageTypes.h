@@ -52,10 +52,8 @@ namespace compiler {
     enum class UnaryOperator {
         PLUS,
         MINUS,
-        LOGICAL_NOT
-    };
+        LOGICAL_NOT,
 
-    enum class IncrementDecrementOperator {
         INCREMENT,
         DECREMENT
     };

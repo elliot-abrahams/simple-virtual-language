@@ -55,7 +55,7 @@ namespace compiler {
         std::unique_ptr<ast::Expr> parseLiteral() const;
 
         std::unique_ptr<ast::AssignmentOperatorInfo> parseAssignmentOperator() const;
-        std::unique_ptr<ast::IncrementDecrementOperatorInfo> parseIncrementDecrementOperator() const;
+        std::unique_ptr<ast::UnaryOperatorInfo> parseIncrementDecrementOperator() const;
 
         static bool isTypeToken(const TokenKind& kind);
 
