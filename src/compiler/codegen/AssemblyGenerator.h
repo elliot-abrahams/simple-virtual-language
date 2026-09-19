@@ -73,7 +73,7 @@ namespace compiler {
         void emit(const AssemblyItem& assemblyItem);
 
         static AssemblyType toAssemblyType(const SemanticType& type);
-        DataValue getDefaultNumber(const SemanticType& type);
+        Number getNumber(const SemanticType& type, const uint64_t value);
 
         std::vector<AssemblyItem> assembly;
         SymbolTable* symbolTable;

@@ -741,7 +741,7 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
              this->emit(Instruction{Opcode::PUSH,
                 {
                     toAssemblyType(expr.expr->resultingType),
-                    Immediate{std::get<Number>(getDefaultNumber(expr.expr->resultingType))}
+                    Immediate{getNumber(expr.expr->resultingType, 0)}
                 },
                  SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
              });
@@ -850,7 +850,7 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
         this->emit(Instruction{Opcode::PUSH,
             {
                 toAssemblyType(expr.resultingType),
-                Immediate{Number{static_cast<uint32_t>(1)}}
+                Immediate{getNumber(expr.resultingType, 1)}
             },
             SourceLocation{0, expr.incDecOperator->line, expr.incDecOperator->column}
         });
@@ -1623,7 +1623,7 @@ void compiler::AssemblyGenerator::compileGlobalVariables() {
         this->emit(DataDef{
             it->first,
             toAssemblyType(SemanticType{it->second.type, it->second.dimension}),
-            getDefaultNumber(SemanticType{it->second.type, it->second.dimension})
+            getNumber(SemanticType{it->second.type, it->second.dimension}, 0)
         });
     }
 }
@@ -1659,11 +1659,11 @@ compiler::AssemblyType compiler::AssemblyGenerator::toAssemblyType(const Semanti
     }
 }
 
-compiler::DataValue compiler::AssemblyGenerator::getDefaultNumber(const SemanticType& type) {
-    if (type.dimension > 0) return Number{static_cast<uint32_t>(0)};
+compiler::Number compiler::AssemblyGenerator::getNumber(const SemanticType& type, const uint64_t value) {
+    if (type.dimension > 0) return Number{static_cast<uint32_t>(value)};
     switch (type.type) {
-        case Type::INT: return Number{static_cast<uint32_t>(0)};
-        case Type::FLOAT: return Number{0.0f};
-        case Type::BOOL: return Number{static_cast<uint32_t>(0)};
+        case Type::INT: return Number{static_cast<int32_t>(value)};
+        case Type::FLOAT: return Number{static_cast<float>(value)};
+        case Type::BOOL: return Number{static_cast<uint32_t>(value)};
     }
 }

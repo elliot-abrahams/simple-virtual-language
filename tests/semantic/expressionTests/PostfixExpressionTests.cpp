@@ -138,7 +138,7 @@ TEST(EXPR_POSTFIX, NEW_EXPRESSION_ONE_INDEX) {
     );
 }
 
-TEST(EXPR_POSTFIX, INCREMENT_VARIABLE) {
+TEST(EXPR_POSTFIX, INCREMENT_INT_VARIABLE) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
             int x = 5;
@@ -147,11 +147,29 @@ TEST(EXPR_POSTFIX, INCREMENT_VARIABLE) {
     );
 }
 
-TEST(EXPR_POSTFIX, DECREMENT_VARIABLE) {
+TEST(EXPR_POSTFIX, DECREMENT_INT_VARIABLE) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
             int x = 5;
             int y = x--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INCREMENT_FLOAT_VARIABLE) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            float x = 5.5f;
+            float y = x++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, DECREMENT_FLOAT_VARIABLE) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            float x = 5.5f;
+            float y = x--;
         )"
     );
 }
@@ -315,15 +333,15 @@ TEST(EXPR_POSTFIX, INVALID_INCREMENT_INT) {
     );
 }
 
-TEST(EXPR_POSTFIX, INVALID_INCREMENT_FLOAT) {
-    ASSERT_THROWS_TYPE_ERROR(
-            "float x = 5.5f++;"
-    );
-}
-
 TEST(EXPR_POSTFIX, INVALID_DECREMENT_INT) {
     ASSERT_THROWS_TYPE_ERROR(
         "int x = 5--;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_FLOAT) {
+    ASSERT_THROWS_TYPE_ERROR(
+            "float x = 5.5f++;"
     );
 }
 
@@ -342,6 +360,24 @@ TEST(EXPR_POSTFIX, INVALID_INCREMENT_BOOL) {
 TEST(EXPR_POSTFIX, INVALID_DECREMENT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR(
         "int x = true--;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_BOOL_VARIABLE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            bool y = x++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_BOOL_VARIABLE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            bool y = x--;
+        )"
     );
 }
 

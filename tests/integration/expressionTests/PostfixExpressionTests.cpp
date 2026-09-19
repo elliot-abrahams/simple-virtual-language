@@ -3,7 +3,7 @@
 
 using namespace integrationTests;
 
-TEST(EXPR_POSTFIX, INCREMENT_VARIABLE) {
+TEST(EXPR_POSTFIX, INCREMENT_INT_VARIABLE) {
     ASSERT_OUTPUT_EQ(
         R"(
             int x = 5;
@@ -14,7 +14,7 @@ TEST(EXPR_POSTFIX, INCREMENT_VARIABLE) {
     );
 }
 
-TEST(EXPR_POSTFIX, DECREMENT_VARIABLE) {
+TEST(EXPR_POSTFIX, DECREMENT_INT_VARIABLE) {
     ASSERT_OUTPUT_EQ(
         R"(
             int x = 5;
@@ -22,6 +22,28 @@ TEST(EXPR_POSTFIX, DECREMENT_VARIABLE) {
             print(x);
         )",
         "54"
+    );
+}
+
+TEST(EXPR_POSTFIX, INCREMENT_FLOAT_VARIABLE) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            float x = 5.5f;
+            print(x++);
+            print(x);
+        )",
+        "5.56.5"
+    );
+}
+
+TEST(EXPR_POSTFIX, DECREMENT_FLOAT_VARIABLE) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            float x = 5.5f;
+            print(x--);
+            print(x);
+        )",
+        "5.54.5"
     );
 }
 
