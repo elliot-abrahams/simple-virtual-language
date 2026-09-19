@@ -361,7 +361,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
 void compiler::SemanticAnalyser::processIndex(Scope* scope, const ast::Index& index) {
     const auto indexType = this->checkExprType(scope, *index.index).type;
 
-    if (indexType.type != Type::INT) {
+    if (indexType.type != Type::INT || indexType.isArray()) {
         throw TypeError(
             this->path->string(),
             index.index->line,
@@ -408,6 +408,10 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
     if (auto* binaryOperator = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
         const SemanticType leftType = this->checkExprType(scope, *binaryOperator->left).type;
         const SemanticType rightType = this->checkExprType(scope, *binaryOperator->right).type;
+
+        if (leftType.isArray() || rightType.isArray()) {
+            this->throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+        }
 
         switch (binaryOperator->binaryOperatorInfo->binaryOperator) {
             case BinaryOperator::PLUS:
@@ -478,7 +482,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         // OR
         // if operator is not logical not and (types is not numeric)
         if ((unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT &&
-                        (exprTypeResult.type.type != Type::BOOL || exprTypeResult.type.dimension > 0)) ||
+                        (exprTypeResult.type.type != Type::BOOL || exprTypeResult.type.isArray())) ||
              (unaryOperator->unaryOperatorInfo->unaryOperator != UnaryOperator::LOGICAL_NOT && !exprTypeResult.type.isNumeric())
         ) {
             throw TypeError(
@@ -512,7 +516,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
 
         if (exprPostfix->indices.size() > 0) {
 
-            if (exprTypeResult.type.dimension == 0) {
+            if (!exprTypeResult.type.isArray()) {
                 throw TypeError(
                     this->path->string(),
                     exprPostfix->line,
@@ -546,7 +550,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
 
             if (exprTypeResult.category != ExprCategory::ASSIGNABLE || !exprTypeResult.type.isNumeric()) {
                 std::string errorMessage = "cannot apply operator '" + unaryOperatorToString(exprPostfix->unaryOperatorInfo->unaryOperator) + "' ";
-                errorMessage += exprTypeResult.category != ExprCategory::ASSIGNABLE || exprTypeResult.type.dimension > 0 ? "to a non-assignable expression" : "to type '" + typeToString(exprPostfix->expression->resultingType) + "'";
+                errorMessage += exprTypeResult.category != ExprCategory::ASSIGNABLE || exprTypeResult.type.isArray() ? "to a non-assignable expression" : "to type '" + typeToString(exprPostfix->expression->resultingType) + "'";
 
                 throw TypeError(
                     this->path->string(),
@@ -568,7 +572,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
             exprTypeResult.type,
             exprTypeResult.category == ExprCategory::ASSIGNABLE &&
                 exprPostfix->unaryOperatorInfo == nullptr &&
-                exprTypeResult.type.dimension == 0
+                !exprTypeResult.type.isArray()
             ? ExprCategory::ASSIGNABLE : ExprCategory::VALUE
         };
     }
@@ -676,7 +680,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         }
 
         // if expr's dimension is larger than zero
-        if (exprTypeResult.type.dimension > 0) {
+        if (exprTypeResult.type.isArray()) {
             throw TypeError(
                 this->path->string(),
                 castExpression->typeInfo->line,
@@ -714,7 +718,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         functionCall->resultingType = functionSymbol->returnType;
         return SemanticExprResult{
             functionSymbol->returnType,
-            functionSymbol->returnType.dimension > 0 ? ExprCategory::ASSIGNABLE : ExprCategory::VALUE
+            functionSymbol->returnType.isArray() ? ExprCategory::ASSIGNABLE : ExprCategory::VALUE
         };
     }
     throw std::runtime_error("Unknown expression type");

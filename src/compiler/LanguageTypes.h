@@ -21,7 +21,11 @@ namespace compiler {
         }
 
         bool isNumeric() const {
-            return dimension == 0 && type == Type::INT || type == Type::FLOAT;
+            return !this->isArray() && type == Type::INT || type == Type::FLOAT;
+        }
+
+        bool isArray() const {
+            return dimension > 0;
         }
     };
 

@@ -116,3 +116,23 @@ TEST(EXPR_UNARY, DECREMENT_ARRAY_ELEMENT) {
         "0-1-1"
     );
 }
+
+TEST(EXPR_UNARY, INCREMENT_FUNCTION_CALL_RETURNING_ARRAY) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            int[] foo() { return new int[3]; }
+            print(++foo()[0]);
+        )",
+        "1"
+    );
+}
+
+TEST(EXPR_UNARY, DECREMENT_FUNCTION_CALL_RETURNING_ARRAY) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            int[] foo() { return new int[3]; }
+            print(--foo()[0]);
+        )",
+        "-1"
+    );
+}

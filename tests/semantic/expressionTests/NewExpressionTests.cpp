@@ -71,6 +71,15 @@ TEST(EXPR_NEW, INVALID_BOOL_ARRAY_DIMENSION) {
     ASSERT_THROWS_TYPE_ERROR("int[] x = new int[false];");
 }
 
+TEST(EXPR_NEW, INVALID_INT_ARRAY_ARRAY_DIMENSION) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] x = new int[1];
+            int[] arr = new int[x];
+        )"
+    );
+}
+
 TEST(EXPR_NEW, INVALID_INT_ARRAY_WITH_BOOL_INITIALISER) {
     ASSERT_THROWS_TYPE_ERROR("int[] x = new int[3]{true, false};");
 }

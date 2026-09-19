@@ -159,11 +159,21 @@ TEST(EXPR_FUNCTION_CALL, INVALID_RETURN_WRONG_ARRAY_TYPE) {
     );
 }
 
-TEST(EXPR_FUNCTION_CALL, INVALID_RETURN_WRONG_ARRAY_DIMENSION) {
+TEST(EXPR_FUNCTION_CALL, INVALID_RETURN_WRONG_ARRAY_DIMENSION_ONE) {
     ASSERT_THROWS_TYPE_ERROR(
         R"(
             int[] foo() {
                 return new int[3][3];
+            }
+        )"
+    );
+}
+
+TEST(EXPR_FUNCTION_CALL, INVALID_RETURN_WRONG_ARRAY_DIMENSION_TWO) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] foo() {
+                return 5;
             }
         )"
     );
@@ -179,7 +189,7 @@ TEST(EXPR_FUNCTION_CALL, INVALID_VOID_RETURN_TYPE_USED_IN_EXPR) {
     );
 }
 
-TEST(EXPR_FUNCTION_CALL, INVALID_WRONG_ARGUMENT_TYPE) {
+TEST(EXPR_FUNCTION_CALL, INVALID_WRONG_ARGUMENT_TYPE_ONE) {
     ASSERT_THROWS_SEMANTIC_ERROR(
         R"(
             int foo(int a) {
@@ -187,6 +197,30 @@ TEST(EXPR_FUNCTION_CALL, INVALID_WRONG_ARGUMENT_TYPE) {
             }
 
             int x = foo(true);
+        )"
+    );
+}
+
+TEST(EXPR_FUNCTION_CALL, INVALID_WRONG_ARGUMENT_TYPE_TWO) {
+    ASSERT_THROWS_SEMANTIC_ERROR(
+        R"(
+            int foo(int a) {
+                return 5;
+            }
+            int[] arr = new int[3];
+            int x = foo(arr);
+        )"
+    );
+}
+
+TEST(EXPR_FUNCTION_CALL, INVALID_WRONG_ARGUMENT_TYPE_THREE) {
+    ASSERT_THROWS_SEMANTIC_ERROR(
+        R"(
+            int foo(int[] a) {
+                return a[0];
+            }
+
+            int x = foo(4);
         )"
     );
 }

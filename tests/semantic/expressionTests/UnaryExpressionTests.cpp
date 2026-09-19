@@ -103,6 +103,33 @@ TEST(EXPR_UNARY, INVALID_FLOAT_LOGICAL_NOT) {
     ASSERT_THROWS_TYPE_ERROR("bool x = !5.5f;");
 }
 
+TEST(EXPR_UNARY, INVALID_INT_ARRAY_PLUS) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            int x = +arr;
+        )"
+    );
+}
+
+TEST(EXPR_UNARY, INVALID_INT_ARRAY_MINUS) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            int x = -arr;
+        )"
+    );
+}
+
+TEST(EXPR_UNARY, INVALID_BOOL_ARRAY_LOGICAL_NOT) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool[] arr = new bool[3];
+            int x = !arr;
+        )"
+    );
+}
+
 TEST(EXPR_UNARY, INCREMENT_INT) {
     ASSERT_THROWS_TYPE_ERROR(
         "int x = ++5;"

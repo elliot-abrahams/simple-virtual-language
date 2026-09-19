@@ -1120,7 +1120,7 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
     // [root_array_ptr]
     // [ptr           ]
 
-    if (typeAtDepth.dimension == 0) {
+    if (!typeAtDepth.isArray()) {
         return;
     }
 
@@ -1569,7 +1569,7 @@ void compiler::AssemblyGenerator::compileFunctionCall(Scope* scope, const ast::F
 void compiler::AssemblyGenerator::compileExprIdentifier(Scope* scope, const ast::ExprIdentifier& exprIdentifier, const ExprResult exprResult) {
     const auto symbol = scope->lookup(exprIdentifier.identifier->name).value();
 
-    if (exprResult == ExprResult::VALUE || exprIdentifier.resultingType.dimension > 0) {
+    if (exprResult == ExprResult::VALUE || exprIdentifier.resultingType.isArray()) {
         if (symbol->isGlobal()) {
             // push global variable onto stack
             this->emit(Instruction{Opcode::LOADG,
@@ -1703,7 +1703,7 @@ void compiler::AssemblyGenerator::emit(const AssemblyItem& assemblyItem) {
 }
 
 compiler::AssemblyType compiler::AssemblyGenerator::toAssemblyType(const SemanticType& type) {
-    if (type.dimension > 0) return AssemblyType::PTR;
+    if (type.isArray()) return AssemblyType::PTR;
     switch (type.type) {
         case Type::INT: return AssemblyType::I32;
         case Type::FLOAT: return AssemblyType::F32;
@@ -1712,7 +1712,7 @@ compiler::AssemblyType compiler::AssemblyGenerator::toAssemblyType(const Semanti
 }
 
 compiler::Number compiler::AssemblyGenerator::getNumber(const SemanticType& type, const uint64_t value) {
-    if (type.dimension > 0) return Number{static_cast<uint32_t>(value)};
+    if (type.isArray()) return Number{static_cast<uint32_t>(value)};
     switch (type.type) {
         case Type::INT: return Number{static_cast<int32_t>(value)};
         case Type::FLOAT: return Number{static_cast<float>(value)};

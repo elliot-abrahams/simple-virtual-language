@@ -211,12 +211,30 @@ TEST(EXPR_BINARY, INVALID_PLUS_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("int x = 1 + true;");
 }
 
+TEST(EXPR_BINARY, INVALID_PLUS_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            int x = 1 + arr;
+        )"
+    );
+}
+
 TEST(EXPR_BINARY, INVALID_MINUS_BOOL_INT) {
     ASSERT_THROWS_TYPE_ERROR("int x = true - 1;");
 }
 
 TEST(EXPR_BINARY, INVALID_MINUS_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("int x = 1 - true;");
+}
+
+TEST(EXPR_BINARY, INVALID_MINUS_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            int x = 1 - arr;
+        )"
+    );
 }
 
 TEST(EXPR_BINARY, INVALID_MULTIPLY_BOOL_INT) {
@@ -227,12 +245,30 @@ TEST(EXPR_BINARY, INVALID_MULTIPLY_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("int x = 1 * true;");
 }
 
+TEST(EXPR_BINARY, INVALID_MULTIPLY_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            int x = 1 * arr;
+        )"
+    );
+}
+
 TEST(EXPR_BINARY, INVALID_DIVIDE_BOOL_INT) {
     ASSERT_THROWS_TYPE_ERROR("int x = true / 1;");
 }
 
 TEST(EXPR_BINARY, INVALID_DIVIDE_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("int x = 1 / true;");
+}
+
+TEST(EXPR_BINARY, INVALID_DIVIDE_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            float x = 1 / arr;
+        )"
+    );
 }
 
 TEST(EXPR_BINARY, INVALID_INTEGER_DIVIDE_BOOL_INT) {
@@ -243,12 +279,30 @@ TEST(EXPR_BINARY, INVALID_INTEGER_DIVIDE_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("int x = 1 // true;");
 }
 
+TEST(EXPR_BINARY, INVALID_INTEGER_DIVIDE_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            int x = 1 // arr;
+        )"
+    );
+}
+
 TEST(EXPR_BINARY, INVALID_MODULO_BOOL_INT) {
     ASSERT_THROWS_TYPE_ERROR("int x = true % 1;");
 }
 
 TEST(EXPR_BINARY, INVALID_MODULO_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("int x = 1 % true;");
+}
+
+TEST(EXPR_BINARY, INVALID_MODULO_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            int x = 1 % arr;
+        )"
+    );
 }
 
 TEST(EXPR_BINARY, INVALID_LOGICAL_OR_INT_BOOL) {
@@ -267,6 +321,15 @@ TEST(EXPR_BINARY, INVALID_LOGICAL_OR_BOOL_FLOAT) {
     ASSERT_THROWS_TYPE_ERROR("bool x = true || 5.5f;");
 }
 
+TEST(EXPR_BINARY, INVALID_LOGICAL_OR_BOOL_BOOL_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool[] arr = new bool[3];
+            bool x = 1 || arr;
+        )"
+    );
+}
+
 TEST(EXPR_BINARY, INVALID_LOGICAL_AND_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("bool x = 5 && true;");
 }
@@ -283,12 +346,30 @@ TEST(EXPR_BINARY, INVALID_LOGICAL_AND_BOOL_FLOAT) {
     ASSERT_THROWS_TYPE_ERROR("bool x = true && 5.5f;");
 }
 
+TEST(EXPR_BINARY, INVALID_LOGICAL_AND_BOOL_BOOL_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool[] arr = new bool[3];
+            bool x = 1 && arr;
+        )"
+    );
+}
+
 TEST(EXPR_BINARY, INVALID_EQUAL_BOOL_INT) {
     ASSERT_THROWS_TYPE_ERROR("bool x = false == 10;");
 }
 
 TEST(EXPR_BINARY, INVALID_EQUAL_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("bool x = 10 == false;");
+}
+
+TEST(EXPR_BINARY, INVALID_EQUAL_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            bool x = 1 == arr;
+        )"
+    );
 }
 
 TEST(EXPR_BINARY, INVALID_NOT_EQUAL_BOOL_INT) {
@@ -299,12 +380,30 @@ TEST(EXPR_BINARY, INVALID_NOT_EQUAL_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("bool x = 10 != false;");
 }
 
+TEST(EXPR_BINARY, INVALID_NOT_EQUAL_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            bool x = 1 != arr;
+        )"
+    );
+}
+
 TEST(EXPR_BINARY, INVALID_LESS_THAN_BOOL_INT) {
     ASSERT_THROWS_TYPE_ERROR("bool x = false < 10;");
 }
 
 TEST(EXPR_BINARY, INVALID_LESS_THAN_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("bool x = 10 < false;");
+}
+
+TEST(EXPR_BINARY, INVALID_LESS_THAN_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            bool x = 1 < arr;
+        )"
+    );
 }
 
 TEST(EXPR_BINARY, INVALID_LESS_THAN_OR_EQUAL_TO_BOOL_INT) {
@@ -315,6 +414,15 @@ TEST(EXPR_BINARY, INVALID_LESS_THAN_OR_EQUAL_TO_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("bool x = 10 <= false;");
 }
 
+TEST(EXPR_BINARY, INVALID_LESS_THAN_OR_EQUAL_TO_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            bool x = 1 <= arr;
+        )"
+    );
+}
+
 TEST(EXPR_BINARY, INVALID_GREATER_THAN_BOOL_INT) {
     ASSERT_THROWS_TYPE_ERROR("bool x = false > 10;");
 }
@@ -323,10 +431,28 @@ TEST(EXPR_BINARY, INVALID_GREATER_THAN_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("bool x = 10 > false;");
 }
 
+TEST(EXPR_BINARY, INVALID_GREATER_THAN_TO_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            bool x = 1 > arr;
+        )"
+    );
+}
+
 TEST(EXPR_BINARY, INVALID_GREATER_THAN_OR_EQUAL_TO_BOOL_INT) {
     ASSERT_THROWS_TYPE_ERROR("bool x = false >= 10;");
 }
 
 TEST(EXPR_BINARY, INVALID_GREATER_THAN_OR_EQUAL_TO_INT_BOOL) {
     ASSERT_THROWS_TYPE_ERROR("bool x = 10 >= false;");
+}
+
+TEST(EXPR_BINARY, INVALID_GREATER_THAN_OR_EQUAL_TO_INT_INT_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            bool x = 1 >= arr;
+        )"
+    );
 }
