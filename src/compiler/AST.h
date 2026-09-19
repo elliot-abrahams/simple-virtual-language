@@ -180,13 +180,13 @@ namespace ast {
     struct ExprPostfix final : Expr {
         const std::unique_ptr<Expr> expression;
         const std::vector<std::unique_ptr<Index>> indices;
-        const std::optional<std::unique_ptr<IncrementDecrementOperatorInfo>> incDecOperator;
+        const std::unique_ptr<IncrementDecrementOperatorInfo> incDecOperator;
 
         ExprPostfix(const uint32_t line,
                     const uint16_t column,
                     std::unique_ptr<Expr> expression,
                     std::vector<std::unique_ptr<Index>>& indices,
-                    std::optional<std::unique_ptr<IncrementDecrementOperatorInfo>>& incDecOperator) :
+                    std::unique_ptr<IncrementDecrementOperatorInfo> incDecOperator) :
             Expr(line, column),
             expression(std::move(expression)),
             indices(std::move(indices)),

@@ -724,7 +724,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
 
     auto incDecOp = this->parseIncrementDecrementOperator();
 
-    if (indices.empty() && !incDecOp.has_value()) {
+    if (indices.empty() && incDecOp == nullptr) {
         return expression;
     }
 
@@ -733,7 +733,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
         expression->column,
         std::move(expression),
         indices,
-        incDecOp
+        std::move(incDecOp)
     );
 }
 
@@ -1059,10 +1059,10 @@ std::unique_ptr<ast::AssignmentOperatorInfo> compiler::Parser::parseAssignmentOp
 /*
  * [ INCREMENT | DECREMENT ]
  */
-std::optional<std::unique_ptr<ast::IncrementDecrementOperatorInfo>> compiler::Parser::parseIncrementDecrementOperator() const {
+std::unique_ptr<ast::IncrementDecrementOperatorInfo> compiler::Parser::parseIncrementDecrementOperator() const {
     const auto token = this->tokeniser->tok();
     if (token.kind != TokenKind::INCREMENT && token.kind != TokenKind::DECREMENT) {
-        return std::nullopt;
+        return nullptr;
     }
 
     this->tokeniser->next();

@@ -800,7 +800,7 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
 }
 
 void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr, const ExprResult exprResult) {
-    this->compileExpr(scope, *expr.expression, expr.incDecOperator.has_value() ? ExprResult::PTR : ExprResult::VALUE);
+    this->compileExpr(scope, *expr.expression, expr.incDecOperator != nullptr ? ExprResult::PTR : ExprResult::VALUE);
 
     if (expr.indices.size() > 0) {
         for (size_t i = 0; i < expr.indices.size(); ++i) {
@@ -815,7 +815,7 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
         }
     }
 
-    if (!expr.incDecOperator.has_value()) {
+    if (expr.incDecOperator == nullptr) {
         this->emit(Instruction{Opcode::LOAD,
             {toAssemblyType(expr.resultingType)},
             SourceLocation{0, expr.expression->line, expr.expression->column}
@@ -825,25 +825,25 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
 
         this->emit(Instruction{Opcode::DUP,
             {Immediate{Number{static_cast<uint32_t>(0)}}},
-            SourceLocation{0, expr.incDecOperator.value()->line, expr.incDecOperator.value()->column}
+            SourceLocation{0, expr.incDecOperator->line, expr.incDecOperator->column}
         });
         // [ptr, ptr]
 
         this->emit(Instruction{Opcode::LOAD,
             {toAssemblyType(expr.resultingType)},
-            SourceLocation{0, expr.incDecOperator.value()->line, expr.incDecOperator.value()->column}
+            SourceLocation{0, expr.incDecOperator->line, expr.incDecOperator->column}
         });
         // [ptr, val]
 
         this->emit(Instruction{Opcode::SWAP,
             {},
-            SourceLocation{0, expr.incDecOperator.value()->line, expr.incDecOperator.value()->column}
+            SourceLocation{0, expr.incDecOperator->line, expr.incDecOperator->column}
         });
         // [val, ptr]
 
         this->emit(Instruction{Opcode::DUP,
             {Immediate{Number{static_cast<uint32_t>(1)}}},
-            SourceLocation{0, expr.incDecOperator.value()->line, expr.incDecOperator.value()->column}
+            SourceLocation{0, expr.incDecOperator->line, expr.incDecOperator->column}
         });
         // [val, ptr, val]
 
@@ -852,21 +852,21 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
                 toAssemblyType(expr.resultingType),
                 Immediate{Number{static_cast<uint32_t>(1)}}
             },
-            SourceLocation{0, expr.incDecOperator.value()->line, expr.incDecOperator.value()->column}
+            SourceLocation{0, expr.incDecOperator->line, expr.incDecOperator->column}
         });
         // [val, ptr, val, 1]
 
-        const auto arithmeticOpcode = expr.incDecOperator.value()->incDecOperator == IncrementDecrementOperator::INCREMENT ? Opcode::ADD : Opcode::SUB;
+        const auto arithmeticOpcode = expr.incDecOperator->incDecOperator == IncrementDecrementOperator::INCREMENT ? Opcode::ADD : Opcode::SUB;
 
         this->emit(Instruction{arithmeticOpcode,
             {},
-            SourceLocation{0, expr.incDecOperator.value()->line, expr.incDecOperator.value()->column}
+            SourceLocation{0, expr.incDecOperator->line, expr.incDecOperator->column}
         });
         // [val, ptr, val +/- 1]
 
         this->emit(Instruction{Opcode::STORE,
             {},
-            SourceLocation{0, expr.incDecOperator.value()->line, expr.incDecOperator.value()->column}
+            SourceLocation{0, expr.incDecOperator->line, expr.incDecOperator->column}
         });
         // [val]
     }

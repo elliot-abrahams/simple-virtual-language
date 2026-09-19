@@ -327,10 +327,10 @@ namespace parserTest {
                 ASSERT_EXPR_EQ(*expectedExprPostfix->expectedIndices[i]->index, *actualExprPostfix->indices[i]->index);
             }
 
-            ASSERT_EQ(expectedExprPostfix->expectedIncDecOperator.has_value(), actualExprPostfix->incDecOperator.has_value());
+            ASSERT_EQ(expectedExprPostfix->expectedIncDecOperator.has_value(), actualExprPostfix->incDecOperator != nullptr);
 
             if (expectedExprPostfix->expectedIncDecOperator.has_value()) {
-                ASSERT_EQ(expectedExprPostfix->expectedIncDecOperator.value(), actualExprPostfix->incDecOperator.value()->incDecOperator);
+                ASSERT_EQ(expectedExprPostfix->expectedIncDecOperator.value(), actualExprPostfix->incDecOperator->incDecOperator);
             }
 
         } else if (auto* expectedCastExpression = dynamic_cast<const ExpectedCastExpr*>(&expectedExpr)) {

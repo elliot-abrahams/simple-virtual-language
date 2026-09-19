@@ -531,14 +531,14 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
                 this->processIndex(scope, *index);
             }
         }
-        if (exprPostfix->incDecOperator.has_value()) {
+        if (exprPostfix->incDecOperator != nullptr) {
             // throw error if
             // expr type is not numeric
             // OR
             // expression is not assignable
 
             if (exprTypeResult.category != ExprCategory::ASSIGNABLE || !exprTypeResult.type.isNumeric()) {
-                std::string errorMessage = "cannot apply operator '" + incrementDecrementOperatorToString(exprPostfix->incDecOperator.value()->incDecOperator) + "' ";
+                std::string errorMessage = "cannot apply operator '" + incrementDecrementOperatorToString(exprPostfix->incDecOperator->incDecOperator) + "' ";
                 errorMessage += exprTypeResult.category != ExprCategory::ASSIGNABLE || exprTypeResult.type.dimension > 0 ? "to a non-assignable expression" : "to type '" + typeToString(exprPostfix->expression->resultingType) + "'";
 
                 throw TypeError(
@@ -560,7 +560,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         return SemanticExprResult{
             exprTypeResult.type,
             exprTypeResult.category == ExprCategory::ASSIGNABLE &&
-                !exprPostfix->incDecOperator.has_value() &&
+                exprPostfix->incDecOperator == nullptr &&
                 exprTypeResult.type.dimension == 0
             ? ExprCategory::ASSIGNABLE : ExprCategory::VALUE
         };
