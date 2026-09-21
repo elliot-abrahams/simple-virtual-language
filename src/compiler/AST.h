@@ -215,6 +215,16 @@ namespace ast {
             right(std::move(right)) {}
     };
 
+    struct ExpressionStatement final : Stm {
+        const std::unique_ptr<Expr> expression;
+
+        ExpressionStatement(const uint32_t line,
+                    const uint16_t column,
+                    std::unique_ptr<Expr> expression) :
+            Stm(line, column),
+            expression(std::move(expression)) {}
+    };
+
     struct ReturnStm final : Stm {
         const std::unique_ptr<Expr> returnExpression;
         mutable compiler::FunctionSymbol* functionSymbol = nullptr;
@@ -224,16 +234,6 @@ namespace ast {
                 std::unique_ptr<Expr> returnExpression) :
             Stm(line, column),
             returnExpression(std::move(returnExpression)) {}
-    };
-
-    struct FunctionCallStm final : Stm {
-        const std::unique_ptr<FunctionCall> functionCall;
-
-        FunctionCallStm(const uint32_t line,
-                    const uint16_t column,
-                    std::unique_ptr<FunctionCall> functionCall) :
-            Stm(line, column),
-            functionCall(std::move(functionCall)) {}
     };
 
     struct BreakStm final : Stm {

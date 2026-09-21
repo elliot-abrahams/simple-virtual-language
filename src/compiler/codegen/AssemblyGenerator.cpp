@@ -276,11 +276,11 @@ void compiler::AssemblyGenerator::compileStm(Scope* scope, const ast::Stm& stm) 
     else if (auto* breakStm = dynamic_cast<const ast::BreakStm*>(&stm)) {
         this->compileBreakStatement(scope, *breakStm);
     }
-    else if (auto* functionCallStm = dynamic_cast<const ast::FunctionCallStm*>(&stm)) {
-        this->compileFunctionCallStatement(scope, *functionCallStm);
-    }
     else if (auto* returnStm = dynamic_cast<const ast::ReturnStm*>(&stm)) {
         this->compileReturnStatement(scope, *returnStm);
+    }
+    else if (auto* expressionStatement = dynamic_cast<const ast::ExpressionStatement*>(&stm)) {
+        this->compileExpressionStatement(scope, *expressionStatement);
     }
 }
 
@@ -491,10 +491,6 @@ void compiler::AssemblyGenerator::compileBreakStatement(Scope* scope, const ast:
     });
 }
 
-void compiler::AssemblyGenerator::compileFunctionCallStatement(Scope* scope, const ast::FunctionCallStm &functionCallStm) {
-    this->compileFunctionCall(scope, *functionCallStm.functionCall, ExprResult::VALUE);
-}
-
 void compiler::AssemblyGenerator::compileReturnStatement(Scope* scope, const ast::ReturnStm &returnStm) {
     if (returnStm.returnExpression != nullptr) {
         this->compileExpr(scope, *returnStm.returnExpression, ExprResult::VALUE);
@@ -505,6 +501,19 @@ void compiler::AssemblyGenerator::compileReturnStatement(Scope* scope, const ast
         {},
         SourceLocation{0, returnStm.line, returnStm.column}
     });
+}
+
+void compiler::AssemblyGenerator::compileExpressionStatement(Scope *scope, const ast::ExpressionStatement &expressionStm) {
+    if (auto* functionCallExpr = dynamic_cast<const ast::FunctionCall*>(expressionStm.expression.get())) {
+        this->compileFunctionCall(scope, *functionCallExpr);
+
+    } else if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(expressionStm.expression.get())) {
+        this->compileUnaryExpr(scope, *unaryExpr, ExprResult::DISCARD);
+
+    } else { // POSTFIX EXPR
+        auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(expressionStm.expression.get());
+        this->compilePostfixExpr(scope, *postfixExpr, ExprResult::DISCARD);
+    }
 }
 
 void compiler::AssemblyGenerator::compileExpr(Scope* scope, const ast::Expr& expr, const ExprResult exprResult) {
@@ -524,7 +533,7 @@ void compiler::AssemblyGenerator::compileExpr(Scope* scope, const ast::Expr& exp
         this->compileBinaryExpr(scope, *binaryExpr);
     }
     if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
-        this->compileUnaryExpr(scope, *unaryExpr);
+        this->compileUnaryExpr(scope, *unaryExpr, ExprResult::VALUE);
     }
     if (auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
         this->compilePostfixExpr(scope, *postfixExpr, exprResult);
@@ -533,7 +542,7 @@ void compiler::AssemblyGenerator::compileExpr(Scope* scope, const ast::Expr& exp
         this->compileCastExpr(scope, *castExpr);
     }
     if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
-        this->compileFunctionCall(scope, *functionCall, exprResult);
+        this->compileFunctionCall(scope, *functionCall);
     }
     if (auto* newExpr = dynamic_cast<const ast::ExprNew*>(&expr)) {
         this->compileNewExpr(scope, *newExpr);
@@ -730,7 +739,7 @@ void compiler::AssemblyGenerator::compileBinaryOperator(const ast::BinaryOperato
 }
 
 
-void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr) {
+void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr, const ExprResult exprResult) {
     switch (expr.unaryOperatorInfo->unaryOperator) {
         case UnaryOperator::PLUS: {
             this->compileExpr(scope, *expr.expr, ExprResult::VALUE);
@@ -831,22 +840,27 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
             });
             // [ptr, val +/- 1]
 
-            this->emit(Instruction{Opcode::DUP,
-                {Immediate{Number{static_cast<uint32_t>(0)}}},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
-            });
-            // [ptr, val +/- 1, val +/- 1]
+            if (exprResult != ExprResult::DISCARD) {
+                this->emit(Instruction{Opcode::DUP,
+                    {Immediate{Number{static_cast<uint32_t>(0)}}},
+                    SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                });
+                // [ptr, val +/- 1, val +/- 1]
 
-            this->emit(Instruction{Opcode::ROTU,
-                {Immediate{Number{static_cast<uint16_t>(3)}}}
-            });
-            // [val +/- 1, ptr, val +/- 1]
+                this->emit(Instruction{Opcode::ROTU,
+                    {Immediate{Number{static_cast<uint16_t>(3)}}}
+                });
+                // [val +/- 1, ptr, val +/- 1]
+            }
+            // if exprResult != DISCARD [val +/- 1, ptr, val +/- 1]
+            // if exprResult == DISCARD [ptr, val +/- 1]
 
             this->emit(Instruction{Opcode::STORE,
                 {},
                 SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
             });
-            // [val +/- 1]
+            // if exprResult != DISCARD [val +/- 1]
+            // if exprResult == DISCARD []
         }
     }
 }
@@ -887,17 +901,21 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
         });
         // [ptr, val]
 
-        this->emit(Instruction{Opcode::SWAP,
-            {},
-            SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
-        });
-        // [val, ptr]
+        if (exprResult != ExprResult::DISCARD) {
+            this->emit(Instruction{Opcode::SWAP,
+                {},
+                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+            });
+            // [val, ptr]
 
-        this->emit(Instruction{Opcode::DUP,
-            {Immediate{Number{static_cast<uint32_t>(1)}}},
-            SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
-        });
-        // [val, ptr, val]
+            this->emit(Instruction{Opcode::DUP,
+                {Immediate{Number{static_cast<uint32_t>(1)}}},
+                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+            });
+            // [val, ptr, val]
+        }
+        // if exprResult != DISCARD [val, ptr, val]
+        // if exprResult == DISCARD [ptr, val]
 
         this->emit(Instruction{Opcode::PUSH,
             {
@@ -906,7 +924,8 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
             },
             SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
         });
-        // [val, ptr, val, 1]
+        // if exprResult != DISCARD [val, ptr, val, 1]
+        // if exprResult == DISCARD [ptr, val, 1]
 
         const auto arithmeticOpcode = expr.unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ? Opcode::ADD : Opcode::SUB;
 
@@ -914,13 +933,15 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
             {},
             SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
         });
-        // [val, ptr, val +/- 1]
+        // if exprResult != DISCARD [val, ptr, val +/- 1]
+        // if exprResult == DISCARD [ptr, val +/- 1]
 
         this->emit(Instruction{Opcode::STORE,
             {},
             SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
         });
-        // [val]
+        // if exprResult != DISCARD [val]
+        // if exprResult == DISCARD []
     }
 }
 
@@ -1542,10 +1563,10 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
     }
 }
 
-void compiler::AssemblyGenerator::compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall, const ExprResult exprResult) {
+void compiler::AssemblyGenerator::compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall) {
     // compile arguments
     for (size_t argIndex = 0; argIndex < functionCall.arguments.size(); argIndex++) {
-        this->compileExpr(scope, *functionCall.arguments[argIndex], exprResult);
+        this->compileExpr(scope, *functionCall.arguments[argIndex], ExprResult::VALUE);
 
         // convert any arguments that require implicit conversion
         this->compileTypeConversionIfRequired(functionCall.arguments[argIndex]->resultingType.type, functionCall.functionSymbol->parameterTypes[argIndex].type, SourceLocation{0, functionCall.arguments[argIndex]->line, functionCall.arguments[argIndex]->column});

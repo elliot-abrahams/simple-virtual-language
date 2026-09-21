@@ -137,21 +137,21 @@ TEST(EXPR_FUNCTION_CALL, INVALID_MISSING_SEMICOLON) {
 
 TEST(EXPR_FUNCTION_CALL, INVALID_MISSING_COMMA) {
     const auto testCode = R"(
-        int x = foo(5 5)
+        int x = foo(5 5);
     )";
     ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(EXPR_FUNCTION_CALL, INVALID_MISSING_EXPR_AFTER_COMMA) {
     const auto testCode = R"(
-        int x = foo(5,)
+        int x = foo(5,);
     )";
     ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
 
 TEST(EXPR_FUNCTION_CALL, INVALID_MISSING_EXPR_BEFORE_COMMA) {
     const auto testCode = R"(
-        int x = foo(,5)
+        int x = foo(,5);
     )";
     ASSERT_THROW(PARSE(testCode), SyntaxError);
 }

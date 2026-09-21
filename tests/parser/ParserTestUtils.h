@@ -143,11 +143,11 @@ namespace parserTest {
         expectedReturnExpr(std::move(expectedReturnExpr)) {}
     };
 
-    struct ExpectedFunctionCallStm final : ExpectedStm {
-        const std::unique_ptr<ExpectedFunctionCallExpr> expectedFunctionCallExpr;
+    struct ExpectedExpressionStatement final : ExpectedStm {
+        const std::unique_ptr<ExpectedExpr> expectedExpr;
 
-        ExpectedFunctionCallStm(std::unique_ptr<ExpectedFunctionCallExpr> expectedFunctionCallExpr) :
-        expectedFunctionCallExpr(std::move(expectedFunctionCallExpr)) {}
+        ExpectedExpressionStatement(std::unique_ptr<ExpectedExpr> expectedExpr) :
+        expectedExpr(std::move(expectedExpr)) {}
     };
 
     struct ExpectedBreakStm final : ExpectedStm {};
@@ -435,10 +435,10 @@ namespace parserTest {
             auto* actualBreakStm = dynamic_cast<const ast::BreakStm*>(&actualStm);
             ASSERT_NE(actualBreakStm, nullptr);
 
-        } else if (auto* expectedFunctionCallStm = dynamic_cast<const ExpectedFunctionCallStm*>(&expectedStm)) {
-            auto* actualFunctionCallStm = dynamic_cast<const ast::FunctionCallStm*>(&actualStm);
-            ASSERT_NE(actualFunctionCallStm, nullptr);
-            ASSERT_EXPR_EQ(*expectedFunctionCallStm->expectedFunctionCallExpr, *actualFunctionCallStm->functionCall);
+        } else if (auto* expectedExpressionStatement = dynamic_cast<const ExpectedExpressionStatement*>(&expectedStm)) {
+            auto* actualExpressionStatement = dynamic_cast<const ast::ExpressionStatement*>(&actualStm);
+            ASSERT_NE(actualExpressionStatement, nullptr);
+            ASSERT_EXPR_EQ(*expectedExpressionStatement->expectedExpr, *actualExpressionStatement->expression);
 
         } else if (auto* expectedReturnStm = dynamic_cast<const ExpectedReturnStm*>(&expectedStm)) {
             auto* actualReturnStm = dynamic_cast<const ast::ReturnStm*>(&actualStm);

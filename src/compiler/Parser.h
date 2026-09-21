@@ -20,6 +20,7 @@ namespace compiler {
         std::unique_ptr<ast::Parameter> parseParameter() const;
 
         std::unique_ptr<ast::Stm> parseStm() const;
+        std::unique_ptr<ast::Stm> parseIdentifierStm() const;
         std::unique_ptr<ast::Block> parseBlock() const;
         std::unique_ptr<ast::StmVarDecl> parseVarDecl(std::unique_ptr<ast::TypeInfo> type) const;
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
@@ -27,8 +28,8 @@ namespace compiler {
         std::unique_ptr<ast::WhileStm> parseWhileStatement() const;
         std::unique_ptr<ast::ContinueStm> parseContinueStatement() const;
         std::unique_ptr<ast::BreakStm> parseBreakStatement() const;
-        std::unique_ptr<ast::FunctionCallStm> parseFunctionCallStatement() const;
         std::unique_ptr<ast::ReturnStm> parseReturnStatement() const;
+        std::unique_ptr<ast::ExpressionStatement> parseExpressionStatement() const;
 
         std::unique_ptr<ast::Expr> parseExpr() const;
         std::unique_ptr<ast::Expr> parseLogicalOrExpression() const;
@@ -40,7 +41,7 @@ namespace compiler {
         std::unique_ptr<ast::Expr> parseUnaryExpression() const;
         std::unique_ptr<ast::Expr> parseExprPostfix() const;
         std::unique_ptr<ast::Expr> parsePrimaryExpression() const;
-        std::unique_ptr<ast::FunctionCall> parseFunctionCall() const;
+        std::unique_ptr<ast::FunctionCall> parseFunctionCall(std::unique_ptr<ast::Identifier> identifier) const;
         std::vector<std::unique_ptr<ast::Expr>> parseArgumentList() const;
         std::unique_ptr<ast::ExprIdentifier> parseExprIdentifier() const;
         std::unique_ptr<ast::ExprNew> parseExprNew() const;
@@ -58,6 +59,7 @@ namespace compiler {
         std::unique_ptr<ast::UnaryOperatorInfo> parseIncrementDecrementOperator() const;
 
         static bool isTypeToken(const TokenKind& kind);
+        static bool isAssignmentOperator(const TokenKind& kind);
 
         void handleUnexpectedToken(const Token& token) const;
         void handleLiteralOutOfRangeError(const Token& token, const std::string& type) const;

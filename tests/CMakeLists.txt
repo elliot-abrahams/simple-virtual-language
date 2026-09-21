@@ -80,7 +80,6 @@ set(Parser_Sources
         parser/FunctionDeclTests.cpp
 
         parser/statementTests/ReturnStatementTests.cpp
-        parser/statementTests/FunctionCallStatementTests.cpp
         parser/statementTests/BreakStatementTests.cpp
         parser/statementTests/ContinueStatementTests.cpp
         parser/statementTests/WhileStatementTests.cpp
@@ -88,6 +87,8 @@ set(Parser_Sources
         parser/statementTests/AssignmentTests.cpp
         parser/statementTests/VarDeclTests.cpp
         parser/statementTests/BlockTests.cpp
+
+        parser/statementTests/ExpressionStatementTests.cpp
 
         parser/expressionTests/PrecedenceTests.cpp
         parser/expressionTests/BinaryExpressionTests.cpp
@@ -163,6 +164,7 @@ set(Semantic_Sources
 
         semantic/SemanticTestUtils.h
         semantic/SemanticTests.cpp
+        semantic/statementTests/ExpressionStatementTests.cpp
 )
 
 add_executable(${SEMANTIC_TESTS} ${Semantic_Sources})
@@ -192,6 +194,8 @@ set(Integration_Sources
         integration/statementTests/WhileStatementTests.cpp
         integration/statementTests/IfStatementTests.cpp
         integration/statementTests/AssignmentTests.cpp
+
+        integration/statementTests/ExpressionStatementTests.cpp
 
         integration/expressionTests/PrecedenceTests.cpp
         integration/expressionTests/BinaryExpressionTests.cpp

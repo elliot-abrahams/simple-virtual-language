@@ -45,7 +45,9 @@
   - [7.2 Blocks](#72-blocks)
   - [7.3 Variable Declarations](#73-variable-declaration)
   - [7.4 Variable Assignment](#74-variable-assignment)
-  - [7.5 Function Call Statements](#75-function-call-statements)
+  - [7.5 Expression Statements](#75-expression-statements)
+    - [7.5.1 Function Call](#751-function-call)
+    - [7.5.2 Increment and Decrement](#752-increment-and-decrement)
 - [8. Control Flow](#8-control-flow)
   - [8.1 If Statements](#81-if-statements)
   - [8.2 While Statements](#82-while-statements)
@@ -425,7 +427,7 @@ For example:
 
 ```
 int x = 5;
-
+[Semantics.md](Semantics.md)
 int a = ++x; // x = 6, a = 6
 int b = --x; // x = 5, b = 5
 ```
@@ -655,6 +657,8 @@ The following are statements:
 
 Statements are analysed in source order within a block or function body.
 
+A statement performs an action and does not produce a value.
+
 ### 7.2 Blocks
 
 A block is a sequence of statements enclosed by `{` and `}`.
@@ -698,13 +702,27 @@ x = 10;
 arr = new int[3];
 ```
 
-### 7.5 Function Call Statements
+### 7.5 Expression Statements
 
-A function call statement evaluates a function call.
+An expression statement evaluates an expression without producing a value.
+
+Only function call, increment, and decrement expressions may be used as expression statements.
+
+For example:
+
+```
+foo();
+x++;
+--x;
+arr[0]--;
+```
+
+#### 7.5.1 Function Call
 
 The called function must have a `void` return type.
 
-See [Section 6.4](#64-function-resolution) for function resolution rules.
+See [5.9 Function Calls](#59-function-calls) for the semantics of function call expressions.
+See [6.4 Function Resolution](#64-function-resolution) for function resolution rules.
 
 For example:
 ```
@@ -713,6 +731,29 @@ void foo() {
 }
 
 foo();
+```
+
+#### 7.5.2 Increment and Decrement
+
+When used as an expression statement, the increment or decrement is performed without producing the value that would normally be produced by the expression.
+
+The increment or decrement operators increase or decrease the value of its base expression by `1`.
+
+The base expression must be an assignable expression.
+
+An expression is assignable when it refers to a variable or array element.
+
+The increment and decrement operators may only be applied to numeric types.
+
+For example:
+
+```
+int x = 5;
+
+x++;    // x becomes 6
+++x;    // x becomes 7
+x--;    // x becomes 6
+--x;    // x becomes 5
 ```
 
 ---

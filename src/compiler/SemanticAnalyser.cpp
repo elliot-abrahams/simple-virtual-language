@@ -99,11 +99,11 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStm(Scope* s
     if (auto* breakStm = dynamic_cast<const ast::BreakStm*>(&stm)) {
         return this->processBreakStatement(scope, *breakStm);
     }
-    if (auto* functionCallStm = dynamic_cast<const ast::FunctionCallStm*>(&stm)) {
-        return this->processFunctionCallStatement(scope, *functionCallStm);
-    }
     if (auto* returnStm = dynamic_cast<const ast::ReturnStm*>(&stm)) {
         return this->processReturnStatement(scope, *returnStm);
+    }
+    if (auto* expressionStatement = dynamic_cast<const ast::ExpressionStatement*>(&stm)) {
+        return this->processExpressionStatement(scope, *expressionStatement);
     }
 }
 
@@ -280,33 +280,6 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBreakStateme
     return SemanticAnalysisResult{false};
 }
 
-compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCallStatement(Scope *scope, const ast::FunctionCallStm &functionCallStm) {
-    std::vector<SemanticType> argumentTypes;
-    for (const auto& argument : functionCallStm.functionCall->arguments) {
-        argumentTypes.push_back(this->checkExprType(scope, *argument).type);
-    }
-
-    std::vector<FunctionSymbol>* functionSymbols = this->symbolTable->getFunctionSymbols(functionCallStm.functionCall->identifier->name);
-
-    FunctionSymbol* functionSymbol = this->resolveFunctionCall(functionSymbols, *functionCallStm.functionCall, argumentTypes);
-
-    // process function arguments
-    this->processFunctionCall(functionSymbol, *functionCallStm.functionCall, argumentTypes);
-
-    functionCallStm.functionCall->resultingType = functionSymbol->returnType;
-
-    if (functionSymbol->returnType.type != Type::VOID_RETURN_TYPE) {
-        throw SemanticError(
-            this->path->string(),
-            functionCallStm.line,
-            functionCallStm.column,
-            "return value of function '" + functionSignatureToString(functionCallStm.functionCall->identifier->name, argumentTypes) + "' must be used"
-        );
-    }
-
-    return SemanticAnalysisResult{false};
-}
-
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatement(Scope *scope, const ast::ReturnStm &returnStm) {
     auto currentFunctionSymbol = this->symbolTable->getCurrentFunctionSymbol();
     if (currentFunctionSymbol == nullptr) {
@@ -356,6 +329,44 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
     }
 
     return SemanticAnalysisResult{true};
+}
+
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processExpressionStatement(Scope *scope, const ast::ExpressionStatement &expressionStm) {
+    if (auto* functionCallExpr = dynamic_cast<const ast::FunctionCall*>(expressionStm.expression.get())) {
+        const auto exprResult = this->processFunctionCall(scope, *functionCallExpr);
+
+        // ensure functionCallExpr has a return type of void
+        if (exprResult.type.type != Type::VOID_RETURN_TYPE) {
+            std::vector<SemanticType> argumentTypes;
+            for (const auto& argument : functionCallExpr->arguments) {
+                argumentTypes.push_back(argument->resultingType);
+            }
+            throw SemanticError(
+                this->path->string(),
+                functionCallExpr->column,
+                functionCallExpr->column,
+                "return value of function '" + functionSignatureToString(functionCallExpr->identifier->name, argumentTypes) + "' must be used"
+            );
+        }
+
+    } else if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(expressionStm.expression.get())) {
+        // ensure unaryExpr has an inc / dec operator
+        if (unaryExpr->unaryOperatorInfo->unaryOperator != UnaryOperator::DECREMENT &&
+            unaryExpr->unaryOperatorInfo->unaryOperator != UnaryOperator::INCREMENT
+
+        ) this->throwInvalidExpressionTypeAsStatement(*unaryExpr);
+
+
+    } else if (auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(expressionStm.expression.get())) {
+        // ensure postfixExpr has an inc / dec operator
+        if (postfixExpr->unaryOperatorInfo == nullptr) this->throwInvalidExpressionTypeAsStatement(*postfixExpr);
+
+    // invalid expression type
+    } else this->throwInvalidExpressionTypeAsStatement(*expressionStm.expression);
+
+    this->checkExprType(scope, *expressionStm.expression);
+
+    return SemanticAnalysisResult{false};
 }
 
 void compiler::SemanticAnalyser::processIndex(Scope* scope, const ast::Index& index) {
@@ -705,26 +716,20 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
     }
 
     if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
-        std::vector<SemanticType> argumentTypes;
-        for (const auto& argument : functionCall->arguments) {
-            argumentTypes.push_back(this->checkExprType(scope, *argument).type);
-        }
-
-        FunctionSymbol* functionSymbol = this->resolveFunctionCall(this->symbolTable->getFunctionSymbols(functionCall->identifier->name), *functionCall, argumentTypes);
-
-        // process function
-        this->processFunctionCall(functionSymbol, *functionCall, argumentTypes);
-
-        functionCall->resultingType = functionSymbol->returnType;
-        return SemanticExprResult{
-            functionSymbol->returnType,
-            functionSymbol->returnType.isArray() ? ExprCategory::ASSIGNABLE : ExprCategory::VALUE
-        };
+        // process function call
+        return this->processFunctionCall(scope, *functionCall);
     }
     throw std::runtime_error("Unknown expression type");
 }
 
-compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall &functionCall, const std::vector<SemanticType>& argumentTypes) const {
+compiler::SemanticExprResult compiler::SemanticAnalyser::processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall) {
+    std::vector<SemanticType> argumentTypes;
+    for (const auto& argument : functionCall.arguments) {
+        argumentTypes.push_back(this->checkExprType(scope, *argument).type);
+    }
+
+    FunctionSymbol* functionSymbol = this->resolveFunctionCall(this->symbolTable->getFunctionSymbols(functionCall.identifier->name), functionCall, argumentTypes);
+
     if (functionSymbol == nullptr) { // if function is not defined
         std::string errorMsg = "function '";
         errorMsg += functionSignatureToString(functionCall.identifier->name, argumentTypes);
@@ -741,7 +746,12 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionCall
     // set functionSymbol in FunctionCall ast for code gen
     functionCall.functionSymbol = functionSymbol;
 
-    return SemanticAnalysisResult{false};
+    functionCall.resultingType = functionSymbol->returnType;
+
+    return SemanticExprResult{
+        functionSymbol->returnType,
+        functionSymbol->returnType.isArray() ? ExprCategory::ASSIGNABLE : ExprCategory::VALUE
+    };
 }
 
 compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::vector<FunctionSymbol> *functionSymbols, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const {
@@ -887,6 +897,15 @@ void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::Exp
         binaryOperator.line,
         binaryOperator.column,
         "cannot apply operator '" + binaryOperatorToString(binaryOperator.binaryOperatorInfo->binaryOperator) + "' to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
+    );
+}
+
+void compiler::SemanticAnalyser::throwInvalidExpressionTypeAsStatement(const ast::Expr& expr) {
+    throw SemanticError(
+        this->path->string(),
+        expr.line,
+        expr.column,
+        "expression is not valid as a statement"
     );
 }
 

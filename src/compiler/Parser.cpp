@@ -46,7 +46,7 @@ std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
                 break;
 
             default:
-                this->handleUnexpectedToken(token);
+                statements.push_back(this->parseExpressionStatement());
         }
     }
 
@@ -119,8 +119,8 @@ std::unique_ptr<ast::Parameter> compiler::Parser::parseParameter() const {
  *                      | while_statement
  *                      | continue_statement
  *                      | break_statement
- *                      | function_call_statement
- *                      | return_statement ;
+ *                      | return_statement
+ *                      | expression_statement ;
  */
 std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
     const Token stm = tokeniser->tok();
@@ -132,12 +132,9 @@ std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
         case TokenKind::BOOL_TYPE:
             return this->parseVarDecl(this->parseType());
 
-        case TokenKind::IDENTIFIER: {
-            if (this->tokeniser->lookAhead(1).kind == TokenKind::LBR) {
-                return this->parseFunctionCallStatement();
-            }
-            return this->parseAssignment();
-        }
+        case TokenKind::IDENTIFIER:
+            return this->parseIdentifierStm();
+
         case TokenKind::IF: return this->parseIfStatement();
         case TokenKind::WHILE: return this->parseWhileStatement();
         case TokenKind::CONTINUE: return this->parseContinueStatement();
@@ -145,8 +142,42 @@ std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
         case TokenKind::RETURN: return this->parseReturnStatement();
 
         default:
-            this->handleUnexpectedToken(stm);
+            this->handleUnexpectedToken(this->tokeniser->tok());
     }
+}
+
+std::unique_ptr<ast::Stm> compiler::Parser::parseIdentifierStm() const {
+    // check type of token following:
+    // IDENTIFIER, { INDEX }
+    // to determine whether to parse assignment or expression statement
+
+    int openSquareBracketCount = 0;
+    bool insideBracket = false;
+    int lookahead = 1;
+
+    // each iteration increments lookahead
+    // execution breaks from the while loop when openSquareBracketCount is zero and current TokenKind is not LSQBR
+    while (true) {
+        switch (this->tokeniser->lookAhead(lookahead).kind) {
+            case TokenKind::LSQBR: {
+                openSquareBracketCount++;
+                insideBracket = true;
+                break;
+            }
+            case TokenKind::RSQBR:
+                openSquareBracketCount--; break;
+
+            default:
+                if (openSquareBracketCount == 0) insideBracket = false;
+        }
+        if (!insideBracket) break;
+        lookahead++;
+    }
+
+    if (isAssignmentOperator(this->tokeniser->lookAhead(lookahead).kind)) {
+        return this->parseAssignment();
+    }
+    return this->parseExpressionStatement();
 }
 
 /*
@@ -311,20 +342,6 @@ std::unique_ptr<ast::BreakStm> compiler::Parser::parseBreakStatement() const {
 }
 
 /*
- *  function_call_statement    = function_call, SEMI ;
- */
-std::unique_ptr<ast::FunctionCallStm> compiler::Parser::parseFunctionCallStatement() const {
-    std::unique_ptr<ast::FunctionCall> functionCall = this->parseFunctionCall();
-    this->tokeniser->eat(TokenKind::SEMI);
-
-    return std::make_unique<ast::FunctionCallStm>(
-        functionCall->line,
-        functionCall->column,
-        std::move(functionCall)
-    );
-}
-
-/*
  *  return_statement            = RETURN, [ expression ], SEMI ;
  */
 std::unique_ptr<ast::ReturnStm> compiler::Parser::parseReturnStatement() const {
@@ -340,6 +357,20 @@ std::unique_ptr<ast::ReturnStm> compiler::Parser::parseReturnStatement() const {
         token.line,
         token.column,
         std::move(returnExpression)
+    );
+}
+
+/*
+ *  expression_statement        = expression ;
+ */
+std::unique_ptr<ast::ExpressionStatement> compiler::Parser::parseExpressionStatement() const {
+    auto expr = this->parseExpr();
+    this->tokeniser->eat(TokenKind::SEMI);
+
+    return std::make_unique<ast::ExpressionStatement>(
+        expr->line,
+        expr->column,
+        std::move(expr)
     );
 }
 
@@ -624,7 +655,6 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
             binaryOperator
         );
 
-
         this->tokeniser->next();
 
         // parse right expression
@@ -788,7 +818,8 @@ std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
 
         case TokenKind::IDENTIFIER: {
             if (this->tokeniser->lookAhead(1).kind == TokenKind::LBR) {
-                return this->parseFunctionCall();
+                std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
+                return this->parseFunctionCall(std::move(identifier));
             }
             return this->parseExprIdentifier();
         }
@@ -811,8 +842,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
 /*
  *  function_call               = IDENTIFIER, LBR, [ argument_list ], RBR ;
  */
-std::unique_ptr<ast::FunctionCall> compiler::Parser::parseFunctionCall() const {
-    std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
+std::unique_ptr<ast::FunctionCall> compiler::Parser::parseFunctionCall(std::unique_ptr<ast::Identifier> identifier) const {
     this->tokeniser->eat(TokenKind::LBR);
 
     std::vector<std::unique_ptr<ast::Expr>> argumentList;
@@ -1112,6 +1142,16 @@ bool compiler::Parser::isTypeToken(const TokenKind& kind) {
         case TokenKind::INT_TYPE:
         case TokenKind::FLOAT_TYPE:
         case TokenKind::BOOL_TYPE:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+bool compiler::Parser::isAssignmentOperator(const TokenKind& kind) {
+    switch (kind) {
+        case TokenKind::EQUAL:
             return true;
 
         default:

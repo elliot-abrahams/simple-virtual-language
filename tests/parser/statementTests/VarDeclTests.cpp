@@ -344,10 +344,3 @@ TEST(STM_VAR_DECL, INVALID_MISSING_SEMICOLON) {
     )";
     ASSERT_THROW(PARSE(testCode), SyntaxError);
 }
-
-TEST(STM_VAR_DECL, INVALID_MISSING_TYPE) {
-    const auto testCode = R"(
-        x;
-    )";
-    ASSERT_THROW(PARSE(testCode), SyntaxError);
-}

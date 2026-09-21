@@ -1,6 +1,6 @@
 # Assembly Generation
 
-# Contents
+## Contents
 
 - [1. Overview](#1-overview)
 - [2 Assembly Notation](#2-assembly-notation)
@@ -21,7 +21,6 @@
   - [5.2 Variable Access](#52-variable-access)
     - [5.2.1 Global Variable Access](#521-global-variable-access)
     - [5.2.2 Local Variable Access](#522-local-variable-access)
-    - [5.2.3 Array Access](#523-array-access)
   - [5.3 Arithmetic Expressions](#53-arithmetic-expressions)
     - [5.3.1 Addition](#531-addition)
     - [5.3.2 Subtraction](#532-subtraction)
@@ -40,6 +39,8 @@
     - [5.7.4 Prefix Increment](#574-prefix-increment)
     - [5.7.5 Prefix Decrement](#575-prefix-decrement)
   - [5.8 Postfix Expression](#58-postfix-expressions)
+    - [5.8.1 Indexing](#581-indexing)
+    - [5.8.2 Increment and Decrement](#582-increment-and-decrement)
   - [5.9 Function Calls](#59-function-calls)
   - [5.10 Cast Expressions](#510-cast-expressions)
   - [5.11 New Expressions](#511-new-expressions)
@@ -57,17 +58,19 @@
     - [6.2.3 Global Array Element Assignment](#623-global-array-element-assignment)
     - [6.2.4 Local Array Element Assignment](#624-local-array-element-assignment)
   - [6.3 Block](#63-block)
-  - [6.4 Function Call Statement](#64-function-call-statement)
-  - [6.5 Return Statement](#65-return-statement)
-    - [6.5.1 Return Statement With Expression](#651-return-with-expression)
-    - [6.5.2 Return Statement Without Expression](#652-return-without-expression)
-  - [6.6 Conditional Statements](#66-conditional-statements)
-    - [6.6.1 If Statement](#661-if-statement)
-    - [6.6.2 If-Else Statement](#662-if-else-statement)
-    - [6.6.3 Else-If Statement](#663-else-if-statement)
-  - [6.7 While Statement](#67-while-statement)
-  - [6.8 Break Statement](#68-break-statement)
-  - [6.9 Continue Statement](#69-continue-statement)
+  - [6.4 Conditional Statements](#64-conditional-statements)
+    - [6.4.1 If Statement](#641-if-statement)
+    - [6.4.2 If-Else Statement](#642-if-else-statement)
+    - [6.4.3 Else-If Statement](#643-else-if-statement)
+  - [6.5 While Statement](#65-while-statement)
+  - [6.6 Break Statement](#66-break-statement)
+  - [6.7 Continue Statement](#67-continue-statement)
+  - [6.8 Return Statement](#68-return-statement)
+    - [6.8.1 Return Statement With Expression](#681-return-with-expression)
+    - [6.8.2 Return Statement Without Expression](#682-return-without-expression)
+  - [6.9 Expression Statement](#69-expression-statement)
+    - [6.9.1 Function Call](#691-function-call)
+    - [6.9.2 Increment and Decrement](#692-increment-and-decrement)
 - [7. Functions](#7-functions)
   - [7.1 Function Declaration](#71-function-declaration)
   - [7.2 Function Labels](#72-function-labels)
@@ -1800,43 +1803,9 @@ A block whose parent scope is the global scope, excluding function scopes, is ge
 
 ---
 
-### 6.4 Function Call Statement
+### 6.4 Conditional Statements
 
-A function call statement is generated in the same way as a function call expression.
-
-```
-    {{Function Call Expression}}
-```
-
----
-
-### 6.5 Return Statement
-
-#### 6.5.1 Return With Expression
-
-A return statement containing an expression generates:
-
-```
-    {{Expression}}
-    {{Implicit Conversion}}
-    ret
-```
-
-The expression is converted to the function's return type when required.
-
-#### 6.5.2 Return Without Expression
-
-A `void` function may return without an expression.
-
-```
-    ret
-```
-
----
-
-### 6.6 Conditional Statements
-
-#### 6.6.1 If Statement
+#### 6.4.1 If Statement
 
 An `if` statement without an `else` block is generated as:
 
@@ -1854,7 +1823,7 @@ The condition value is consumed by `jez`.
 Where:
 - `[N]` is a unique label number.
 
-#### 6.6.2 If-Else Statement
+#### 6.4.2 If-Else Statement
 
 An `if` statement with an `else` block is generated as:
 
@@ -1875,13 +1844,13 @@ $end_if_[N1]:
 Where:
 - `[N0]` and `[N1]` are unique label numbers.
 
-#### 6.6.3 Else-If Statement
+#### 6.4.3 Else-If Statement
 
 An `else if` statement is generated as an `if` statement contained within the `else` block of the preceding `if` statement.
 
 ---
 
-### 6.7 While Statement
+### 6.5 While Statement
 
 A `while` statement is generated as:
 
@@ -1904,7 +1873,7 @@ The condition is evaluated at the beginning of every iteration.
 
 ---
 
-### 6.8 Break Statement
+### 6.6 Break Statement
 
 A `break` statement jumps to the end of the innermost enclosing `while` loop.
 
@@ -1915,9 +1884,9 @@ A `break` statement jumps to the end of the innermost enclosing `while` loop.
 Where:
 - `[N]` identifies the end label of the innermost enclosing `while` loop.
 
---
+---
 
-### 6.9 Continue Statement
+### 6.7 Continue Statement
 
 A `continue` statement jumps to the start of the innermost enclosing `while` loop.
 
@@ -1927,6 +1896,87 @@ A `continue` statement jumps to the start of the innermost enclosing `while` loo
 
 Where:
 - `[N]` identifies the start label of the innermost enclosing `while` loop.
+
+---
+
+### 6.8 Return Statement
+
+#### 6.8.1 Return With Expression
+
+A return statement containing an expression generates:
+
+```
+    {{Expression}}
+    {{Implicit Conversion}}
+    ret
+```
+
+The expression is converted to the function's return type when required.
+
+#### 6.8.2 Return Without Expression
+
+A `void` function may return without an expression.
+
+```
+    ret
+```
+
+---
+
+### 6.9 Expression Statement
+
+Expression Statements evaluate the expression without resulting in a value.
+
+#### 6.9.1 Function Call
+
+A function call statement is generated in the same way as a function call expression.
+
+```
+    {{Function Call Expression}}
+```
+
+#### 6.9.2 Increment and Decrement
+
+The base expression is generated to produce its address. The current value is then loaded from the address, incremented or decremented, and stored back at the same address. 
+
+The pre increment and post increment operator is generated as:
+
+```
+    {{Expression: PTR}}
+    ; Stack: <ptr: ptr>
+    
+    dup #0
+    load [type]
+    ; Stack: <ptr: ptr, val: type>
+    
+    push [type] #[1]
+    add
+    ; Stack: <ptr: ptr, val + 1: type>
+    
+    store
+    ; Stack: <>
+```
+
+The pre decrement and post decrement operator is generated as:
+
+```
+    {{Expression: PTR}}
+    ; Stack: <ptr: ptr>
+    
+    dup #0
+    load [type]
+    ; Stack: <ptr: ptr, val: type>
+    
+    push [type] #[1]
+    sub
+    ; Stack: <ptr: ptr, val - 1: type>
+    
+    store
+    ; Stack: <>
+```
+
+Where:
+- `[type]` is the assembly type of the base expression.
 
 ---
 

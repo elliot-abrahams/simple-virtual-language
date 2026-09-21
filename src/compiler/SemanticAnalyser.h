@@ -41,14 +41,14 @@ namespace compiler {
         SemanticAnalysisResult processWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
         SemanticAnalysisResult processContinueStatement(Scope* scope, const ast::ContinueStm& continueStm);
         SemanticAnalysisResult processBreakStatement(Scope* scope, const ast::BreakStm& breakStm);
-        SemanticAnalysisResult processFunctionCallStatement(Scope* scope, const ast::FunctionCallStm& functionCallStm);
         SemanticAnalysisResult processReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
+        SemanticAnalysisResult processExpressionStatement(Scope* scope, const ast::ExpressionStatement& expressionStm);
 
         void processIndex(Scope* scope, const ast::Index& index);
         unsigned int resolveAccessArrayDepth(const SemanticType& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const;
 
         SemanticExprResult checkExprType(Scope* scope, const ast::Expr& expr);
-        SemanticAnalysisResult processFunctionCall(FunctionSymbol* functionSymbol, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const;
+        SemanticExprResult processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
         FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const;
 
         static bool canImplicitlyConvert(const SemanticType& from, const SemanticType& to);
@@ -59,6 +59,7 @@ namespace compiler {
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
 
         void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const SemanticType& leftType, const SemanticType& rightType) const;
+        void throwInvalidExpressionTypeAsStatement(const ast::Expr& expr);
         void checkType(const std::vector<SemanticType>& expectedTypes, const SemanticType& actualType, const size_t line, const size_t column) const;
         static std::string functionSignatureToString(const std::string& functionIdentifier, const std::vector<SemanticType>& parameterTypes);
 

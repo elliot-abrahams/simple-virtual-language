@@ -24,8 +24,8 @@ statement                   = block
                             | while_statement
                             | continue_statement
                             | break_statement
-                            | function_call_statement
-                            | return_statement ;
+                            | return_statement
+                            | expression_statement ;
 
 block                       = LCBR, { statement }, RCBR ;
 
@@ -41,9 +41,9 @@ continue_statement          = CONTINUE, SEMI ;
 
 break_statement             = BREAK, SEMI ;
 
-function_call_statement    = function_call, SEMI ;
-
 return_statement            = RETURN, [ expression ], SEMI ;
+
+expression_statement        = expression ;
 
 expression                  = logical_or_expression ;
 

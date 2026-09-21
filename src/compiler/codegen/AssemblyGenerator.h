@@ -10,8 +10,9 @@
 namespace compiler {
 
     enum class ExprResult {
-        VALUE,
-        PTR
+        VALUE,   // produce value
+        PTR,     // produce pointer to value
+        DISCARD  // produce nothing
     };
 
     class AssemblyGenerator {
@@ -38,13 +39,13 @@ namespace compiler {
         void compileWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
         void compileContinueStatement(Scope* scope, const ast::ContinueStm& continueStm);
         void compileBreakStatement(Scope* scope, const ast::BreakStm& breakStm);
-        void compileFunctionCallStatement(Scope* scope, const ast::FunctionCallStm& functionCallStm);
         void compileReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
+        void compileExpressionStatement(Scope* scope, const ast::ExpressionStatement& expressionStm);
 
         void compileExpr(Scope* scope, const ast::Expr& expr, const ExprResult exprResult);
         void compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& expr);
         void compileBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo);
-        void compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr);
+        void compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr, const ExprResult exprResult);
         void compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr, const ExprResult exprResult);
         void compileCastExpr(Scope* scope, const ast::ExprCast& castExpr);
         void compileNewExpr(Scope* scope, const ast::ExprNew& newExpr);
@@ -52,7 +53,7 @@ namespace compiler {
         void compileArrayAlloc(Scope* scope, const ast::ExprNew& newExpr, unsigned int depth, SemanticType& typeAtDepth);
         void compileArrayInitialiser(Scope* scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const SemanticType& typeOfDeepestElement);
 
-        void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall, const ExprResult exprResult);
+        void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
         void compileExprIdentifier(Scope* scope, const ast::ExprIdentifier& exprIdentifier, const ExprResult exprResult);
 
         void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
