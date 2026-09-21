@@ -157,12 +157,12 @@ When running bytecode that has been previously processed by the SVC, the runtime
 For example, a language runtime error may be reported as:
 ```
 DivisionByZeroError: division by zero
-  at foo2 (C:\...\svm\examples\test.sv:5:17)
+  at foo2 (C:\...\svl\examples\test.sv:5:17)
   5 |    float x = 5 / 0;
     |                ^
 stack trace:
-  at foo1 (C:\...\svm\examples\test.sv:2:5)
-  at <global> (C:\...\svm\examples\test.sv:7:1)
+  at foo1 (C:\...\svl\examples\test.sv:2:5)
+  at <global> (C:\...\svl\examples\test.sv:7:1)
 ```
 
 The '...' included in the file path is not part of the actual error message

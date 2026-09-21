@@ -50,7 +50,7 @@ namespace integrationTests {
             const auto code = assemblyEmitter->emitAssembly(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
 
             std::string assemblyCode;
-            for (std::string line : code) {
+            for (const std::string& line : code) {
                 assemblyCode += line + "\n";
             }
 
@@ -112,14 +112,14 @@ namespace integrationTests {
 
         try {
             compileAndRun(&vm, sourceCode, testScenario);
+            FAIL();
         } catch (const CompilerError& e) {
             std::cerr << e.what() << std::endl;
             FAIL();
+        } catch (const RuntimeError& e) {
+            ASSERT_EQ(e.type, runtimeErrorType);
+            ASSERT_EQ(vm.getExitStatus(), 1);
         }
-
-        ASSERT_TRUE(vm.getRuntimeError()->has_value());
-        ASSERT_EQ(vm.getRuntimeError()->value().type, runtimeErrorType);
-        ASSERT_EQ(vm.getExitStatus(), 1);
     }
 
 }

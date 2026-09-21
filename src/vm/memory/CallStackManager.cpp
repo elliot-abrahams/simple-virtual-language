@@ -3,7 +3,7 @@
 CallStackManager::CallStackManager(MemoryManager* memoryManager) :
     memoryManager(memoryManager) {};
 
-void CallStackManager::push(std::optional<RuntimeError>* runtimeError, uint32_t& FP, uint32_t& SP, const uint32_t returnAddress, const uint8_t numberOfArguments, const uint32_t numberLocals, const std::vector<Value>& arguments, const uint32_t* HP, const uint32_t PC) {
+void CallStackManager::push(uint32_t& FP, uint32_t& SP, const uint32_t returnAddress, const uint8_t numberOfArguments, const uint32_t numberLocals, const std::vector<Value>& arguments, const uint32_t* HP, const uint32_t PC) {
     // calc number of bytes allocated to number of arguments and locals
     const uint32_t sizeOfArguments =  numberOfArguments * 8;
     const uint32_t sizeOfLocals = numberLocals * 8;
@@ -11,11 +11,10 @@ void CallStackManager::push(std::optional<RuntimeError>* runtimeError, uint32_t&
     // check if new frame would collide with heap
     const uint32_t sizeOfFrame = sizeOfArguments + 8 + sizeOfLocals;
     if (SP - sizeOfFrame <= *HP || sizeOfFrame > SP) {
-        *runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::STACK_OVERFLOW,
             "stack overflow"
         };
-        throw std::runtime_error{""};
     }
 
     const uint32_t oldFP = FP;
@@ -26,40 +25,39 @@ void CallStackManager::push(std::optional<RuntimeError>* runtimeError, uint32_t&
 
     // load arguments into memory
     for (int i = 0; i < numberOfArguments; i++) {
-        this->memoryManager->write64(runtimeError, MemoryAccessScope::CALL_STACK, FP + (sizeOfArguments - (i * 8)), arguments[i].rawValue);
+        this->memoryManager->write64(MemoryAccessScope::CALL_STACK, FP + (sizeOfArguments - (i * 8)), arguments[i].rawValue);
     }
 
     // write zero into locals
     for (int i = 0; i < numberLocals; i++) {
-        this->memoryManager->write64(runtimeError, MemoryAccessScope::CALL_STACK, SP + (i * 8), 0);
+        this->memoryManager->write64(MemoryAccessScope::CALL_STACK, SP + (i * 8), 0);
     }
 
     // load previous frame pointer value into memory
-    this->memoryManager->write32(runtimeError, MemoryAccessScope::CALL_STACK, FP, oldFP);
+    this->memoryManager->write32(MemoryAccessScope::CALL_STACK, FP, oldFP);
 
     // load return address into memory
-    this->memoryManager->write32(runtimeError, MemoryAccessScope::CALL_STACK, FP + 4, returnAddress);
+    this->memoryManager->write32(MemoryAccessScope::CALL_STACK, FP + 4, returnAddress);
 
     // add frame info to stack
     this->frameInfoStack.push(FrameInfo{numberOfArguments, numberLocals});
 }
 
-void CallStackManager::pop(std::optional<RuntimeError>* runtimeError, uint32_t &FP, uint32_t &SP, uint32_t &PC) {
+void CallStackManager::pop(uint32_t &FP, uint32_t &SP, uint32_t &PC) {
 
     // check if stack frame exists
     if (this->frameInfoStack.empty()) {
-        *runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::INTERNAL,
             "cannot execute 'ret' with an empty call stack",
         };
-        throw std::runtime_error{""};
     }
 
     // read return address from memory
-    PC = this->memoryManager->read32(runtimeError, MemoryAccessScope::CALL_STACK, FP + 4);
+    PC = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP + 4);
 
     // set FP to previous frame pointer value read from memory
-    FP = this->memoryManager->read32(runtimeError, MemoryAccessScope::CALL_STACK, FP);
+    FP = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, FP);
 
     // increase SP by current stack frame size
     const FrameInfo frameInfo = this->frameInfoStack.top();
@@ -84,7 +82,7 @@ bool CallStackManager::isCallStackEmpty() const {
     return this->frameInfoStack.empty();
 }
 
-std::vector<uint32_t> CallStackManager::getStackTrace(std::optional<RuntimeError>* runtimeError, const uint32_t FP) const {
+std::vector<uint32_t> CallStackManager::getStackTrace(const uint32_t FP) const {
     std::vector<uint32_t> stackTrace;
 
     uint32_t currentFrameFP = FP;
@@ -92,10 +90,10 @@ std::vector<uint32_t> CallStackManager::getStackTrace(std::optional<RuntimeError
     for (int stackIdx = 0; stackIdx < this->frameInfoStack.size(); stackIdx++) {
         // read return address
         // read return address from memory
-        stackTrace.push_back(this->memoryManager->read32(runtimeError, MemoryAccessScope::CALL_STACK, currentFrameFP + 4));
+        stackTrace.push_back(this->memoryManager->read32(MemoryAccessScope::CALL_STACK, currentFrameFP + 4));
 
         // read fp and set it to current frame fp
-        currentFrameFP = this->memoryManager->read32(runtimeError, MemoryAccessScope::CALL_STACK, currentFrameFP);
+        currentFrameFP = this->memoryManager->read32(MemoryAccessScope::CALL_STACK, currentFrameFP);
     }
 
     return stackTrace;

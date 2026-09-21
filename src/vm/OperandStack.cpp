@@ -2,37 +2,34 @@
 
 OperandStack::OperandStack() : stack(std::vector<Value>{}) {}
 
-Value OperandStack::pop(std::optional<RuntimeError>* runtimeError) {
+Value OperandStack::pop() {
     if (this->stack.empty()) {
-        *runtimeError = RuntimeError {
+        throw RuntimeError {
             RuntimeErrorType::INTERNAL,
             "attempted to pop from an empty operand stack"
         };
-        throw std::runtime_error{""};
     }
     const Value top = this->stack.back();
     this->stack.pop_back();
     return top;
 }
 
-Value OperandStack::peek(std::optional<RuntimeError>* runtimeError) const {
+Value OperandStack::peek() const {
     if (this->stack.empty()) {
-        *runtimeError = RuntimeError {
+        throw RuntimeError {
             RuntimeErrorType::INTERNAL,
             "attempted to peek at an empty operand stack"
         };
-        throw std::runtime_error{""};
     }
     return this->stack.at(stack.size() - 1);
 }
 
-void OperandStack::push(std::optional<RuntimeError>* runtimeError, const uint8_t typeOperand, const uint64_t rawValue) {
+void OperandStack::push(const uint8_t typeOperand, const uint64_t rawValue) {
     if (this->stack.size() == MAX_OPERAND_STACK_SIZE) {
-        *runtimeError = RuntimeError {
+        throw RuntimeError {
             RuntimeErrorType::INTERNAL,
             "attempted to push onto a full operand stack"
         };
-        throw std::runtime_error{""};
     }
 
     Value val{};
@@ -70,13 +67,12 @@ void OperandStack::push(std::optional<RuntimeError>* runtimeError, const uint8_t
     this->stack.push_back(val);
 }
 
-void OperandStack::push(std::optional<RuntimeError>* runtimeError, const Value value) {
+void OperandStack::push(const Value value) {
     if (this->stack.size() == MAX_OPERAND_STACK_SIZE) {
-        *runtimeError = RuntimeError {
+        throw RuntimeError {
             RuntimeErrorType::INTERNAL,
             "attempted to push onto a full operand stack"
         };
-        throw std::runtime_error{""};
     }
 
     this->stack.push_back(value);

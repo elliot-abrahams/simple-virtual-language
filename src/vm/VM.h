@@ -24,7 +24,8 @@ public:
     VM();
 
     void run(const std::vector<uint8_t>* bytecode);
-    void run(const std::vector<uint8_t>* bytecode, VMTestScenario testScenario);
+    void run(const std::vector<uint8_t>* bytecode, const VMTestScenario testScenario);
+    void runProgram(const std::vector<uint8_t>* bytecode);
 
     void readBytecode(const std::vector<uint8_t>* bytecode);
 
@@ -33,13 +34,12 @@ public:
     OperandStack* getOperandStack();
     CallStackManager* getCallStackManager();
 
-    void handleRuntimeError() const;
+    void handleRuntimeError(const RuntimeError& runtimeError) const;
 
     void setExitStatus(int status);
     int getExitStatus() const;
     uint32_t getPC() const;
     ErrorContext getErrorContext() const;
-    const std::optional<RuntimeError>* getRuntimeError() const;
 
     std::string readStringFromMemory(const uint32_t address);
 
@@ -118,7 +118,6 @@ private:
     OperandStack operandStack;
 
     RuntimeErrorHandler runtimeErrorHandler;
-    std::optional<RuntimeError> runtimeError;
     ErrorContext errorContext;
 
     bool running;

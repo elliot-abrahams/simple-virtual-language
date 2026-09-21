@@ -11,10 +11,10 @@ MemoryManager::MemoryManager(uint32_t* HB, const uint32_t* HP, const uint32_t* S
     HP(HP),
     SP(SP) {}
 
-void MemoryManager::loadBytecodeIntoMemory(std::optional<RuntimeError>* runtimeError, const std::vector<uint8_t>* bytecode, const uint32_t endOfDataAddress) {
+void MemoryManager::loadBytecodeIntoMemory(const std::vector<uint8_t>* bytecode, const uint32_t endOfDataAddress) {
     // load bytecode
     for (uint32_t i = BYTECODE_HEADER_SIZE; i <= endOfDataAddress; i++) {
-        write8(runtimeError, MemoryAccessScope::ANY, i - BYTECODE_HEADER_SIZE, (*bytecode)[i]);
+        write8(MemoryAccessScope::ANY, i - BYTECODE_HEADER_SIZE, (*bytecode)[i]);
     }
 }
 
@@ -22,63 +22,63 @@ void MemoryManager::setStartOfDataRegion(const uint32_t startOfDataAddress) {
     this->startOfDataRegion = startOfDataAddress;
 }
 
-void MemoryManager::write(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const Value* value) {
+void MemoryManager::write(const MemoryAccessScope region, const uint32_t address, const Value* value) {
     switch (value->type) {
         case ISA::Type::I32:
         case ISA::Type::UI32:
         case ISA::Type::F32:
         case ISA::Type::PTR: {
-            this->write32(runtimeError, region, address, value->rawValue);
+            this->write32(region, address, value->rawValue);
             return;
         }
         case ISA::Type::I64:
         case ISA::Type::UI64:
         case ISA::Type::F64: {
-            this->write64(runtimeError, region, address, value->rawValue);
+            this->write64(region, address, value->rawValue);
         }
     }
 }
 
-void MemoryManager::write8(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const uint8_t value) {
-    this->checkAddressInRegion(runtimeError, region, address, true);
+void MemoryManager::write8(const MemoryAccessScope region, const uint32_t address, const uint8_t value) {
+    this->checkAddressInRegion(region, address, true);
     Page* page = getOrCreatePage(address);
     page->data[getPageOffset(address)] = value;
 }
 
-void MemoryManager::write32(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const uint32_t value) {
-    this->checkAddressInRegion(runtimeError, region, address, true);
+void MemoryManager::write32(const MemoryAccessScope region, const uint32_t address, const uint32_t value) {
+    this->checkAddressInRegion(region, address, true);
     Page* page = getOrCreatePage(address);
     for (int i = 0; i < 4; i++) {
         page->data[getPageOffset(address) + i] = (value >> (i * 8)) & 0xFF;
     }
 }
 
-void MemoryManager::write64(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const uint64_t value) {
-    this->checkAddressInRegion(runtimeError, region, address, true);
+void MemoryManager::write64(const MemoryAccessScope region, const uint32_t address, const uint64_t value) {
+    this->checkAddressInRegion(region, address, true);
     Page* page = getOrCreatePage(address);
     for (int i = 0; i < 8; i++) {
         page->data[getPageOffset(address) + i] = (value >> (i * 8)) & 0xFF;
     }
 }
 
-uint64_t MemoryManager::read(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const ISA::Type type) const {
+uint64_t MemoryManager::read(const MemoryAccessScope region, const uint32_t address, const ISA::Type type) const {
     switch (type) {
         case ISA::Type::I32:
         case ISA::Type::UI32:
         case ISA::Type::F32:
         case ISA::Type::PTR: {
-            return read32(runtimeError, region, address);
+            return read32(region, address);
         }
         case ISA::Type::I64:
         case ISA::Type::UI64:
         case ISA::Type::F64: {
-            return read64(runtimeError, region, address);
+            return read64(region, address);
         }
     }
 }
 
-uint8_t MemoryManager::read8(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address) const {
-    this->checkAddressInRegion(runtimeError, region, address, false);
+uint8_t MemoryManager::read8(const MemoryAccessScope region, const uint32_t address) const {
+    this->checkAddressInRegion(region, address, false);
     Page* page = getPage(address);
     if (page == nullptr) {
         // page is not currently allocated
@@ -87,8 +87,8 @@ uint8_t MemoryManager::read8(std::optional<RuntimeError>* runtimeError, const Me
     return page->data[getPageOffset(address)];
 }
 
-uint32_t MemoryManager::read32(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address) const {
-    this->checkAddressInRegion(runtimeError, region, address, false);
+uint32_t MemoryManager::read32(const MemoryAccessScope region, const uint32_t address) const {
+    this->checkAddressInRegion(region, address, false);
     Page* page = getPage(address);
     if (page == nullptr) {
         // page is not currently allocated
@@ -101,8 +101,8 @@ uint32_t MemoryManager::read32(std::optional<RuntimeError>* runtimeError, const 
     return result;
 }
 
-uint64_t MemoryManager::read64(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address) const {
-    this->checkAddressInRegion(runtimeError, region, address, false);
+uint64_t MemoryManager::read64(const MemoryAccessScope region, const uint32_t address) const {
+    this->checkAddressInRegion(region, address, false);
     Page* page = getPage(address);
     if (page == nullptr) {
         // page is not currently allocated
@@ -151,7 +151,7 @@ Page* MemoryManager::getPage(uint32_t address) const {
     return it->second;
 }
 
-void MemoryManager::checkAddressInRegion(std::optional<RuntimeError>* runtimeError, const MemoryAccessScope region, const uint32_t address, const bool isWrite) const {
+void MemoryManager::checkAddressInRegion(const MemoryAccessScope region, const uint32_t address, const bool isWrite) const {
     switch (region) {
         case MemoryAccessScope::CODE: {
             if (this->inCodeRegion(address)) {
@@ -189,11 +189,10 @@ void MemoryManager::checkAddressInRegion(std::optional<RuntimeError>* runtimeErr
     addressAsHex << "0x" << std::hex << std::uppercase << address;
     const std::string str = isWrite? "write to": "read from";
     const std::string errorMessage = "attempted to " + str + " address " + addressAsHex.str() + " outside the permitted memory region";
-    *runtimeError = RuntimeError{
+    throw RuntimeError{
         RuntimeErrorType::INTERNAL,
         errorMessage
     };
-    throw std::runtime_error{""};
 }
 
 bool MemoryManager::inCodeRegion(const uint32_t address) const {

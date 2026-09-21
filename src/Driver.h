@@ -21,6 +21,8 @@ private:
     static int compile(const char* filePath);
     static int run(const char* filePath, const bool outputAssembly, const bool outputByteCode);
 
+    static void runVM(const std::vector<uint8_t>& bytecode);
+
     static std::string readSourceCode(const std::filesystem::path& path);
 
     static int outputBytecodeFile(const std::filesystem::path& outputFilePath, const std::vector<uint8_t>& bytecode);

@@ -22,7 +22,6 @@ public:
     CallStackManager(MemoryManager* memoryManager);
 
     void push(
-        std::optional<RuntimeError>* runtimeError,
         uint32_t& FP,
         uint32_t& SP,
         const uint32_t returnAddress,
@@ -34,7 +33,6 @@ public:
     );
 
     void pop(
-        std::optional<RuntimeError>* runtimeError,
         uint32_t& FP,
         uint32_t& SP,
         uint32_t& PC
@@ -44,7 +42,7 @@ public:
 
     bool isCallStackEmpty() const;
 
-    std::vector<uint32_t> getStackTrace(std::optional<RuntimeError>* runtimeError, const uint32_t FP) const;
+    std::vector<uint32_t> getStackTrace(const uint32_t FP) const;
 
 private:
     MemoryManager *memoryManager;

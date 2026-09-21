@@ -50,7 +50,7 @@ void RuntimeErrorHandler::raiseRuntimeError(const RuntimeError& error, const uin
 
     // get stack trace
     std::optional<RuntimeError> runtimeErrorWhenBuildingStackTrace;
-    std::vector<uint32_t> stackTrace = vm->getCallStackManager()->getStackTrace(&runtimeErrorWhenBuildingStackTrace, FP);
+    std::vector<uint32_t> stackTrace = vm->getCallStackManager()->getStackTrace(FP);
     const FunctionMetadata* functionInfo = this->getFunctionMetadata(this->vm->getPC() - 1);
 
     const std::string* path = &this->sourceMetadata.at(lineMetadata->sourceId);

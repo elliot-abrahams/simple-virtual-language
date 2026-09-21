@@ -21,15 +21,18 @@ enum class RuntimeErrorType {
     INTERNAL
 };
 
-struct RuntimeError {
-    RuntimeErrorType type;
+struct RuntimeError : std::runtime_error {
+    const RuntimeErrorType type;
     std::string message;
+
+    RuntimeError(const RuntimeErrorType type, const std::string& message) :
+        std::runtime_error(message), type(type) {}
 };
 
 struct CompilerError : std::runtime_error {
     std::string file;
-    size_t line;
-    size_t column;
+    const size_t line;
+    const size_t column;
 
     CompilerError(const std::string& file, const size_t line, const size_t column, const std::string& errorType, const std::string& message) :
           std::runtime_error(format(file, line, column, errorType, message)),

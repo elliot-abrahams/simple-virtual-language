@@ -10,13 +10,12 @@ void HeapManager::initialiseHeap(uint32_t* HP) {
     this->HP = HP;
 }
 
-uint32_t HeapManager::allocateBlock(std::optional<RuntimeError>* runtimeError, const uint32_t size, const uint32_t SP) {
+uint32_t HeapManager::allocateBlock(const uint32_t size, const uint32_t SP) {
     if (size == 0) {
-        *runtimeError = RuntimeError {
+        throw RuntimeError {
             RuntimeErrorType::INTERNAL,
             "attempted to allocate 0 bytes in heap memory"
         };
-        throw std::runtime_error{""};
     }
 
     const uint32_t bytesToAllocate = size + BLOCK_HEADER_SIZE;
@@ -37,11 +36,10 @@ uint32_t HeapManager::allocateBlock(std::optional<RuntimeError>* runtimeError, c
     if (currBlock == nullptr || // if no sufficiently sized free block was found
         currBlock->address + bytesToAllocate >= SP // if allocated space would collide with call stack
     ) {
-        *runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::OUT_OF_MEMORY,
             "heap memory exhausted"
         };
-        throw std::runtime_error{""};
     }
 
     const uint32_t allocatedAddress = currBlock->address + BLOCK_HEADER_SIZE;
@@ -52,12 +50,12 @@ uint32_t HeapManager::allocateBlock(std::optional<RuntimeError>* runtimeError, c
     }
 
     // write header onto the heap
-    this->memoryManager->write32(runtimeError, MemoryAccessScope::HEAP, currBlock->address, bytesToAllocate);
+    this->memoryManager->write32(MemoryAccessScope::HEAP, currBlock->address, bytesToAllocate);
 
     // write all other allocated values to zero
     for (uint32_t addressOffset = 0; addressOffset < size; addressOffset++) {
         const uint32_t address = currBlock->address + BLOCK_HEADER_SIZE + addressOffset;
-        this->memoryManager->write8(runtimeError, MemoryAccessScope::HEAP, address, 0);
+        this->memoryManager->write8(MemoryAccessScope::HEAP, address, 0);
     }
 
     // if allocated space takes up the entire free block
@@ -82,11 +80,11 @@ uint32_t HeapManager::allocateBlock(std::optional<RuntimeError>* runtimeError, c
     return allocatedAddress;
 }
 
-void HeapManager::deallocateBlock(std::optional<RuntimeError>* runtimeError, const uint32_t address) {
+void HeapManager::deallocateBlock(const uint32_t address) {
     const uint32_t blockAddress = address - BLOCK_HEADER_SIZE;
 
     // read bytesToDeallocate from heap block header
-    const uint32_t bytesToDeallocate = this->memoryManager->read32(runtimeError, MemoryAccessScope::HEAP, blockAddress);
+    const uint32_t bytesToDeallocate = this->memoryManager->read32(MemoryAccessScope::HEAP, blockAddress);
 
     auto* newFreeBlock = new FreeBlock{bytesToDeallocate, blockAddress, nullptr};
 

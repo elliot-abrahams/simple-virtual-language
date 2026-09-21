@@ -9,24 +9,23 @@
 
 class NativeFunctionManager {
 public:
-    static void invoke(VM* vm, std::optional<RuntimeError>* runtimeError, const uint8_t id) {
+    static void invoke(VM* vm, const uint8_t id) {
         switch (id) {
-            case 0x00: executeExit(vm, runtimeError); break;
-            case 0x01: executePrint(vm, runtimeError); break;
-            case 0x03: executePrintStr(vm, runtimeError); break;
+            case 0x00: executeExit(vm); break;
+            case 0x01: executePrint(vm); break;
+            case 0x03: executePrintStr(vm); break;
 
             default:
-                *runtimeError = RuntimeError{
+                throw RuntimeError{
                     RuntimeErrorType::INTERNAL,
                     "native call ID " + std::to_string(id) + " does not correspond to a defined function"
                 };
-                throw std::runtime_error{""};
         }
     }
 
 private:
-    static void executeExit(VM* vm, std::optional<RuntimeError>* runtimeError) {
-        const Value exitStatus = vm->getOperandStack()->pop(runtimeError);
+    static void executeExit(VM* vm) {
+        const Value exitStatus = vm->getOperandStack()->pop();
 
         // type of exitStatus must be integer
         vm->checkType(
@@ -39,13 +38,11 @@ private:
             },
             static_cast<uint8_t>(exitStatus.type));
 
-        if (vm->getRuntimeError()->has_value()) return;
-
         vm->setExitStatus(static_cast<int>(exitStatus.rawValue));
     }
 
-    static void executePrint(VM* vm, std::optional<RuntimeError>* runtimeError) {
-        const Value value = vm->getOperandStack()->pop(runtimeError);
+    static void executePrint(VM* vm) {
+        const Value value = vm->getOperandStack()->pop();
 
         // type of value must be either integer or float
         vm->checkType(
@@ -61,27 +58,22 @@ private:
             static_cast<uint8_t>(value.type)
         );
 
-        if (vm->getRuntimeError()->has_value()) return;
-
         const std::string output = value.toString();
 
         if (output == "") {
-            *runtimeError = RuntimeError{
+            throw RuntimeError{
                 RuntimeErrorType::INTERNAL,
                 "invalid operand type for native function 'print'"
             };
-            throw std::runtime_error{""};
         }
 
         std::cout << output;
     }
 
-    static void executePrintStr(VM* vm, std::optional<RuntimeError>* runtimeError) {
-        const Value value = vm->getOperandStack()->pop(runtimeError);
+    static void executePrintStr(VM* vm) {
+        const Value value = vm->getOperandStack()->pop();
         // type of value must be ptr
         vm->checkType("native print_str", {static_cast<uint8_t>(ISA::Type::PTR)}, static_cast<uint8_t>(value.type));
-
-        if (vm->getRuntimeError()->has_value()) return;
 
         std::cout << vm->readStringFromMemory(value.rawValue);
     }

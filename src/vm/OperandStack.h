@@ -22,7 +22,6 @@ struct Value
     ISA::Type type;
     uint64_t rawValue;
 
-    inline static std::optional<RuntimeError>* runtimeError;
     inline static ErrorContext errorContext;
 
     TypedValue toTyped() const {
@@ -44,11 +43,10 @@ struct Value
                 return d;
             }
             default:
-                *runtimeError = RuntimeError{
+                throw RuntimeError{
                     RuntimeErrorType::INTERNAL,
                     "unexpected type on the operand stack"
                 };
-                throw std::runtime_error{""};
         }
     }
 
@@ -212,33 +210,30 @@ struct Value
 private:
 
     void handleInvalidOperandTypesForConversion(const ISA::Type newType) const {
-        *runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::INTERNAL,
             "cannot convert value from type " +
                 TypeConversions::typeToString(static_cast<uint8_t>(this->type)) +
                 " to type " +
                 TypeConversions::typeToString(static_cast<uint8_t>(newType))
         };
-        throw std::runtime_error{""};
     }
 
     void handleOutOfRangeConversionError(const ISA::Type& newType) const {
         if (errorContext == ErrorContext::LANGUAGE) {
-            *runtimeError = RuntimeError {
+            throw RuntimeError {
                 RuntimeErrorType::OUT_OF_RANGE,
                 "value cannot be represented by the target type"
             };
 
-        } else {
-            *runtimeError = RuntimeError {
-                RuntimeErrorType::INTERNAL,
-                "out of range during conversion from type " +
-                TypeConversions::typeToString(static_cast<uint8_t>(this->type)) +
-                " to type " +
-                TypeConversions::typeToString(static_cast<uint8_t>(newType))
-            };
         }
-        throw std::runtime_error{""};
+        throw RuntimeError {
+            RuntimeErrorType::INTERNAL,
+            "out of range during conversion from type " +
+            TypeConversions::typeToString(static_cast<uint8_t>(this->type)) +
+            " to type " +
+            TypeConversions::typeToString(static_cast<uint8_t>(newType))
+        };
     }
 
     std::string formatFloatString(const double value) const {
@@ -279,12 +274,12 @@ class OperandStack {
 public:
     OperandStack();
 
-    Value pop(std::optional<RuntimeError>* runtimeError);
+    Value pop();
 
-    Value peek(std::optional<RuntimeError>* runtimeError) const;
+    Value peek() const;
 
-    void push(std::optional<RuntimeError>* runtimeError, const uint8_t typeOperand, const uint64_t rawValue);
-    void push(std::optional<RuntimeError>* runtimeError, const Value value);
+    void push(const uint8_t typeOperand, const uint64_t rawValue);
+    void push(const Value value);
 
     const std::vector<Value>* getStack() const;
 

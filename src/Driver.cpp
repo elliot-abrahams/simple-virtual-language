@@ -126,15 +126,7 @@ int Driver::execute(const char* filePath) {
     );
 
     // run bytecode in vm
-    try {
-        const auto vm = new VM();
-        vm->run(&bytecode);
-        vm->handleRuntimeError();
-        exit(vm->getExitStatus());
-    } catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
-        return 1;
-    }
+    runVM(bytecode);
 }
 
 int Driver::assemble(const char* filePath) {
@@ -224,14 +216,18 @@ int Driver::run(const char *filePath, const bool outputAssembly, const bool outp
     }
 
     // run bytecode in vm
+    runVM(bytecode.value());
+}
+
+void Driver::runVM(const std::vector<uint8_t>& bytecode) {
+    // run bytecode in vm
+    const auto vm = new VM();
     try {
-        const auto vm = new VM();
-        vm->run(&bytecode.value());
-        vm->handleRuntimeError();
+        vm->run(&bytecode);
         exit(vm->getExitStatus());
-    } catch (const std::runtime_error& e) {
-        std::cerr << e.what() << std::endl;
-        return 1;
+    } catch (RuntimeError& e) {
+        vm->handleRuntimeError(e);
+        exit(vm->getExitStatus());
     }
 }
 

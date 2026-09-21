@@ -33,24 +33,10 @@ void VM::run(const std::vector<uint8_t>* bytecode) {
 
     this->heapManager.initialiseHeap(&this->HP);
 
-    Value::runtimeError = &this->runtimeError;
-
-    while (running) {
-        try {
-            this->execute();
-        } catch (std::runtime_error& e) {
-            if (this->runtimeError.has_value()) {
-                this->exitCode = 1;
-                return;
-            }
-            throw e;
-        }
-
-        if (this->exitCode != 0) return;
-    }
+    this->runProgram(bytecode);
 }
 
-void VM::run(const std::vector<uint8_t>* bytecode, VMTestScenario testScenario) {
+void VM::run(const std::vector<uint8_t>* bytecode, const VMTestScenario testScenario) {
     // read bytecode
     this->readBytecode(bytecode);
 
@@ -59,8 +45,6 @@ void VM::run(const std::vector<uint8_t>* bytecode, VMTestScenario testScenario) 
     this->HP = this->HB;
 
     this->heapManager.initialiseHeap(&this->HP);
-
-    Value::runtimeError = &this->runtimeError;
 
     switch (testScenario) {
         case VMTestScenario::NEAR_CALL_STACK_OVERFLOW:
@@ -74,18 +58,20 @@ void VM::run(const std::vector<uint8_t>* bytecode, VMTestScenario testScenario) 
             default: {}
     }
 
-    while (running) {
-        try {
-            this->execute();
-        } catch (std::runtime_error& e) {
-            if (this->runtimeError.has_value()) {
-                this->exitCode = 1;
-                return;
-            }
-            throw e;
-        }
+    this->runProgram(bytecode);
+}
 
-        if (this->exitCode != 0) return;
+void VM::runProgram(const std::vector<uint8_t>* bytecode) {
+    try {
+        while (running) {
+            this->execute();
+
+            if (this->exitCode != 0) return; // terminate program if exit status is not zero
+        }
+    } catch (RuntimeError& runtimeError) {
+        // if a runtime error is thrown -> set exit code to 1
+        this->exitCode = 1;
+        throw;
     }
 }
 
@@ -131,7 +117,7 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
     Value::errorContext = errorContext;
 
     // load bytecode into memory
-    this->memoryManager.loadBytecodeIntoMemory(&this->runtimeError, bytecode, endOfDataAddress);
+    this->memoryManager.loadBytecodeIntoMemory(bytecode, endOfDataAddress);
     this->memoryManager.setStartOfDataRegion(endOfCodeAddress + 1 - BYTECODE_HEADER_SIZE);
 
     // decode metadata for runtimeErrorHandler
@@ -265,7 +251,7 @@ void VM::readBytecode(const std::vector<uint8_t> *bytecode) {
 }
 
 Value VM::popOperandStack() {
-    return this->operandStack.pop(&this->runtimeError);
+    return this->operandStack.pop();
 }
 
 OperandStack* VM::getOperandStack() {
@@ -276,12 +262,8 @@ CallStackManager* VM::getCallStackManager() {
     return &this->callStackManager;
 }
 
-void VM::handleRuntimeError() const {
-    if (!this->runtimeError.has_value()) {
-        return;
-    }
-
-    this->runtimeErrorHandler.raiseRuntimeError(*runtimeError, this->FP);
+void VM::handleRuntimeError(const RuntimeError& runtimeError) const {
+    this->runtimeErrorHandler.raiseRuntimeError(runtimeError, this->FP);
 }
 
 void VM::setExitStatus(const int status) {
@@ -300,26 +282,22 @@ ErrorContext VM::getErrorContext() const {
     return this->errorContext;
 }
 
-const std::optional<RuntimeError>* VM::getRuntimeError() const {
-    return &this->runtimeError;
-}
-
 std::string VM::readStringFromMemory(const uint32_t address) {
     // read number of bytes of string
-    const uint32_t size = this->memoryManager.read32(&this->runtimeError, MemoryAccessScope::PTR, address);
+    const uint32_t size = this->memoryManager.read32(MemoryAccessScope::PTR, address);
 
     std::string string;
     string.resize(size);
 
     for (int i = 0; i < size; i++) {
-        string[i] = static_cast<char>(this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::PTR, address + 4 + i));
+        string[i] = static_cast<char>(this->memoryManager.read8(MemoryAccessScope::PTR, address + 4 + i));
     }
     return string;
 }
 
 void VM::execute() {
     // read byte at PC
-    const uint8_t opcode = this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++);
+    const uint8_t opcode = this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
 
     switch (static_cast<ISA::Opcode>(opcode)) {
         case ISA::Opcode::NOP: break; // nop
@@ -410,22 +388,22 @@ void VM::executeHalt() {
 void VM::executePush() {
     const uint8_t type = this->fetchType(); // read type operand
     const uint64_t value = this->fetchOperand(type); // get value from bytecode
-    this->operandStack.push(&this->runtimeError, type, value); // push value onto the operand stack
+    this->operandStack.push(type, value); // push value onto the operand stack
 }
 
 void VM::executePop() {
-    this->operandStack.pop(&this->runtimeError); // remove top of stack
+    this->operandStack.pop(); // remove top of stack
 }
 
 void VM::executeDup() {
     // read depth of duplication
     uint8_t depth = 0;
     for (int i = 0; i < 2; i++) {
-        depth = depth | this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++) >> (i * 8) & 0xFF;
+        depth = depth | this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++) >> (i * 8) & 0xFF;
     }
 
     if (depth >= this->operandStack.getStack()->size()) {
-        this->runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::INTERNAL,
             "attempted to duplicate a value outside the operand stack"
         };
@@ -433,52 +411,52 @@ void VM::executeDup() {
     }
 
     const Value valueToDuplicate = this->operandStack.getStack()->at((this->operandStack.getStack()->size() - depth) - 1);
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(valueToDuplicate.type), valueToDuplicate.rawValue); // push that value onto the operand stack
+    this->operandStack.push(static_cast<uint8_t>(valueToDuplicate.type), valueToDuplicate.rawValue); // push that value onto the operand stack
 }
 
 void VM::executeSwap() {
     // pop top two values from operand stack
-    const Value y = this->operandStack.pop(&this->runtimeError);
-    const Value x = this->operandStack.pop(&this->runtimeError);
+    const Value y = this->operandStack.pop();
+    const Value x = this->operandStack.pop();
 
     // push the two values onto the operand stack resulting in a swap
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(y.type), y.rawValue);
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(x.type), x.rawValue);
+    this->operandStack.push(static_cast<uint8_t>(y.type), y.rawValue);
+    this->operandStack.push(static_cast<uint8_t>(x.type), x.rawValue);
 }
 
 void VM::executeRotD() {
     // read depth of rotation
     uint8_t depth = 0;
     for (int i = 0; i < 2; i++) {
-        depth = depth | this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++) >> (i * 8) & 0xFF;
+        depth = depth | this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++) >> (i * 8) & 0xFF;
     }
     std::vector<Value> values;
     // pop values
     for (int i = 0; i < depth; i++) {
-        values.push_back(this->operandStack.pop(&runtimeError));
+        values.push_back(this->operandStack.pop());
     }
     // push values resulting in a downwards rotation
     for (int i = depth - 2; i >= 0; i--) {
-        this->operandStack.push(&runtimeError, static_cast<uint8_t>(values[i].type), values[i].rawValue);
+        this->operandStack.push(static_cast<uint8_t>(values[i].type), values[i].rawValue);
     }
-    this->operandStack.push(&runtimeError, static_cast<uint8_t>(values[depth - 1].type), values[depth - 1].rawValue);
+    this->operandStack.push(static_cast<uint8_t>(values[depth - 1].type), values[depth - 1].rawValue);
 }
 
 void VM::executeRotU() {
     // read depth of rotation
     uint8_t depth = 0;
     for (int i = 0; i < 2; i++) {
-        depth = depth | this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++) >> (i * 8) & 0xFF;
+        depth = depth | this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++) >> (i * 8) & 0xFF;
     }
     // pop values
     std::vector<Value> values;
     for (int i = 0; i < depth; i++) {
-        values.push_back(this->operandStack.pop(&runtimeError));
+        values.push_back(this->operandStack.pop());
     }
     // push values resulting in an upwards rotation
-    this->operandStack.push(&runtimeError, static_cast<uint8_t>(values[0].type), values[0].rawValue);
+    this->operandStack.push(static_cast<uint8_t>(values[0].type), values[0].rawValue);
     for (int i = depth - 1; i >= 1; i--) {
-        this->operandStack.push(&runtimeError, static_cast<uint8_t>(values[i].type), values[i].rawValue);
+        this->operandStack.push(static_cast<uint8_t>(values[i].type), values[i].rawValue);
     }
 }
 
@@ -488,26 +466,26 @@ void VM::executeRotU() {
 
 void VM::executeLoad() {
     const uint8_t type = this->fetchType(); // read type operand
-    const Value address = this->operandStack.pop(&this->runtimeError); // pop address from operand stack
+    const Value address = this->operandStack.pop(); // pop address from operand stack
     this->checkType("load", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr or ui32
 
-    const uint64_t value = this->memoryManager.read(&this->runtimeError, MemoryAccessScope::PTR, address.rawValue, static_cast<ISA::Type>(type)); // read value at address
-    this->operandStack.push(&this->runtimeError, type, value); // push value onto operand stack
+    const uint64_t value = this->memoryManager.read(MemoryAccessScope::PTR, address.rawValue, static_cast<ISA::Type>(type)); // read value at address
+    this->operandStack.push(type, value); // push value onto operand stack
 }
 
 void VM::executeLoadB() {
-    const Value address = this->operandStack.pop(&this->runtimeError); // pop address from operand stack
+    const Value address = this->operandStack.pop(); // pop address from operand stack
     this->checkType("loadB", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr or ui32
 
     // read byte at address
-    const uint8_t value = this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::PTR, address.rawValue);
+    const uint8_t value = this->memoryManager.read8(MemoryAccessScope::PTR, address.rawValue);
     // push byte as ui32 onto the operand stack
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(ISA::Type::UI32), value);
+    this->operandStack.push(static_cast<uint8_t>(ISA::Type::UI32), value);
 }
 
 void VM::executeLoadG() {
     const uint32_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
-    const uint8_t valueDataType = this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::DATA, address - 1); // load data type at address
+    const uint8_t valueDataType = this->memoryManager.read8(MemoryAccessScope::DATA, address - 1); // load data type at address
 
     /*
      * <data type of global at address>
@@ -516,11 +494,11 @@ void VM::executeLoadG() {
     */
 
     if (valueDataType != static_cast<uint8_t>(ISA::Type::STR)) {
-        const uint64_t value = this->memoryManager.read(&this->runtimeError, MemoryAccessScope::DATA, address, static_cast<ISA::Type>(valueDataType)); // read value at address
-        this->operandStack.push(&this->runtimeError, valueDataType, value); // push value onto operand stack
+        const uint64_t value = this->memoryManager.read(MemoryAccessScope::DATA, address, static_cast<ISA::Type>(valueDataType)); // read value at address
+        this->operandStack.push(valueDataType, value); // push value onto operand stack
     } else {
         // push address (pointer to the string) onto operand stack
-        this->operandStack.push(&this->runtimeError, valueDataType, address);
+        this->operandStack.push(valueDataType, address);
     }
 }
 
@@ -528,22 +506,22 @@ void VM::executeLoadL() {
     const uint8_t type = this->fetchType(); // read type operand
     const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
 
-    const uint64_t local = this->memoryManager.read64(&this->runtimeError, MemoryAccessScope::CALL_STACK, this->calculateAndValidateFrameAddress(rawOffset)); // get local value from memory
+    const uint64_t local = this->memoryManager.read64(MemoryAccessScope::CALL_STACK, this->calculateAndValidateFrameAddress(rawOffset)); // get local value from memory
 
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(type), local); // push local value onto operand stack
+    this->operandStack.push(static_cast<uint8_t>(type), local); // push local value onto operand stack
 }
 
 void VM::executeStore() {
-    const Value value = this->operandStack.pop(&this->runtimeError); // pop value to store from operand stack
-    const Value address = this->operandStack.pop(&this->runtimeError); // pop address to store to from operand stack
+    const Value value = this->operandStack.pop(); // pop value to store from operand stack
+    const Value address = this->operandStack.pop(); // pop address to store to from operand stack
     this->checkType("store", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr or ui32
 
     // store value in memory at address
-    this->memoryManager.write(&this->runtimeError, MemoryAccessScope::PTR, address.rawValue, &value);
+    this->memoryManager.write(MemoryAccessScope::PTR, address.rawValue, &value);
 }
 
 void VM::executeStoreB() {
-    const Value value = this->operandStack.pop(&this->runtimeError); // pop value to store from operand stack
+    const Value value = this->operandStack.pop(); // pop value to store from operand stack
 
     // enforce type of value is either i32, ui32, i64, or ui64
     this->checkType("storeB",
@@ -556,54 +534,54 @@ void VM::executeStoreB() {
         static_cast<uint8_t>(value.type)
     );
 
-    const Value address = this->operandStack.pop(&this->runtimeError); // pop address to store to from operand stack
+    const Value address = this->operandStack.pop(); // pop address to store to from operand stack
     this->checkType("storeB", {static_cast<uint8_t>(ISA::Type::PTR), static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(address.type)); // ensure type of address is of type ptr or ui32
 
     // store 8 least significant bytes of value in memory at address
-    this->memoryManager.write8(&this->runtimeError, MemoryAccessScope::PTR, address.rawValue, value.rawValue & 0xFF);
+    this->memoryManager.write8(MemoryAccessScope::PTR, address.rawValue, value.rawValue & 0xFF);
 }
 
 void VM::executeStoreG() {
     const uint32_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
-    const Value value = this->operandStack.pop(&this->runtimeError); // pop value from operand stack to store
+    const Value value = this->operandStack.pop(); // pop value from operand stack to store
 
     // ensure the value on the operand stack matches the type of the target global
-    const uint8_t valueDataType = this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::DATA, address - 1); // read data type of target global
+    const uint8_t valueDataType = this->memoryManager.read8(MemoryAccessScope::DATA, address - 1); // read data type of target global
     this->checkType("storeG", {valueDataType}, static_cast<uint8_t>(value.type)); // ensure type of target global matches type of value from operand stack
 
-    this->memoryManager.write(&this->runtimeError, MemoryAccessScope::DATA, address, &value); // store val in memory at address
+    this->memoryManager.write(MemoryAccessScope::DATA, address, &value); // store val in memory at address
 }
 
 void VM::executeStoreL() {
     const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
 
-    const Value value = this->operandStack.pop(&this->runtimeError); // pop value from operand stack to store
+    const Value value = this->operandStack.pop(); // pop value from operand stack to store
 
-    this->memoryManager.write64(&this->runtimeError, MemoryAccessScope::CALL_STACK, this->calculateAndValidateFrameAddress(rawOffset), value.rawValue); // store value from operand stack to memory
+    this->memoryManager.write64(MemoryAccessScope::CALL_STACK, this->calculateAndValidateFrameAddress(rawOffset), value.rawValue); // store value from operand stack to memory
 }
 
 void VM::executeAddrL() {
     const uint64_t rawOffset = this->fetchOperand(static_cast<uint8_t>(ISA::Type::I32)); // read immediate operand
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(ISA::Type::PTR), this->calculateAndValidateFrameAddress(rawOffset));
+    this->operandStack.push(static_cast<uint8_t>(ISA::Type::PTR), this->calculateAndValidateFrameAddress(rawOffset));
 }
 
 void VM::executeAlloc() {
-    const Value value = this->operandStack.pop(&this->runtimeError); // pop number of bytes to allocate in the heap
+    const Value value = this->operandStack.pop(); // pop number of bytes to allocate in the heap
     this->checkType("alloc", {static_cast<uint8_t>(ISA::Type::UI32)}, static_cast<uint8_t>(value.type));
 
     // allocate space on heap
-    const uint32_t allocatedAddress = this->heapManager.allocateBlock(&this->runtimeError, value.rawValue, this->SP);
+    const uint32_t allocatedAddress = this->heapManager.allocateBlock(value.rawValue, this->SP);
 
     // push pointer onto the operand stack
-    this->operandStack.push(&this->runtimeError, static_cast<uint8_t>(ISA::Type::PTR), allocatedAddress);
+    this->operandStack.push(static_cast<uint8_t>(ISA::Type::PTR), allocatedAddress);
 }
 
 void VM::executeFree() {
-    const Value value = this->operandStack.pop(&this->runtimeError); // pop address of the block to deallocate from the heap
+    const Value value = this->operandStack.pop(); // pop address of the block to deallocate from the heap
     this->checkType("free", {static_cast<uint8_t>(ISA::Type::PTR)}, static_cast<uint8_t>(value.type));
 
     // deallocate heap at address
-    heapManager.deallocateBlock(&this->runtimeError, value.rawValue);
+    heapManager.deallocateBlock(value.rawValue);
 }
 
 // -------------------------------------------------
@@ -612,24 +590,24 @@ void VM::executeFree() {
 
 void VM::executeNative() {
     // read native function ID operand
-    const uint8_t nativeID = this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++);
+    const uint8_t nativeID = this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
 
-    NativeFunctionManager::invoke(this, &this->runtimeError,  nativeID);
+    NativeFunctionManager::invoke(this, nativeID);
 }
 
 void VM::executeCall() {
     const uint32_t address = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
     // read method metadata
-    const uint8_t numberOfArguments = this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, address);
-    const uint32_t numberOfLocals = this->memoryManager.read32(&this->runtimeError, MemoryAccessScope::CODE, address + 1);
+    const uint8_t numberOfArguments = this->memoryManager.read8(MemoryAccessScope::CODE, address);
+    const uint32_t numberOfLocals = this->memoryManager.read32(MemoryAccessScope::CODE, address + 1);
 
     // read arguments from operand stack
     std::vector<Value> arguments;
     for (int i = 0; i < numberOfArguments; i++) {
-        arguments.push_back(this->operandStack.pop(&this->runtimeError));
+        arguments.push_back(this->operandStack.pop());
     }
     // push stack frame onto call stack
-    this->callStackManager.push(&this->runtimeError, this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, &this->HP, this->PC);
+    this->callStackManager.push(this->FP, this->SP, this->PC, numberOfArguments, numberOfLocals, arguments, &this->HP, this->PC);
 
     // set PC to start of called method
     this->PC = address + 5; // (5 for length of method metadata)
@@ -637,7 +615,7 @@ void VM::executeCall() {
 
 void VM::executeRet() {
     // pop stack frame off of call stack
-    this->callStackManager.pop(&this->runtimeError, this->FP, this->SP, this->PC);
+    this->callStackManager.pop(this->FP, this->SP, this->PC);
 }
 
 void VM::executeJmp() {
@@ -647,7 +625,7 @@ void VM::executeJmp() {
 
 void VM::executeJez() {
     const uint32_t jumpAddress = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
-    const Value value = this->operandStack.pop(&this->runtimeError); // pop value off of the operand stack
+    const Value value = this->operandStack.pop(); // pop value off of the operand stack
 
     if (value.isZero()) {
         this->PC = jumpAddress;
@@ -656,7 +634,7 @@ void VM::executeJez() {
 
 void VM::executeJnz() {
     const uint32_t jumpAddress = this->fetchOperand(static_cast<uint8_t>(ISA::Type::PTR)); // read label operand
-    const Value value = this->operandStack.pop(&this->runtimeError); // pop value off of the operand stack
+    const Value value = this->operandStack.pop(); // pop value off of the operand stack
 
     if (!value.isZero()) {
         this->PC = jumpAddress;
@@ -669,196 +647,194 @@ void VM::executeJnz() {
 
 void VM::executeAdd() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // add those two values and push the result onto the operand stack
-    const Value result = ArithmeticOps::add(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::add(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeSub() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // subtract those two values and push the result onto the operand stack
-    const Value result = ArithmeticOps::sub(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::sub(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeMul() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // multiply those two values and push the result onto the operand stack
-    const Value result = ArithmeticOps::mul(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::mul(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeDiv() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     if (value1.isZero()) {
-        this->runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::DIVISION_BY_ZERO,
             "division by zero"
         };
-        throw std::runtime_error{""};
     }
 
     // multiply those two values and push the result onto the operand stack
-    const Value result = ArithmeticOps::div(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::div(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeMod() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     if (value1.isZero()) {
-        this->runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::DIVISION_BY_ZERO,
             "modulo by zero"
         };
-        throw std::runtime_error{""};
     }
 
     // compute modulo and push the result onto the operand stack
-    const Value result = ArithmeticOps::mod(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::mod(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeNot() {
-    const Value value = this->operandStack.pop(&this->runtimeError); // pop value from the operand stack
+    const Value value = this->operandStack.pop(); // pop value from the operand stack
 
     // compute bitwise not and push the result onto the operand stack
-    const Value result = ArithmeticOps::bitwiseNot(&this->runtimeError, value);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::bitwiseNot(value);
+    this->operandStack.push(result);
 }
 
 void VM::executeAnd() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // compute bitwise and, and push the result onto the operand stack
-    const Value result = ArithmeticOps::bitwiseAnd(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::bitwiseAnd(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeOrr() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // compute bitwise or, and push the result onto the operand stack
-    const Value result = ArithmeticOps::bitwiseOr(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::bitwiseOr(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeXor() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // compute bitwise xor and push the result onto the operand stack
-    const Value result = ArithmeticOps::bitwiseXor(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::bitwiseXor(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeShl() {
     // pop two values off of the operand stack
-    const Value numberOfShifts = this->operandStack.pop(&this->runtimeError);
-    const Value value = this->operandStack.pop(&this->runtimeError);
+    const Value numberOfShifts = this->operandStack.pop();
+    const Value value = this->operandStack.pop();
 
     // compute logical shift left and push the result onto the operand stack
-    const Value result = ArithmeticOps::shl(&this->runtimeError, value, numberOfShifts);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::shl(value, numberOfShifts);
+    this->operandStack.push(result);
 }
 
 void VM::executeShr() {
     // pop two values off of the operand stack
-    const Value numberOfShifts = this->operandStack.pop(&this->runtimeError);
-    const Value value = this->operandStack.pop(&this->runtimeError);
+    const Value numberOfShifts = this->operandStack.pop();
+    const Value value = this->operandStack.pop();
 
     // compute logical shift right and push the result onto the operand stack
-    const Value result = ArithmeticOps::shr(&this->runtimeError, false, value, numberOfShifts);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::shr(false, value, numberOfShifts);
+    this->operandStack.push(result);
 }
 
 void VM::executeSar() {
     // pop two values off of the operand stack
-    const Value numberOfShifts = this->operandStack.pop(&this->runtimeError);
-    const Value value = this->operandStack.pop(&this->runtimeError);
+    const Value numberOfShifts = this->operandStack.pop();
+    const Value value = this->operandStack.pop();
 
     // compute arithmetic shift right and push the result onto the operand stack
-    const Value result = ArithmeticOps::shr(&this->runtimeError, true, value, numberOfShifts);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::shr(true, value, numberOfShifts);
+    this->operandStack.push(result);
 }
 
 void VM::executeCeq() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // push 1 onto the operand stack if x == y, otherwise push 0
-    const Value result = ArithmeticOps::ceq(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::ceq(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeCne() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // push 1 onto the operand stack if x != y, otherwise push 0
-    const Value result = ArithmeticOps::cne(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::cne(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeClt() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // push 1 onto the operand stack if x < y, otherwise push 0
-    const Value result = ArithmeticOps::clt(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::clt(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeCle() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // push 1 onto the operand stack if x <= y, otherwise push 0
-    const Value result = ArithmeticOps::cle(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::cle(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeCgt() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // push 1 onto the operand stack if x > y, otherwise push 0
-    const Value result = ArithmeticOps::cgt(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::cgt(value2, value1);
+    this->operandStack.push(result);
 }
 
 void VM::executeCge() {
     // pop two values off of the operand stack
-    const Value value1 = this->operandStack.pop(&this->runtimeError);
-    const Value value2 = this->operandStack.pop(&this->runtimeError);
+    const Value value1 = this->operandStack.pop();
+    const Value value2 = this->operandStack.pop();
 
     // push 1 onto the operand stack if x >= y, otherwise push 0
-    const Value result = ArithmeticOps::cge(&this->runtimeError, value2, value1);
-    this->operandStack.push(&this->runtimeError, result);
+    const Value result = ArithmeticOps::cge(value2, value1);
+    this->operandStack.push(result);
 }
 
 // -------------------------------------------------
@@ -867,20 +843,20 @@ void VM::executeCge() {
 
 void VM::executeConv() {
     const uint8_t type = this->fetchType(); // read type operand
-    Value value = this->operandStack.pop(&this->runtimeError); // pop value off of the operand stack
+    Value value = this->operandStack.pop(); // pop value off of the operand stack
 
     value.convertToType(static_cast<ISA::Type>(type)); // convert type
-    this->operandStack.push(&this->runtimeError, value); // push new value onto operand stack
+    this->operandStack.push(value); // push new value onto operand stack
 }
 
 void VM::executeThrow() {
     // read error ref operand
-    const uint8_t errorRef = this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++);
+    const uint8_t errorRef = this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
 
     switch (errorRef) {
         case 0x00: { // ArrayIndexOutOfRange
-            const Value arrayIndex = this->operandStack.pop(&this->runtimeError);
-            const Value arrayLength = this->operandStack.pop(&this->runtimeError);
+            const Value arrayIndex = this->operandStack.pop();
+            const Value arrayLength = this->operandStack.pop();
 
             checkType(
                 "throw array_index_out_of_range",
@@ -902,14 +878,13 @@ void VM::executeThrow() {
             );
 
             const std::string errorMsg = "array index " + arrayIndex.toString() + " out of range for array with length " + arrayLength.toString();
-            this->runtimeError = RuntimeError{
+            throw RuntimeError{
                 RuntimeErrorType::EXPLICIT_ARRAY_INDEX_OUT_OF_RANGE,
                 errorMsg
             };
-            throw std::runtime_error{""};
         }
         case 0x01: { // NegativeArraySizeError
-            const Value arrayLength = this->operandStack.pop(&this->runtimeError);
+            const Value arrayLength = this->operandStack.pop();
 
             checkType(
                 "throw negative_array_size",
@@ -923,14 +898,13 @@ void VM::executeThrow() {
             );
 
             const std::string errorMsg = "cannot create array with size " + arrayLength.toString();
-            this->runtimeError = RuntimeError{
+            throw RuntimeError{
                 RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_LENGTH,
                 errorMsg
             };
-            throw std::runtime_error{""};
         }
         case 0x02: { // ArrayInitialiserSizeError
-            const Value arrayLength = this->operandStack.pop(&this->runtimeError);
+            const Value arrayLength = this->operandStack.pop();
             checkType(
                 "throw array_initialiser_size",
                 {
@@ -940,17 +914,16 @@ void VM::executeThrow() {
             );
 
             const std::string errorMsg = "array initialiser contains too many elements for array with length " + arrayLength.toString();
-            this->runtimeError = RuntimeError{
+            throw RuntimeError{
                 RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_LENGTH,
                 errorMsg
             };
-            throw std::runtime_error{""};
         }
     }
 }
 
 uint8_t VM::fetchType() {
-    return this->memoryManager.read8(&this->runtimeError, MemoryAccessScope::CODE, this->PC++);
+    return this->memoryManager.read8(MemoryAccessScope::CODE, this->PC++);
 }
 
 uint64_t VM::fetchOperand(const uint8_t type) {
@@ -961,7 +934,7 @@ uint64_t VM::fetchOperand(const uint8_t type) {
         case ISA::Type::F32: // f32
         case ISA::Type::PTR: // ptr
         {
-            result = static_cast<uint64_t>(this->memoryManager.read32(&this->runtimeError, MemoryAccessScope::CODE, this->PC));
+            result = static_cast<uint64_t>(this->memoryManager.read32(MemoryAccessScope::CODE, this->PC));
             this->PC += 4;
             break;
         }
@@ -969,7 +942,7 @@ uint64_t VM::fetchOperand(const uint8_t type) {
         case ISA::Type::UI64: // ui64
         case ISA::Type::F64: // f64
         {
-            result = this->memoryManager.read64(&this->runtimeError, MemoryAccessScope::CODE, this->PC);
+            result = this->memoryManager.read64(MemoryAccessScope::CODE, this->PC);
             this->PC += 8;
             break;
         }
@@ -1016,11 +989,10 @@ void VM::checkType(const std::string &instructionMnemonic, const std::vector<uin
         errorMessage += "but found ";
         errorMessage += TypeConversions::typeToString(actualType);
 
-        this->runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::INTERNAL,
             errorMessage
         };
-        throw std::runtime_error{""};
     }
 }
 
@@ -1030,20 +1002,18 @@ uint32_t VM::calculateAndValidateFrameAddress(const uint64_t rawFrameSlotOffset)
     // enforce offset is within current frame's bounds
     const FrameInfo* frameInfo = this->callStackManager.peekFrameInfo();
     if (frameInfo == nullptr) {
-        this->runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::INTERNAL,
             "attempted to access a local variable or argument outside the current call frame"
         };
-        throw std::runtime_error{""};
     }
     if (frameSlotOffset > 0 && frameSlotOffset > static_cast<int32_t>(frameInfo->numberOfArguments) ||
         -frameSlotOffset > static_cast<int32_t>(frameInfo->numberOfLocals)
     ) {
-        this->runtimeError = RuntimeError{
+        throw RuntimeError{
             RuntimeErrorType::INTERNAL,
             "attempted to access a local variable or argument without an active call frame"
         };
-        throw std::runtime_error{""};
     }
 
     // calculate address of frame slot using the given offset
