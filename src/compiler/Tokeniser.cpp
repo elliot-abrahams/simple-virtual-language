@@ -50,293 +50,311 @@ void compiler::Tokeniser::next() {
 }
 
 Token compiler::Tokeniser::readToken() {
-    // skip whitespace
-    while (this->current < this->source.size() &&
-       std::isspace(static_cast<unsigned char>(this->source[this->current]))) {
-        if (this->source[this->current] == '\n') {
-            this->line++;
-            this->column = 0;
-        }
-        this->advance();
-       }
-
-    // check reached end
-    if (this->current == this->source.size()) {
-        return Token{TokenKind::END_OF_FILE, "", this->line, this->column};
-    }
-
-    this->start = this->current;
-
-    const char currentChar = this->source[this->current];
-
-    switch (currentChar) {
-        case ';': {
-            const Token token = Token{TokenKind::SEMI, ";", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case ',': {
-            const Token token = Token{TokenKind::COMMA, ",", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '(': {
-            const Token token = Token{TokenKind::LBR, "(", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case ')': {
-            const Token token = Token{TokenKind::RBR, ")", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '{': {
-            const Token token = Token{TokenKind::LCBR, "{", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '}': {
-            const Token token = Token{TokenKind::RCBR, "}", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '[': {
-            const Token token = Token{TokenKind::LSQBR, "[", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case ']': {
-            const Token token = Token{TokenKind::RSQBR, "]", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '=': {
-            if (this->current + 1 < this->source.size() &&
-                this->source[this->current + 1] == '=') {
-
-                const Token token = Token{TokenKind::EQUAL_EQUAL, "==", this->line, this->column};
-                this->advance();
-                this->advance();
-                return token;
+    // traverse input until a token is read or an error is thrown
+    while (true) {
+        // skip whitespace
+        while (this->current < this->source.size() &&
+           std::isspace(static_cast<unsigned char>(this->source[this->current]))) {
+            if (this->source[this->current] == '\n') {
+                this->line++;
+                this->column = 0;
             }
-
-            const Token token = Token{TokenKind::EQUAL, "=", this->line, this->column};
             this->advance();
-            return token;
         }
-        case '+': {
-            if (this->current + 1 < this->source.size() &&
-                this->source[this->current + 1] == '+') {
 
-                const Token token = Token{TokenKind::INCREMENT, "++", this->line, this->column};
-                this->advance();
-                this->advance();
-                return token;
-            }
-            const Token token = Token{TokenKind::PLUS, "+", this->line, this->column};
-            this->advance();
-            return token;
+        // check reached end
+        if (this->current == this->source.size()) {
+            return Token{TokenKind::END_OF_FILE, "", this->line, this->column};
         }
-        case '-': {
-            if (this->current + 1 < this->source.size() &&
-                this->source[this->current + 1] == '-') {
 
-                const Token token = Token{TokenKind::DECREMENT, "--", this->line, this->column};
-                this->advance();
-                this->advance();
-                return token;
-            }
-            const Token token = Token{TokenKind::MINUS, "-", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '*': {
-            const Token token = Token{TokenKind::MULTIPLY, "*", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '/': {
-            if (this->current + 1 < this->source.size() &&
-                this->source[this->current + 1] == '/') {
+        this->start = this->current;
 
-                const Token token = Token{TokenKind::INTEGER_DIVIDE, "//", this->line, this->column};
-                this->advance();
-                this->advance();
-                return token;
-            }
-            const Token token = Token{TokenKind::DIVIDE, "/", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '%': {
-            const Token token = Token{TokenKind::MODULO, "%", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '|': {
-            if (this->current + 1 < this->source.size() &&
-                this->source[this->current + 1] == '|') {
+        const char currentChar = this->source[this->current];
 
-                const Token token = Token{TokenKind::LOGICAL_OR, "||", this->line, this->column};
-                this->advance();
-                this->advance();
-                return token;
-            }
-            throw LexicalError(
-                this->path->string(),
-                this->line,
-                this->column,
-                "invalid character '" + std::string(1, currentChar) + "'"
-            );
-        }
-        case '&': {
-            if (this->current + 1 < this->source.size() &&
-                this->source[this->current + 1] == '&') {
-
-                const Token token = Token{TokenKind::LOGICAL_AND, "&&", this->line, this->column};
-                this->advance();
-                this->advance();
-                return token;
-            }
-            throw LexicalError(
-                this->path->string(),
-                this->line,
-                this->column,
-                "invalid character '" + std::string(1, currentChar) + "'"
-            );
-        }
-        case '!': {
-            if (this->current + 1 < this->source.size() &&
-                this->source[this->current + 1] == '=') {
-
-                const Token token = Token{TokenKind::NOT_EQUAL, "!=", this->line, this->column};
-                this->advance();
-                this->advance();
-                return token;
-            }
-
-            const Token token = Token{TokenKind::LOGICAL_NOT, "!", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '<': {
-            if (this->current + 1 < this->source.size() &&
-                this->source[this->current + 1] == '=') {
-
-                const Token token = Token{TokenKind::LESS_THAN_OR_EQUAL, "<=", this->line, this->column};
-                this->advance();
-                this->advance();
-                return token;
-                }
-
-            const Token token = Token{TokenKind::LESS_THAN, "<", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        case '>': {
-            if (this->current + 1 < this->source.size() &&
-                this->source[this->current + 1] == '=') {
-
-                const Token token = Token{TokenKind::GREATER_THAN_OR_EQUAL, ">=", this->line, this->column};
-                this->advance();
-                this->advance();
-                return token;
-                }
-
-            const Token token = Token{TokenKind::GREATER_THAN, ">", this->line, this->column};
-            this->advance();
-            return token;
-        }
-        default: {
-
-            if (std::isalpha(currentChar) || currentChar == '_') {
+        switch (currentChar) {
+            case '#' : { // single line comment
+                const Token token = Token{};
+                // skip until newline
                 while (this->current < this->source.size() &&
-                      (std::isalnum(this->source[this->current]) || this->source[this->current] == '_')) {
+                    this->source[this->current] != '\n' &&
+                    this->source[this->current] != '\r'
+                ) {
+                    if (this->source[this->current] == '\n') {
+                        this->line++;
+                        this->column = 0;
+                    }
                     this->advance();
                 }
-
-                // parse keyword or identifier
-                const std::string image(this->source.substr(this->start, this->current - this->start));
-
-                if (image == "if") return Token{TokenKind::IF, image, this->line, this->column - 2};
-                if (image == "else") return Token{TokenKind::ELSE, image, this->line, this->column - 4};
-                if (image == "while") return Token{TokenKind::WHILE, image, this->line, this->column - 5};
-                if (image == "continue") return Token{TokenKind::CONTINUE, image, this->line, this->column - 8};
-                if (image == "break") return Token{TokenKind::BREAK, image, this->line, this->column - 5};
-                if (image == "return") return Token{TokenKind::RETURN, image, this->line, this->column - 6};
-                if (image == "new") return Token{TokenKind::NEW, image, this->line, this->column - 3};
-
-                if (image == "int") return Token{TokenKind::INT_TYPE, image, this->line, this->column - 3};
-                if (image == "float") return Token{TokenKind::FLOAT_TYPE, image, this->line, this->column - 5};
-                if (image == "void") return Token{TokenKind::VOID_TYPE, image, this->line, this->column - 4};
-                if (image == "bool") return Token{TokenKind::BOOL_TYPE, image, this->line, this->column - 4};
-                if (image == "true") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column - 4};
-                if (image == "false") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column - 5};
-
-                if (image.substr(0,2) == "__") {
-                    throw LexicalError(
-                        this->path->string(),
-                        this->line,
-                        this->column,
-                        "identifier '" + image + "' is invalid. Identifiers starting with '__' are reserved"
-                    );
-                }
-
-                return Token{TokenKind::IDENTIFIER, image, this->line, this->column - image.size()};
+                break;
             }
+            case ';': {
+                const Token token = Token{TokenKind::SEMI, ";", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case ',': {
+                const Token token = Token{TokenKind::COMMA, ",", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '(': {
+                const Token token = Token{TokenKind::LBR, "(", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case ')': {
+                const Token token = Token{TokenKind::RBR, ")", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '{': {
+                const Token token = Token{TokenKind::LCBR, "{", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '}': {
+                const Token token = Token{TokenKind::RCBR, "}", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '[': {
+                const Token token = Token{TokenKind::LSQBR, "[", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case ']': {
+                const Token token = Token{TokenKind::RSQBR, "]", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '=': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '=') {
 
-            if (std::isdigit(currentChar)) {
-                // consume integer part
-                while (this->current < this->source.size() && std::isdigit(this->source[this->current])) {
+                    const Token token = Token{TokenKind::EQUAL_EQUAL, "==", this->line, this->column};
                     this->advance();
-                }
-
-                // check for a float
-                if (this->current < this->source.size() && this->source[this->current] == '.') {
                     this->advance();
+                    return token;
+                    }
 
-                    // enforce digits after '.'
-                    if (this->current >= this->source.size() || !std::isdigit(this->source[this->current])) {
+                const Token token = Token{TokenKind::EQUAL, "=", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '+': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '+') {
+
+                    const Token token = Token{TokenKind::INCREMENT, "++", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                    }
+                const Token token = Token{TokenKind::PLUS, "+", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '-': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '-') {
+
+                    const Token token = Token{TokenKind::DECREMENT, "--", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                    }
+                const Token token = Token{TokenKind::MINUS, "-", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '*': {
+                const Token token = Token{TokenKind::MULTIPLY, "*", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '/': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '/') {
+
+                    const Token token = Token{TokenKind::INTEGER_DIVIDE, "//", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                    }
+                const Token token = Token{TokenKind::DIVIDE, "/", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '%': {
+                const Token token = Token{TokenKind::MODULO, "%", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '|': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '|') {
+
+                    const Token token = Token{TokenKind::LOGICAL_OR, "||", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                    }
+                throw LexicalError(
+                    this->path->string(),
+                    this->line,
+                    this->column,
+                    "invalid character '" + std::string(1, currentChar) + "'"
+                );
+            }
+            case '&': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '&') {
+
+                    const Token token = Token{TokenKind::LOGICAL_AND, "&&", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                    }
+                throw LexicalError(
+                    this->path->string(),
+                    this->line,
+                    this->column,
+                    "invalid character '" + std::string(1, currentChar) + "'"
+                );
+            }
+            case '!': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '=') {
+
+                    const Token token = Token{TokenKind::NOT_EQUAL, "!=", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                    }
+
+                const Token token = Token{TokenKind::LOGICAL_NOT, "!", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '<': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '=') {
+
+                    const Token token = Token{TokenKind::LESS_THAN_OR_EQUAL, "<=", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                    }
+
+                const Token token = Token{TokenKind::LESS_THAN, "<", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '>': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '=') {
+
+                    const Token token = Token{TokenKind::GREATER_THAN_OR_EQUAL, ">=", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                    }
+
+                const Token token = Token{TokenKind::GREATER_THAN, ">", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            default: {
+
+                if (std::isalpha(currentChar) || currentChar == '_') {
+                    while (this->current < this->source.size() &&
+                          (std::isalnum(this->source[this->current]) || this->source[this->current] == '_')) {
+                        this->advance();
+                          }
+
+                    // parse keyword or identifier
+                    const std::string image(this->source.substr(this->start, this->current - this->start));
+
+                    if (image == "if") return Token{TokenKind::IF, image, this->line, this->column - 2};
+                    if (image == "else") return Token{TokenKind::ELSE, image, this->line, this->column - 4};
+                    if (image == "while") return Token{TokenKind::WHILE, image, this->line, this->column - 5};
+                    if (image == "continue") return Token{TokenKind::CONTINUE, image, this->line, this->column - 8};
+                    if (image == "break") return Token{TokenKind::BREAK, image, this->line, this->column - 5};
+                    if (image == "return") return Token{TokenKind::RETURN, image, this->line, this->column - 6};
+                    if (image == "new") return Token{TokenKind::NEW, image, this->line, this->column - 3};
+
+                    if (image == "int") return Token{TokenKind::INT_TYPE, image, this->line, this->column - 3};
+                    if (image == "float") return Token{TokenKind::FLOAT_TYPE, image, this->line, this->column - 5};
+                    if (image == "void") return Token{TokenKind::VOID_TYPE, image, this->line, this->column - 4};
+                    if (image == "bool") return Token{TokenKind::BOOL_TYPE, image, this->line, this->column - 4};
+                    if (image == "true") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column - 4};
+                    if (image == "false") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column - 5};
+
+                    if (image.substr(0,2) == "__") {
                         throw LexicalError(
                             this->path->string(),
                             this->line,
                             this->column,
-                            "expected digit after '.' in float literal"
+                            "identifier '" + image + "' is invalid. Identifiers starting with '__' are reserved"
                         );
                     }
 
-                    // consume decimal part
+                    return Token{TokenKind::IDENTIFIER, image, this->line, this->column - image.size()};
+                }
+
+                if (std::isdigit(currentChar)) {
+                    // consume integer part
                     while (this->current < this->source.size() && std::isdigit(this->source[this->current])) {
                         this->advance();
                     }
 
-                    // enforce float literal ends with 'f'
-                    if (this->current >= this->source.size() || this->source[this->current] != 'f') {
-                        throw LexicalError(
-                            this->path->string(),
-                            this->line,
-                            this->column,
-                            "float literal must end with 'f'"
-                        );
+                    // check for a float
+                    if (this->current < this->source.size() && this->source[this->current] == '.') {
+                        this->advance();
+
+                        // enforce digits after '.'
+                        if (this->current >= this->source.size() || !std::isdigit(this->source[this->current])) {
+                            throw LexicalError(
+                                this->path->string(),
+                                this->line,
+                                this->column,
+                                "expected digit after '.' in float literal"
+                            );
+                        }
+
+                        // consume decimal part
+                        while (this->current < this->source.size() && std::isdigit(this->source[this->current])) {
+                            this->advance();
+                        }
+
+                        // enforce float literal ends with 'f'
+                        if (this->current >= this->source.size() || this->source[this->current] != 'f') {
+                            throw LexicalError(
+                                this->path->string(),
+                                this->line,
+                                this->column,
+                                "float literal must end with 'f'"
+                            );
+                        }
+
+                        this->advance();
+                        const std::string image = std::string(source.substr(this->start, this->current - this->start - 1));
+                        auto token = Token{TokenKind::FLOAT_LITERAL, image, this->line, this->column - (image.size() + 1)};
+                        return token;
                     }
 
-                    this->advance();
-                    const std::string image = std::string(source.substr(this->start, this->current - this->start - 1));
-                    auto token = Token{TokenKind::FLOAT_LITERAL, image, this->line, this->column - (image.size() + 1)};
+                    const std::string image = std::string(source.substr(this->start, this->current - this->start));
+                    auto token = Token{TokenKind::INT_LITERAL, image, this->line, this->column - image.size()};
                     return token;
                 }
 
-                const std::string image = std::string(source.substr(this->start, this->current - this->start));
-                auto token = Token{TokenKind::INT_LITERAL, image, this->line, this->column - image.size()};
-                return token;
+                throw LexicalError(
+                    this->path->string(),
+                    this->line,
+                    this->column,
+                    "invalid character '" + std::string(1, currentChar) + "'"
+                );
             }
-
-            throw LexicalError(
-                this->path->string(),
-                this->line,
-                this->column,
-                "invalid character '" + std::string(1, currentChar) + "'"
-            );
         }
     }
 }

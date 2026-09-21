@@ -3,14 +3,15 @@
 ## Contents
 - [1. Overview](#1-overview)
 - [2. Whitespace](#2-whitespace)
-- [3. Delimiters](#3-delimiters)
-- [4. Operators](#4-operators)
-- [5. Keywords](#5-keywords)
-- [6. Identifiers](#6-identifiers)
-- [7. Literals](#7-literals)
-  - [7.1 Integer Literals](#71-integer-literals)
-  - [7.2 Float Literals](#72-float-literals)
-  - [7.3 Boolean Literals](#73-boolean-literals)
+- [3. Comments]()
+- [4. Delimiters](#4-delimiters)
+- [5. Operators](#5-operators)
+- [6. Keywords](#6-keywords)
+- [7. Identifiers](#7-identifiers)
+- [8. Literals](#8-literals)
+  - [8.1 Int Literals](#81-int-literals)
+  - [8.2 Float Literals](#82-float-literals)
+  - [8.3 Bool Literals](#83-bool-literals)
 
 ---
 
@@ -43,7 +44,23 @@ int         x
 
 ---
 
-## 3. Delimiters
+## 3. Comments
+
+SV supports single-line comments.
+
+A comment begins with `#` and continues until the end of the line. Comments are ignored by the tokeniser and do not produce tokens.
+
+For example:
+
+```
+int x = 10; # This is a comment
+```
+
+The contents of a comment are not interpreted as SV source code.
+
+---
+
+## 4. Delimiters
 
 SV provides the following delimiters:
 
@@ -55,10 +72,12 @@ SV provides the following delimiters:
 | `RBR`   | `)`       |
 | `LCBR`  | `{`       |
 | `RCBR`  | `}`       |
+| `LSQBR` | `[`       |
+| `RSQBR` | `]`       |
 
 ---
 
-## 4. Operators
+## 5. Operators
 
 SV provides the following operators
 
@@ -66,7 +85,9 @@ SV provides the following operators
 |-------------------------|-----------|
 | `EQUAL`                 | `=`       |
 | `PLUS`                  | `+`       |
+| `INCREMENT`             | `++`      |
 | `MINUS`                 | `-`       |
+| `DECREMENT`             | `--`      |
 | `MULTIPLY`              | `*`       |
 | `DIVIDE`                | `/`       |
 | `INTEGER_DIVIDE`        | `//`      |
@@ -83,28 +104,29 @@ SV provides the following operators
 
 ---
 
-## 5. Keywords
+## 6. Keywords
 
 The following sequences are reserved as keywords:
 
-| Token          | Keyword    |
-|----------------|------------|
-| `IF`           | `if`       |
-| `ELSE`         | `else`     |
-| `WHILE`        | `while`    |
-| `CONTINUE`     | `continue` |
-| `BREAK`        | `break`    |
-| `RETURN`       | `return`   |
-| `INTEGER_TYPE` | `int`      |
-| `FLOAT_TYPE`   | `float`    |
-| `BOOL_TYPE`    | `bool`     |
-| `VOID_TYPE`    | `void`     |
+| Token        | Keyword    |
+|--------------|------------|
+| `IF`         | `if`       |
+| `ELSE`       | `else`     |
+| `WHILE`      | `while`    |
+| `CONTINUE`   | `continue` |
+| `BREAK`      | `break`    |
+| `RETURN`     | `return`   |
+| `NEW`        | `new`      |
+| `INT_TYPE`   | `int`      |
+| `FLOAT_TYPE` | `float`    |
+| `BOOL_TYPE`  | `bool`     |
+| `VOID_TYPE`  | `void`     |
 
 Keywords have a predefined meaning in the SV language and cannot be used as identifiers.
 
 ---
 
-## 6. Identifiers
+## 7. Identifiers
 
 Identifiers are used to name variables and functions.
 
@@ -138,9 +160,9 @@ Identifiers beginning with `__` are reserved for compiler use and cannot be decl
 
 ---
 
-## 7. Literals
+## 8. Literals
 
-### 7.1 Integer Literals
+### 8.1 Int Literals
 
 An integer literal consists of one or more decimal digits.
 
@@ -161,7 +183,7 @@ Integer literals do not contain a sign.
 
 A sign is represented by a separate unary operator.
 
-### 7.2 Float Literals
+### 8.2 Float Literals
 
 A float literal consists of:
 1. One or more decimal digits
@@ -186,7 +208,7 @@ Float literals do not contain a sign.
 
 A sign is represented by a separate unary operator.
 
-### 7.3 Boolean Literals
+### 8.3 Bool Literals
 
 SV provides two boolean literals:
 - `true`

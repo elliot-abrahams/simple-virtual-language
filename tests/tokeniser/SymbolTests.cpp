@@ -106,3 +106,27 @@ TEST(SYMBOL, GREATER_THAN) {
 TEST(SYMBOL, GREATER_THAN_OR_EQUAL) {
     ASSERT_TOKEN_EQ(">=", TokenKind::GREATER_THAN_OR_EQUAL, ">=");
 }
+
+
+TEST(SYMBOL, END_OF_FILE) {
+    ASSERT_TOKEN_EQ("", TokenKind::END_OF_FILE, "");
+}
+TEST(SYMBOL, HASH) {
+    ASSERT_TOKEN_EQ(
+        R"(
+            # this is a comment
+            ;
+        )",
+        TokenKind::SEMI, ";"
+    );
+}
+
+TEST(SYMBOL, HASH_END_OF_FILE) {
+    ASSERT_TOKEN_EQ(
+        R"(
+            # this is a comment
+
+        )",
+        TokenKind::END_OF_FILE, ""
+    );
+}

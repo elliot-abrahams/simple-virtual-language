@@ -3,58 +3,59 @@
 ## Contents
 
 - [1. Overview](#1-overview)
-- [2. Types](#2-types)
-    - [2.1 Int Type](#21-int-type)
-    - [2.2 Float Type](#22-float-type)
-    - [2.3 Bool Type](#23-bool-type)
-    - [2.4 Void Type](#24-void-type)
-    - [2.5 Array Types](#25-array-types)
-    - [2.6 Implicit Conversion](#26-implicit-conversion)
-- [3. Variables](#3-variables)
-  - [3.1 Variable Declaration](#31-variable-declaration)
-  - [3.2 Variable Initialisation](#32-variable-initialisation)
-  - [3.3 Variable Assignment](#33-variable-assignment)
-  - [3.4 Variable Access](#34-variable-access)
-- [4. Scopes](#4-scopes)
-  - [4.1 Global Scopes](#41-global-scope)
-  - [4.2 Block Scopes](#42-block-scope)
-  - [4.3 Function Scopes](#43-function-scope)
-  - [4.4 Variable Visibility](#44-variable-visibility)
-- [5. Expressions](#5-expressions)
-  - [5.1 Literals](#51-literals)
-  - [5.2 Variable Access](#52-variable-access)
-  - [5.3 Arithmetic Operators](#53-arithmetic-operators)
-  - [5.4 Comparison Operators](#54-comparison-operators)
-  - [5.5 Equality Operators](#55-equality-operators)
-  - [5.6 Logical Operators](#56-logical-operators)
-  - [5.7 Unary Operators](#57-unary-operators)
-  - [5.8 Postfix Expressions](#58-postfix-expressions)
-    - [5.8.1 Indexing](#581-indexing)
-    - [5.8.2 Increment and Decrement](#582-increment-and-decrement)
-  - [5.9 Function Calls](#59-function-calls)
-  - [5.10 Cast Expressions](#510-cast-expressions)
-  - [5.11 New Expressions](#511-new-expressions)
-- [6. Functions](#6-functions)
-  - [6.1 Function Declarations](#61-function-declarations)
-  - [6.2 Parameters](#62-parameters)
-  - [6.3 Function Overloading](#63-function-overloading)
-  - [6.4 Function Resolution](#64-function-resolution)
-  - [6.5 Return Types](#65-return-types)
-- [7. Statements](#7-statements)
-  - [7.1 Statement Rules](#71-statement-rules)
-  - [7.2 Blocks](#72-blocks)
-  - [7.3 Variable Declarations](#73-variable-declaration)
-  - [7.4 Variable Assignment](#74-variable-assignment)
-  - [7.5 Expression Statements](#75-expression-statements)
-    - [7.5.1 Function Call](#751-function-call)
-    - [7.5.2 Increment and Decrement](#752-increment-and-decrement)
-- [8. Control Flow](#8-control-flow)
-  - [8.1 If Statements](#81-if-statements)
-  - [8.2 While Statements](#82-while-statements)
-  - [8.3 Break Statements](#83-break-statements)
-  - [8.4 Continue Statements](#84-continue-statements)
-  - [8.5 Return Statements](#85-return-statements)
-  - [8.6 Return Paths](#86-return-paths)
+- [2. Comments](#2-comments)
+- [3. Types](#3-types)
+  - [3.1 Int Type](#31-int-type)
+  - [3.2 Float Type](#32-float-type)
+  - [3.3 Bool Type](#33-bool-type)
+  - [3.4 Void Type](#34-void-type)
+  - [3.5 Array Types](#35-array-types)
+  - [3.6 Implicit Conversion](#36-implicit-conversion)
+- [4. Variables](#4-variables)
+  - [4.1 Variable Declaration](#41-variable-declaration)
+  - [4.2 Variable Initialisation](#42-variable-initialisation)
+  - [4.3 Variable Assignment](#43-variable-assignment)
+  - [4.4 Variable Access](#44-variable-access)
+- [5. Scopes](#5-scopes)
+  - [5.1 Global Scopes](#51-global-scopes)
+  - [5.2 Block Scopes](#52-block-scopes)
+  - [5.3 Function Scopes](#53-function-scopes)
+  - [5.4 Variable Visibility](#54-variable-visibility)
+- [6. Expressions](#6-expressions)
+  - [6.1 Literals](#61-literals)
+  - [6.2 Variable Access](#62-variable-access)
+  - [6.3 Arithmetic Operators](#63-arithmetic-operators)
+  - [6.4 Comparison Operators](#64-comparison-operators)
+  - [6.5 Equality Operators](#65-equality-operators)
+  - [6.6 Logical Operators](#66-logical-operators)
+  - [6.7 Unary Operators](#67-unary-operators)
+  - [6.8 Postfix Expressions](#68-postfix-expressions)
+    - [6.8.1 Indexing](#681-indexing)
+    - [6.8.2 Increment and Decrement](#682-increment-and-decrement)
+  - [6.9 Function Calls](#69-function-calls)
+  - [6.10 Cast Expressions](#610-cast-expressions)
+  - [6.11 New Expressions](#611-new-expressions)
+- [7. Functions](#7-functions)
+  - [7.1 Function Declarations](#71-function-declarations)
+  - [7.2 Parameters](#72-parameters)
+  - [7.3 Function Overloading](#73-function-overloading)
+  - [7.4 Function Resolution](#74-function-resolution)
+  - [7.5 Return Types](#75-return-types)
+- [8. Statements](#8-statements)
+  - [8.1 Statement Rules](#81-statement-rules)
+  - [8.2 Blocks](#82-blocks)
+  - [8.3 Variable Declarations](#83-variable-declaration)
+  - [8.4 Variable Assignment](#84-variable-assignment)
+  - [8.5 Expression Statements](#85-expression-statements)
+    - [8.5.1 Function Call](#851-function-call)
+    - [8.5.2 Increment and Decrement](#852-increment-and-decrement)
+- [9. Control Flow](#9-control-flow)
+  - [9.1 If Statements](#91-if-statements)
+  - [9.2 While Statements](#92-while-statements)
+  - [9.3 Break Statements](#93-break-statements)
+  - [9.4 Continue Statements](#94-continue-statements)
+  - [9.5 Return Statements](#95-return-statements)
+  - [9.6 Return Paths](#96-return-paths)
 
 ---
 
@@ -68,7 +69,28 @@ A program is semantically valid only if all applicable semantic rules are satisf
 
 ---
 
-## 2. Types
+## 2. Comments
+
+SV supports single-line comments.
+
+A comment begins with `#` and continues until the end of the line.
+
+The following code is therefore equivalent:
+
+```
+int x = 10;
+```
+
+```
+# this is a comment
+int x = 10; # this is another comment
+```
+
+Comments do not change the behaviour of a program
+
+---
+
+## 3. Types
 
 SV provides the following primitive types:
 - `int`
@@ -80,27 +102,27 @@ SV also provides array types.
 
 `void` is only permitted as a function return type.
 
-### 2.1 Int Type
+### 3.1 Int Type
 
 `int` represents a signed 32-bit integer.
 
-### 2.2 Float Type
+### 3.2 Float Type
 
 `float` represents a 32-bit floating-point value.
 
-### 2.3 Bool Type
+### 3.3 Bool Type
 
 `bool` represents a boolean value.
 
 A boolean value is either `true` or `false`.
 
-### 2.4 Void Type
+### 3.4 Void Type
 
 `void` represents the absence of a value.
 
 `void` may only be used as the return type of a function.
 
-### 2.5 Array Types
+### 3.5 Array Types
 
 An array type consists of an element type and one or more dimensions.
 
@@ -116,7 +138,7 @@ int[][] arr;
 ```
 has base type `int` and dimension `2`.
 
-### 2.6 Implicit Conversion
+### 3.6 Implicit Conversion
 
 SV supports implicit conversion between certain types.
 
@@ -145,11 +167,11 @@ Implicit conversion may be required when:
 
 ---
 
-## 3. Variables
+## 4. Variables
 
 A variable has a declared type and may either be initialised or uninitialised.
 
-### 3.1 Variable Declaration
+### 4.1 Variable Declaration
 
 Variable declaration introduces a variable into the current scope.
 
@@ -157,7 +179,7 @@ A variable declaration specifies the variable's type and identifier.
 
 A variable cannot be declared more than once within the same scope.
 
-### 3.2 Variable Initialisation
+### 4.2 Variable Initialisation
 
 A variable declaration may include an initialiser.
 
@@ -195,7 +217,7 @@ print(arr[0]); // 5
 ```
 Both `arr` and `copy` refer to the same array. Modifying the array through either variable is therefore visible through the other variable.
 
-### 3.3 Variable Assignment
+### 4.3 Variable Assignment
 
 An assignment stores the resulting value of an expression in an existing variable or array element.
 
@@ -209,7 +231,7 @@ A successful assignment initialises the target variable if it was previously uni
 
 Assigning an array to another array variable copies the array reference rather than the contents of the array.
 
-### 3.4 Variable access
+### 4.4 Variable access
 
 A variable access evaluates to the value stored in the referenced variable.
 
@@ -223,11 +245,11 @@ The resulting type is the declared type of the variable.
 
 ---
 
-## 4. Scopes
+## 5. Scopes
 
 A scope defines the region of a program in which declarations are visible.
 
-### 4.1 Global Scope
+### 5.1 Global Scope
 
 The global scope contains declarations made outside of functions and blocks.
 
@@ -247,7 +269,7 @@ int x = 10;
 ```
 This is valid because `x` is a global variable.
 
-### 4.2 Block Scope
+### 5.2 Block Scope
 
 Each block introduces a new scope.
 
@@ -264,7 +286,7 @@ For example:
 int y = x;     <- invalid
 ```
 
-### 4.3 Function Scope
+### 5.3 Function Scope
 
 Each function introduces a function scope.
 
@@ -274,7 +296,7 @@ A nested block within a function introduces a separate block scope.
 
 Variables declared within a function are not visible outside that function.
 
-### 4.4 Variable Visibility
+### 5.4 Variable Visibility
 
 A variable is visible within its declaring scope and all nested scopes.
 
@@ -294,7 +316,7 @@ A variable must be declared before it is accessed, except when a global variable
 
 ---
 
-## 5. Expressions
+## 6. Expressions
 
 An expression produces a value and has a resulting type.
 
@@ -302,7 +324,7 @@ The resulting type of an expression is determined by the expression's operand(s)
 
 An expression cannot have a resulting type of `void`.
 
-### 5.1 Literals
+### 6.1 Literals
 
 Each literal has a fixed resulting type.
 
@@ -313,7 +335,7 @@ Each literal has a fixed resulting type.
 | `true`  | `bool`  |
 | `false` | `bool`  |
 
-### 5.2 Variable Access
+### 6.2 Variable Access
 
 A variable access produces the value stored in the referenced variable.
 
@@ -321,7 +343,7 @@ The resulting type is the declared type of the variable.
 
 See [Section 3.4](#34-variable-access) for the rules governing variable access.
 
-### 5.3 Arithmetic Operators
+### 6.3 Arithmetic Operators
 
 The arithmetic operators are:
 
@@ -354,7 +376,7 @@ For example:
 `10 // 2     <- int 
 ```
 
-### 5.4 Comparison Operators
+### 6.4 Comparison Operators
 
 The comparison operators are:
 
@@ -369,7 +391,7 @@ The operands of comparison operators must be numeric.
 
 The resulting type is always `bool`.
 
-### 5.5 Equality Operators
+### 6.5 Equality Operators
 
 The equality operators are:
 
@@ -382,7 +404,7 @@ Both operands must be `bool`, or both operands must be numeric.
 
 The resulting type is always `bool`.
 
-### 5.6 Logical Operators
+### 6.6 Logical Operators
 
 The logical operators are:
 
@@ -395,7 +417,7 @@ Both operands must be `bool`.
 
 The resulting type is always `bool`.
 
-### 5.7 Unary Operators
+### 6.7 Unary Operators
 
 The unary operators are:
 
@@ -434,11 +456,11 @@ int b = --x; // x = 5, b = 5
 
 The resulting type of unary expressions is the resulting type of its base expression.
 
-### 5.8 Postfix Expressions
+### 6.8 Postfix Expressions
 
 A postfix expression evaluates its base expression and then applies each postfix operation in order.
 
-#### 5.8.1 Indexing
+#### 6.8.1 Indexing
 
 An index may only be applied to an array.
 
@@ -459,7 +481,7 @@ arr[0]      // has type int[]
 arr[0][1]   // has type int 
 ```
 
-#### 5.8.2 Increment and Decrement
+#### 6.8.2 Increment and Decrement
 
 The postfix increment operator `++` increments the value of its base expression by `1`.
 
@@ -484,7 +506,7 @@ int b = x--;  // b is 6, x is 5
 
 The resulting type of a postfix increment or decrement expression is the resulting type of its base expression.
 
-### 5.9 Function Calls
+### 6.9 Function Calls
 
 A function call is an expression that evaluates to the return value of the selected function.
 
@@ -494,7 +516,7 @@ A function call with a `void` return type does not produce a value and therefore
 
 Function selection is defined in [Section 6.4](#64-function-resolution).
 
-### 5.10 Cast Expressions
+### 6.10 Cast Expressions
 
 A cast expression explicitly converts the resulting value of an expression to the specified type.
 
@@ -504,7 +526,7 @@ Conversions can only be made between numeric types.
 
 Array types cannot be used as either the source or target type of a cast.
 
-### 5.11 New Expressions
+### 6.11 New Expressions
 
 A new expression creates an array of the specified type and dimensions.
 
@@ -562,11 +584,11 @@ A runtime error occurs if the initialiser contains more elements than the corres
 
 ---
 
-## 6. Functions
+## 7. Functions
 
 A function has a name, parameter list, return type, and body.
 
-### 6.1 Function Declarations
+### 7.1 Function Declarations
 
 A function declaration defines a function with:
 - A return type
@@ -580,7 +602,7 @@ The return type is not part of a function's signature.
 
 Function declarations are available when resolving function calls regardless of their position in the source file.
 
-### 6.2 Parameters
+### 7.2 Parameters
 
 Each parameter has a type and an identifier.
 
@@ -590,7 +612,7 @@ Parameters are visible throughout the function body unless hidden by a declarati
 
 When an array is passed as an argument, its array reference is passed to the function. The function therefore refers to the same array as the caller.
 
-### 6.3 Function Overloading
+### 7.3 Function Overloading
 
 SV supports function overloading.
 
@@ -608,7 +630,7 @@ float add(float a, float b) {
 
 Return types alone cannot distinguish overloaded functions.
 
-### 6.4 Function Resolution
+### 7.4 Function Resolution
 
 A function call is resolved using the number and resulting type of its arguments.
 
@@ -626,7 +648,7 @@ If multiple functions can be selected using implicit conversion and none is pref
 
 Arguments are implicitly converted to their corresponding parameter type when required.
 
-### 6.5 Return Types
+### 7.5 Return Types
 
 Every function has a return type.
 
@@ -638,7 +660,7 @@ A `void` function cannot return a value.
 
 ---
 
-## 7. Statements
+## 8. Statements
 
 A statement performs an action and does not produce a value.
 
@@ -653,13 +675,13 @@ The following are statements:
 - `continue` statements
 - `return` statements
 
-### 7.1 Statement Rules
+### 8.1 Statement Rules
 
 Statements are analysed in source order within a block or function body.
 
 A statement performs an action and does not produce a value.
 
-### 7.2 Blocks
+### 8.2 Blocks
 
 A block is a sequence of statements enclosed by `{` and `}`.
 
@@ -676,7 +698,7 @@ For example:
 }
 ```
 
-### 7.3 Variable Declaration
+### 8.3 Variable Declaration
 
 A variable declaration is a statement that introduces a variable in the current scope.
 
@@ -690,7 +712,7 @@ bool z;
 int[] arr;
 ```
 
-### 7.4 Variable Assignment
+### 8.4 Variable Assignment
 
 Variable assignment is a statement that stores the resulting value of an expression in an existing variable.
 
@@ -702,7 +724,7 @@ x = 10;
 arr = new int[3];
 ```
 
-### 7.5 Expression Statements
+### 8.5 Expression Statements
 
 An expression statement evaluates an expression without producing a value.
 
@@ -717,7 +739,7 @@ x++;
 arr[0]--;
 ```
 
-#### 7.5.1 Function Call
+#### 8.5.1 Function Call
 
 The called function must have a `void` return type.
 
@@ -733,7 +755,7 @@ void foo() {
 foo();
 ```
 
-#### 7.5.2 Increment and Decrement
+#### 8.5.2 Increment and Decrement
 
 When used as an expression statement, the increment or decrement is performed without producing the value that would normally be produced by the expression.
 
@@ -758,11 +780,11 @@ x--;    // x becomes 6
 
 ---
 
-## 8. Control Flow
+## 9. Control Flow
 
 Control-flow statements determine which statements are executed.
 
-### 8.1 If Statements
+### 9.1 If Statements
 
 An `if` statement evaluates its condition.
 
@@ -800,7 +822,7 @@ if (false) {
 }
 ```
 
-### 8.2 While Statements
+### 9.2 While Statements
 
 A `while` statement evaluates its condition.
 
@@ -818,7 +840,7 @@ while (x < 4) {
     x = x + 1;
 }
 ```
-### 8.3 Break Statements
+### 9.3 Break Statements
 
 A `break` statement terminates the innermost enclosing `while` loop.
 
@@ -832,7 +854,7 @@ while (true) {
 }
 ```
 
-### 8.4 Continue Statements
+### 9.4 Continue Statements
 
 A `continue` statement skips the remainder of the current iteration of the innermost enclosing while loop.
 
@@ -847,7 +869,7 @@ while (x < 10) {
 }
 ```
 
-### 8.5 Return Statements
+### 9.5 Return Statements
 
 A `return` statement terminates execution of the current function and transfers control to the caller.
 
@@ -866,7 +888,7 @@ int foo(int a) {
 }
 ```
 
-### 8.6 Return Paths
+### 9.6 Return Paths
 
 A `non-void` function must have a return value on every possible execution path.
 

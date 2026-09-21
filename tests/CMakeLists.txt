@@ -204,6 +204,8 @@ set(Integration_Sources
         integration/expressionTests/castExpressionTests.cpp
         integration/expressionTests/VarAccessTests.cpp
 
+        integration/CommentTests.cpp
+
         integration/IntegrationTestUtils.h
         integration/IntegrationTests.cpp
 )
