@@ -52,11 +52,11 @@ namespace tokeniserTest {
         ASSERT_NE(token.kind, TokenKind::IDENTIFIER);
     }
 
-    inline void ASSERT_TOKEN_THROWS_LEXICAL_ERROR(
+    inline void ASSERT_TOKEN_THROWS_SYNTAX_ERROR(
         const std::string& source
     ) {
         const auto path = new std::filesystem::path("Testing");
-        ASSERT_THROW(auto tokeniser = new compiler::Tokeniser(source, path), LexicalError);
+        ASSERT_THROW(auto tokeniser = new compiler::Tokeniser(source, path), SyntaxError);
     }
 
 }

@@ -33,17 +33,13 @@ std::unordered_set<compiler::BuiltinDataId> compiler::AssemblyGenerator::getRequ
 }
 
 void compiler::AssemblyGenerator::compileUserDefinedFunction(const ast::FunctionDecl &functionDecl) {
-    std::vector<Type> parameterTypes;
-    for (auto& parameter : functionDecl.parameters) {
-        parameterTypes.push_back(parameter->typeInfo->type);
-    }
     this->compileFunctionDeclaration(
         functionDecl.functionSymbol->builtinId == BuiltinFunctionId::NONE ? MethodDefType::USER : MethodDefType::BUILTIN,
         functionDecl.functionSymbol->label,
         *functionDecl.body,
         functionDecl.parameters.size(),
         functionDecl.body->scope->calculateNumberOfLocalSlots(),
-        functionDecl.returnTypeInfo->type == Type::VOID_RETURN_TYPE,
+        functionDecl.returnTypeInfo->type.type == Type::VOID_RETURN_TYPE,
         functionDecl.line,
         functionDecl.column,
         functionDecl.body->blockEndLine,
@@ -954,7 +950,7 @@ void compiler::AssemblyGenerator::compileCastExpr(Scope* scope, const ast::ExprC
 
 void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNew& newExpr) {
     // allocate space in heap
-    const unsigned int dimension = newExpr.typeInfo->dimension - 1;
+    const unsigned int dimension = newExpr.typeInfo->type.dimension - 1;
 
     // compile index expressions
     for (int index = newExpr.arrayDimensions.size() - 1; index >= 0; index--) {
@@ -1007,7 +1003,7 @@ void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNe
         );
     }
 
-    this->compileArrayAlloc(scope, newExpr, 0, *(new SemanticType{newExpr.typeInfo->type, dimension}));
+    this->compileArrayAlloc(scope, newExpr, 0, *(new SemanticType{newExpr.typeInfo->type.type, dimension}));
 
     // =======================================================
     // pop remaining index expressions
@@ -1049,7 +1045,7 @@ void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNe
         });
         // [root_array_ptr, root_array_ptr]
 
-        this->compileArrayInitialiser(scope, *newExpr.optionalInitialiser, SourceLocation{0, newExpr.optionalInitialiser->line, newExpr.optionalInitialiser->column}, SemanticType{newExpr.typeInfo->type, newExpr.typeInfo->dimension});
+        this->compileArrayInitialiser(scope, *newExpr.optionalInitialiser, SourceLocation{0, newExpr.optionalInitialiser->line, newExpr.optionalInitialiser->column}, newExpr.typeInfo->type);
         // [root_array_ptr]
     }
 }

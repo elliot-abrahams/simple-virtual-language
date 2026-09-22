@@ -31,9 +31,9 @@ std::string compiler::Tokeniser::eat(const TokenKind& kind) {
     if (token.kind != kind) {
         throw SyntaxError(
             this->path->string(),
-            this->line,
-            this->column,
-            "expecting '" + Token{kind}.kindToString() + "' but found '" + token.kindToString() + "'"
+            token.line,
+            token.column,
+            "unexpected '" + token.image + "'"
         );
     }
     this->next();
@@ -198,13 +198,8 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     this->advance();
                     return token;
-                    }
-                throw LexicalError(
-                    this->path->string(),
-                    this->line,
-                    this->column,
-                    "invalid character '" + std::string(1, currentChar) + "'"
-                );
+                }
+                this->throwUnexpectedCharError('|');
             }
             case '&': {
                 if (this->current + 1 < this->source.size() &&
@@ -214,13 +209,8 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     this->advance();
                     return token;
-                    }
-                throw LexicalError(
-                    this->path->string(),
-                    this->line,
-                    this->column,
-                    "invalid character '" + std::string(1, currentChar) + "'"
-                );
+                }
+                this->throwUnexpectedCharError('&');
             }
             case '!': {
                 if (this->current + 1 < this->source.size() &&
@@ -291,11 +281,11 @@ Token compiler::Tokeniser::readToken() {
                     if (image == "false") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column - 5};
 
                     if (image.substr(0,2) == "__") {
-                        throw LexicalError(
-                            this->path->string(),
+                        throw SyntaxError(
+                            *this->path,
                             this->line,
-                            this->column,
-                            "identifier '" + image + "' is invalid. Identifiers starting with '__' are reserved"
+                            this->column - 1, // '-1' because this->column points to the char following this keyword token
+                            "identifiers starting with '__' are reserved"
                         );
                     }
 
@@ -314,11 +304,11 @@ Token compiler::Tokeniser::readToken() {
 
                         // enforce digits after '.'
                         if (this->current >= this->source.size() || !std::isdigit(this->source[this->current])) {
-                            throw LexicalError(
-                                this->path->string(),
+                            throw SyntaxError(
+                                *this->path,
                                 this->line,
-                                this->column,
-                                "expected digit after '.' in float literal"
+                                this->column - 1,
+                                "expected digit after '.'"
                             );
                         }
 
@@ -329,11 +319,11 @@ Token compiler::Tokeniser::readToken() {
 
                         // enforce float literal ends with 'f'
                         if (this->current >= this->source.size() || this->source[this->current] != 'f') {
-                            throw LexicalError(
-                                this->path->string(),
+                            throw SyntaxError(
+                                *this->path,
                                 this->line,
-                                this->column,
-                                "float literal must end with 'f'"
+                                this->column - 1,
+                                "float value must end with 'f'"
                             );
                         }
 
@@ -347,13 +337,7 @@ Token compiler::Tokeniser::readToken() {
                     auto token = Token{TokenKind::INT_LITERAL, image, this->line, this->column - image.size()};
                     return token;
                 }
-
-                throw LexicalError(
-                    this->path->string(),
-                    this->line,
-                    this->column,
-                    "invalid character '" + std::string(1, currentChar) + "'"
-                );
+                this->throwUnexpectedCharError(currentChar);
             }
         }
     }
@@ -362,4 +346,13 @@ Token compiler::Tokeniser::readToken() {
 void compiler::Tokeniser::advance() {
     this->current++;
     this->column++;
+}
+
+void compiler::Tokeniser::throwUnexpectedCharError(const char character) const {
+    throw SyntaxError(
+        *this->path,
+        this->line,
+        this->column,
+        "unexpected '" + std::string(1, character) + "'"
+    );
 }

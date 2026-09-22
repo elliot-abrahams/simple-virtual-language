@@ -10,6 +10,16 @@ Describes the overall compilation process and the stages performed by SVC.
 
 ---
 
+## Compiler Errors
+
+`Compiler-Errors.md`
+
+Describes the errors that can be reported during compilation.
+
+- Syntax Errors
+- Semantic Errors
+- Type Errors
+
 ## Lexical Structure
 
 `Lexical-Structure.md`

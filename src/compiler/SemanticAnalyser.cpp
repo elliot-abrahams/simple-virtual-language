@@ -1,6 +1,6 @@
 #include "SemanticAnalyser.h"
 
-#include <algorithm>
+#include <iostream>
 #include <queue>
 
 #include "../include/Error.h"
@@ -23,23 +23,20 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
 
     // process function bodies
     for (auto& functionDecl : program.functionDecls) {
-        // get FunctionSymbol
-        std::vector<Type> parameterTypes = std::vector<Type>{};
-        for (const auto& parameterType : functionDecl->parameters) {
-            parameterTypes.push_back(parameterType->typeInfo->type);
-        }
-
         const auto semanticAnalysisResult = this->processFunctionBody(*functionDecl, functionDecl->functionSymbol);
 
         // check function body always reaches returnStm if return type is non-void
-        if (functionDecl->returnTypeInfo->type != Type::VOID_RETURN_TYPE &&
+        if (functionDecl->returnTypeInfo->type.type != Type::VOID_RETURN_TYPE &&
             !semanticAnalysisResult.alwaysReturns
         ) {
+            // get FunctionSymbol
             throw SemanticError(
-                this->path->string(),
+                *this->path,
                 functionDecl->line,
                 functionDecl->column,
-                "function '" + functionDecl->identifier->name + "'" + "may not return a value on all paths"
+                "function '" +
+                    functionSignatureToString(functionDecl->identifier->name, functionDecl->getParameterTypes()) +
+                    "' may not return a value on all paths"
             );
         }
     }
@@ -47,34 +44,23 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
 
 void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& functionDecl) {
     // declare function in symbol table
-    const std::vector<SemanticType> parameterTypes = this->processParameterList(functionDecl.parameters);
-    const std::string functionSignature = functionSignatureToString(functionDecl.identifier->name, parameterTypes);
-    FunctionSymbol* functionSymbol = this->symbolTable->declareFunction(functionDecl.identifier->name, functionSignature, SemanticType{functionDecl.returnTypeInfo->type, functionDecl.returnTypeInfo->dimension}, parameterTypes);
+    const auto parameterTypes = functionDecl.getParameterTypes();
+    const auto functionSignature = functionSignatureToString(functionDecl.identifier->name, parameterTypes);
+    FunctionSymbol* functionSymbol = this->symbolTable->declareFunction(functionDecl.identifier->name, functionSignature, functionDecl.returnTypeInfo->type, parameterTypes);
 
     if (functionSymbol == nullptr) {
-        std::string errorMsg = "function '";
-        errorMsg += functionSignature;
-        errorMsg += "' is already defined";
-
         throw SemanticError(
-            this->path->string(),
+            *this->path,
             functionDecl.line,
             functionDecl.column,
-            errorMsg
+            "function '" +
+                functionSignature +
+                "' is already defined"
         );
     }
 
     // set symbol of functionDecl
     functionDecl.functionSymbol = functionSymbol;
-}
-
-std::vector<compiler::SemanticType> compiler::SemanticAnalyser::processParameterList(const std::vector<std::unique_ptr<ast::Parameter>> &parameterList) {
-    std::vector<SemanticType> parameterTypes;
-
-    for (auto& parameter : parameterList) {
-        parameterTypes.push_back(SemanticType{parameter->typeInfo->type, parameter->typeInfo->dimension});
-    }
-    return parameterTypes;
 }
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStm(Scope* scope, const ast::Stm& stm) {
@@ -131,7 +117,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionBody
 
     // add parameters to the list of symbols in newScope
     for (int parameterIndex = 0; parameterIndex < functionDecl.parameters.size(); parameterIndex++) {
-        newScope->declareSymbol(functionDecl.parameters[parameterIndex]->identifier->name, SemanticType{functionDecl.parameters[parameterIndex]->typeInfo->type, functionDecl.parameters[parameterIndex]->typeInfo->dimension}, parameterIndex + 1, true);
+        newScope->declareSymbol(functionDecl.parameters[parameterIndex]->identifier->name, functionDecl.parameters[parameterIndex]->typeInfo->type, parameterIndex + 1, true);
     }
 
     bool alwaysReturns = false;
@@ -152,15 +138,17 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(S
     // check symbol with same name has not been initialised already
     if (scope->symbols.find(varDecl.identifier->name) != scope->symbols.end()) {
         throw SemanticError(
-            this->path->string(),
+            *this->path,
             varDecl.line,
             varDecl.column,
-            "variable '" + varDecl.identifier->name + "' is already defined"
+            "variable '" +
+                varDecl.identifier->name +
+                "' is already defined"
         );
     }
 
     // declare symbol (as uninitialised)
-    scope->declareSymbol(varDecl.identifier->name, SemanticType{varDecl.typeInfo->type, varDecl.typeInfo->dimension}, 0, false);
+    scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
 
     // if var decl does not have an initialiser
     if (varDecl.optionalInitialiser == nullptr) {
@@ -172,12 +160,16 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(S
     // set symbol as initialised after checking optional initialiser (prevents self initialisation)
     scope->lookup(varDecl.identifier->name).value()->isInitialised = true;
 
-    if (!canImplicitlyConvert(initializerType, SemanticType{varDecl.typeInfo->type, varDecl.typeInfo->dimension})) {
+    if (!canImplicitlyConvert(initializerType, varDecl.typeInfo->type)) {
         throw TypeError(
-            this->path->string(),
+            *this->path,
             varDecl.optionalInitialiser->line,
             varDecl.optionalInitialiser->column,
-            "cannot assign " + typeToString(initializerType) + " to " + typeToString(SemanticType{varDecl.typeInfo->type, varDecl.typeInfo->dimension})
+            "cannot assign '" +
+                typeToString(initializerType) +
+                "' to type '" +
+                typeToString(varDecl.typeInfo->type) +
+                "'"
         );
     }
     return SemanticAnalysisResult{false};
@@ -195,10 +187,12 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
         // check if array is initialised
         if (!identifierSymbol->isInitialised) {
             throw SemanticError(
-                this->path->string(),
+                *this->path,
                 assignment.identifier->line,
                 assignment.identifier->column,
-                "variable '" + assignment.identifier->name + "' may not have been initialised"
+                "variable '" +
+                    assignment.identifier->name +
+                    "' may not have been initialised"
             );
         }
     }
@@ -215,10 +209,14 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
 
     if (!canImplicitlyConvert(exprType, SemanticType{identifierSymbol->type, indexDepth})) {
         throw TypeError(
-            this->path->string(),
+            *this->path,
             assignment.line,
             assignment.column,
-            "cannot assign " + typeToString(exprType) + " to " + typeToString(SemanticType{identifierSymbol->type, identifierSymbol->dimension})
+            "cannot assign " +
+                typeToString(exprType) +
+                "' to type '" +
+                typeToString(SemanticType{identifierSymbol->type, identifierSymbol->dimension}) +
+                "'"
         );
     }
 
@@ -230,7 +228,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processIfStatement(Scope *scope, const ast::IfStm &ifStm) {
     // ensure condition type is bool
     const auto conditionType = this->checkExprType(scope, *ifStm.condition).type;
-    this->checkType({SemanticType{Type::BOOL, 0}}, conditionType, ifStm.condition->line, ifStm.condition->column);
+    this->checkConditionType(conditionType, ifStm.condition->line, ifStm.condition->column);
 
     const bool ifBlockAlwaysReturns = this->processBlock(*ifStm.ifBlock, ScopeKind::BLOCK).alwaysReturns;
 
@@ -244,7 +242,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processIfStatement(
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processWhileStatement(Scope* scope, const ast::WhileStm& whileStm) {
     // ensure condition type is bool
     const auto conditionType = this->checkExprType(scope, *whileStm.condition).type;
-    this->checkType({SemanticType{Type::BOOL, 0}}, conditionType, whileStm.condition->line, whileStm.condition->column);
+    this->checkConditionType(conditionType, whileStm.condition->line, whileStm.condition->column);
 
     this->processBlock(*whileStm.block, ScopeKind::WHILE);
     return SemanticAnalysisResult{false};
@@ -255,10 +253,10 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processContinueStat
 
     if (loopScope == nullptr) {
         throw SemanticError(
-            this->path->string(),
+            *this->path,
             continueStm.line,
             continueStm.column,
-            "'continue' statement can only be used within a loop"
+            "'continue' outside a loop"
         );
     }
 
@@ -270,10 +268,10 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBreakStateme
 
     if (loopScope == nullptr) {
         throw SemanticError(
-            this->path->string(),
+            *this->path,
             breakStm.line,
             breakStm.column,
-            "'break' statement can only be used within a loop"
+            "'break' outside a loop"
         );
     }
 
@@ -284,22 +282,25 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
     auto currentFunctionSymbol = this->symbolTable->getCurrentFunctionSymbol();
     if (currentFunctionSymbol == nullptr) {
         throw SemanticError(
-            this->path->string(),
+            *this->path,
             returnStm.line,
             returnStm.column,
-            "return statement exists outside of a function"
+            "'return' outside a function"
         );
     }
 
     returnStm.functionSymbol = currentFunctionSymbol;
 
-    if (returnStm.returnExpression == nullptr) { // return has no expression
+    if (returnStm.returnExpression == nullptr) {
         if (currentFunctionSymbol->returnType.type != Type::VOID_RETURN_TYPE) {
+            // function has non-void return type and return has no expression
             throw SemanticError(
-                this->path->string(),
+                *this->path,
                 returnStm.line,
                 returnStm.column,
-                "non-void function must return a value"
+                "function '" +
+                currentFunctionSymbol->label +
+                "' must return a value"
             );
         }
     } else {
@@ -310,20 +311,26 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
         if (currentFunctionSymbol->returnType.type == Type::VOID_RETURN_TYPE) { // function return type is void
             if (returnStm.returnExpression != nullptr) { // return has an expression
                 throw SemanticError(
-                    this->path->string(),
+                    *this->path,
                     returnStm.line,
                     returnStm.column,
-                    "cannot return an expression from a void function"
+                    "cannot return a value from void function '" +
+                        currentFunctionSymbol->label +
+                        "'"
                 );
             }
         }
 
         if (!canImplicitlyConvert(exprType, currentFunctionSymbol->returnType)) {
             throw TypeError(
-                this->path->string(),
+                *this->path,
                 returnStm.line,
                 returnStm.column,
-                "return type mismatch: expected '" + typeToString(currentFunctionSymbol->returnType) + "', got '" + typeToString(exprType) + "'"
+                "cannot return '" +
+                    typeToString(exprType) +
+                    "' from a function returning '" +
+                    typeToString(currentFunctionSymbol->returnType) +
+                    "'"
             );
         }
     }
@@ -337,15 +344,13 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processExpressionSt
 
         // ensure functionCallExpr has a return type of void
         if (exprResult.type.type != Type::VOID_RETURN_TYPE) {
-            std::vector<SemanticType> argumentTypes;
-            for (const auto& argument : functionCallExpr->arguments) {
-                argumentTypes.push_back(argument->resultingType);
-            }
             throw SemanticError(
-                this->path->string(),
+                *this->path,
+                functionCallExpr->line,
                 functionCallExpr->column,
-                functionCallExpr->column,
-                "return value of function '" + functionSignatureToString(functionCallExpr->identifier->name, argumentTypes) + "' must be used"
+                "return value of function '" +
+                functionSignatureToString(functionCallExpr->identifier->name, functionCallExpr->getArgumentTypes()) +
+                "' must be used"
             );
         }
 
@@ -374,10 +379,12 @@ void compiler::SemanticAnalyser::processIndex(Scope* scope, const ast::Index& in
 
     if (indexType.type != Type::INT || indexType.isArray()) {
         throw TypeError(
-            this->path->string(),
+            *this->path,
             index.index->line,
             index.index->column,
-            "array index must have type int, but found " + typeToString(indexType)
+            "cannot use type '" +
+                typeToString(indexType) +
+                "' as an array index"
         );
     }
 }
@@ -385,11 +392,13 @@ void compiler::SemanticAnalyser::processIndex(Scope* scope, const ast::Index& in
 unsigned int compiler::SemanticAnalyser::resolveAccessArrayDepth(const SemanticType& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const {
     if (indices.size() > arrayType.dimension) {
         throw TypeError(
-            this->path->string(),
+            *this->path,
             indices[indices.size() - arrayType.dimension - 1]->line,
             indices[indices.size() - arrayType.dimension - 1]->column,
-            "array required, but " + typeToString(SemanticType{arrayType.type, 0}) + " found"
-        );
+            "cannot index a value of type '" +
+                typeToString(SemanticType{arrayType.type, 0}) +
+                "'"
+            );
     }
     return arrayType.dimension - indices.size();
 }
@@ -497,10 +506,14 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
              (unaryOperator->unaryOperatorInfo->unaryOperator != UnaryOperator::LOGICAL_NOT && !exprTypeResult.type.isNumeric())
         ) {
             throw TypeError(
-                this->path->string(),
+                *this->path,
                 unaryOperator->line,
                 unaryOperator->column,
-                "cannot apply operator'" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to type '" + typeToString(exprTypeResult.type) + "'"
+                "cannot apply operator '" +
+                    unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) +
+                    "' to type '" +
+                    typeToString(exprTypeResult.type) +
+                    "'"
             );
         }
 
@@ -510,10 +523,12 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         ) {
             if (exprTypeResult.category != ExprCategory::ASSIGNABLE) {
                 throw TypeError(
-                    this->path->string(),
+                    *this->path,
                     unaryOperator->unaryOperatorInfo->line,
                     unaryOperator->unaryOperatorInfo->column,
-                    "cannot apply operator '" + unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) + "' to a non-assignable expression"
+                    "cannot apply operator '" +
+                        unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) +
+                        "' to a non-assignable expression"
                 );
             }
         }
@@ -529,20 +544,24 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
 
             if (!exprTypeResult.type.isArray()) {
                 throw TypeError(
-                    this->path->string(),
+                    *this->path,
                     exprPostfix->line,
                     exprPostfix->column,
-                    "array required, but " + typeToString(exprTypeResult.type) + " found"
+                    "cannot index a value of type '" +
+                        typeToString(exprTypeResult.type) +
+                        "'"
                 );
             }
 
             if (exprPostfix->indices.size() > exprTypeResult.type.dimension) {
                 exprTypeResult.type.dimension = 0; // for error message
                 throw TypeError(
-                    this->path->string(),
+                    *this->path,
                     exprPostfix->line,
                     exprPostfix->column,
-                    "array required, but " + typeToString(exprTypeResult.type) + " found"
+                    "cannot index a value of type '" +
+                        typeToString(exprTypeResult.type) +
+                        "'"
                 );
             }
 
@@ -560,11 +579,17 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
             // expression is not assignable
 
             if (exprTypeResult.category != ExprCategory::ASSIGNABLE || !exprTypeResult.type.isNumeric()) {
-                std::string errorMessage = "cannot apply operator '" + unaryOperatorToString(exprPostfix->unaryOperatorInfo->unaryOperator) + "' ";
-                errorMessage += exprTypeResult.category != ExprCategory::ASSIGNABLE || exprTypeResult.type.isArray() ? "to a non-assignable expression" : "to type '" + typeToString(exprPostfix->expression->resultingType) + "'";
+                std::string errorMessage = "cannot apply operator '" +
+                        unaryOperatorToString(exprPostfix->unaryOperatorInfo->unaryOperator) +
+                        "' ";
+
+                errorMessage += exprTypeResult.category != ExprCategory::ASSIGNABLE ||
+                                exprTypeResult.type.isArray()
+                    ? "to a non-assignable expression"
+                    : "to type '" + typeToString(exprPostfix->expression->resultingType) + "'";
 
                 throw TypeError(
-                    this->path->string(),
+                    *this->path,
                     exprPostfix->line,
                     exprPostfix->column,
                     errorMessage
@@ -593,10 +618,12 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         const auto symbol = this->checkSymbolIsDefined(scope, exprIdentifier->identifier->name, exprIdentifier->line, exprIdentifier->column);
         if (!symbol->isInitialised) {
             throw SemanticError(
-                this->path->string(),
+                *this->path,
                 exprIdentifier->line,
                 exprIdentifier->column,
-                "variable '" + exprIdentifier->identifier->name + "' may not have been initialised"
+                "variable '" +
+                    exprIdentifier->identifier->name +
+                    "' may not have been initialised"
             );
         }
 
@@ -632,14 +659,16 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
                     // expecting each element to be an array initialiser
                     // add each nested initialiser to queue
                     for (const ast::ArrayInitialiserElement& element : arrayInitialiser->get()->elements) {
+                        // initialiser element is expr instead
                         if (std::holds_alternative<std::unique_ptr<ast::Expr>>(element)) {
                             const auto expr = &std::get<std::unique_ptr<ast::Expr>>(element);
-                            unsigned int initialiserDepth = newExpression->arrayDimensions.size() - depth;
                             throw TypeError(
-                                this->path->string(),
+                                *this->path,
                                 expr->get()->line,
                                 expr->get()->column,
-                                "expected '" + typeToString(SemanticType{newExpression->typeInfo->type, initialiserDepth}) + "' but found '" + typeToString(SemanticType{newExpression->typeInfo->type, 0}) + "'"
+                                "array initialiser has too few dimensions for array of type '" +
+                                    typeToString(newExpression->typeInfo->type) +
+                                    "'"
                             );
                         }
                         initialisersToProcess.push(&std::get<std::unique_ptr<ast::ArrayInitialiser>>(element));
@@ -649,22 +678,30 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
                     // expecting each element to be expr which can be converted to array base type
                     for (const ast::ArrayInitialiserElement& element : arrayInitialiser->get()->elements) {
                         if (std::holds_alternative<std::unique_ptr<ast::ArrayInitialiser>>(element)) {
+                            // initialiser element is a nested initialiser instead
                             const auto initialiser = &std::get<std::unique_ptr<ast::ArrayInitialiser>>(element);
                             throw TypeError(
-                                this->path->string(),
+                                *this->path,
                                 initialiser->get()->line,
                                 initialiser->get()->column,
-                                "array initialiser exceeds array dimensions"
+                                "array initialiser has too many dimensions for array of type '" +
+                                    typeToString(newExpression->typeInfo->type) +
+                                    "'"
                             );
                         }
                         // check expr is valid for array type
                         const auto expr = &std::get<std::unique_ptr<ast::Expr>>(element);
-                        if (!canImplicitlyConvert(this->checkExprType(scope, *expr->get()).type, SemanticType{newExpression->typeInfo->type, 0})) {
+                        if (!canImplicitlyConvert(this->checkExprType(scope, *expr->get()).type, SemanticType{newExpression->typeInfo->type.type, 0})) {
+                            newExpression->typeInfo->type.dimension = 0; // for error message
                             throw TypeError(
-                                this->path->string(),
+                                *this->path,
                                 expr->get()->line,
                                 expr->get()->column,
-                                "expected '" + typeToString(SemanticType{newExpression->typeInfo->type, 0}) + "' but found '" + typeToString(expr->get()->resultingType) + "'"
+                                "cannot initialise an array element of type '" +
+                                    typeToString(newExpression->typeInfo->type) +
+                                    "' with type '" +
+                                    typeToString(expr->get()->resultingType) +
+                                    "'"
                             );
                         }
                     }
@@ -672,7 +709,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
             }
         }
 
-        const auto resultingType = SemanticType{newExpression->typeInfo->type, newExpression->typeInfo->dimension};
+        const auto resultingType = newExpression->typeInfo->type;
         newExpression->resultingType = resultingType;
         return SemanticExprResult{resultingType, ExprCategory::VALUE};
     }
@@ -680,37 +717,31 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
     if (auto* castExpression = dynamic_cast<const ast::ExprCast*>(&expr)) {
         const auto exprTypeResult = this->checkExprType(scope, *castExpression->expr);
 
-        // if target's dimension is larger than zero
-        if (castExpression->typeInfo->dimension > 0) {
+        // if target's type is an array
+        // OR
+        // if expr's type is an array
+        // OR
+        // if target's type is a bool
+        // OR
+        // if expr's type is a bool
+        if (castExpression->typeInfo->type.isArray() ||
+            exprTypeResult.type.isArray() ||
+            exprTypeResult.type.type == Type::BOOL ||
+            castExpression->typeInfo->type.type == Type::BOOL
+        ) {
             throw TypeError(
-                this->path->string(),
-                castExpression->typeInfo->line,
-                castExpression->typeInfo->column,
-                "cannot cast to array type '" + typeToString(SemanticType{castExpression->typeInfo->type, castExpression->typeInfo->dimension}) + "'"
-            );
-        }
-
-        // if expr's dimension is larger than zero
-        if (exprTypeResult.type.isArray()) {
-            throw TypeError(
-                this->path->string(),
-                castExpression->typeInfo->line,
-                castExpression->typeInfo->column,
-                "cannot cast from array type '" + typeToString(SemanticType{castExpression->typeInfo->type, castExpression->typeInfo->dimension}) + "'"
-            );
-        }
-
-        // if either source or target type is bool
-        if (exprTypeResult.type.type == Type::BOOL || castExpression->typeInfo->type == Type::BOOL) {
-            throw TypeError(
-                this->path->string(),
+                *this->path,
                 castExpression->line,
                 castExpression->column,
-                "cannot cast from '" + typeToString(exprTypeResult.type) + "' to '" + typeToString(SemanticType{castExpression->typeInfo->type, castExpression->typeInfo->dimension}) + "'"
+                "cannot cast from type '" +
+                    typeToString(exprTypeResult.type) +
+                    "' to type '" +
+                    typeToString(castExpression->typeInfo->type) +
+                    "'"
             );
         }
 
-        const auto resultingType = SemanticType{castExpression->typeInfo->type, 0};
+        const auto resultingType = castExpression->typeInfo->type;
         castExpression->resultingType = resultingType;
         return SemanticExprResult{resultingType, ExprCategory::VALUE};
     }
@@ -719,10 +750,10 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         // process function call
         return this->processFunctionCall(scope, *functionCall);
     }
-    throw std::runtime_error("Unknown expression type");
 }
 
 compiler::SemanticExprResult compiler::SemanticAnalyser::processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall) {
+    // process function call's arguments
     std::vector<SemanticType> argumentTypes;
     for (const auto& argument : functionCall.arguments) {
         argumentTypes.push_back(this->checkExprType(scope, *argument).type);
@@ -730,16 +761,15 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::processFunctionCall(Sco
 
     FunctionSymbol* functionSymbol = this->resolveFunctionCall(this->symbolTable->getFunctionSymbols(functionCall.identifier->name), functionCall, argumentTypes);
 
-    if (functionSymbol == nullptr) { // if function is not defined
-        std::string errorMsg = "function '";
-        errorMsg += functionSignatureToString(functionCall.identifier->name, argumentTypes);
-        errorMsg += "' is undefined";
-
+    if (functionSymbol == nullptr) {
+        // if function is not defined
         throw SemanticError(
-            this->path->string(),
+            *this->path,
             functionCall.line,
             functionCall.column,
-            errorMsg
+            "function '" +
+                functionSignatureToString(functionCall.identifier->name, argumentTypes) +
+                "' is undefined"
         );
     }
 
@@ -801,10 +831,12 @@ compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::v
 
         } else if (validFunctionSymbols.size() > 1) { // function is ambiguous (multiple function symbols to choose from)
             throw SemanticError(
-                this->path->string(),
+                *this->path,
                 functionCall.line,
                 functionCall.column,
-                "ambiguous function call to '" + functionCall.identifier->name + "'"
+                "ambiguous call to function '" +
+                    functionCall.identifier->name +
+                    "'"
             );
         }
     }
@@ -831,15 +863,16 @@ bool compiler::SemanticAnalyser::canImplicitlyConvert(const SemanticType& from, 
     }
 }
 
-
 compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) const {
     auto symbol = scope->lookup(identifier);
     if (!symbol.has_value()) {
         throw SemanticError(
-            this->path->string(),
+            *this->path,
             line,
             column,
-            "undefined identifier '" + identifier + "'"
+            "variable '" +
+                identifier +
+                "' is undefined"
         );
     }
     return symbol.value();
@@ -893,50 +926,45 @@ std::string compiler::SemanticAnalyser::unaryOperatorToString(const UnaryOperato
 
 void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const SemanticType& leftType, const SemanticType& rightType) const {
     throw TypeError(
-        this->path->string(),
+        *this->path,
         binaryOperator.line,
         binaryOperator.column,
-        "cannot apply operator '" + binaryOperatorToString(binaryOperator.binaryOperatorInfo->binaryOperator) + "' to types '" + typeToString(leftType) + "' and '" + typeToString(rightType) + "'"
+        "cannot apply operator '" +
+            binaryOperatorToString(binaryOperator.binaryOperatorInfo->binaryOperator) +
+            "' to types '" +
+            typeToString(leftType) +
+            "' and '" +
+            typeToString(rightType) +
+            "'"
     );
 }
 
-void compiler::SemanticAnalyser::throwInvalidExpressionTypeAsStatement(const ast::Expr& expr) {
+void compiler::SemanticAnalyser::throwInvalidExpressionTypeAsStatement(const ast::Expr& expr) const {
     throw SemanticError(
-        this->path->string(),
+        *this->path,
         expr.line,
         expr.column,
-        "expression is not valid as a statement"
+        "expression cannot be used as a statement"
     );
 }
 
-void compiler::SemanticAnalyser::checkType(const std::vector<SemanticType>& expectedTypes, const SemanticType &actualType, const size_t line, const size_t column) const {
-    for (const auto type : expectedTypes) {
-        if (type.type == actualType.type && type.dimension == actualType.dimension) {
-            return;
-        }
+void compiler::SemanticAnalyser::checkConditionType(const SemanticType& conditionType, const size_t line, const size_t column) const {
+    if (conditionType.isArray() ||
+        conditionType.type != Type::BOOL
+    ) {
+        throw TypeError(
+            *this->path,
+            line,
+            column,
+            "cannot use type '" +
+                typeToString(conditionType) +
+                "' as a condition"
+        );
     }
-
-    std::string string;
-
-    string += "Error: type mismatch";
-    string += "\nExpected: ";
-    for (SemanticType expectedType : expectedTypes) {
-        string += typeToString(expectedType)  + " ";
-    }
-    string += "\nActual: " + typeToString(actualType);
-
-    throw TypeError(
-        this->path->string(),
-        line,
-        column,
-        string
-    );
 }
 
 std::string compiler::SemanticAnalyser::functionSignatureToString(const std::string& functionIdentifier, const std::vector<SemanticType>& parameterTypes) {
-    std::string result = "";
-
-    result+= functionIdentifier + "(";
+    std::string result = functionIdentifier + "(";
 
     if (parameterTypes.size() > 0) {
         result+= typeToString(parameterTypes.at(0));

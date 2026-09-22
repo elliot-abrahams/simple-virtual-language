@@ -142,7 +142,7 @@ std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
         case TokenKind::RETURN: return this->parseReturnStatement();
 
         default:
-            this->handleUnexpectedToken(this->tokeniser->tok());
+            this->throwUnexpectedTokenError(this->tokeniser->tok());
     }
 }
 
@@ -481,7 +481,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseEqualityExpression() const {
                 );
                 break;
             default:
-                this->handleUnexpectedToken(this->tokeniser->tok());
+                this->throwUnexpectedTokenError(this->tokeniser->tok());
         }
         this->tokeniser->next();
 
@@ -547,7 +547,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseComparisonExpression() const {
                 );
                 break;
             default:
-                this->handleUnexpectedToken(this->tokeniser->tok());
+                this->throwUnexpectedTokenError(this->tokeniser->tok());
         }
         this->tokeniser->next();
 
@@ -596,7 +596,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
                 );
                 break;
             default:
-                this->handleUnexpectedToken(this->tokeniser->tok());
+                this->throwUnexpectedTokenError(this->tokeniser->tok());
         }
         this->tokeniser->next();
 
@@ -646,7 +646,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
                 break;
 
             default:
-                this->handleUnexpectedToken(this->tokeniser->tok());
+                this->throwUnexpectedTokenError(this->tokeniser->tok());
         }
 
         auto binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
@@ -835,7 +835,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
         }
 
         default:
-            this->handleUnexpectedToken(token);
+            this->throwUnexpectedTokenError(token);
     }
 }
 
@@ -904,7 +904,7 @@ std::unique_ptr<ast::ExprNew> compiler::Parser::parseExprNew() const {
         arrayDimensions.push_back(this->parseIndex());
     }
 
-    typeInfo->dimension = arrayDimensions.size();
+    typeInfo->type.dimension = arrayDimensions.size();
 
     std::unique_ptr<ast::ArrayInitialiser> optionalInitialiser;
     if (this->tokeniser->tok().kind == TokenKind::LCBR) {
@@ -986,7 +986,7 @@ std::unique_ptr<ast::Identifier> compiler::Parser::parseIdentifier() const {
             identifier.image
         );
     }
-    this->handleUnexpectedToken(identifier);
+    this->throwUnexpectedTokenError(identifier);
 }
 
 /*
@@ -999,8 +999,7 @@ std::unique_ptr<ast::TypeInfo> compiler::Parser::parseReturnType() const {
         return std::make_unique<ast::TypeInfo> (
             returnType.line,
             returnType.column,
-            Type::VOID_RETURN_TYPE,
-            0
+            SemanticType{Type::VOID_RETURN_TYPE, 0}
         );
     }
     return this->parseType();
@@ -1019,7 +1018,7 @@ std::unique_ptr<ast::TypeInfo> compiler::Parser::parseType() const {
         this->tokeniser->next();
         this->tokeniser->eat(TokenKind::RSQBR);
     }
-    primitiveType->dimension = typeDimension;
+    primitiveType->type.dimension = typeDimension;
     return primitiveType;
 }
 
@@ -1036,25 +1035,22 @@ std::unique_ptr<ast::TypeInfo> compiler::Parser::parsePrimitiveType(const unsign
             return std::make_unique<ast::TypeInfo>(
                 type.line,
                 type.column,
-                Type::INT,
-                dimension
+                SemanticType{Type::INT, dimension}
             );
         case TokenKind::FLOAT_TYPE :
             return std::make_unique<ast::TypeInfo>(
                 type.line,
                 type.column,
-                Type::FLOAT,
-                dimension
+                SemanticType{Type::FLOAT, dimension}
             );
         case TokenKind::BOOL_TYPE :
             return std::make_unique<ast::TypeInfo> (
                 type.line,
                 type.column,
-                Type::BOOL,
-                dimension
+                SemanticType{Type::BOOL, dimension}
             );
         default:
-            this->handleUnexpectedToken(type);
+            this->throwUnexpectedTokenError(type);
     }
 }
 
@@ -1075,7 +1071,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
                     std::stoi(literal.image)
                 );
             } catch (std::out_of_range& e) {
-                handleLiteralOutOfRangeError(literal, "int");
+                throwLiteralOutOfRangeError(literal, "int");
             }
         }
         case TokenKind::FLOAT_LITERAL : {
@@ -1087,7 +1083,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
                     std::stof(literal.image)
                 );
             } catch (std::out_of_range& e) {
-                this->handleLiteralOutOfRangeError(literal, "float");
+                this->throwLiteralOutOfRangeError(literal, "float");
             }
         }
         case TokenKind::BOOL_LITERAL : {
@@ -1099,7 +1095,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
             );
         }
         default:
-            this->handleUnexpectedToken(literal);
+            this->throwUnexpectedTokenError(literal);
     }
 }
 
@@ -1116,7 +1112,7 @@ std::unique_ptr<ast::AssignmentOperatorInfo> compiler::Parser::parseAssignmentOp
             AssignmentOperator::EQUAL
         );
     }
-    this->handleUnexpectedToken(assignmentOperator);
+    this->throwUnexpectedTokenError(assignmentOperator);
 }
 
 /*
@@ -1159,20 +1155,20 @@ bool compiler::Parser::isAssignmentOperator(const TokenKind& kind) {
     }
 }
 
-void compiler::Parser::handleUnexpectedToken(const Token& token) const {
+void compiler::Parser::throwUnexpectedTokenError(const Token& token) const {
     throw SyntaxError(
-        this->path->string(),
+        *this->path,
         token.line,
         token.column,
-        "unexpected token '" + token.image + "'"
+        "unexpected '" + token.image + "'"
     );
 }
 
-void compiler::Parser::handleLiteralOutOfRangeError(const Token& token, const std::string& type) const {
+void compiler::Parser::throwLiteralOutOfRangeError(const Token& token, const std::string& type) const {
     throw SyntaxError(
         this->path->string(),
         token.line,
         token.column,
-        token.image + " is out of range for type '" + type + "'"
+        "'" + token.image + "' is out of range for type '" + type + "'"
     );
 }

@@ -25,45 +25,39 @@ namespace integrationTests {
         auto* tokeniser = new compiler::Tokeniser(sourceCode, path);
         const auto parser = new compiler::Parser(tokeniser, path);
 
-        try {
-            // generate AST
-            const std::unique_ptr<ast::Program> program = parser->parseProgram();
+        // generate AST
+        const std::unique_ptr<ast::Program> program = parser->parseProgram();
 
-            const auto symbolTable = new compiler::SymbolTable();
+        const auto symbolTable = new compiler::SymbolTable();
 
-            // add builtin functions to symbol table
-            compiler::Builtins::registerBuiltinFunctions(*symbolTable);
+        // add builtin functions to symbol table
+        compiler::Builtins::registerBuiltinFunctions(*symbolTable);
 
-            // build symbol table and type check the program
-            auto semanticAnalyser = compiler::SemanticAnalyser(symbolTable, path);
-            semanticAnalyser.processProgram(*program);
+        // build symbol table and type check the program
+        auto semanticAnalyser = compiler::SemanticAnalyser(symbolTable, path);
+        semanticAnalyser.processProgram(*program);
 
-            // assign slots to local symbols
-            symbolTable->assignSlotsToLocalSymbols();
+        // assign slots to local symbols
+        symbolTable->assignSlotsToLocalSymbols();
 
-            // generate assembly code
-            const auto codeGenerator = new compiler::AssemblyGenerator(symbolTable);
-            auto assemblyIR = codeGenerator->compileProgram(*program);
+        // generate assembly code
+        const auto codeGenerator = new compiler::AssemblyGenerator(symbolTable);
+        auto assemblyIR = codeGenerator->compileProgram(*program);
 
-            auto assemblyEmitter = new compiler::AssemblyEmitter(path->string());
+        auto assemblyEmitter = new compiler::AssemblyEmitter(path->string());
 
-            const auto code = assemblyEmitter->emitAssembly(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
+        const auto code = assemblyEmitter->emitAssembly(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
 
-            std::string assemblyCode;
-            for (const std::string& line : code) {
-                assemblyCode += line + "\n";
-            }
-
-            assembler::Assembler assembler;
-
-            const auto bytecode = assembler.assembleString(assemblyCode);
-
-            vm->run(&bytecode.value(), testScenario);
-
-        } catch (const CompilerError& e) {
-            std::cerr << e.what() << std::endl;
-            exit(EXIT_FAILURE);
+        std::string assemblyCode;
+        for (const std::string& line : code) {
+            assemblyCode += line + "\n";
         }
+
+        assembler::Assembler assembler;
+
+        const auto bytecode = assembler.assembleString(assemblyCode);
+
+        vm->run(&bytecode.value(), testScenario);
     }
 
     inline void ASSERT_OUTPUT_EQ(
@@ -77,8 +71,8 @@ namespace integrationTests {
 
         try {
             compileAndRun(&vm, sourceCode, VMTestScenario::NONE);
-        } catch (const CompilerError& e) {
-            std::cerr << e.what() << std::endl;
+        } catch (const SVLError& e) {
+            std::cerr << e.message << std::endl;
             FAIL();
         }
         std::cout.rdbuf(old);
@@ -94,7 +88,7 @@ namespace integrationTests {
 
         try {
             compileAndRun(&vm, sourceCode, VMTestScenario::NONE);
-        } catch (const CompilerError& e) {
+        } catch (const SVLError& e) {
             std::cerr << e.what() << std::endl;
             FAIL();
         }
@@ -113,8 +107,8 @@ namespace integrationTests {
         try {
             compileAndRun(&vm, sourceCode, testScenario);
             FAIL();
-        } catch (const CompilerError& e) {
-            std::cerr << e.what() << std::endl;
+        } catch (const SourceError& e) {
+            std::cerr << e.message << std::endl;
             FAIL();
         } catch (const RuntimeError& e) {
             ASSERT_EQ(e.type, runtimeErrorType);

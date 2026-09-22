@@ -22,6 +22,8 @@ namespace compiler {
         Token readToken();
         void advance();
 
+        void throwUnexpectedCharError(const char character) const;
+
         std::deque<Token> tokenBuffer;
 
         std::string_view source;

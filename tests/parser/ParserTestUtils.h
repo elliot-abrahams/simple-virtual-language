@@ -259,8 +259,8 @@ namespace parserTest {
     inline void ASSERT_EXPR_EQ(const ExpectedExpr& expectedExpr, const ast::Expr& actualExpr);
 
     inline void ASSERT_TYPE_EQ(const Type& expectedType, const ast::TypeInfo& actualType) {
-        ASSERT_EQ(expectedType.type, actualType.type);
-        ASSERT_EQ(expectedType.expectedDimension, actualType.dimension);
+        ASSERT_EQ(expectedType.type, actualType.type.type);
+        ASSERT_EQ(expectedType.expectedDimension, actualType.type.dimension);
     }
 
     inline void ASSERT_ARRAY_INITIALISER_EQ(const ExpectedArrayInitialiser& expectedArrayInitialiser, const ast::ArrayInitialiser& actualArrayInitialiser) {

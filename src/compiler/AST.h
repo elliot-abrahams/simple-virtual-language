@@ -64,11 +64,10 @@ namespace ast {
     };
 
     struct TypeInfo final : ASTNode {
-        const compiler::Type type;
-        unsigned int dimension;
+        compiler::SemanticType type;
 
-        TypeInfo(const uint32_t line, const uint16_t column, const compiler::Type type, const unsigned int dimension) :
-            ASTNode(line, column), type(type), dimension(dimension) {}
+        TypeInfo(const uint32_t line, const uint16_t column, const compiler::SemanticType type) :
+            ASTNode(line, column), type(type) {}
     };
 
     struct AssignmentOperatorInfo final : ASTNode {
@@ -155,6 +154,17 @@ namespace ast {
             Expr(line, column),
             identifier(std::move(identifier)),
             arguments(std::move(arguments)) {}
+
+        std::vector<compiler::SemanticType> getArgumentTypes() const {
+            std::vector<compiler::SemanticType> types;
+            types.reserve(arguments.size());
+
+            for (const auto& argument : this->arguments) {
+                types.push_back(argument->resultingType );
+            }
+
+            return types;
+        }
     };
 
     struct ExprCast final : Expr {
@@ -362,6 +372,17 @@ namespace ast {
             identifier(std::move(identifier)),
             parameters(std::move(parameters)),
             body(std::move(block)) {}
+
+        std::vector<compiler::SemanticType> getParameterTypes() const {
+            std::vector<compiler::SemanticType> types;
+            types.reserve(parameters.size());
+
+            for (const auto& parameter : this->parameters) {
+                types.push_back(parameter->typeInfo->type);
+            }
+
+            return types;
+        }
     };
 
     struct Program {

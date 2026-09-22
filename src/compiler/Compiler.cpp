@@ -45,8 +45,8 @@ std::vector<std::string> compiler::Compiler::compile(const std::string& sourceCo
 
         return assemblyEmitter->emitAssembly(assemblyIR, codeGenerator->getRequiredBuiltinFunctions(), codeGenerator->getRequiredBuiltinData());
 
-    } catch (const CompilerError& e) {
-        std::cerr << e.what() << std::endl;
+    } catch (const SourceError& e) {
+        std::cerr << e.generateMessage() << std::endl;
         exit(EXIT_FAILURE);
     }
 }

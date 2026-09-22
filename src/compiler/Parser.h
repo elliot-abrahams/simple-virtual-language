@@ -61,8 +61,8 @@ namespace compiler {
         static bool isTypeToken(const TokenKind& kind);
         static bool isAssignmentOperator(const TokenKind& kind);
 
-        void handleUnexpectedToken(const Token& token) const;
-        void handleLiteralOutOfRangeError(const Token& token, const std::string& type) const;
+        void throwUnexpectedTokenError(const Token& token) const;
+        void throwLiteralOutOfRangeError(const Token& token, const std::string& type) const;
 
         Tokeniser* tokeniser;
         const std::filesystem::path* path;

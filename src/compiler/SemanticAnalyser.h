@@ -30,7 +30,6 @@ namespace compiler {
 
     private:
         void processFunctionDecl(const ast::FunctionDecl& functionDecl);
-        std::vector<SemanticType> processParameterList(const std::vector<std::unique_ptr<ast::Parameter>>& parameterList);
 
         SemanticAnalysisResult processStm(Scope* scope, const ast::Stm& stm);
         SemanticAnalysisResult processBlock(const ast::Block& block, const ScopeKind scopeKind);
@@ -59,8 +58,10 @@ namespace compiler {
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
 
         void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const SemanticType& leftType, const SemanticType& rightType) const;
-        void throwInvalidExpressionTypeAsStatement(const ast::Expr& expr);
-        void checkType(const std::vector<SemanticType>& expectedTypes, const SemanticType& actualType, const size_t line, const size_t column) const;
+        void throwInvalidExpressionTypeAsStatement(const ast::Expr& expr) const;
+        void checkConditionType(const SemanticType& conditionType, const size_t line, const size_t column) const;
+
+        //static std::vector<SemanticType> get
         static std::string functionSignatureToString(const std::string& functionIdentifier, const std::vector<SemanticType>& parameterTypes);
 
         SymbolTable* symbolTable;

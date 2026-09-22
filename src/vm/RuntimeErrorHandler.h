@@ -41,9 +41,6 @@ private:
 
     void outputStackTraceLine(const std::string& functionName, const uint16_t sourceId, const uint32_t line, const uint16_t column) const;
 
-    static std::string runtimeErrorTypeToString(const RuntimeErrorType& errorType);
-
-
     VM* vm;
 
     std::map<uint32_t, std::string> sourceMetadata;
