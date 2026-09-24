@@ -9,7 +9,7 @@
 #include <vector>
 #include <cstdint>
 
-namespace AssemblerDefs {
+namespace assembler {
 
     enum class Section {
         CODE,
@@ -41,7 +41,8 @@ namespace AssemblerDefs {
     struct SVMAToken {
         SVMATokenType type;
         std::string value;
-        int lineNumber;
+        uint32_t line;
+        uint16_t column;
     };
 
     inline const std::map<std::string, uint8_t> opcode {
@@ -141,31 +142,37 @@ namespace AssemblerDefs {
     struct Operand {
         OperandType type;
         std::string value;
+        uint32_t line;
+        uint16_t column;
     };
 
     struct Instruction {
         std::string opcode;
         std::vector<Operand> operands;
-        int lineNumber;
+        uint32_t line;
+        uint16_t column;
     };
 
     struct Label {
         std::string name;
-        int lineNumber;
+        uint32_t lineNumber;
+        uint16_t column;
     };
 
     struct MethodDef {
-        std::string name;
+        Label label;
         uint8_t numberOfArguments;
         uint32_t numberOfLocals;
-        int lineNumber;
+        uint32_t lineNumber;
+        uint16_t column;
     };
 
     struct Data {
-        std::string name;
+        Label label;
         std::string type;
         std::string value;
-        int lineNumber;
+        uint32_t lineNumber;
+        uint16_t column;
     };
 
     struct SourceMetadata {

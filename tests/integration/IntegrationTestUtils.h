@@ -57,7 +57,7 @@ namespace integrationTests {
 
         const auto bytecode = assembler.assembleString(assemblyCode);
 
-        vm->run(&bytecode.value(), testScenario);
+        vm->run(&bytecode, testScenario);
     }
 
     inline void ASSERT_OUTPUT_EQ(

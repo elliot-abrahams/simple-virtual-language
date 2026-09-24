@@ -137,19 +137,21 @@ int Driver::assemble(const char* filePath) {
     const auto assembler = new assembler::Assembler();
 
     // assemble bytecode assembly
-    const auto bytecode = assembler->assemble(std::string(filePath));
-
-    delete assembler;
-
-    if (!bytecode.has_value()) {
+    std::vector<uint8_t> bytecode;
+    try {
+        bytecode = assembler->assemble(new std::filesystem::path(filePath));
+    } catch (const AssemblerError& e) {
+        std::cerr << e.generateMessage() << std::endl;
         return 1;
     }
+
+    delete assembler;
 
     // replace .svma extension with .svmb
     std::filesystem::path outputFilePath(filePath);
     outputFilePath.replace_extension(BYTECODE_FILE_EXTENSION);
 
-    return outputBytecodeFile(outputFilePath, bytecode.value());
+    return outputBytecodeFile(outputFilePath, bytecode);
 }
 
 int Driver::compile(const char* filePath) {
@@ -199,24 +201,27 @@ int Driver::run(const char *filePath, const bool outputAssembly, const bool outp
 
     // assemble bytecode assembly
     const auto assembler = new assembler::Assembler();
-    const auto bytecode = assembler->assembleString(assemblyLanguage);
-    delete assembler;
-    if (!bytecode.has_value()) {
+    std::vector<uint8_t> bytecode;
+    try {
+        bytecode = assembler->assembleString(assemblyLanguage);
+    } catch (const AssemblerError& e) {
+        std::cerr << e.generateMessage() << std::endl;
         return 1;
     }
+    delete assembler;
 
     outputFilePath.replace_extension(BYTECODE_FILE_EXTENSION);
 
     if (outputByteCode) {
         // generate .svmb file
-        const int exitCode = outputBytecodeFile(outputFilePath, bytecode.value());
+        const int exitCode = outputBytecodeFile(outputFilePath, bytecode);
         if (exitCode != 0) {
             return exitCode;
         }
     }
 
     // run bytecode in vm
-    runVM(bytecode.value());
+    runVM(bytecode);
 }
 
 void Driver::runVM(const std::vector<uint8_t>& bytecode) {

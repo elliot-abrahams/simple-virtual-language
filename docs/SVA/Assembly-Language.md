@@ -222,6 +222,7 @@ Examples:
 5.5
 -2.75
 0.0
+1
 ```
 
 The value must be representable by the type in which it is used.
@@ -569,6 +570,7 @@ Examples:
 $x: i32 -10
 $y: ui64 100
 $z: f64 -3.14
+$a: f32 1
 ```
 
 The value must be representable by the specified type.
@@ -844,7 +846,7 @@ def $foo2():
 .metadata
 
     .sources
-            0    "C:\Projects\svm\examples\test.sv"
+            0    "C:\Projects\svl\examples\test.sv"
 
     .functions
         ;     start          end       source    name
@@ -863,5 +865,4 @@ def $foo2():
         0x00000026    0x00000027        0             5       17
         0x00000027    0x0000002C        0             5        5
         0x0000002C    0x0000002D        0             6        1
-
 ```

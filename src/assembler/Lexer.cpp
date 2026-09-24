@@ -3,21 +3,22 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <optional>
 #include <regex>
-#include <filesystem>
 
-assembler::Lexer::Lexer() : charIdx(0), lineNumber(0), reachedEndOfFile(false) {
-}
+#include "../include/Error.h"
 
-std::optional<std::vector<AssemblerDefs::SVMAToken>> assembler::Lexer::lex(const std::string &filePath) {
+assembler::Lexer::Lexer() : charIdx(0), lineNumber(0), columnNumber(0), reachedEndOfFile(false) {}
+
+std::vector<assembler::SVMAToken> assembler::Lexer::lex(const std::filesystem::path* filePath) {
     std::fstream svmaFile;
-    svmaFile.open(filePath, std::ios::in); // read file
+    svmaFile.open(filePath->string(), std::ios::in); // read file
 
     if (!svmaFile.is_open()) {
-        std::cerr << "File " << filePath << " could not be opened." << std::endl;
-        return std::nullopt;
+        std::cerr << "could not open file" << std::endl;
+        exit(EXIT_FAILURE);
     }
+
+    this->filePath = filePath;
 
     char character;
 
@@ -30,19 +31,19 @@ std::optional<std::vector<AssemblerDefs::SVMAToken>> assembler::Lexer::lex(const
     return this->buildTokenStream();
 }
 
-std::optional<std::vector<AssemblerDefs::SVMAToken>> assembler::Lexer::lexString(const std::string& fileContent) {
-    char character;
-
+std::vector<assembler::SVMAToken> assembler::Lexer::lexString(const std::filesystem::path* testpath, const std::string& fileContent) {
+    this->filePath = testpath;
     this->inputBuffer.assign(fileContent.begin(), fileContent.end());
     return this->buildTokenStream();
 }
 
-std::optional<std::vector<AssemblerDefs::SVMAToken>> assembler::Lexer::buildTokenStream() {
+std::vector<assembler::SVMAToken> assembler::Lexer::buildTokenStream() {
     this->charIdx = 0;
     this->lineNumber = 1;
+    this->columnNumber = 1;
     this->reachedEndOfFile = false;
 
-    std::vector<AssemblerDefs::SVMAToken> tokensStream;
+    std::vector<SVMAToken> tokensStream;
 
     while (!this->reachedEndOfFile && this->charIdx < this->inputBuffer.size()) {
 
@@ -55,6 +56,7 @@ std::optional<std::vector<AssemblerDefs::SVMAToken>> assembler::Lexer::buildToke
         switch (this->peek()) {
             case '\n':
                 this->lineNumber++;
+                this->columnNumber = 0;
                 this->next();
                 break;
 
@@ -62,21 +64,18 @@ std::optional<std::vector<AssemblerDefs::SVMAToken>> assembler::Lexer::buildToke
                 this->skipComment();
                 break;
 
-            default:
+            default: {
                 if (this->charIdx < this->inputBuffer.size()) {
-                    std::optional<AssemblerDefs::SVMAToken> token = this->lexToken();
-                    if (!token.has_value()) {
-                        return std::nullopt;
-                    }
-                    tokensStream.push_back(token.value());
+                    tokensStream.push_back(this->lexToken());
                 }
+            }
         }
     }
-    tokensStream.push_back(AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::END_OF_FILE, "", this->lineNumber});
+    tokensStream.push_back(SVMAToken{SVMATokenType::END_OF_FILE, "EOF", this->lineNumber, this->columnNumber});
     return tokensStream;
 }
 
-std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexToken() {
+assembler::SVMAToken assembler::Lexer::lexToken() {
     switch (this->peek()) {
         case '$':
             return this->lexLabel();
@@ -100,6 +99,7 @@ std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexToken() {
 
 void assembler::Lexer::next() {
     this->charIdx++;
+    this->columnNumber++;
     if (this->charIdx >= this->inputBuffer.size()) {
         this->reachedEndOfFile = true;
     }
@@ -109,68 +109,65 @@ char assembler::Lexer::peek() const {
     return this->inputBuffer[this->charIdx];
 }
 
-std::optional<char> assembler::Lexer::peekNext() {
+char assembler::Lexer::peekNext() {
     if (this->charIdx + 1 == this->inputBuffer.size() - 1) {
-        return std::nullopt;
+        throw AssemblerError(
+            *this->filePath,
+            this->lineNumber,
+            this->columnNumber,
+            "unexpected 'EOF'"
+        );
     }
     return this->inputBuffer[this->charIdx + 1];
 }
 
-std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexLabel() {
-    // enforce label does not start with a number
-    std::optional<char> nextChar = peekNext();
-    if (nextChar.has_value() && std::isdigit(nextChar.value())) {
-        return std::nullopt;
-    }
+assembler::SVMAToken assembler::Lexer::lexLabel() {
+    const uint16_t labelColumn = this->columnNumber;
     // keep going through inputBuffer until reaching EOF, space, end of line, colon
     const std::string label = this->readUntilWhitespace();
     // LABEL_DEF
     if (label[label.size() - 1] == ':') {
         if (!isValidLabel(label.substr(0, label.size() - 1))) {
-            this->outputInvalidLabelError(label);
-            return std::nullopt;
+            this->throwInvalidLabel(label, labelColumn);
         }
-        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::LABEL_DEF, label, this->lineNumber};
+        return SVMAToken{SVMATokenType::LABEL_DEF, label, this->lineNumber, labelColumn};
     }
     // LABEL_REF
     if (!isValidLabel(label)) {
-        this->outputInvalidLabelError(label);
-        return std::nullopt;
+        this->throwInvalidLabel(label, labelColumn);
     }
-    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::LABEL_REF, label, this->lineNumber};
+    return SVMAToken{SVMATokenType::LABEL_REF, label, this->lineNumber, labelColumn};
 }
 
-std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexNumber() {
+assembler::SVMAToken assembler::Lexer::lexNumber() {
+    const uint16_t numberColumn = this->columnNumber;
     std::string number = this->readUntilWhitespace();
-    if (!isValidNumber(number)) {
-        this->outputLineNumberOfError();
-        std::cerr << "Invalid number \' " << number << "\'" << std::endl;
-        return std::nullopt;
-    }
-    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::NUMBER, number, this->lineNumber};
+    return SVMAToken{SVMATokenType::NUMBER, number, this->lineNumber, numberColumn};
 }
 
-std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexHex() {
+assembler::SVMAToken assembler::Lexer::lexHex() {
+    const uint16_t hexColumn = this->columnNumber;
     const std::string hex = this->readUntilWhitespace();
     if (!isValidHex(hex)) {
-        this->outputLineNumberOfError();
-        std::cerr << "Invalid hexadecimal number \'" << hex << "\'" << std::endl;
-        return std::nullopt;
+        throw AssemblerError(
+            *this->filePath,
+            this->lineNumber,
+            hexColumn,
+            "invalid hexadecimal '" +
+                hex + "'"
+        );
     }
-    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::HEX, hex, this->lineNumber};
+    return SVMAToken{SVMATokenType::HEX, hex, this->lineNumber, hexColumn};
 }
 
-std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexImmediate() {
+assembler::SVMAToken assembler::Lexer::lexImmediate() {
+    const uint16_t immediateColumn = this->columnNumber;
     const std::string immediate = this->readUntilWhitespace();
-    if (!isValidImmediate(immediate)) {
-        this->outputLineNumberOfError();
-        std::cerr << "Invalid immediate \'" << immediate << "\'" << std::endl;
-        return std::nullopt;
-    }
-    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::IMMEDIATE, immediate, this->lineNumber};
+    return SVMAToken{SVMATokenType::IMMEDIATE, immediate, this->lineNumber, immediateColumn};
 }
 
-std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexDirective() {
+assembler::SVMAToken assembler::Lexer::lexDirective() {
+    const uint16_t directiveColumn = this->columnNumber;
     const std::string directive = this->readUntilWhitespace();
     if (directive != ".data" &&
         directive != ".metadata" &&
@@ -178,59 +175,71 @@ std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexDirective() {
         directive != ".functions" &&
         directive != ".line_table"
     ) {
-        this->outputInvalidTokenError(directive);
-        return std::nullopt;
+        throw AssemblerError(
+            *this->filePath,
+            this->lineNumber,
+            directiveColumn,
+            "invalid directive '" +
+                directive + "'"
+        );
     }
-    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::DIRECTIVE, directive, this->lineNumber};
+    return SVMAToken{SVMATokenType::DIRECTIVE, directive, this->lineNumber, directiveColumn};
 }
 
-std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexString() {
+assembler::SVMAToken assembler::Lexer::lexString() {
+    const uint16_t stringColumn = this->columnNumber;
     const std::string string = this->readString();
     if (!isValidString(string)) {
-        this->outputLineNumberOfError();
-        if (this->charIdx >= this->inputBuffer.size()) {
-            std::cerr << "Unterminated string" << std::endl;
-        } else {
-            std::cerr << "Invalid string \'" << string << "\'" << std::endl;
-        }
-        return std::nullopt;
+        throw AssemblerError(
+            *this->filePath,
+            this->lineNumber,
+            stringColumn,
+            "invalid string '" +
+                 string + "'"
+        );
     }
-    return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::STRING, string, this->lineNumber};
+    return SVMAToken{SVMATokenType::STRING, string, this->lineNumber, stringColumn};
 }
 
-std::optional<AssemblerDefs::SVMAToken> assembler::Lexer::lexKeyWord() {
+assembler::SVMAToken assembler::Lexer::lexKeyWord() {
+    const uint16_t keywordColumn = this->columnNumber;
     const std::string keyword = this->readUntilWhitespace();
 
     // TYPE Token
-    if (AssemblerDefs::type.find(keyword) != AssemblerDefs::type.end()) {
-        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::TYPE, keyword, this->lineNumber};
+    if (type.find(keyword) != type.end()) {
+        return SVMAToken{SVMATokenType::TYPE, keyword, this->lineNumber, keywordColumn};
     }
     // DATA_TYPE Token
-    if (AssemblerDefs::dataType.find(keyword) != AssemblerDefs::dataType.end()) {
-        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::DATA_TYPE, keyword, this->lineNumber};
+    if (dataType.find(keyword) != dataType.end()) {
+        return SVMAToken{SVMATokenType::DATA_TYPE, keyword, this->lineNumber, keywordColumn};
     }
     // METHOD_DEF Token
     if (keyword == "def") {
-        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::METHOD_DEF, "", this->lineNumber};
+        return SVMAToken{SVMATokenType::METHOD_DEF, "", this->lineNumber,  keywordColumn};
     }
     // METHOD_METADATA
-    if (AssemblerDefs::method_metadata_fields.find(keyword) != AssemblerDefs::method_metadata_fields.end()) {
-        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::METHOD_METADATA_FIELD, keyword, this->lineNumber};
+    if (method_metadata_fields.find(keyword) != method_metadata_fields.end()) {
+        return SVMAToken{SVMATokenType::METHOD_METADATA_FIELD, keyword, this->lineNumber, keywordColumn};
     }
     // INSTRUCTION
-    if (AssemblerDefs::opcode.find(keyword) != AssemblerDefs::opcode.end()) {
-        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::INSTRUCTION, keyword, this->lineNumber};
+    if (opcode.find(keyword) != opcode.end()) {
+        return SVMAToken{SVMATokenType::INSTRUCTION, keyword, this->lineNumber, keywordColumn};
     }
     // NATIVE_REF
-    if (AssemblerDefs::nativeRef.find(keyword) != AssemblerDefs::nativeRef.end()) {
-        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::NATIVE_REF, keyword, this->lineNumber};
+    if (nativeRef.find(keyword) != nativeRef.end()) {
+        return SVMAToken{SVMATokenType::NATIVE_REF, keyword, this->lineNumber, keywordColumn};
     }
     // ERROR_REF
-    if (AssemblerDefs::errorRef.find(keyword) != AssemblerDefs::errorRef.end()) {
-        return AssemblerDefs::SVMAToken{AssemblerDefs::SVMATokenType::ERROR_REF, keyword, this->lineNumber};
+    if (errorRef.find(keyword) != errorRef.end()) {
+        return SVMAToken{SVMATokenType::ERROR_REF, keyword, this->lineNumber, keywordColumn};
     }
-    this->outputInvalidTokenError(keyword);
-    return std::nullopt;
+    throw AssemblerError(
+        *this->filePath,
+        this->lineNumber,
+        keywordColumn,
+        "invalid keyword '" +
+             keyword + "'"
+    );
 }
 
 std::string assembler::Lexer::readUntilWhitespace() {
@@ -247,30 +256,21 @@ std::string assembler::Lexer::readUntilWhitespace() {
     return word;
 }
 
-std::string assembler::Lexer::readChar() {
-    std::string character = "'";
-    this->next();
-    for (int i = 0; i < 2; i++) {
-        character += this->peek();
-        this->next();
-        if (this->reachedEndOfFile) {
-            break;
-        }
-    }
-    return character;
-}
-
 std::string assembler::Lexer::readString() {
-    std::string string = "\"";
+    std::string string;
+    string += this->peek();
     this->next();
     // keep consuming chars until " (without escape character) appears in string
-    while (!(this->peek() == '"' && this->inputBuffer.at(this->charIdx - 1) != '\\')) {
+    while (!(this->peek() == '"' && this->inputBuffer.at(this->charIdx - 1) != '\\') && this->charIdx < this->inputBuffer.size()) {
         string += this->peek();
         this->next();
         if (this->charIdx == this->inputBuffer.size() - 1) {
             this->reachedEndOfFile = true;
             break;
         }
+    }
+    if (this->charIdx == this->inputBuffer.size()) {
+        return string;
     }
     string += this->peek();
     this->next();
@@ -295,32 +295,27 @@ bool assembler::Lexer::isValidLabel(const std::string& s) {
     return std::regex_match(s, std::regex{R"(\$[a-zA-Z_][a-zA-Z0-9_()\[\],]*)"});
 }
 
-bool assembler::Lexer::isValidNumber(const std::string& s) {
-    return std::regex_match(s, std::regex{R"(-?[0-9]+(\.[0-9]+)?)"});
-}
-
 bool assembler::Lexer::isValidHex(const std::string& s) {
     return std::regex_match(s, std::regex{R"(0x[0-9A-Fa-f]+)"});
 }
 
-bool assembler::Lexer::isValidImmediate(const std::string& s) {
-    return std::regex_match(s, std::regex{R"(#-?[0-9]+(\.[0-9]+)?)"});
-}
-
 bool assembler::Lexer::isValidString(const std::string &s) {
-    return s.size() > 2;
+    if (s.size() < 2 ||
+        s[0] != '"' ||
+        s[s.size() - 1] != '"'
+    ) {
+        return false;
+    }
+    return true;
 }
 
-void assembler::Lexer::outputInvalidTokenError(const std::string& word) const {
-    this->outputLineNumberOfError();
-    std::cerr << "Invalid SVMA Token \'" << word << "\'\n" << std::endl;
-}
-
-void assembler::Lexer::outputInvalidLabelError(const std::string &word) const {
-    this->outputLineNumberOfError();
-    std::cerr << "Invalid label \'" << word << "\'\n" << std::endl;
-}
-
-void assembler::Lexer::outputLineNumberOfError() const {
-    std::cerr << "Error found at Line " << this->lineNumber << std::endl;
+void assembler::Lexer::throwInvalidLabel(const std::string& label, const uint16_t columnNumber) const {
+    throw AssemblerError(
+        *this->filePath,
+        this->lineNumber,
+        columnNumber,
+        "invalid label '" +
+            label +
+            "'"
+    );
 }

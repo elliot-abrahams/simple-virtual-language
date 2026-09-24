@@ -56,7 +56,7 @@ namespace tokeniserTest {
         const std::string& source
     ) {
         const auto path = new std::filesystem::path("Testing");
-        ASSERT_THROW(auto tokeniser = new compiler::Tokeniser(source, path), SyntaxError);
+        ASSERT_THROW(new compiler::Tokeniser(source, path), SyntaxError);
     }
 
 }

@@ -74,7 +74,8 @@ Integration tests covering the complete compilation and execution pipeline
 Unit tests cover:
 
 - Virtual machine execution
-- Lexical analysis (tokeniser)
+- Assembly and bytecode generation
+- Lexical analysis (tokenisation)
 - Parsing and AST generation
 - Semantic analysis
 

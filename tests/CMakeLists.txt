@@ -72,6 +72,65 @@ gtest_discover_tests(
 )
 
 
+# ASSEMBLER TESTS
+
+set(ASSEMBLER_TESTS assembler_tests)
+
+set(Assembler_Sources
+        assembler/MetadataTests.cpp
+        assembler/directiveTests.cpp
+        assembler/DataTests.cpp
+        assembler/MethodTests.cpp
+        assembler/LabelTests.cpp
+        assembler/ImmediateTests.cpp
+
+        assembler/instructions/OtherInstructionTests.cpp
+        assembler/instructions/ArithmeticInstructionTests.cpp
+        assembler/instructions/ControlInstructionTests.cpp
+        assembler/instructions/MemoryInstructionTests.cpp
+        assembler/instructions/StackInstructionTests.cpp
+        assembler/instructions/coreInstructionTests.cpp
+
+        assembler/AssemblerTestsUtils.h
+        assembler/AssemblerTests.cpp
+)
+
+add_executable(${ASSEMBLER_TESTS} ${Assembler_Sources})
+
+target_link_libraries(${ASSEMBLER_TESTS} PRIVATE
+        gtest_main
+        sv_lib
+)
+
+gtest_discover_tests(${ASSEMBLER_TESTS})
+
+
+# TOKENISER TESTS
+
+set(TOKENISER_TESTS tokeniser_tests)
+
+set(Tokeniser_Sources
+        tokeniser/InvalidTokenTests.cpp
+        tokeniser/TokenSequenceTests.cpp
+        tokeniser/IdentifierTests.cpp
+        tokeniser/KeywordTests.cpp
+        tokeniser/LiteralTests.cpp
+        tokeniser/SymbolTests.cpp
+
+        tokeniser/TokeniserTestUtils.h
+        tokeniser/TokeniserTests.cpp
+)
+
+add_executable(${TOKENISER_TESTS} ${Tokeniser_Sources})
+
+target_link_libraries(${TOKENISER_TESTS} PRIVATE
+        gtest_main
+        sv_lib
+)
+
+gtest_discover_tests(${TOKENISER_TESTS})
+
+
 # PARSER TESTS
 
 set(PARSER_TESTS parser_tests)
@@ -110,32 +169,6 @@ target_link_libraries(${PARSER_TESTS} PRIVATE
 )
 
 gtest_discover_tests(${PARSER_TESTS})
-
-
-# TOKENISER TESTS
-
-set(TOKENISER_TESTS tokeniser_tests)
-
-set(Tokeniser_Sources
-        tokeniser/InvalidTokenTests.cpp
-        tokeniser/TokenSequenceTests.cpp
-        tokeniser/IdentifierTests.cpp
-        tokeniser/KeywordTests.cpp
-        tokeniser/LiteralTests.cpp
-        tokeniser/SymbolTests.cpp
-
-        tokeniser/TokeniserTestUtils.h
-        tokeniser/TokeniserTests.cpp
-)
-
-add_executable(${TOKENISER_TESTS} ${Tokeniser_Sources})
-
-target_link_libraries(${TOKENISER_TESTS} PRIVATE
-        gtest_main
-        sv_lib
-)
-
-gtest_discover_tests(${TOKENISER_TESTS})
 
 
 # SEMANTIC TESTS
@@ -208,6 +241,7 @@ set(Integration_Sources
 
         integration/IntegrationTestUtils.h
         integration/IntegrationTests.cpp
+        assembler/AssemblerTestsUtils.h
 )
 
 add_executable(${INTEGRATION_TESTS} ${Integration_Sources})

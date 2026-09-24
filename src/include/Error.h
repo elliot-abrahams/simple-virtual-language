@@ -115,11 +115,20 @@ protected:
     }
 };
 
+struct AssemblerError : SourceError {
+    AssemblerError(const std::filesystem::path& path, const uint32_t line, const uint16_t column, const std::string& message) :
+        SourceError(path, line, column, message) {}
+
+    std::string generateMessage() const override {
+        return SourceError::generateMessage("AssemblerError");
+    }
+};
+
 struct SyntaxError final : SourceError {
     SyntaxError(const std::filesystem::path& path, const uint32_t line, const uint16_t column, const std::string& message) :
         SourceError(path, line, column, message) {}
 
-    std::string generateMessage() const {
+    std::string generateMessage() const override {
         return SourceError::generateMessage("SyntaxError");
     }
 };
@@ -128,7 +137,7 @@ struct SemanticError final : SourceError {
     SemanticError(const std::filesystem::path& path, const uint32_t line, const uint16_t column, const std::string& message) :
         SourceError(path, line, column, message) {}
 
-    std::string generateMessage() const {
+    std::string generateMessage() const override {
         return SourceError::generateMessage("SemanticError");
     }
 };
@@ -137,7 +146,7 @@ struct TypeError final : SourceError {
     TypeError(const std::filesystem::path& path, const uint32_t line, const uint16_t column, const std::string& message) :
         SourceError(path, line, column, message) {}
 
-    std::string generateMessage() const {
+    std::string generateMessage() const override {
         return SourceError::generateMessage("TypeError");
     }
 };

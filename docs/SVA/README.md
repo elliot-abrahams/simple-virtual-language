@@ -17,6 +17,14 @@ Describes how SVA processes SVMA source code and generates SVM bytecode.
 
 ---
 
+## Assembler Errors
+
+`Assembler-Errors.md`
+
+Describes the errors that can be reported by the assembler, when SVMA source code cannot be successfully assembled.
+
+---
+
 ## Assembly Language
 
 `Assembly-Language.md`

@@ -18,7 +18,7 @@ void EXPECT_OPERAND_VM_STACK_EQ(
 
         const auto bytecode = assembler.assembleString(source);
 
-        vm.run(&bytecode.value());
+        vm.run(&bytecode);
         const Value result = vm.popOperandStack();
 
         EXPECT_EQ(result.type, expectedType);
@@ -41,7 +41,7 @@ void EXPECT_N_OPERANDS_OF_SAME_TYPE_VM_STACK_EQ(
 
         const auto bytecode = assembler.assembleString(source);
 
-        vm.run(&bytecode.value());
+        vm.run(&bytecode);
 
         for (int i = 0; i < expectedValues.size(); i++) {
             const Value result = vm.popOperandStack();
@@ -63,10 +63,12 @@ inline void EXPECT_RUNTIME_ERROR(
 
     const auto bytecode = assembler.assembleString(source);
 
-    vm.run(&bytecode.value());
-
-    ASSERT_TRUE(vm.getRuntimeError()->has_value());
-    ASSERT_EQ(vm.getRuntimeError()->value().type, errorType);
+    try {
+        vm.run(&bytecode);
+        FAIL();
+    } catch (const RuntimeError& e) {
+        ASSERT_EQ(e.type, errorType);
+    }
 }
 
 template<typename T>
@@ -85,7 +87,7 @@ void EXPECT_OPERAND_VM_STACK_EQ_WITH_CONSOLE_INPUT(
 
         const auto bytecode = assembler.assembleString(source);
 
-        vm.run(&bytecode.value());
+        vm.run(&bytecode);
 
         std::cin.rdbuf(oldCin);
 
@@ -112,10 +114,12 @@ inline void EXPECT_RUNTIME_ERROR_WITH_CONSOLE_INPUT(
 
     const auto bytecode = assembler.assembleString(source);
 
-    vm.run(&bytecode.value());
-
-    ASSERT_TRUE(vm.getRuntimeError()->has_value());
-    ASSERT_EQ(vm.getRuntimeError()->value().type, errorType);
+    try {
+        vm.run(&bytecode);
+        FAIL();
+    } catch (const RuntimeError& e) {
+        ASSERT_EQ(e.type, errorType);
+    }
 
     std::cin.rdbuf(oldCin);
 }
@@ -132,7 +136,7 @@ inline void EXPECT_CONSOLE_OUTPUT(
 
     const auto bytecode = assembler.assembleString(source);
 
-    vm.run(&bytecode.value());
+    vm.run(&bytecode);
 
     std::cout.rdbuf(old);
     EXPECT_EQ(buffer.str(), expectedOutput);
@@ -155,7 +159,7 @@ inline void EXPECT_CONSOLE_OUTPUT_WITH_CONSOLE_INPUT(
 
     const auto bytecode = assembler.assembleString(source);
 
-    vm.run(&bytecode.value());
+    vm.run(&bytecode);
 
     std::cout.rdbuf(oldCin);
     std::cout.rdbuf(oldCout);
@@ -172,7 +176,7 @@ inline void EXPECT_EXIT_CODE(
 
         const auto bytecode = assembler.assembleString(source);
 
-        vm.run(&bytecode.value());
+        vm.run(&bytecode);
 
         ASSERT_EQ(vm.getExitStatus(), expectedExitCode);
 

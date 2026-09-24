@@ -48,7 +48,7 @@ Compiler errors are divided into three categories:
 - **Semantic Errors:** the source code is syntactically valid but violates a rule about the meaning or structure of a program.
 - **Type Errors:** an operation uses values or expressions with incompatible or unsupported types.
 
-Each error identifies the location in the source program where the error waas detected.
+Each error identifies the location in the source program where the error was detected.
 
 ---
 

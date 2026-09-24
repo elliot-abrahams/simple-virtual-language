@@ -2,8 +2,9 @@
 #define SIMPLE_VM_LEXER_H
 
 #pragma once
+#include <filesystem>
+
 #include "AssemblerDefs.h"
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -14,45 +15,43 @@ namespace assembler {
     public:
         Lexer();
 
-        std::optional<std::vector<AssemblerDefs::SVMAToken>> lex(const std::string& filePath);
-        std::optional<std::vector<AssemblerDefs::SVMAToken>> lexString(const std::string& fileContent);
+        std::vector<SVMAToken> lex(const std::filesystem::path* filePath);
+        std::vector<SVMAToken> lexString(const std::filesystem::path* testpath, const std::string& fileContent);
 
 
     private:
-        std::optional<std::vector<AssemblerDefs::SVMAToken>> buildTokenStream();
+        std::vector<SVMAToken> buildTokenStream();
 
-        std::optional<AssemblerDefs::SVMAToken> lexToken();
-        std::optional<AssemblerDefs::SVMAToken> lexLabel();
-        std::optional<AssemblerDefs::SVMAToken> lexNumber();
-        std::optional<AssemblerDefs::SVMAToken> lexHex();
-        std::optional<AssemblerDefs::SVMAToken> lexImmediate();
-        std::optional<AssemblerDefs::SVMAToken> lexDirective();
-        std::optional<AssemblerDefs::SVMAToken> lexString();
-        std::optional<AssemblerDefs::SVMAToken> lexKeyWord();
+        SVMAToken lexToken();
+        SVMAToken lexLabel();
+        SVMAToken lexNumber();
+        SVMAToken lexHex();
+        SVMAToken lexImmediate();
+        SVMAToken lexDirective();
+        SVMAToken lexString();
+        SVMAToken lexKeyWord();
 
         void next();
         char peek() const;
-        std::optional<char> peekNext();
+        char peekNext();
         std::string readUntilWhitespace();
-        std::string readChar();
         std::string readString();
         void skipWhitespace();
         void skipComment();
 
         static bool isValidLabel(const std::string& s);
-        static bool isValidNumber(const std::string& s);
         static bool isValidHex(const std::string& s);
-        static bool isValidImmediate(const std::string& s);
         static bool isValidString(const std::string& s);
 
-        void outputInvalidTokenError(const std::string& word) const;
-        void outputInvalidLabelError(const std::string& word) const;
-        void outputLineNumberOfError() const;
+        void throwInvalidLabel(const std::string& label, const uint16_t columnNumber) const;
 
         std::vector<char> inputBuffer;
         int charIdx;
-        int lineNumber;
+        uint32_t lineNumber;
+        uint16_t columnNumber;
         bool reachedEndOfFile;
+
+        const std::filesystem::path* filePath;
     };
 }
 

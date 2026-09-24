@@ -5,7 +5,6 @@
 
 #include <cstdint>
 #include <map>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -21,15 +20,27 @@ namespace assembler {
         DATA
     };
 
-    struct Label {
-        std::string name;
-        LabelType type;
+    struct LabelReference {
+        const std::string name;
+        const LabelType type;
+
+        const uint32_t line;
+        const uint16_t column;
 
         std::string getKey() const {
             switch (type) {
-                case LabelType::CODE: return std::string(this->name + "CODE");
-                case LabelType::METHOD: return std::string(this->name + "MTHD");
-                case LabelType::DATA: return std::string(this->name + "DATA");
+                case LabelType::CODE: return std::string(this->name + "C");
+                case LabelType::METHOD: return std::string(this->name + "M");
+                case LabelType::DATA: return std::string(this->name + "D");
+            }
+            return "";
+        }
+
+        std::string getTypeAsString() const {
+            switch (this->type) {
+                case LabelType::CODE: return "code";
+                case LabelType::METHOD: return "method";
+                case LabelType::DATA: return "data";
             }
             return "";
         }
@@ -40,50 +51,53 @@ namespace assembler {
     public:
         Assembler();
 
-        std::optional<std::vector<uint8_t>> assemble(const std::string& filePath);
-        std::optional<std::vector<uint8_t>> assembleString(const std::string& fileContent);
+        std::vector<uint8_t> assemble(const std::filesystem::path* filePath);
+        std::vector<uint8_t> assembleString(const std::string& fileContent);
 
     private:
-        std::optional<std::vector<uint8_t>> assembleFromTokens(const std::vector<AssemblerDefs::SVMAToken>& tokens);
+        std::vector<uint8_t> assembleFromTokens(const std::vector<SVMAToken>& tokenStream);
 
-        bool constructLabelTable();
+        void constructLabelTable();
 
-        bool processLabelDef(std::map<std::string, uint32_t>& unhandledLabelRefs, uint32_t location, const Label& label, const int& lineNumber);
-        void processInstruction(std::map<std::string, uint32_t>& unhandledLabelRefs, uint32_t& codeSectionLength, const AssemblerDefs::Instruction& instruction);
-        void processData(std::map<std::string, uint32_t>& unhandledLabelRefs, const uint32_t location, uint32_t& dataSectionLength, const AssemblerDefs::Data& data);
-        void processLabelRef(std::map<std::string, uint32_t>& unhandledLabelRefs, const Label& label, const int& lineNumber);
+        void processLabelDef(std::map<std::string, LabelReference>& unhandledLabelRefs, uint32_t location, const LabelReference& label);
+        void processInstruction(std::map<std::string, LabelReference>& unhandledLabelRefs, uint32_t& codeSectionLength, const Instruction& instruction);
+        void processData(std::map<std::string, LabelReference>& unhandledLabelRefs, const uint32_t location, uint32_t& dataSectionLength, const Data& data);
+        void processLabelRef(std::map<std::string, LabelReference>& unhandledLabelRefs, const LabelReference& label);
 
         static LabelType getOperandLabelType(const std::string& instructionMnemonic);
 
-        uint8_t calculateBytesOfData(const AssemblerDefs::Data& data) const;
+        uint8_t calculateBytesOfData(const Data& data) const;
         uint8_t calculateBytesFromType(const std::string& type) const;
 
-        std::optional<std::vector<uint8_t>> generateBytecode();
+        std::vector<uint8_t> generateBytecode();
 
-        std::optional<std::vector<uint8_t>> convertInstructionToBytes(const AssemblerDefs::Instruction& instruction) const;
-        std::vector<uint8_t> convertMethodDefToBytes(const AssemblerDefs::MethodDef& methodDef) const;
-        std::optional<std::vector<uint8_t>> convertDataStatementToBytes(const AssemblerDefs::Data& data) const;
+        std::vector<uint8_t> convertInstructionToBytes(const Instruction& instruction) const;
+
+        static std::vector<uint8_t> convertMethodDefToBytes(const MethodDef& methodDef);
+        std::vector<uint8_t> convertDataStatementToBytes(const Data& data) const;
 
         static uint8_t convertTypeToByte(const std::string& type);
         uint8_t convertDataTypeToByte(const std::string& dataType) const;
-        std::optional<std::vector<uint8_t>> convertDataToBytes(const std::string& dataType, const std::string& data, const int& lineNumber) const;
-        std::vector<uint8_t> convertLabelRefToBytes(const Label& label) const;
+        std::vector<uint8_t> convertDataToBytes(const std::string& dataType, const std::string& data, const uint32_t lineNumber, const uint16_t columnNumber) const;
+        std::vector<uint8_t> convertLabelRefToBytes(const LabelReference& label) const;
         std::vector<uint8_t> convertStringToBytes(const std::string& string) const;
 
-        std::vector<uint8_t> convertSourceMetadata(const AssemblerDefs::SourceMetadata& sourceMetadata);
-        std::vector<uint8_t> convertFunctionMetadata(const AssemblerDefs::FunctionMetadata& functionMetadata);
-        std::vector<uint8_t> convertLineTableMetadata(const AssemblerDefs::LineTableMetadata& lineTableMetadata);
+        std::vector<uint8_t> convertSourceMetadata(const SourceMetadata& sourceMetadata);
+        std::vector<uint8_t> convertFunctionMetadata(const FunctionMetadata& functionMetadata);
+        std::vector<uint8_t> convertLineTableMetadata(const LineTableMetadata& lineTableMetadata);
 
         std::vector<uint8_t> pushBackVector(std::vector<uint8_t>& a, const std::vector<uint8_t>& b) const;
 
-        AssemblerDefs::Section section;
-        std::vector<AssemblerDefs::Statement> statements;
+        Section section;
+        std::vector<Statement> statements;
         std::map<std::string, uint32_t> labelTable;
         uint32_t codeEndLocation = 0;
         uint32_t dataEndLocation = 0;
         uint32_t sourceMetadataLength = 0;
         uint32_t functionMetadataLength = 0;
         uint32_t lineTableMetadataLength = 0;
+
+        const std::filesystem::path* filepath;
     };
 }
 

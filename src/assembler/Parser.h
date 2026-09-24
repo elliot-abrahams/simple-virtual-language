@@ -1,7 +1,7 @@
 #ifndef SIMPLE_VM_PARSER_H
 #define SIMPLE_VM_PARSER_H
 
-#include <optional>
+#include <filesystem>
 #include <string>
 #include <variant>
 #include <vector>
@@ -14,51 +14,50 @@ namespace assembler {
     public:
         Parser();
 
-        std::optional<std::vector<AssemblerDefs::Statement>> parse(const std::vector<AssemblerDefs::SVMAToken>& tokenStream);
+        std::vector<Statement> parse(const std::filesystem::path* filepath, const std::vector<SVMAToken>& tokenStream);
 
     private:
-        std::optional<AssemblerDefs::Statement> parseToken();
+        Statement parseToken();
 
-        std::optional<AssemblerDefs::Statement> parseInstruction();
-        std::optional<AssemblerDefs::Statement> parseLabelDef();
-        std::optional<AssemblerDefs::Statement> parseData();
-        std::optional<AssemblerDefs::Statement> parseMethodDef();
-        std::optional<AssemblerDefs::Operand> parseType();
-        std::optional<AssemblerDefs::Operand> parseImmediate();
-        std::optional<AssemblerDefs::Operand> parseLabelRef();
-        std::optional<AssemblerDefs::Operand> parseNativeRef();
-        std::optional<AssemblerDefs::Operand> parseErrorRef();
-        std::optional<AssemblerDefs::Operand> parseOperand(AssemblerDefs::SVMATokenType tokenType);
-        std::optional<AssemblerDefs::Statement> parseDirective();
+        Statement parseInstruction();
+        Statement parseLabelDef();
+        Statement parseData();
+        Statement parseMethodDef();
+        Operand parseOperand(SVMATokenType tokenType);
+        Statement parseDirective();
 
-        std::optional<AssemblerDefs::SourceMetadata> parseSourceMetadata();
-        std::optional<AssemblerDefs::FunctionMetadata> parseFunctionMetadata();
-        std::optional<AssemblerDefs::LineTableMetadata> parseLineTableMetadata();
+        SourceMetadata parseSourceMetadata();
+        FunctionMetadata parseFunctionMetadata();
+        LineTableMetadata parseLineTableMetadata();
+
+        uint32_t parseAddress();
+        uint16_t parseSourceId();
 
         void next();
-        AssemblerDefs::SVMAToken peek();
-        AssemblerDefs::SVMAToken peekNext();
+        SVMAToken peek();
+        SVMAToken peekNext();
 
-        static bool checkAndHandleValueIsValidAsType(const std::string type, const std::string& value, const int& lineNumber);
-        static bool checkAndHandleValueIsValidAsDataType(const std::string type, const std::string& value, const int& lineNumber);
+        void checkAndHandleValueIsValidAsType(const std::string& type, const std::string& value, const uint32_t lineNumber, const uint16_t columnNumber) const;
+        void checkAndHandleValueIsValidAsDataType(const std::string& type, const std::string& value, const uint32_t lineNumber, const uint16_t columnNumber) const;
 
-        static bool isNumberInteger(const std::string& value);
-        static bool isNumberDecimal(const std::string& value);
-        static bool isNumberSigned(const std::string& value);
+        static bool isInteger(const std::string& value);
+        static bool isSigned(const std::string& value);
 
         static bool fitsUint16(const std::string& s);
         static bool fitsUint32(const std::string& s);
 
-        AssemblerDefs::OperandType mapTokenTypeToOperandType(AssemblerDefs::SVMATokenType tokenType);
+        OperandType mapTokenTypeToOperandType(SVMATokenType tokenType);
 
-        static void printError(const std::string& msg, const int& lineNumber);
-        static void handleUnexpectedTokenError(const std::vector<AssemblerDefs::SVMATokenType> &expectingTypes, const AssemblerDefs::SVMAToken& actualType, const int& lineNumber);
-        static void handleIncorrectInstructionOperand(const std::string& instructionMnemonic, const AssemblerDefs::SVMATokenType expectedType, const int& lineNumber);
-        static std::string tokenTypeToString(AssemblerDefs::SVMATokenType tokenType);
+        void throwUnexpectedTokenError(const SVMAToken& token) const;
+        void throwInvalidValueForTypeError(const std::string& value, const std::string& type, const uint32_t lineNumber, const uint16_t columnNumber) const;
+        void throwMethodMetadataOutOfRange(const std::string& value, const uint32_t lineNumber, const uint16_t columnNumber, const bool isArg) const;
 
-        std::vector<AssemblerDefs::SVMAToken> tokenStream;
+        static std::string tokenTypeToString(SVMATokenType tokenType);
+
+        std::vector<SVMAToken> tokenStream;
         int tokenIdx;
-        AssemblerDefs::Section section;
+        Section section;
+        const std::filesystem::path* filepath;
     };
 }
 
