@@ -11,7 +11,7 @@ TEST(EXPR_UNARY, INT_PLUS) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
                 std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::PLUS,
@@ -35,7 +35,7 @@ TEST(EXPR_UNARY, VARIABLE_PLUS) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::PLUS,
@@ -58,7 +58,7 @@ TEST(EXPR_UNARY, INT_MINUS) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::MINUS,
@@ -81,7 +81,7 @@ TEST(EXPR_UNARY, INT_MINUS_PAREN) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::MINUS,
@@ -105,7 +105,7 @@ TEST(EXPR_UNARY, VARIABLE_MINUS) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
              std::make_unique<ExpectedUnaryExpr>(
                  compiler::UnaryOperator::MINUS,
@@ -128,7 +128,7 @@ TEST(EXPR_UNARY, INT_LOGICAL_NOT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::LOGICAL_NOT,
@@ -152,7 +152,7 @@ TEST(EXPR_UNARY, VARIABLE_LOGICAL_NOT) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::LOGICAL_NOT,
@@ -175,7 +175,7 @@ TEST(EXPR_UNARY, INT_NESTED_LOGICAL_NOT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::LOGICAL_NOT,
@@ -201,7 +201,7 @@ TEST(EXPR_UNARY, INT_NESTED_SIGN) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::MINUS,
@@ -229,7 +229,7 @@ TEST(EXPR_UNARY, INCREMENT) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::INCREMENT,
@@ -253,7 +253,7 @@ TEST(EXPR_UNARY, DECREMENT) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::DECREMENT,

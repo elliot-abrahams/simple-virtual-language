@@ -13,7 +13,7 @@ TEST(EXPR_FUNCTION_CALL, FUNCTION_CALL) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedFunctionCallExpr>(
                 "foo",
@@ -40,7 +40,7 @@ TEST(EXPR_FUNCTION_CALL, ONE_ARGUMENT) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedFunctionCallExpr>(
                 "foo",
@@ -71,7 +71,7 @@ TEST(EXPR_FUNCTION_CALL, NESTED_CALL) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedFunctionCallExpr>(
                 "foo",
@@ -101,7 +101,7 @@ TEST(EXPR_FUNCTION_CALL, TWO_ARGUMENTS) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedFunctionCallExpr>(
                 "foo",

@@ -1,25 +1,44 @@
-# Built-in Functions
+# Built-ins
 
 ## Contents
 
 - [1. Overview](#1-overview)
-- [2. Builtin Functions](#2-builtin-functions)
-  - [2.1 exit](#21-exit)
-  - [2.2 print](#22-print)
+- [2 Built-in Types](#2-built-in-types)
+  - [2.1 Array](#21-array)
+    - [2.1.1 Length Field](#211-length-field)
+- [3. Built-in Functions](#3-built-in-functions)
+  - [3.1 exit](#31-exit)
+  - [3.2 print](#32-print)
 
 ---
 
 ## 1. Overview
 
-SV provides a number of built-in functions.
+SV provides a number of built-in types and functions.
+
+Built-in types provide functionality that is available without being explicitly defined by the programmer.
 
 Built-in functions behave like ordinary functions, but their implementations are provided by the compiler.
 
 ---
 
-## 2. Builtin Functions
+## 2. Built-in Types
 
-### 2.1 exit
+### 2.1 Array
+
+Arrays provide indexed storage for a fixed number of elements.
+
+### 2.1.1 Length Field
+
+**Type:** `int`
+
+**Description:** Returns the number of elements in the array.
+
+---
+
+## 3. Built-in Functions
+
+### 3.1 exit
 
 **Signature:**
 ```
@@ -32,7 +51,7 @@ Terminates program execution using the arguments as the exit code.
 
 ---
 
-### 2.2 print
+### 3.2 print
 
 **Signature:**
 ```

@@ -11,10 +11,10 @@ TEST(EXPR_CAST, FLOAT_TO_INT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedCastExpr>(
-                std::make_unique<Type>(compiler::Type::INT, 0),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 std::make_unique<ExpectedFloatLiteral>(5.5f)
             )
         )
@@ -32,10 +32,10 @@ TEST(EXPR_CAST, INT_TO_FLOAT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedCastExpr>(
-                std::make_unique<Type>(compiler::Type::FLOAT, 0),
+                std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 0),
                 std::make_unique<ExpectedIntegerLiteral>(5)
             )
         )
@@ -53,10 +53,10 @@ TEST(EXPR_CAST, BOOL_TO_BOOL) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedCastExpr>(
-                std::make_unique<Type>(compiler::Type::BOOL, 0),
+                std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
                 std::make_unique<ExpectedBoolLiteral>(true)
             )
         )

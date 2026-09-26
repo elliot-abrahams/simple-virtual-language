@@ -11,12 +11,12 @@ TEST(EXPR_PRECEDENCE, CAST_UNARY_BEFORE_MULTIPLICATIVE) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::MULTIPLY,
                 std::make_unique<ExpectedCastExpr>(
-                    std::make_unique<Type>(compiler::Type::INT, 0),
+                    std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                     std::make_unique<ExpectedFloatLiteral>(1.8f)
                 ),
                 std::make_unique<ExpectedIntegerLiteral>(2)
@@ -36,7 +36,7 @@ TEST(EXPR_PRECEDENCE, UNARY_BEFORE_MULTIPLICATIVE) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::MULTIPLY,
@@ -61,7 +61,7 @@ TEST(EXPR_PRECEDENCE, PARETHESES_BEFORE_MULTIPLICATIVE) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::MULTIPLY,
@@ -87,7 +87,7 @@ TEST(EXPR_PRECEDENCE, MULTIPLICATIVE_BEFORE_ADDITIVE_1) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::PLUS,
@@ -113,7 +113,7 @@ TEST(EXPR_PRECEDENCE, MULTIPLICATIVE_BEFORE_ADDITIVE_2) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::PLUS,
@@ -139,7 +139,7 @@ TEST(EXPR_PRECEDENCE, ADDITIVE_BEFORE_COMPARISON) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::LESS_THAN,
@@ -165,7 +165,7 @@ TEST(EXPR_PRECEDENCE, COMPARISON_BEFORE_EQUALITY) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::EQUAL_EQUAL,
@@ -191,7 +191,7 @@ TEST(EXPR_PRECEDENCE, EQUALITY_BEFORE_LOGICAL_AND) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::LOGICAL_AND,
@@ -217,7 +217,7 @@ TEST(EXPR_PRECEDENCE, LOGICAL_AND_BEFORE_LOGICAL_OR) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::LOGICAL_OR,

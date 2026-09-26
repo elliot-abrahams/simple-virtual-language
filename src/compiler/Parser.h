@@ -39,13 +39,14 @@ namespace compiler {
         std::unique_ptr<ast::Expr> parseAdditiveExpression() const;
         std::unique_ptr<ast::Expr> parseMultiplicativeExpression() const;
         std::unique_ptr<ast::Expr> parseUnaryExpression() const;
+        std::unique_ptr<ast::Index> parseIndex() const;
+        std::unique_ptr<ast::FieldAccess> parseFieldAccess() const;
         std::unique_ptr<ast::Expr> parseExprPostfix() const;
         std::unique_ptr<ast::Expr> parsePrimaryExpression() const;
         std::unique_ptr<ast::FunctionCall> parseFunctionCall(std::unique_ptr<ast::Identifier> identifier) const;
         std::vector<std::unique_ptr<ast::Expr>> parseArgumentList() const;
         std::unique_ptr<ast::ExprIdentifier> parseExprIdentifier() const;
         std::unique_ptr<ast::ExprNew> parseExprNew() const;
-        std::unique_ptr<ast::Index> parseIndex() const;
         std::unique_ptr<ast::ArrayInitialiser> parseArrayInitialiser() const;
         ast::ArrayInitialiserElement parseArrayInitialiserElement() const;
 

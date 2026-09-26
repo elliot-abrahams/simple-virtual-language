@@ -6,8 +6,9 @@
 #include <string>
 #include <variant>
 
-#include "SymbolTable.h"
+#include "semantic/SymbolTable.h"
 #include "LanguageTypes.h"
+#include "semantic/TypeRegistry.h"
 
 namespace compiler {
     struct Scope;
@@ -30,13 +31,13 @@ namespace ast {
 
     struct Stm : ASTNode {
         using ASTNode::ASTNode;
-        virtual ~Stm() = default;
+        ~Stm() override = default;
     };
 
     struct Expr : ASTNode {
-        mutable compiler::SemanticType resultingType;
+        mutable compiler::Type resultingType;
         using ASTNode::ASTNode;
-        virtual ~Expr() = default;
+        ~Expr() override = default;
     };
 
     struct ExprIntegerLiteral final : Expr {
@@ -64,9 +65,9 @@ namespace ast {
     };
 
     struct TypeInfo final : ASTNode {
-        compiler::SemanticType type;
+        compiler::Type type;
 
-        TypeInfo(const uint32_t line, const uint16_t column, const compiler::SemanticType type) :
+        TypeInfo(const uint32_t line, const uint16_t column, const compiler::Type type) :
             ASTNode(line, column), type(type) {}
     };
 
@@ -155,8 +156,8 @@ namespace ast {
             identifier(std::move(identifier)),
             arguments(std::move(arguments)) {}
 
-        std::vector<compiler::SemanticType> getArgumentTypes() const {
-            std::vector<compiler::SemanticType> types;
+        std::vector<compiler::Type> getArgumentTypes() const {
+            std::vector<compiler::Type> types;
             types.reserve(arguments.size());
 
             for (const auto& argument : this->arguments) {
@@ -180,19 +181,33 @@ namespace ast {
         expr(std::move(expr)) {}
     };
 
+    struct FieldAccess final : Expr {
+        const std::unique_ptr<Identifier> identifier;
+        const mutable compiler::FieldInfo* fieldInfo;
+
+        FieldAccess(const uint32_t line, const uint16_t column, std::unique_ptr<Identifier> identifier) :
+            Expr(line, column),
+            identifier(std::move(identifier)) {}
+    };
+
+    using PostfixOperator = std::variant<
+        std::unique_ptr<Index>,
+        std::unique_ptr<FieldAccess>
+    >;
+
     struct ExprPostfix final : Expr {
         const std::unique_ptr<Expr> expression;
-        const std::vector<std::unique_ptr<Index>> indices;
+        const std::vector<PostfixOperator> postfixOperators;
         const std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo;
 
         ExprPostfix(const uint32_t line,
                     const uint16_t column,
                     std::unique_ptr<Expr> expression,
-                    std::vector<std::unique_ptr<Index>>& indices,
+                    std::vector<PostfixOperator>& postfixOperator,
                     std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo) :
             Expr(line, column),
             expression(std::move(expression)),
-            indices(std::move(indices)),
+            postfixOperators(std::move(postfixOperator)),
             unaryOperatorInfo(std::move(unaryOperatorInfo)) {}
     };
 
@@ -335,10 +350,10 @@ namespace ast {
                     std::vector<std::unique_ptr<Stm>> statements,
                     compiler::Scope* scope) :
             Stm(line, column),
-            blockEndLine(blockEndLine),
-            blockEndColumn(blockEndColumn),
             statements(std::move(statements)),
-            scope(scope) {}
+            scope(scope),
+            blockEndLine(blockEndLine),
+            blockEndColumn(blockEndColumn) {}
     };
 
     struct Parameter final : ASTNode {
@@ -373,8 +388,8 @@ namespace ast {
             parameters(std::move(parameters)),
             body(std::move(block)) {}
 
-        std::vector<compiler::SemanticType> getParameterTypes() const {
-            std::vector<compiler::SemanticType> types;
+        std::vector<compiler::Type> getParameterTypes() const {
+            std::vector<compiler::Type> types;
             types.reserve(parameters.size());
 
             for (const auto& parameter : this->parameters) {

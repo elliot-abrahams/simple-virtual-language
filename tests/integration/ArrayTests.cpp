@@ -256,6 +256,27 @@ TEST(ARRAY, NEW_EXPESSION_WITH_INDEX) {
     );
 }
 
+TEST(ARRAY, ARRAY_LENGTH_1D) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            int[] arr = new int[3];
+            print(arr.length);
+        )",
+        "3"
+    );
+}
+
+TEST(ARRAY, ARRAY_LENGTH_2D) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            int[][] arr = new int[1][4];
+            print(arr.length);
+            print(arr[0].length);
+        )",
+        "14"
+    );
+}
+
 TEST(ARRAY, INVALID_NEGATIVE_ARRAY_SIZE) {
     ASSERT_THROWS_RUNTIME_ERROR(
         R"(

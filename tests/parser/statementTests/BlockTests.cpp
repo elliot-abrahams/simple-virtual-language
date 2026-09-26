@@ -31,7 +31,7 @@ TEST(STM_BLOCK, VAR_DECL) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatementsInBlock;
     expectedStatementsInBlock.push_back(
         std::make_unique<ExpectedVarDecl>(
-                std::make_unique<Type>(compiler::Type::INT, 0),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "x",
             nullptr
         )
@@ -60,7 +60,7 @@ TEST(STM_BLOCK, NESTED_VAR_DECL) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatementsInBlock2;
     expectedStatementsInBlock2.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             nullptr
         )

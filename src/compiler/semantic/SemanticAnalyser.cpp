@@ -3,10 +3,10 @@
 #include <iostream>
 #include <queue>
 
-#include "../include/Error.h"
+#include "../../include/Error.h"
 
-compiler::SemanticAnalyser::SemanticAnalyser(SymbolTable* symbolTable, const std::filesystem::path* path) :
-    symbolTable(symbolTable), path(path) {}
+compiler::SemanticAnalyser::SemanticAnalyser(SymbolTable* symbolTable, TypeRegistry* typeRegistry, const std::filesystem::path* path) :
+    symbolTable(symbolTable), typeRegistry(typeRegistry), path(path) {}
 
 void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
     Scope* globalScope = this->symbolTable->enterScope(ScopeKind::GLOBAL); // generate global scope
@@ -26,7 +26,7 @@ void compiler::SemanticAnalyser::processProgram(const ast::Program& program) {
         const auto semanticAnalysisResult = this->processFunctionBody(*functionDecl, functionDecl->functionSymbol);
 
         // check function body always reaches returnStm if return type is non-void
-        if (functionDecl->returnTypeInfo->type.type != Type::VOID_RETURN_TYPE &&
+        if (functionDecl->returnTypeInfo->type.typeId != VOID_TYPE_ID &&
             !semanticAnalysisResult.alwaysReturns
         ) {
             // get FunctionSymbol
@@ -205,9 +205,9 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
     }
 
     // check var access index depth is smaller than the variable's dimensions
-    const unsigned int indexDepth = this->resolveAccessArrayDepth(SemanticType{identifierSymbol->type, identifierSymbol->dimension}, assignment.indices);
+    const unsigned int indexDepth = this->resolveAccessArrayDepth(identifierSymbol->type, assignment.indices);
 
-    if (!canImplicitlyConvert(exprType, SemanticType{identifierSymbol->type, indexDepth})) {
+    if (!canImplicitlyConvert(exprType, Type{identifierSymbol->type.typeId, indexDepth})) {
         throw TypeError(
             *this->path,
             assignment.line,
@@ -215,7 +215,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
             "cannot assign " +
                 typeToString(exprType) +
                 "' to type '" +
-                typeToString(SemanticType{identifierSymbol->type, identifierSymbol->dimension}) +
+                typeToString(identifierSymbol->type) +
                 "'"
         );
     }
@@ -292,7 +292,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
     returnStm.functionSymbol = currentFunctionSymbol;
 
     if (returnStm.returnExpression == nullptr) {
-        if (currentFunctionSymbol->returnType.type != Type::VOID_RETURN_TYPE) {
+        if (currentFunctionSymbol->returnType.typeId != VOID_TYPE_ID) {
             // function has non-void return type and return has no expression
             throw SemanticError(
                 *this->path,
@@ -308,7 +308,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
 
         const auto exprType = this->checkExprType(scope, *returnStm.returnExpression).type;
 
-        if (currentFunctionSymbol->returnType.type == Type::VOID_RETURN_TYPE) { // function return type is void
+        if (currentFunctionSymbol->returnType.typeId == VOID_TYPE_ID) { // function return type is void
             if (returnStm.returnExpression != nullptr) { // return has an expression
                 throw SemanticError(
                     *this->path,
@@ -340,10 +340,10 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processExpressionStatement(Scope *scope, const ast::ExpressionStatement &expressionStm) {
     if (auto* functionCallExpr = dynamic_cast<const ast::FunctionCall*>(expressionStm.expression.get())) {
-        const auto exprResult = this->processFunctionCall(scope, *functionCallExpr);
+        const auto exprInfo = this->processFunctionCall(scope, *functionCallExpr);
 
         // ensure functionCallExpr has a return type of void
-        if (exprResult.type.type != Type::VOID_RETURN_TYPE) {
+        if (exprInfo.type.typeId != VOID_TYPE_ID) {
             throw SemanticError(
                 *this->path,
                 functionCallExpr->line,
@@ -377,7 +377,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processExpressionSt
 void compiler::SemanticAnalyser::processIndex(Scope* scope, const ast::Index& index) {
     const auto indexType = this->checkExprType(scope, *index.index).type;
 
-    if (indexType.type != Type::INT || indexType.isArray()) {
+    if (indexType.typeId != INT_TYPE_ID || indexType.isArray()) {
         throw TypeError(
             *this->path,
             index.index->line,
@@ -389,45 +389,45 @@ void compiler::SemanticAnalyser::processIndex(Scope* scope, const ast::Index& in
     }
 }
 
-unsigned int compiler::SemanticAnalyser::resolveAccessArrayDepth(const SemanticType& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const {
+unsigned int compiler::SemanticAnalyser::resolveAccessArrayDepth(const Type& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const {
     if (indices.size() > arrayType.dimension) {
         throw TypeError(
             *this->path,
             indices[indices.size() - arrayType.dimension - 1]->line,
             indices[indices.size() - arrayType.dimension - 1]->column,
             "cannot index a value of type '" +
-                typeToString(SemanticType{arrayType.type, 0}) +
+                typeToString(Type{arrayType.typeId, 0}) +
                 "'"
             );
     }
     return arrayType.dimension - indices.size();
 }
 
-compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
+compiler::ExpressionInfo compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
-        intLit->resultingType = SemanticType{Type::INT, 0};
-        return SemanticExprResult{
-            SemanticType{Type::INT, 0},
-            ExprCategory::VALUE
+        intLit->resultingType = Type{INT_TYPE_ID, 0};
+        return ExpressionInfo{
+            Type{INT_TYPE_ID, 0},
+            Assignability::NON_ASSIGNABLE
         };
     }
     if (auto* floatLit = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
-        floatLit->resultingType = SemanticType{Type::FLOAT, 0};
-        return SemanticExprResult{
-            SemanticType{Type::FLOAT, 0},
-            ExprCategory::VALUE
+        floatLit->resultingType = Type{FLOAT_TYPE_ID, 0};
+        return ExpressionInfo{
+            Type{FLOAT_TYPE_ID, 0},
+            Assignability::NON_ASSIGNABLE
         };
     }
     if (auto* boolLit = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
-        boolLit->resultingType = SemanticType{Type::BOOL, 0};
-        return SemanticExprResult{
-            SemanticType{Type::BOOL, 0},
-            ExprCategory::VALUE
+        boolLit->resultingType = Type{BOOL_TYPE_ID, 0};
+        return ExpressionInfo{
+            Type{BOOL_TYPE_ID, 0},
+            Assignability::NON_ASSIGNABLE
         };
     }
     if (auto* binaryOperator = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
-        const SemanticType leftType = this->checkExprType(scope, *binaryOperator->left).type;
-        const SemanticType rightType = this->checkExprType(scope, *binaryOperator->right).type;
+        const Type leftType = this->checkExprType(scope, *binaryOperator->left).type;
+        const Type rightType = this->checkExprType(scope, *binaryOperator->right).type;
 
         if (leftType.isArray() || rightType.isArray()) {
             this->throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
@@ -440,69 +440,85 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
             case BinaryOperator::DIVIDE:
             case BinaryOperator::MODULO: {
                 // ensure either operand is not bool
-                if (leftType.type == Type::BOOL || rightType.type == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                if (leftType.typeId == BOOL_TYPE_ID || rightType.typeId == BOOL_TYPE_ID) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
 
                 // result is float if either operand is a float or binary operator is divide
-                if ((leftType.type == Type::FLOAT || rightType.type == Type::FLOAT) ||
+                if ((leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) ||
                     binaryOperator->binaryOperatorInfo->binaryOperator == BinaryOperator::DIVIDE
                 ) {
-                    constexpr auto resultingType = SemanticType{Type::FLOAT, 0};
+                    auto resultingType = Type{FLOAT_TYPE_ID, 0};
                     binaryOperator->resultingType = resultingType;
-                    return SemanticExprResult{resultingType, ExprCategory::VALUE};
+                    return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
                 }
-                constexpr auto resultingType = SemanticType{Type::INT, 0};
+                const auto resultingType = Type{INT_TYPE_ID, 0};
                 binaryOperator->resultingType = resultingType;
-                return SemanticExprResult{resultingType, ExprCategory::VALUE};
+                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
             }
 
             case BinaryOperator::INTEGER_DIVIDE: {
                 // ensure either operand is not bool
-                if (leftType.type == Type::BOOL || rightType.type == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                constexpr auto resultingType = SemanticType{Type::INT, 0};
+                if (leftType.typeId == BOOL_TYPE_ID || rightType.typeId == BOOL_TYPE_ID) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                const auto resultingType = Type{INT_TYPE_ID, 0};
                 binaryOperator->resultingType = resultingType;
-                return SemanticExprResult{resultingType, ExprCategory::VALUE};
+                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
             }
 
             case BinaryOperator::LOGICAL_OR:
             case BinaryOperator::LOGICAL_AND: {
-                if (leftType.type != Type::BOOL || rightType.type != Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                constexpr auto resultingType = SemanticType{Type::BOOL, 0};
+                if (leftType.typeId != BOOL_TYPE_ID || rightType.typeId != BOOL_TYPE_ID) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                const auto resultingType = Type{BOOL_TYPE_ID, 0};
                 binaryOperator->resultingType = resultingType;
-                return SemanticExprResult{resultingType, ExprCategory::VALUE};
+                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
             }
 
             case BinaryOperator::LESS_THAN:
             case BinaryOperator::LESS_THAN_OR_EQUAL:
             case BinaryOperator::GREATER_THAN:
             case BinaryOperator::GREATER_THAN_OR_EQUAL: {
-                if (leftType.type == Type::BOOL || rightType.type == Type::BOOL) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                constexpr auto resultingType = SemanticType{Type::BOOL, 0};
+                if (leftType.typeId == BOOL_TYPE_ID || rightType.typeId == BOOL_TYPE_ID) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+                const auto resultingType = Type{BOOL_TYPE_ID, 0};
                 binaryOperator->resultingType = resultingType;
-                return SemanticExprResult{resultingType, ExprCategory::VALUE};
+                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
             }
 
             default:
                 // EQUAL_EQUAL / NOT_EQUAL
 
                 // if either left or right type is bool and the other operand is not bool
-                if ((leftType.type == Type::BOOL || rightType.type == Type::BOOL) &&
-                    leftType.type != rightType.type
+                if ((leftType.typeId == BOOL_TYPE_ID || rightType.typeId == BOOL_TYPE_ID) &&
+                    leftType.typeId != rightType.typeId
                 ) {
                     throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
                 }
-                constexpr auto resultingType = SemanticType{Type::BOOL, 0};
+                const auto resultingType = Type{BOOL_TYPE_ID, 0};
                 binaryOperator->resultingType = resultingType;
-                return SemanticExprResult{resultingType, ExprCategory::VALUE};
+                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
         }
     }
     if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
         const auto exprTypeResult = this->checkExprType(scope, *unaryOperator->expr);
 
+        // if operator is increment or decrement and expression is not assignable
+        if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ||
+            unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT
+        ) {
+            if (exprTypeResult.assignability != Assignability::ASSIGNABLE) {
+                throw SemanticError(
+                    *this->path,
+                    unaryOperator->unaryOperatorInfo->line,
+                    unaryOperator->unaryOperatorInfo->column,
+                    "cannot apply operator '" +
+                        unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) +
+                        "' to a non-assignable expression"
+                );
+            }
+        }
+
         // if operator is logical not and (type is not bool or type is an array)
         // OR
         // if operator is not logical not and (types is not numeric)
         if ((unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT &&
-                        (exprTypeResult.type.type != Type::BOOL || exprTypeResult.type.isArray())) ||
+                        (exprTypeResult.type.typeId != BOOL_TYPE_ID || exprTypeResult.type.isArray())) ||
              (unaryOperator->unaryOperatorInfo->unaryOperator != UnaryOperator::LOGICAL_NOT && !exprTypeResult.type.isNumeric())
         ) {
             throw TypeError(
@@ -516,100 +532,103 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
                     "'"
             );
         }
-
-        // if operator is increment or decrement and expression is not assignable
-        if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ||
-            unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT
-        ) {
-            if (exprTypeResult.category != ExprCategory::ASSIGNABLE) {
-                throw TypeError(
-                    *this->path,
-                    unaryOperator->unaryOperatorInfo->line,
-                    unaryOperator->unaryOperatorInfo->column,
-                    "cannot apply operator '" +
-                        unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) +
-                        "' to a non-assignable expression"
-                );
-            }
-        }
-
         unaryOperator->resultingType = exprTypeResult.type;
         return exprTypeResult;
     }
 
     if (auto* exprPostfix = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
-        auto exprTypeResult = this->checkExprType(scope, *exprPostfix->expression);
+        auto exprTypeInfo = this->checkExprType(scope, *exprPostfix->expression);
 
-        if (exprPostfix->indices.size() > 0) {
+        if (!exprPostfix->postfixOperators.empty()) {
+            for (const auto& postfixOperator : exprPostfix->postfixOperators) {
+                if (std::holds_alternative<std::unique_ptr<ast::Index>>(postfixOperator)) {
 
-            if (!exprTypeResult.type.isArray()) {
-                throw TypeError(
-                    *this->path,
-                    exprPostfix->line,
-                    exprPostfix->column,
-                    "cannot index a value of type '" +
-                        typeToString(exprTypeResult.type) +
-                        "'"
-                );
-            }
+                    // ensure expr is an array
+                    if (!exprTypeInfo.type.isArray()) {
+                        throw TypeError(
+                            *this->path,
+                            exprPostfix->line,
+                            exprPostfix->column,
+                            "cannot index a value of type '" +
+                                typeToString(exprTypeInfo.type) +
+                                "'"
+                        );
+                    }
 
-            if (exprPostfix->indices.size() > exprTypeResult.type.dimension) {
-                exprTypeResult.type.dimension = 0; // for error message
-                throw TypeError(
-                    *this->path,
-                    exprPostfix->line,
-                    exprPostfix->column,
-                    "cannot index a value of type '" +
-                        typeToString(exprTypeResult.type) +
-                        "'"
-                );
-            }
+                    // process index
+                    this->processIndex(scope, *std::get<std::unique_ptr<ast::Index>>(postfixOperator));
 
-            exprTypeResult.type.dimension -= exprPostfix->indices.size();
+                    // decrement resulting dimension
+                    exprTypeInfo.type.dimension--;
+                    exprTypeInfo.assignability = Assignability::ASSIGNABLE;
 
-            // process indices
-            for (const auto& index : exprPostfix->indices) {
-                this->processIndex(scope, *index);
+                } else {
+
+                    auto fieldAccess = std::get<std::unique_ptr<ast::FieldAccess>>(postfixOperator).get();
+
+                    // get field info
+                    auto fieldInfo = this->typeRegistry->getFieldInfo(exprTypeInfo.type, fieldAccess->identifier->name);
+
+                    if (!fieldInfo.has_value()) {
+                        throw SemanticError(
+                            *this->path,
+                            fieldAccess->line,
+                            fieldAccess->column,
+                            "type '" +
+                                typeToString(exprTypeInfo.type) +
+                                "' has no field '" +
+                                fieldAccess->identifier->name +
+                                "'"
+                        );
+                    }
+                    exprTypeInfo.type = fieldInfo.value()->type;
+                    exprTypeInfo.assignability = fieldInfo.value()->assignability;
+                    fieldAccess->fieldInfo = fieldInfo.value();
+                }
             }
         }
+
         if (exprPostfix->unaryOperatorInfo != nullptr) {
-            // throw error if
-            // expr type is not numeric
-            // OR
-            // expression is not assignable
-
-            if (exprTypeResult.category != ExprCategory::ASSIGNABLE || !exprTypeResult.type.isNumeric()) {
-                std::string errorMessage = "cannot apply operator '" +
+            // throw error if expr is not assignable
+            if (exprTypeInfo.assignability != Assignability::ASSIGNABLE) {
+                throw SemanticError(
+                    *this->path,
+                    exprPostfix->line,
+                    exprPostfix->column,
+                    "cannot apply operator '" +
                         unaryOperatorToString(exprPostfix->unaryOperatorInfo->unaryOperator) +
-                        "' ";
+                        "' to a non-assignable expression"
+                );
+            }
 
-                errorMessage += exprTypeResult.category != ExprCategory::ASSIGNABLE ||
-                                exprTypeResult.type.isArray()
-                    ? "to a non-assignable expression"
-                    : "to type '" + typeToString(exprPostfix->expression->resultingType) + "'";
-
+            // throw error if expr type is not numeric
+            if (!exprTypeInfo.type.isNumeric()) {
                 throw TypeError(
                     *this->path,
                     exprPostfix->line,
                     exprPostfix->column,
-                    errorMessage
+                    "cannot apply operator '" +
+                        unaryOperatorToString(exprPostfix->unaryOperatorInfo->unaryOperator) +
+                            "' to type '" +
+                            typeToString(exprPostfix->expression->resultingType) +
+                            "'"
                 );
             }
         }
 
-        exprPostfix->resultingType = exprTypeResult.type;
+        exprPostfix->resultingType = exprTypeInfo.type;
 
         // postfix is only assignable if expression is assignable
         // AND
         // does not have a ++ or -- operator
         // AND
         // resulting expression is not an array
-        return SemanticExprResult{
-            exprTypeResult.type,
-            exprTypeResult.category == ExprCategory::ASSIGNABLE &&
+        return ExpressionInfo{
+            exprTypeInfo.type,
+            exprTypeInfo.assignability == Assignability::ASSIGNABLE &&
                 exprPostfix->unaryOperatorInfo == nullptr &&
-                !exprTypeResult.type.isArray()
-            ? ExprCategory::ASSIGNABLE : ExprCategory::VALUE
+                !exprTypeInfo.type.isArray()
+            ? Assignability::ASSIGNABLE : Assignability::NON_ASSIGNABLE
         };
     }
 
@@ -628,11 +647,10 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         }
 
         // get return type of identifier
-
-        const auto resultingType = SemanticType{symbol->type, symbol->dimension};
+        const auto resultingType = symbol->type;
 
         expr.resultingType = resultingType;
-        return SemanticExprResult{resultingType, ExprCategory::ASSIGNABLE};
+        return ExpressionInfo{resultingType, Assignability::ASSIGNABLE};
     }
 
     if (auto* newExpression = dynamic_cast<const ast::ExprNew*>(&expr)) {
@@ -691,7 +709,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
                         }
                         // check expr is valid for array type
                         const auto expr = &std::get<std::unique_ptr<ast::Expr>>(element);
-                        if (!canImplicitlyConvert(this->checkExprType(scope, *expr->get()).type, SemanticType{newExpression->typeInfo->type.type, 0})) {
+                        if (!canImplicitlyConvert(this->checkExprType(scope, *expr->get()).type, Type{newExpression->typeInfo->type.typeId, 0})) {
                             newExpression->typeInfo->type.dimension = 0; // for error message
                             throw TypeError(
                                 *this->path,
@@ -711,7 +729,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
 
         const auto resultingType = newExpression->typeInfo->type;
         newExpression->resultingType = resultingType;
-        return SemanticExprResult{resultingType, ExprCategory::VALUE};
+        return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
     }
 
     if (auto* castExpression = dynamic_cast<const ast::ExprCast*>(&expr)) {
@@ -726,8 +744,8 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
         // if expr's type is a bool
         if (castExpression->typeInfo->type.isArray() ||
             exprTypeResult.type.isArray() ||
-            exprTypeResult.type.type == Type::BOOL ||
-            castExpression->typeInfo->type.type == Type::BOOL
+            exprTypeResult.type.typeId == BOOL_TYPE_ID ||
+            castExpression->typeInfo->type.typeId == BOOL_TYPE_ID
         ) {
             throw TypeError(
                 *this->path,
@@ -743,7 +761,7 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
 
         const auto resultingType = castExpression->typeInfo->type;
         castExpression->resultingType = resultingType;
-        return SemanticExprResult{resultingType, ExprCategory::VALUE};
+        return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
     }
 
     if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
@@ -752,9 +770,9 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::checkExprType(Scope* sc
     }
 }
 
-compiler::SemanticExprResult compiler::SemanticAnalyser::processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall) {
+compiler::ExpressionInfo compiler::SemanticAnalyser::processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall) {
     // process function call's arguments
-    std::vector<SemanticType> argumentTypes;
+    std::vector<Type> argumentTypes;
     for (const auto& argument : functionCall.arguments) {
         argumentTypes.push_back(this->checkExprType(scope, *argument).type);
     }
@@ -778,13 +796,13 @@ compiler::SemanticExprResult compiler::SemanticAnalyser::processFunctionCall(Sco
 
     functionCall.resultingType = functionSymbol->returnType;
 
-    return SemanticExprResult{
+    return ExpressionInfo{
         functionSymbol->returnType,
-        functionSymbol->returnType.isArray() ? ExprCategory::ASSIGNABLE : ExprCategory::VALUE
+        functionSymbol->returnType.isArray() ? Assignability::ASSIGNABLE : Assignability::NON_ASSIGNABLE
     };
 }
 
-compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::vector<FunctionSymbol> *functionSymbols, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const {
+compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::vector<FunctionSymbol> *functionSymbols, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const {
     FunctionSymbol* functionSymbol = nullptr;
 
     if (functionSymbols != nullptr) {
@@ -801,7 +819,7 @@ compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::v
             bool isSignatureIdentical = true;;
             // loop through each parameter
             for (size_t i = 0; i < symbol.parameterTypes.size(); i++) {
-                if (symbol.parameterTypes[i].type == argumentTypes[i].type &&
+                if (symbol.parameterTypes[i].typeId == argumentTypes[i].typeId &&
                     symbol.parameterTypes[i].dimension == argumentTypes[i].dimension
                 ) {
                     continue;
@@ -844,18 +862,18 @@ compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::v
     return functionSymbol;
 }
 
-bool compiler::SemanticAnalyser::canImplicitlyConvert(const SemanticType& from, const SemanticType& to) {
-    if (from.type == to.type && from.dimension == to.dimension) return true; // types are identical
+bool compiler::SemanticAnalyser::canImplicitlyConvert(const Type& from, const Type& to) {
+    if (from.typeId == to.typeId && from.dimension == to.dimension) return true; // types are identical
     if (from.dimension != 0 || to.dimension != 0) return false; // return false as array types cannot be implicity converted
 
-    switch (from.type) {
-        case Type::INT:
-            return to.type == Type::FLOAT;
+    switch (from.typeId) {
+        case INT_TYPE_ID:
+            return to.typeId == FLOAT_TYPE_ID;
 
-        case Type::FLOAT:
+        case FLOAT_TYPE_ID:
             return false;
 
-        case Type::BOOL:
+        case BOOL_TYPE_ID:
             return false;
 
         default:
@@ -878,13 +896,13 @@ compiler::Symbol* compiler::SemanticAnalyser::checkSymbolIsDefined(Scope* scope,
     return symbol.value();
 }
 
-std::string compiler::SemanticAnalyser::typeToString(const SemanticType& type) {
+std::string compiler::SemanticAnalyser::typeToString(const Type& type) {
     std::string result;
-    switch (type.type) {
-        case Type::VOID_RETURN_TYPE: result += "void"; break;
-        case Type::INT: result += "int"; break;
-        case Type::FLOAT: result += "float"; break;
-        case Type::BOOL: result += "bool"; break;
+    switch (type.typeId) {
+        case VOID_TYPE_ID: result += "void"; break;
+        case INT_TYPE_ID: result += "int"; break;
+        case FLOAT_TYPE_ID: result += "float"; break;
+        case BOOL_TYPE_ID: result += "bool"; break;
     }
     for (int i = 0; i < type.dimension; i++) {
         result += "[]";
@@ -924,7 +942,7 @@ std::string compiler::SemanticAnalyser::unaryOperatorToString(const UnaryOperato
     }
 }
 
-void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const SemanticType& leftType, const SemanticType& rightType) const {
+void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType) const {
     throw TypeError(
         *this->path,
         binaryOperator.line,
@@ -948,9 +966,9 @@ void compiler::SemanticAnalyser::throwInvalidExpressionTypeAsStatement(const ast
     );
 }
 
-void compiler::SemanticAnalyser::checkConditionType(const SemanticType& conditionType, const size_t line, const size_t column) const {
+void compiler::SemanticAnalyser::checkConditionType(const Type& conditionType, const size_t line, const size_t column) const {
     if (conditionType.isArray() ||
-        conditionType.type != Type::BOOL
+        conditionType.typeId != BOOL_TYPE_ID
     ) {
         throw TypeError(
             *this->path,
@@ -963,7 +981,7 @@ void compiler::SemanticAnalyser::checkConditionType(const SemanticType& conditio
     }
 }
 
-std::string compiler::SemanticAnalyser::functionSignatureToString(const std::string& functionIdentifier, const std::vector<SemanticType>& parameterTypes) {
+std::string compiler::SemanticAnalyser::functionSignatureToString(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes) {
     std::string result = functionIdentifier + "(";
 
     if (parameterTypes.size() > 0) {

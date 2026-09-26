@@ -68,6 +68,7 @@ SV provides the following delimiters:
 |---------|-----------|
 | `SEMI`  | `;`       |
 | `COMMA` | `,`       |
+| `DOT`   | `.`       |
 | `LBR`   | `(`       |
 | `RBR`   | `)`       |
 | `LCBR`  | `{`       |

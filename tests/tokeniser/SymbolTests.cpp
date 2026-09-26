@@ -11,6 +11,10 @@ TEST(SYMBOL, COMMA) {
     ASSERT_TOKEN_EQ(",", TokenKind::COMMA, ",");
 }
 
+TEST(SYMBOL, DOT) {
+    ASSERT_TOKEN_EQ(".", TokenKind::DOT, ".");
+}
+
 TEST(SYMBOL, LBR) {
     ASSERT_TOKEN_EQ("(", TokenKind::LBR, "(");
 }

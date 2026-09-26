@@ -16,6 +16,8 @@ namespace compiler {
         static std::vector<std::string> compile(const std::string& sourceCode, const std::filesystem::path& path);
         static void compile(const std::filesystem::path& path);
         static std::unique_ptr<ast::Program> testParsing(const std::string& sourceCode);
+
+        static void registerBuiltinTypes(TypeRegistry* typeRegistry);
     };
 }
 

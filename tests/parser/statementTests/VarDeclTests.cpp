@@ -11,7 +11,7 @@ TEST(STM_VAR_DECL, INT_NOT_INITIALISED) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             nullptr
         )
@@ -29,7 +29,7 @@ TEST(STM_VAR_DECL, INT_ARRAY_NOT_INITIALISED) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 1),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
             "x",
             nullptr
         )
@@ -47,7 +47,7 @@ TEST(STM_VAR_DECL, INT_MULTIDIMENSIONAL_ARRAY_NOT_INITIALISED) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 2),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 2),
             "x",
             nullptr
         )
@@ -65,7 +65,7 @@ TEST(STM_VAR_DECL, FLOAT_NOT_INITIALISED) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::FLOAT, 0),
+            std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 0),
             "x",
             nullptr
         )
@@ -83,7 +83,7 @@ TEST(STM_VAR_DECL, FLOAT_ARRAY_NOT_INITIALISED) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::FLOAT, 1),
+            std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 1),
             "x",
             nullptr
         )
@@ -101,7 +101,7 @@ TEST(STM_VAR_DECL, BOOL_NOT_INITIALISED) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::BOOL, 0),
+            std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
             "x",
             nullptr
         )
@@ -119,7 +119,7 @@ TEST(STM_VAR_DECL, BOOL_ARRAY_NOT_INITIALISED) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::BOOL, 1),
+            std::make_unique<Type>(compiler::BOOL_TYPE_ID, 1),
             "x",
             nullptr
         )
@@ -137,7 +137,7 @@ TEST(STM_VAR_DECL, INT_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedIntegerLiteral>(5)
         )
@@ -155,7 +155,7 @@ TEST(STM_VAR_DECL, INT_FLOAT_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedFloatLiteral>(5.5f)
         )
@@ -173,7 +173,7 @@ TEST(STM_VAR_DECL, FLOAT_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::FLOAT, 0),
+            std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 0),
             "f",
             std::make_unique<ExpectedFloatLiteral>(5.5f)
         )
@@ -191,7 +191,7 @@ TEST(STM_VAR_DECL, BOOL_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::BOOL, 0),
+            std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
             "b",
             std::make_unique<ExpectedBoolLiteral>(
                 true
@@ -212,7 +212,7 @@ TEST(STM_VAR_DECL, INT_IDENTIFIER_EXPR) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("x")
@@ -232,7 +232,7 @@ TEST(STM_VAR_DECL, INT_UNARY_EXPR) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
             std::make_unique<ExpectedUnaryExpr>(
                 compiler::UnaryOperator::MINUS,
@@ -256,7 +256,7 @@ TEST(STM_VAR_DECL, INT_BINARY_EXPR) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
             std::make_unique<ExpectedBinaryExpr>(
                 compiler::BinaryOperator::PLUS,
@@ -283,7 +283,7 @@ TEST(STM_VAR_DECL, INT_FUNCTION_CALL_EXPR) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
             std::make_unique<ExpectedFunctionCallExpr>(
                 "foo",
@@ -305,7 +305,7 @@ TEST(STM_VAR_DECL, INT_PAREN_INT_LIT) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
             std::make_unique<ExpectedIntegerLiteral>(
                 5

@@ -4,7 +4,7 @@
 
 #include "Assembly.h"
 #include "../AST.h"
-#include "../SymbolTable.h"
+#include "../semantic/SymbolTable.h"
 
 
 namespace compiler {
@@ -29,7 +29,7 @@ namespace compiler {
         void compileFunctionDeclaration(const MethodDefType methodType, const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefualtReturn, const uint32_t line, const uint16_t column, const uint32_t functionBodyEndLine, const uint16_t functionBodyEndColumn);
         void compilePendingScopeFunctions();
 
-        void compileArrayIndex(Scope* scope, const ast::Index& index, SemanticType& typeAtDepth);
+        void compileArrayIndex(Scope* scope, const ast::Index& index, Type& typeAtDepth);
 
         void compileStm(Scope* scope, const ast::Stm& stm);
         void compileBlock(const ast::Block& block);
@@ -50,8 +50,8 @@ namespace compiler {
         void compileCastExpr(Scope* scope, const ast::ExprCast& castExpr);
         void compileNewExpr(Scope* scope, const ast::ExprNew& newExpr);
 
-        void compileArrayAlloc(Scope* scope, const ast::ExprNew& newExpr, unsigned int depth, SemanticType& typeAtDepth);
-        void compileArrayInitialiser(Scope* scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const SemanticType& typeOfDeepestElement);
+        void compileArrayAlloc(Scope* scope, const ast::ExprNew& newExpr, unsigned int depth, Type& typeAtDepth);
+        void compileArrayInitialiser(Scope* scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const Type& typeOfDeepestElement);
 
         void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
         void compileExprIdentifier(Scope* scope, const ast::ExprIdentifier& exprIdentifier, const ExprResult exprResult);
@@ -60,21 +60,19 @@ namespace compiler {
         void compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);
         void compileExprBoolLiteral(const ast::ExprBoolLiteral& boolLiteral);
 
-        void compileTypeConversionIfRequired(const Type currentType, const Type newType, const SourceLocation& sourceLocation);
+        void compileTypeConversionIfRequired(const Type& currentType, const Type& newType, const SourceLocation& sourceLocation);
         void compileTypeConversionIfRequired(const AssemblyType currentType, const AssemblyType newType, const SourceLocation& sourceLocation);
 
         void compileBuiltinFunctions();
         void compileGlobalVariables();
-
-        static std::string typeToString(const Type& type);
 
         std::string generateLabel(const std::string& label);
         static std::string generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber);
 
         void emit(const AssemblyItem& assemblyItem);
 
-        static AssemblyType toAssemblyType(const SemanticType& type);
-        Number getNumber(const SemanticType& type, const uint64_t value);
+        static AssemblyType toAssemblyType(const Type& type);
+        Number getNumber(const Type& type, const uint64_t value);
 
         std::vector<AssemblyItem> assembly;
         SymbolTable* symbolTable;

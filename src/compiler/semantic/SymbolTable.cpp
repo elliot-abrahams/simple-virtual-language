@@ -3,7 +3,7 @@
 #include <functional>
 #include <stdexcept>
 
-#include "../include/Error.h"
+#include "../../include/Error.h"
 
 compiler::SymbolTable::SymbolTable() {}
 
@@ -15,7 +15,7 @@ bool compiler::Symbol::isArgument() const {
     return this->localSlot > 0;
 }
 
-compiler::FunctionSymbol* compiler::SymbolTable::declareFunction(const std::string& functionIdentifier, const std::string& functionLabel, const SemanticType& returnType, const std::vector<SemanticType>& parameterTypes) {
+compiler::FunctionSymbol* compiler::SymbolTable::declareFunction(const std::string& functionIdentifier, const std::string& functionLabel, const Type& returnType, const std::vector<Type>& parameterTypes) {
     FunctionSymbol* functionSymbol = nullptr;
     if (this->functions.find(functionIdentifier) == this->functions.end()) {
         // function with the same identifier has not been initialised
@@ -34,7 +34,7 @@ compiler::FunctionSymbol* compiler::SymbolTable::declareFunction(const std::stri
         int identicalTypeCount = 0;
 
         for (int parameterIndex = 0; parameterIndex < parameterTypes.size(); parameterIndex++) {
-            if (parameterTypes.at(parameterIndex).type == function.parameterTypes.at(parameterIndex).type &&
+            if (parameterTypes.at(parameterIndex).typeId == function.parameterTypes.at(parameterIndex).typeId &&
                 parameterTypes.at(parameterIndex).dimension == function.parameterTypes.at(parameterIndex).dimension
             ) {
                 identicalTypeCount++;
@@ -54,7 +54,7 @@ compiler::FunctionSymbol* compiler::SymbolTable::declareFunction(const std::stri
     return functionSymbol;
 }
 
-void compiler::SymbolTable::declareBuiltinFunction(const BuiltinFunctionId builtinId, const std::string &functionIdentifier, const SemanticType &returnType, const std::vector<SemanticType> &parameterTypes) {
+void compiler::SymbolTable::declareBuiltinFunction(const BuiltinFunctionId builtinId, const std::string &functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes) {
     const auto newFunctionSymbol = FunctionSymbol{"", returnType, parameterTypes, builtinId};
     if (this->functions.find(functionIdentifier) == this->functions.end()) {
         // function with the same identifier has not been initialised

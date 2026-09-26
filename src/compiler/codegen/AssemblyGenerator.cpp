@@ -39,7 +39,7 @@ void compiler::AssemblyGenerator::compileUserDefinedFunction(const ast::Function
         *functionDecl.body,
         functionDecl.parameters.size(),
         functionDecl.body->scope->calculateNumberOfLocalSlots(),
-        functionDecl.returnTypeInfo->type.type == Type::VOID_RETURN_TYPE,
+        functionDecl.returnTypeInfo->type.typeId == VOID_TYPE_ID,
         functionDecl.line,
         functionDecl.column,
         functionDecl.body->blockEndLine,
@@ -95,7 +95,7 @@ void compiler::AssemblyGenerator::compilePendingScopeFunctions() {
     }
 }
 
-void compiler::AssemblyGenerator::compileArrayIndex(Scope *scope, const ast::Index &index, SemanticType& typeAtDepth) {
+void compiler::AssemblyGenerator::compileArrayIndex(Scope *scope, const ast::Index &index, Type& typeAtDepth) {
     const auto arrayIndexOutOfRangeRangeLabel = this->generateLabel("array_index_out_of_range");
     const auto arrayIndexInRangeRangeLabel = this->generateLabel("array_index_in_range");
 
@@ -303,7 +303,7 @@ void compiler::AssemblyGenerator::compileStmVarDecl(Scope* scope, const ast::Stm
         const auto symbol = scope->lookup(varDecl.identifier->name).value();
 
         // convert expr to variable type
-        this->compileTypeConversionIfRequired(varDecl.optionalInitialiser->resultingType.type, symbol->type, SourceLocation{0, varDecl.optionalInitialiser->line, varDecl.optionalInitialiser->column});
+        this->compileTypeConversionIfRequired(varDecl.optionalInitialiser->resultingType, symbol->type, SourceLocation{0, varDecl.optionalInitialiser->line, varDecl.optionalInitialiser->column});
 
         if (symbol->isGlobal()) {
             // store optional initialiser in global variable
@@ -329,7 +329,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
     if (assignment.indices.size() == 0) {
         this->compileExpr(scope, *assignment.expression, ExprResult::VALUE);
         // convert expr to variable type
-        this->compileTypeConversionIfRequired(assignment.expression->resultingType.type, symbol->type, SourceLocation{0, assignment.expression->line, assignment.expression->column});
+        this->compileTypeConversionIfRequired(assignment.expression->resultingType, symbol->type, SourceLocation{0, assignment.expression->line, assignment.expression->column});
 
         if (symbol->isGlobal()) {
             // store result of expression in global variable
@@ -363,7 +363,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
             });
         }
 
-        SemanticType typeAtDepth = SemanticType{symbol->type, symbol->dimension};
+        Type typeAtDepth = symbol->type;
 
         for (int index = 0; index < assignment.indices.size(); ++index) {
 
@@ -390,7 +390,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
 
         this->compileExpr(scope, *assignment.expression, ExprResult::VALUE);
         // convert expr to variable type
-        this->compileTypeConversionIfRequired(assignment.expression->resultingType.type, symbol->type, SourceLocation{0, assignment.expression->line, assignment.expression->column});
+        this->compileTypeConversionIfRequired(assignment.expression->resultingType, symbol->type, SourceLocation{0, assignment.expression->line, assignment.expression->column});
 
 
         this->emit(Instruction{Opcode::STORE,
@@ -490,7 +490,7 @@ void compiler::AssemblyGenerator::compileBreakStatement(Scope* scope, const ast:
 void compiler::AssemblyGenerator::compileReturnStatement(Scope* scope, const ast::ReturnStm &returnStm) {
     if (returnStm.returnExpression != nullptr) {
         this->compileExpr(scope, *returnStm.returnExpression, ExprResult::VALUE);
-        this->compileTypeConversionIfRequired(returnStm.returnExpression->resultingType.type, returnStm.functionSymbol->returnType.type, SourceLocation{0, returnStm.returnExpression->line, returnStm.returnExpression->column});
+        this->compileTypeConversionIfRequired(returnStm.returnExpression->resultingType, returnStm.functionSymbol->returnType, SourceLocation{0, returnStm.returnExpression->line, returnStm.returnExpression->column});
     }
     // return execution to caller
     this->emit(Instruction{Opcode::RET,
@@ -555,11 +555,11 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
         case BinaryOperator::DIVIDE:
         case BinaryOperator::MODULO: {
             // convert left expr to expr resulting type
-            this->compileTypeConversionIfRequired(expr.left->resultingType.type, expr.resultingType.type, SourceLocation{0, expr.left->line, expr.left->column});
+            this->compileTypeConversionIfRequired(expr.left->resultingType, expr.resultingType, SourceLocation{0, expr.left->line, expr.left->column});
             // compile right expr
             this->compileExpr(scope, *expr.right, ExprResult::VALUE);
             // convert right expr to expr resulting type
-            this->compileTypeConversionIfRequired(expr.right->resultingType.type, expr.resultingType.type, SourceLocation{0, expr.right->line, expr.right->column});
+            this->compileTypeConversionIfRequired(expr.right->resultingType, expr.resultingType, SourceLocation{0, expr.right->line, expr.right->column});
             // compile binary operator
             this->compileBinaryOperator(*expr.binaryOperatorInfo);
             return;
@@ -670,21 +670,21 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
         case BinaryOperator::GREATER_THAN:
         case BinaryOperator::GREATER_THAN_OR_EQUAL: {
 
-            if (expr.left->resultingType.type == Type::FLOAT ||
-                expr.right->resultingType.type == Type::FLOAT
+            if (expr.left->resultingType.typeId == FLOAT_TYPE_ID ||
+                expr.right->resultingType.typeId == FLOAT_TYPE_ID
             ) {
                 // if either operand is float -> convert left expr to float
-                this->compileTypeConversionIfRequired(expr.left->resultingType.type, Type::FLOAT, SourceLocation{0, expr.left->line, expr.left->column});
+                this->compileTypeConversionIfRequired(expr.left->resultingType, Type{FLOAT_TYPE_ID, 0}, SourceLocation{0, expr.left->line, expr.left->column});
             }
 
             // compile right expression
             this->compileExpr(scope, *expr.right, ExprResult::VALUE);
 
-            if (expr.left->resultingType.type == Type::FLOAT ||
-                expr.right->resultingType.type == Type::FLOAT
+            if (expr.left->resultingType.typeId == FLOAT_TYPE_ID ||
+                expr.right->resultingType.typeId == FLOAT_TYPE_ID
             ) {
                 // if either operand is float -> convert right expr to float
-                this->compileTypeConversionIfRequired(expr.right->resultingType.type, Type::FLOAT, SourceLocation{0, expr.right->line, expr.right->column});
+                this->compileTypeConversionIfRequired(expr.right->resultingType, Type{FLOAT_TYPE_ID, 0}, SourceLocation{0, expr.right->line, expr.right->column});
             }
 
             this->compileBinaryOperator(*expr.binaryOperatorInfo);
@@ -696,8 +696,8 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
 
     if (expr.binaryOperatorInfo->binaryOperator == BinaryOperator::INTEGER_DIVIDE) {
         // if either operand is float -> convert result to int
-        if (expr.left->resultingType.type == Type::FLOAT ||
-            expr.right->resultingType.type == Type::FLOAT
+        if (expr.left->resultingType.typeId == FLOAT_TYPE_ID ||
+            expr.right->resultingType.typeId == FLOAT_TYPE_ID
         ) {
             // convert result to integer
             this->emit(Instruction{Opcode::CONV,
@@ -864,16 +864,37 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
 void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr, const ExprResult exprResult) {
     this->compileExpr(scope, *expr.expression, expr.unaryOperatorInfo != nullptr ? ExprResult::PTR : exprResult);
 
-    if (!expr.indices.empty()) {
-        for (size_t i = 0; i < expr.indices.size(); ++i) {
-            this->compileArrayIndex(scope, *expr.indices[i], expr.resultingType);
+    for (int idx = 0; idx < expr.postfixOperators.size(); idx++) {
 
-            if (i < expr.indices.size() - 1) {
+        if (std::holds_alternative<std::unique_ptr<ast::Index>>(expr.postfixOperators[idx])) {
+
+            auto& index = std::get<std::unique_ptr<ast::Index>>(expr.postfixOperators[idx]);
+
+            this->compileArrayIndex(scope, *index, expr.resultingType);
+
+            // load ptr if not last postfix operator
+            if (idx < expr.postfixOperators.size() - 1) {
                 this->emit(Instruction{Opcode::LOAD,
                     {AssemblyType::PTR},
                     SourceLocation{0, expr.expression->line, expr.expression->column}
                 });
             }
+        } else {
+            // compile field access
+            auto& fieldAccess = std::get<std::unique_ptr<ast::FieldAccess>>(expr.postfixOperators[idx]);
+
+            this->emit(Instruction{Opcode::PUSH,
+                {
+                    AssemblyType::UI32,
+                    Immediate{Number{fieldAccess->fieldInfo->addressOffset}}
+                },
+                SourceLocation{0, fieldAccess->line, fieldAccess->column}
+            });
+
+            this->emit(Instruction{Opcode::ADD,
+                {},
+                SourceLocation{0, fieldAccess->line, fieldAccess->column}
+            });
         }
     }
 
@@ -945,7 +966,7 @@ void compiler::AssemblyGenerator::compileCastExpr(Scope* scope, const ast::ExprC
     this->compileExpr(scope, *castExpr.expr, ExprResult::VALUE);
 
     // convert to result of expression to the cast type
-    this->compileTypeConversionIfRequired(castExpr.expr->resultingType.type, castExpr.resultingType.type, SourceLocation{0, castExpr.line, castExpr.column});
+    this->compileTypeConversionIfRequired(castExpr.expr->resultingType, castExpr.resultingType, SourceLocation{0, castExpr.line, castExpr.column});
 }
 
 void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNew& newExpr) {
@@ -1003,7 +1024,9 @@ void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNe
         );
     }
 
-    this->compileArrayAlloc(scope, newExpr, 0, *(new SemanticType{newExpr.typeInfo->type.type, dimension}));
+    auto* nestedType = new Type{newExpr.typeInfo->type.typeId, dimension};
+    this->compileArrayAlloc(scope, newExpr, 0, *nestedType);
+    delete nestedType;
 
     // =======================================================
     // pop remaining index expressions
@@ -1045,12 +1068,12 @@ void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNe
         });
         // [root_array_ptr, root_array_ptr]
 
-        this->compileArrayInitialiser(scope, *newExpr.optionalInitialiser, SourceLocation{0, newExpr.optionalInitialiser->line, newExpr.optionalInitialiser->column}, newExpr.typeInfo->type);
+        this->compileArrayInitialiser(scope, *newExpr.optionalInitialiser, SourceLocation{0, newExpr.optionalInitialiser->line, newExpr.optionalInitialiser->column}, Type{newExpr.typeInfo->type.typeId, 0});
         // [root_array_ptr]
     }
 }
 
-void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::ExprNew& newExpr, unsigned int depth, SemanticType& typeAtDepth) {
+void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::ExprNew& newExpr, unsigned int depth, Type& typeAtDepth) {
     const auto newExprSourceLocation = new SourceLocation{0, newExpr.line, newExpr.column};
 
     // [root_array_length]
@@ -1342,7 +1365,7 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
     // [ptr           ]
 }
 
-void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const SemanticType& typeOfDeepestElement) {
+void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const Type& typeOfDeepestElement) {
 
     if (arrayInitialiser.elements.size() == 0) {
         this->emit(Instruction{Opcode::POP,
@@ -1520,7 +1543,7 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
             // [ptr                , ptr           , type_of_value_to_store]
             // [if not last element,                                       ]
 
-            this->compileTypeConversionIfRequired(std::get<std::unique_ptr<ast::Expr>>(arrayInitialiser.elements[index])->resultingType.type, typeOfDeepestElement.type, optionalInitialiserSource);
+            this->compileTypeConversionIfRequired(std::get<std::unique_ptr<ast::Expr>>(arrayInitialiser.elements[index])->resultingType, typeOfDeepestElement, optionalInitialiserSource);
             // [ptr_to_element     , ptr_to_element, value_to_store        ]
             // [ptr                , ptr           , type_of_element       ]
             // [if not last element,                                       ]
@@ -1565,7 +1588,7 @@ void compiler::AssemblyGenerator::compileFunctionCall(Scope* scope, const ast::F
         this->compileExpr(scope, *functionCall.arguments[argIndex], ExprResult::VALUE);
 
         // convert any arguments that require implicit conversion
-        this->compileTypeConversionIfRequired(functionCall.arguments[argIndex]->resultingType.type, functionCall.functionSymbol->parameterTypes[argIndex].type, SourceLocation{0, functionCall.arguments[argIndex]->line, functionCall.arguments[argIndex]->column});
+        this->compileTypeConversionIfRequired(functionCall.arguments[argIndex]->resultingType, functionCall.functionSymbol->parameterTypes[argIndex], SourceLocation{0, functionCall.arguments[argIndex]->line, functionCall.arguments[argIndex]->column});
     }
     if (functionCall.functionSymbol->builtinId == BuiltinFunctionId::NONE) { // function is user-defined
         // call user-defined function
@@ -1597,7 +1620,7 @@ void compiler::AssemblyGenerator::compileExprIdentifier(Scope* scope, const ast:
             // push local variable onto stack
             this->emit(Instruction{Opcode::LOADL,
                 {
-                    toAssemblyType(SemanticType{symbol->type, symbol->dimension}),
+                    toAssemblyType(symbol->type),
                     Immediate{Number{symbol->localSlot}}
                 },
                 SourceLocation{0, exprIdentifier.line, exprIdentifier.column}
@@ -1656,9 +1679,9 @@ void compiler::AssemblyGenerator::compileExprBoolLiteral(const ast::ExprBoolLite
     });
 }
 
-void compiler::AssemblyGenerator::compileTypeConversionIfRequired(const Type currentType, const Type newType, const SourceLocation& sourceLocation) {
+void compiler::AssemblyGenerator::compileTypeConversionIfRequired(const Type& currentType, const Type& newType, const SourceLocation& sourceLocation) {
     // convert to new type if current type is different from the new type
-    this->compileTypeConversionIfRequired(toAssemblyType(SemanticType{currentType, 0}), toAssemblyType(SemanticType{newType, 0}), sourceLocation);
+    this->compileTypeConversionIfRequired(toAssemblyType(currentType), toAssemblyType(newType), sourceLocation);
 }
 
 void compiler::AssemblyGenerator::compileTypeConversionIfRequired(const AssemblyType currentType, const AssemblyType newType, const SourceLocation& sourceLocation) {
@@ -1691,17 +1714,9 @@ void compiler::AssemblyGenerator::compileGlobalVariables() {
         // global static data definition
         this->emit(DataDef{
             it->first,
-            toAssemblyType(SemanticType{it->second.type, it->second.dimension}),
-            getNumber(SemanticType{it->second.type, it->second.dimension}, 0)
+            toAssemblyType(it->second.type),
+            getNumber(it->second.type, 0)
         });
-    }
-}
-
-std::string compiler::AssemblyGenerator::typeToString(const Type& type) {
-    switch (type) {
-        case Type::INT : return "i32";
-        case Type::FLOAT: return "f32";
-        case Type::BOOL: return "ui32";
     }
 }
 
@@ -1719,20 +1734,20 @@ void compiler::AssemblyGenerator::emit(const AssemblyItem& assemblyItem) {
     this->assembly.push_back(assemblyItem);
 }
 
-compiler::AssemblyType compiler::AssemblyGenerator::toAssemblyType(const SemanticType& type) {
+compiler::AssemblyType compiler::AssemblyGenerator::toAssemblyType(const Type& type) {
     if (type.isArray()) return AssemblyType::PTR;
-    switch (type.type) {
-        case Type::INT: return AssemblyType::I32;
-        case Type::FLOAT: return AssemblyType::F32;
-        case Type::BOOL: return AssemblyType::UI32;
+    switch (type.typeId) {
+        case INT_TYPE_ID: return AssemblyType::I32;
+        case FLOAT_TYPE_ID: return AssemblyType::F32;
+        case BOOL_TYPE_ID: return AssemblyType::UI32;
     }
 }
 
-compiler::Number compiler::AssemblyGenerator::getNumber(const SemanticType& type, const uint64_t value) {
+compiler::Number compiler::AssemblyGenerator::getNumber(const Type& type, const uint64_t value) {
     if (type.isArray()) return Number{static_cast<uint32_t>(value)};
-    switch (type.type) {
-        case Type::INT: return Number{static_cast<int32_t>(value)};
-        case Type::FLOAT: return Number{static_cast<float>(value)};
-        case Type::BOOL: return Number{static_cast<uint32_t>(value)};
+    switch (type.typeId) {
+        case INT_TYPE_ID: return Number{static_cast<int32_t>(value)};
+        case FLOAT_TYPE_ID: return Number{static_cast<float>(value)};
+        case BOOL_TYPE_ID: return Number{static_cast<uint32_t>(value)};
     }
 }

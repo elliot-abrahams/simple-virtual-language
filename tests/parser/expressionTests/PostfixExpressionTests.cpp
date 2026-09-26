@@ -12,7 +12,7 @@ TEST(EXPR_POSTFIX, IDENTIFIER) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("y")
@@ -30,9 +30,9 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
+    std::vector<PostfixOperator> expectedPostfixOperators;
 
-    indices.push_back(
+    expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -40,13 +40,13 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("y")
                 ),
-                indices,
+                expectedPostfixOperators,
                 std::nullopt
             )
         )
@@ -62,14 +62,14 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_TWO_INDICES) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
+    std::vector<PostfixOperator> expectedPostfixOperators;
 
-    indices.push_back(
+    expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
     );
-    indices.push_back(
+    expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(5)
         )
@@ -77,13 +77,13 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_TWO_INDICES) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("y")
                 ),
-                indices,
+                expectedPostfixOperators,
                 std::nullopt
             )
         )
@@ -99,10 +99,10 @@ TEST(EXPR_POSTFIX, FUNCTION_CALL_EXPR_WITH_ONE_INDEX) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
+    std::vector<PostfixOperator> expectedPostfixOperators;
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
-    indices.push_back(
+    expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -110,14 +110,14 @@ TEST(EXPR_POSTFIX, FUNCTION_CALL_EXPR_WITH_ONE_INDEX) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedFunctionCallExpr>(
                     "foo",
                     std::move(expectedArguments)
                 ),
-                indices,
+                expectedPostfixOperators,
                 std::nullopt
             )
         )
@@ -133,12 +133,12 @@ TEST(EXPR_POSTFIX, NEW_EXPRESSION_WITH_ONE_INDEX) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
+    std::vector<PostfixOperator> expectedPostfixOperators;
     std::vector<std::unique_ptr<ExpectedIndex>> arrayDimension;
     std::vector<ArrayInitialiserElement> arrayInitialiserElements;
     std::unique_ptr<ExpectedArrayInitialiser> expectedArrayInitialiser = std::make_unique<ExpectedArrayInitialiser>(std::move(arrayInitialiserElements));
 
-    indices.push_back(
+    expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -152,15 +152,15 @@ TEST(EXPR_POSTFIX, NEW_EXPRESSION_WITH_ONE_INDEX) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprNew>(
-                    std::make_unique<Type>(compiler::Type::INT, 1),
+                    std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
                     std::move(arrayDimension),
                     std::move(expectedArrayInitialiser)
                 ),
-                indices,
+                expectedPostfixOperators,
                 std::nullopt
             )
         )
@@ -176,9 +176,9 @@ TEST(EXPR_POSTFIX, PAREN_WITH_ONE_INDEX) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
+    std::vector<PostfixOperator> expectedPostfixOperators;
 
-    indices.push_back(
+    expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -186,11 +186,11 @@ TEST(EXPR_POSTFIX, PAREN_WITH_ONE_INDEX) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedIntegerLiteral>(1),
-                indices,
+                expectedPostfixOperators,
                 std::nullopt
             )
         )
@@ -209,13 +209,13 @@ TEST(EXPR_POSTFIX, INCREMENT) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "y",
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                noExpectedIndices,
+                noExpectedPostfixOperators,
                 compiler::UnaryOperator::INCREMENT
             )
         )
@@ -235,13 +235,13 @@ TEST(EXPR_POSTFIX, DECREMENT) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "y",
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                noExpectedIndices,
+                noExpectedPostfixOperators,
                 compiler::UnaryOperator::DECREMENT
             )
         )
@@ -258,9 +258,9 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX_INCREMENT) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
+    std::vector<PostfixOperator> postfixOperators;
 
-    indices.push_back(
+    postfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -268,17 +268,101 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX_INCREMENT) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("y")
                 ),
-                indices,
+                postfixOperators,
                 compiler::UnaryOperator::INCREMENT
             )
         )
     );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_POSTFIX, IDENTIFIER_WITH_FIELD_ACCESS) {
+    const auto testCode = R"(
+        int x = y.field;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<PostfixOperator> postfixOperators;
+
+    postfixOperators.push_back(
+        std::make_unique<ExpectedFieldAccess>(
+            "field"
+        )
+    );
+
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("y")
+                ),
+                postfixOperators,
+                std::nullopt
+            )
+        )
+    );
+
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_POSTFIX, IDENTIFIER_WITH_MULTIPLE_INDICES_AND_FIELD_ACCESS_AND_INCREMENT) {
+    const auto testCode = R"(
+        int x = y[1].field[2].other_field++;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    std::vector<PostfixOperator> postfixOperators;
+
+    postfixOperators.push_back(
+        std::make_unique<ExpectedIndex>(
+            std::make_unique<ExpectedIntegerLiteral>(1)
+        )
+    );
+
+    postfixOperators.push_back(
+        std::make_unique<ExpectedFieldAccess>(
+            "field"
+        )
+    );
+
+    postfixOperators.push_back(
+        std::make_unique<ExpectedIndex>(
+            std::make_unique<ExpectedIntegerLiteral>(2)
+        )
+    );
+
+    postfixOperators.push_back(
+        std::make_unique<ExpectedFieldAccess>(
+            "other_field"
+        )
+    );
+
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedExprPostfix>(
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("y")
+                ),
+                postfixOperators,
+                compiler::UnaryOperator::INCREMENT
+            )
+        )
+    );
+
     std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
@@ -314,4 +398,12 @@ TEST(EXPR_POSTFIX, INVALID_MISSING_SECOND_EXPR) {
 
 TEST(EXPR_POSTFIX, INVALID_MISSING_SECOND_RSQBR) {
     ASSERT_THROW(PARSE("int x = y [1] [2;"), SyntaxError);
+}
+
+TEST(EXPR_POSTFIX, INVALID_ORDER_OF_POSTFIX_OPERATORS_ONE) {
+    ASSERT_THROW(PARSE("int x = y++.field"), SyntaxError);
+}
+
+TEST(EXPR_POSTFIX, INVALID_ORDER_OF_POSTFIX_OPERATORS_TWO) {
+    ASSERT_THROW(PARSE("int x = y++[1]"), SyntaxError);
 }

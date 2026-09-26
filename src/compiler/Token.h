@@ -5,6 +5,7 @@
 enum class TokenKind {
     SEMI,
     COMMA,
+    DOT,
     LBR,
     RBR,
     LCBR,
@@ -67,6 +68,7 @@ struct Token {
         switch (this->kind) {
             case TokenKind::SEMI: return ";";
             case TokenKind::COMMA: return ",";
+            case TokenKind::DOT: return ".";
             case TokenKind::LBR: return "(";
             case TokenKind::RBR: return ")";
             case TokenKind::LCBR: return "{";

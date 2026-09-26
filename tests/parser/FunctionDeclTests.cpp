@@ -14,7 +14,7 @@ TEST(FUNCTION_DECL, VOID_FUNCTION_DECL) {
 
     expectedFunctionDecls.push_back(
         std::make_unique<ExpectedFunctionDecl>(
-            std::make_unique<Type>(compiler::Type::VOID_RETURN_TYPE, 0),
+            std::make_unique<Type>(compiler::VOID_TYPE_ID, 0),
             "foo",
             expectedParameters,
             std::make_unique<ExpectedBlock>(expectedStatements)
@@ -36,7 +36,7 @@ TEST(FUNCTION_DECL, INT_FUNCTION_DECL) {
 
     expectedFunctionDecls.push_back(
         std::make_unique<ExpectedFunctionDecl>(
-                std::make_unique<Type>(compiler::Type::INT, 0),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "foo",
             expectedParameters,
             std::make_unique<ExpectedBlock>(expectedStatements)
@@ -58,7 +58,7 @@ TEST(FUNCTION_DECL, FLOAT_FUNCTION_DECL) {
 
     expectedFunctionDecls.push_back(
         std::make_unique<ExpectedFunctionDecl>(
-                std::make_unique<Type>(compiler::Type::FLOAT, 0),
+                std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 0),
                 "foo",
             expectedParameters,
             std::make_unique<ExpectedBlock>(expectedStatements)
@@ -80,7 +80,7 @@ TEST(FUNCTION_DECL, BOOL_FUNCTION_DECL) {
 
     expectedFunctionDecls.push_back(
         std::make_unique<ExpectedFunctionDecl>(
-                std::make_unique<Type>(compiler::Type::BOOL, 0),
+                std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
                 "foo",
             expectedParameters,
             std::make_unique<ExpectedBlock>(expectedStatements)
@@ -102,14 +102,14 @@ TEST(FUNCTION_DECL, FUNCTION_DECL_ONE_PARAMETER) {
 
     expectedParameters.push_back(
         std::make_unique<ExpectedParameter>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "a"
         )
     );
 
     expectedFunctionDecls.push_back(
         std::make_unique<ExpectedFunctionDecl>(
-            std::make_unique<Type>(compiler::Type::BOOL, 0),
+            std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
             "foo",
             expectedParameters,
             std::make_unique<ExpectedBlock>(expectedStatements)
@@ -131,26 +131,26 @@ TEST(FUNCTION_DECL, FUNCTION_DECL_MULTIPLE_PARAMETERS) {
 
     expectedParameters.push_back(
         std::make_unique<ExpectedParameter>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "a"
         )
     );
     expectedParameters.push_back(
         std::make_unique<ExpectedParameter>(
-            std::make_unique<Type>(compiler::Type::FLOAT, 0),
+            std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 0),
             "f"
         )
     );
     expectedParameters.push_back(
         std::make_unique<ExpectedParameter>(
-            std::make_unique<Type>(compiler::Type::BOOL, 0),
+            std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
             "b"
         )
     );
 
     expectedFunctionDecls.push_back(
         std::make_unique<ExpectedFunctionDecl>(
-            std::make_unique<Type>(compiler::Type::BOOL, 0),
+            std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
             "foo",
             expectedParameters,
             std::make_unique<ExpectedBlock>(expectedStatements)
@@ -175,7 +175,7 @@ TEST(FUNCTION_DECL, FUNCTION_DECL_WITH_BODY) {
 
     expectedFunctionStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             nullptr
         )
@@ -183,7 +183,7 @@ TEST(FUNCTION_DECL, FUNCTION_DECL_WITH_BODY) {
 
     expectedFunctionDecls.push_back(
         std::make_unique<ExpectedFunctionDecl>(
-            std::make_unique<Type>(compiler::Type::VOID_RETURN_TYPE, 0),
+            std::make_unique<Type>(compiler::VOID_TYPE_ID, 0),
             "foo",
             expectedParameters,
             std::make_unique<ExpectedBlock>(expectedFunctionStatements)

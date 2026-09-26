@@ -2,9 +2,11 @@
 #define SVM_SEMANTICTESTUTILS_H
 #include <filesystem>
 #include <string>
+
+#include "../../src/compiler/Compiler.h"
 #include "../../src/compiler/Tokeniser.h"
 #include "../../src/compiler/Parser.h"
-#include "../../src/compiler/SemanticAnalyser.h"
+#include "../../src/compiler/semantic/SemanticAnalyser.h"
 #include "../../src/include/Error.h"
 #include "gtest/gtest.h"
 
@@ -25,8 +27,15 @@ namespace semanticTest {
         // add builtin functions to symbol table
         compiler::Builtins::registerBuiltinFunctions(*symbolTable);
 
+        // create type registry
+        const auto typeRegistry = new compiler::TypeRegistry();
+
+        // register builtin type information
+        compiler::Compiler::registerBuiltinTypes(typeRegistry);
+
         // build symbol table and type check the program
-        auto semanticAnalyser = compiler::SemanticAnalyser(symbolTable, path);
+        auto semanticAnalyser = compiler::SemanticAnalyser(symbolTable, typeRegistry, path);
+
         semanticAnalyser.processProgram(*program);
     };
 

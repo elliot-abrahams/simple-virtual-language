@@ -63,7 +63,7 @@ TEST(STM_WHILE, WHILE_BODY) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedWhileBody;
     expectedWhileBody.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 0),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             nullptr
         )

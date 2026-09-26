@@ -5,7 +5,7 @@
 
 #include "../include/Error.h"
 #include "Parser.h"
-#include "SemanticAnalyser.h"
+#include "semantic/SemanticAnalyser.h"
 #include "codegen/AssemblyGenerator.h"
 #include "../Driver.h"
 #include "codegen/Builtins.h"
@@ -30,8 +30,14 @@ std::vector<std::string> compiler::Compiler::compile(const std::string& sourceCo
         // add builtin functions to symbol table
         Builtins::registerBuiltinFunctions(*symbolTable);
 
+        // create type registry
+        const auto typeRegistry = new TypeRegistry();
+
+        // register builtin type information
+        registerBuiltinTypes(typeRegistry);
+
         // build symbol table and type check the program
-        auto semanticAnalyser = SemanticAnalyser(symbolTable, &path);
+        auto semanticAnalyser = SemanticAnalyser(symbolTable, typeRegistry, &path);
         semanticAnalyser.processProgram(*program);
 
         // assign slots to local symbols
@@ -58,4 +64,8 @@ std::unique_ptr<ast::Program> compiler::Compiler::testParsing(const std::string&
 
     // generate AST
     return parser->parseProgram();
+}
+
+void compiler::Compiler::registerBuiltinTypes(TypeRegistry* typeRegistry) {
+    typeRegistry->registerArrayField("length", Type{INT_TYPE_ID, 0}, Assignability::NON_ASSIGNABLE, 0);
 }

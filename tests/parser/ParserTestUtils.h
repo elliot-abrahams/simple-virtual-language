@@ -6,14 +6,19 @@
 #include "../../src/include/Error.h"
 
 namespace parserTest {
+
+    struct ExpectedFieldAccess;
     struct ExpectedIndex;
     struct ExpectedArrayInitialiser;
     struct ExpectedExpr;
     struct ExpectedBlock;
 
-    inline std::vector<std::unique_ptr<ExpectedIndex>> noExpectedIndices;
-
     using ArrayInitialiserElement = std::variant<std::unique_ptr<ExpectedExpr>, std::unique_ptr<ExpectedArrayInitialiser>>;
+
+    using PostfixOperator = std::variant<std::unique_ptr<ExpectedIndex>, std::unique_ptr<ExpectedFieldAccess>>;
+
+    inline std::vector<std::unique_ptr<ExpectedIndex>> noExpectedIndices;
+    inline std::vector<PostfixOperator> noExpectedPostfixOperators;
 
     struct ExpectedStm {
         virtual ~ExpectedStm() = default;
@@ -24,10 +29,10 @@ namespace parserTest {
     };
 
     struct Type {
-        const compiler::Type type;
+        const compiler::TypeId typeId;
         const unsigned int expectedDimension;
 
-        Type(const compiler::Type type, const unsigned int expectedDimension) : type(type), expectedDimension(expectedDimension) {}
+        Type(const compiler::TypeId typeId, const unsigned int expectedDimension) : typeId(typeId), expectedDimension(expectedDimension) {}
     };
 
     struct ExpectedIntegerLiteral final : ExpectedExpr {
@@ -104,13 +109,19 @@ namespace parserTest {
         expectedExpr(std::move(expectedExpr)) {}
     };
 
+    struct ExpectedFieldAccess final : ExpectedExpr {
+        const std::string epxpectedFieldName;
+        ExpectedFieldAccess(const std::string& epxpectedFieldName) :
+            epxpectedFieldName(epxpectedFieldName) {}
+    };
+
     struct ExpectedExprPostfix final : ExpectedExpr {
         const std::unique_ptr<ExpectedExpr> expectedExpression;
-        const std::vector<std::unique_ptr<ExpectedIndex>> expectedIndices;
+        const std::vector<PostfixOperator> expectedPostfixOperators;
         const std::optional<compiler::UnaryOperator> expectedUnaryOperator;
 
-        ExpectedExprPostfix(std::unique_ptr<ExpectedExpr> expectedExpression, std::vector<std::unique_ptr<ExpectedIndex>>& expectedIndices, const std::optional<compiler::UnaryOperator> expectedUnaryOperator) :
-            expectedExpression(std::move(expectedExpression)), expectedIndices(std::move(expectedIndices)), expectedUnaryOperator(expectedUnaryOperator) {}
+        ExpectedExprPostfix(std::unique_ptr<ExpectedExpr> expectedExpression, std::vector<PostfixOperator>& expectedPostfixOperators, const std::optional<compiler::UnaryOperator> expectedUnaryOperator) :
+            expectedExpression(std::move(expectedExpression)), expectedPostfixOperators(std::move(expectedPostfixOperators)), expectedUnaryOperator(expectedUnaryOperator) {}
     };
 
     struct ExpectedUnaryExpr final : ExpectedExpr {
@@ -259,7 +270,7 @@ namespace parserTest {
     inline void ASSERT_EXPR_EQ(const ExpectedExpr& expectedExpr, const ast::Expr& actualExpr);
 
     inline void ASSERT_TYPE_EQ(const Type& expectedType, const ast::TypeInfo& actualType) {
-        ASSERT_EQ(expectedType.type, actualType.type.type);
+        ASSERT_EQ(expectedType.typeId, actualType.type.typeId);
         ASSERT_EQ(expectedType.expectedDimension, actualType.type.dimension);
     }
 
@@ -321,10 +332,18 @@ namespace parserTest {
             ASSERT_NE(actualExprPostfix, nullptr);
             ASSERT_EXPR_EQ(*expectedExprPostfix->expectedExpression, *actualExprPostfix->expression);
 
-            ASSERT_EQ(expectedExprPostfix->expectedIndices.size(), actualExprPostfix->indices.size());
+            ASSERT_EQ(expectedExprPostfix->expectedPostfixOperators.size(), actualExprPostfix->postfixOperators.size());
 
-            for (int i = 0; i < expectedExprPostfix->expectedIndices.size(); i++) {
-                ASSERT_EXPR_EQ(*expectedExprPostfix->expectedIndices[i]->index, *actualExprPostfix->indices[i]->index);
+            for (int i = 0; i < expectedExprPostfix->expectedPostfixOperators.size(); i++) {
+
+                if (std::holds_alternative<std::unique_ptr<ExpectedIndex>>(expectedExprPostfix->expectedPostfixOperators[i])) {
+                    ASSERT_EXPR_EQ(*std::get<std::unique_ptr<ExpectedIndex>>(expectedExprPostfix->expectedPostfixOperators[i])->index, *std::get<std::unique_ptr<ast::Index>>(actualExprPostfix->postfixOperators[i])->index);
+
+                } else if (std::holds_alternative<std::unique_ptr<ExpectedFieldAccess>>(expectedExprPostfix->expectedPostfixOperators[i])) {
+                    ASSERT_EQ(std::get<std::unique_ptr<ExpectedFieldAccess>>(expectedExprPostfix->expectedPostfixOperators[i])->epxpectedFieldName,
+                        std::get<std::unique_ptr<ast::FieldAccess>>(actualExprPostfix->postfixOperators[i])->identifier->name
+                    );
+                }
             }
 
             ASSERT_EQ(expectedExprPostfix->expectedUnaryOperator.has_value(), actualExprPostfix->unaryOperatorInfo != nullptr);

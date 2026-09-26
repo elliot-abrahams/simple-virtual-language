@@ -36,11 +36,8 @@ Defines the semantic rules of the SV programming language.
 
 ---
 
-## Built-in Functions
+## Builtins
 
 `Builtins.md`
 
-Describes the built-in functions provided by the SV language.
-
-- Function Signatures
-- Function Descriptions
+Describes the built-in types and functions provided by the SV language.

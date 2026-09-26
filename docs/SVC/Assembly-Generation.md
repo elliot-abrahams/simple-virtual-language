@@ -39,8 +39,9 @@
     - [5.7.4 Prefix Increment](#574-prefix-increment)
     - [5.7.5 Prefix Decrement](#575-prefix-decrement)
   - [5.8 Postfix Expression](#58-postfix-expressions)
-    - [5.8.1 Indexing](#581-indexing)
-    - [5.8.2 Increment and Decrement](#582-increment-and-decrement)
+    - [5.8.1 Array Access](#581-array-access)
+    - [3.8.2 Field Access](#582-field-access)
+    - [5.8.3 Increment and Decrement](#583-increment-and-decrement)
   - [5.9 Function Calls](#59-function-calls)
   - [5.10 Cast Expressions](#510-cast-expressions)
   - [5.11 New Expressions](#511-new-expressions)
@@ -854,88 +855,58 @@ The updated value remains on the operand stack because prefix decrement produces
 
 ### 5.8 Postfix Expressions
 
-A postfix expression evaluates its base expression and then applies each postfix operation in order.
+A postfix expression evaluates its base expression first, followed by each postfix operation from left to right.
 
-#### 5.8.1 Indexing
+Each postfix operation uses the result of the preceding expression or postfix operation as its input and produces the result used by the next operation.
 
-For each index:
-1. The index expression is evaluated.
-2. The array length is loaded.
-3. The index is bounds checked.
-4. The element address is calculated.
-5. If the index does not select the final dimension, the pointer to the nested array is loaded.
-6. If the index selects the final dimension, the element value is loaded unless the address of the element is required by the surrounding expression.
+#### 5.8.1 Array Access
 
-For a single-dimensional array, when the element's value is required:
+An array access evaluates the index expression, checks that the index is within array bounds, and calculates the address of the selected element.
 
 ```
-    {{Expression}}
-    ; Stack: <array_ptr: ptr>
+    ; Stack: <ptr: ptr>
     
     {{Array Index}}
+    ; Stack: <element_ptr: ptr>
+```
+
+If another postfix operation follows the pointer is loaded:
+
+```
+    ; Stack: <element_ptr: ptr>
+    
+    load ptr
+    ; Stack: <nested_array_ptr: ptr>
+```
+
+When the indexing operation produces the final result and its value is required, the element is loaded:
+
+```
     ; Stack: <element_ptr: ptr>
     
     load [element_type]
-    ; Stack: <element: element_type>
-```
-
-For a single-dimensional array, when the address of the element is required:
-
-```
-    {{Expression}}
-    ; Stack: <array_ptr: ptr>
-    
-    {{Array Index}}
-    ; Stack: <element_ptr: ptr>
-```
-
-For a multidimensional array, when the element's value is required:
-
-```
-    {{Expression}}
-    ; Stack: <array_ptr: ptr>
-    
-    {{Array Index}}
-    load ptr
-    ; Stack: <nested_array_ptr: ptr>
-    
-    {{Array Index}}
-    load ptr
-    ; Stack: <nested_array_ptr: ptr>
-    
-    ...
-    
-    {{Array Index}}
-    load [element_type]
-    ; Stack: <element: element_type>
-```
-
-For a multidimensional array, when the address of the element is required:
-
-```
-    {{Expression}}
-    ; Stack: <array_ptr: ptr>
-    
-    {{Array Index}}
-    load ptr
-    ; Stack: <nested_array_ptr: ptr>
-    
-    {{Array Index}}
-    load ptr
-    ; Stack: <nested_array_ptr: ptr>
-    
-    ...
-    
-    {{Array Index}}
-    ; Stack: <element_ptr: ptr>
+     ; Stack: <element: element_type>
 ```
 
 Where:
 - `[element_type]` is the assembly type of the array element.
 
-The `load ptr` instructions between indexes retrieve the nested array pointer stored in the selected element.
+#### 5.8.2 Field Access
 
-#### 5.8.2 Increment and Decrement
+A field access adds the field offset to the current address:
+
+```
+    ; Stack: <ptr: ptr>
+    
+    push ui32 #[field_offset]
+    add
+    ; Stack: <field_ptr: ptr>
+```
+
+Where:
+- `[field_offset]` is the offset of the field.
+
+#### 5.8.3 Increment and Decrement
 
 The increment and decrement operators require the address of the value being modified.
 
@@ -1412,7 +1383,7 @@ $end_nested_array_alloc_loop_[N1]:
     ; Stack: <root_array_ptr: ptr>
 ```
 
-See [5.10.2 One Dimensional Array Allocation](#5102-one-dimensional-array-allocation) for the assembly generated for `[One Dimensional Array Allocation]`.
+See [5.11.2 One Dimensional Array Allocation](#5112-one-dimensional-array-allocation) for the assembly generated for `[One Dimensional Array Allocation]`.
 
 #### 5.11.4 Array Initialiser
 
@@ -2012,7 +1983,7 @@ $[identifer]([parameter types])
 ```
 
 Where:
-- `[identifier]` is the functions identifier.
+- `[identifier]` is the function's identifier.
 - `[paratmeter]` is the comma-separated list of the function's parameter types.
 
 For example:

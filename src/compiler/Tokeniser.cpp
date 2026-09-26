@@ -97,6 +97,11 @@ Token compiler::Tokeniser::readToken() {
                 this->advance();
                 return token;
             }
+            case '.': {
+                const Token token = Token{TokenKind::DOT, ".", this->line, this->column};
+                this->advance();
+                return token;
+            }
             case '(': {
                 const Token token = Token{TokenKind::LBR, "(", this->line, this->column};
                 this->advance();

@@ -22,22 +22,23 @@
   - [4.9 Return Value From Void Function](#49-return-value-from-void-function)
   - [4.10 Unused Function Return Value](#410-unused-function-return-value)
   - [4.11 Invalid Expression Statement](#411-invalid-expression-statement)
-  - [4.12 Return Outside a Function](#412-return-outside-a-function)
-  - [4.13 Continue Outside a Loop](#413-continue-outside-a-loop)
-  - [4.14 Break Outside a Loop](#414-break-outside-a-loop)
-  - [4.15 Too Few Array Initialiser Dimensions](#415-too-few-array-initialiser-dimensions)
-  - [4.16 Too Many Array Initialiser Dimensions](#416-too-many-array-initialiser-dimensions)
+  - [4.12 Non-Assignable Expression](#412-non-assignable-expression)
+  - [4.13 Undefined Field](#413-undefined-field)
+  - [4.14 Return Outside a Function](#414-return-outside-a-function)
+  - [4.15 Continue Outside a Loop](#415-continue-outside-a-loop)
+  - [4.16 Break Outside a Loop](#416-break-outside-a-loop)
+  - [4.17 Too Few Array Initialiser Dimensions](#417-too-few-array-initialiser-dimensions)
+  - [4.18 Too Many Array Initialiser Dimensions](#418-too-many-array-initialiser-dimensions)
 - [5. Type Errors](#5-type-errors)
   - [5.1 Invalid Assignment](#51-invalid-assignment)
   - [5.2 Invalid Return Type](#52-invalid-return-type)
   - [5.3 Invalid Condition Type](#53-invalid-condition-type)
   - [5.4 Invalid Binary Operator](#54-invalid-binary-operator)
   - [5.5 Invalid Unary Operator](#55-invalid-unary-operator)
-  - [5.6 Non-Assignable Expression](#56-non-assignable-expression)
-  - [5.7 Invalid Array Index Type](#57-invalid-array-index-type)
-  - [5.8 Invalid Array Indexing](#58-invalid-array-indexing)
-  - [5.9 Invalid Array Initialiser Element](#59-invalid-array-initialiser-element)
-  - [5.10 Invalid Cast](#510-invalid-cast)
+  - [5.6 Invalid Array Index Type](#56-invalid-array-index-type)
+  - [5.7 Invalid Array Indexing](#57-invalid-array-indexing)
+  - [5.8 Invalid Array Initialiser Element](#58-invalid-array-initialiser-element)
+  - [5.9 Invalid Cast](#59-invalid-cast)
    
 ## 1. Overview
 
@@ -436,7 +437,48 @@ The expression does not perform an operation that is permitted as ann expression
 
 ---
 
-### 4.12 Return Outside a Function
+### 4.12 Non-Assignable Expression
+
+**Message:**
+```
+cannot apply operator '<unary_operator>' to a non-assignable expression
+```
+
+**Example:**
+```
+int x = ++5;
+```
+
+```
+SemanticError: cannot apply operator '++' to a non-assignable expression
+```
+
+Increment and decrement require an assignable expression because they modify its value.
+
+---
+
+### 4.13 Undefined Field
+
+**Message:**
+```
+type '<type>' has no field '<field>'
+```
+
+**Example:**
+```
+int x = 5;
+int field = x.field;
+```
+
+```
+SemanticError: type 'int' has no field 'field'
+```
+
+A field access is invalid when the specified field does not exist on its type.
+
+---
+
+### 4.14 Return Outside a Function
 
 **Message:**
 ```
@@ -456,7 +498,7 @@ Return can only be used inside a function.
 
 ---
 
-### 4.13 Continue Outside a Loop
+### 4.15 Continue Outside a Loop
 
 **Message:**
 ```
@@ -476,7 +518,7 @@ Continue can only be used inside a loop.
 
 ---
 
-### 4.14 Break Outside a Loop
+### 4.16 Break Outside a Loop
 
 **Message:**
 ```
@@ -496,7 +538,7 @@ break can only be used inside a loop.
 
 ---
 
-### 4.15 Too Few Array Initialiser Dimensions
+### 4.17 Too Few Array Initialiser Dimensions
 
 **Message:**
 ```
@@ -516,7 +558,7 @@ The structure of the array initialiser does not contain enough nested dimensions
 
 ---
 
-### 4.16 Too Many Array Initialiser Dimensions
+### 4.18 Too Many Array Initialiser Dimensions
 
 **Message:**
 ```
@@ -642,27 +684,7 @@ The unary operator cannot be applied to the operand's type.
 
 ---
 
-### 5.6 Non-Assignable Expression
-
-**Message:**
-```
-cannot apply operator '<unary_operator>' to a non-assignable expression
-```
-
-**Example:**
-```
-int x = ++5;
-```
-
-```
-TypeError: cannot apply operator '++' to a non-assignable expression
-```
-
-Increment and decrement require an assignable expression because they modify its value.
-
----
-
-### 5.7 Invalid Array Index Type
+### 5.6 Invalid Array Index Type
 
 **Message:**
 ```
@@ -683,7 +705,7 @@ The array index must have a valid index type.
 
 ---
 
-### 5.8 Invalid Array Indexing
+### 5.7 Invalid Array Indexing
 
 **Message:**
 ```
@@ -704,7 +726,7 @@ Indexing can only be applied to an array.
 
 ---
 
-### 5.9 Invalid Array Initialiser Element
+### 5.8 Invalid Array Initialiser Element
 
 **Message:**
 ```
@@ -724,7 +746,7 @@ The value used to initialise an array element is not compatible with the array's
 
 ---
 
-### 5.10 Invalid Cast
+### 5.9 Invalid Cast
 
 **Message:**
 ```

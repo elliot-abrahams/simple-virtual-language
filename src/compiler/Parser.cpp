@@ -775,19 +775,62 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
 }
 
 /*
- *  postfix_expression          = primary_expression, { index }, [ INCREMENT | DECREMENT ] ;
+ *  index                = LSQBR, expression, RSQBR ;
+ */
+std::unique_ptr<ast::Index> compiler::Parser::parseIndex() const {
+    const auto tokenLSQBR = this->tokeniser->tok();
+    this->tokeniser->eat(TokenKind::LSQBR);
+    auto expr = this->parseExpr();
+    this->tokeniser->eat(TokenKind::RSQBR);
+
+    return std::make_unique<ast::Index>(
+        tokenLSQBR.line,
+        tokenLSQBR.column,
+        std::move(expr)
+    );
+}
+
+/*
+ *  field_access                = DOT, IDENTIFIER ;
+ */
+std::unique_ptr<ast::FieldAccess> compiler::Parser::parseFieldAccess() const {
+    const auto tokenDOT = this->tokeniser->tok();
+    this->tokeniser->eat(TokenKind::DOT);
+    auto identifier = this->parseIdentifier();
+
+    return std::make_unique<ast::FieldAccess>(
+        tokenDOT.line,
+        tokenDOT.column,
+        std::move(identifier)
+    );
+}
+
+/*
+ *  postfix_expression          = primary_expression, { index | field_access }, [ INCREMENT | DECREMENT ] ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
     auto expression = this->parsePrimaryExpression();
 
-    std::vector<std::unique_ptr<ast::Index>> indices;
+    bool morePostfixOperatorsToParse = true;
+
+    std::vector<ast::PostfixOperator> postfixOperators;
+
+    while (morePostfixOperatorsToParse) {
+        switch (this->tokeniser->tok().kind) {
+            case TokenKind::LSQBR: postfixOperators.push_back(this->parseIndex()); break;
+            case TokenKind::DOT: postfixOperators.push_back(this->parseFieldAccess()); break;
+
+            default: morePostfixOperatorsToParse = false;
+        }
+    }
+
     while (this->tokeniser->tok().kind == TokenKind::LSQBR) {
-        indices.push_back(this->parseIndex());
+
     }
 
     auto incDecOp = this->parseIncrementDecrementOperator();
 
-    if (indices.empty() && incDecOp == nullptr) {
+    if (postfixOperators.empty() && incDecOp == nullptr) {
         return expression;
     }
 
@@ -795,7 +838,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
         expression->line,
         expression->column,
         std::move(expression),
-        indices,
+        postfixOperators,
         std::move(incDecOp)
     );
 }
@@ -921,22 +964,6 @@ std::unique_ptr<ast::ExprNew> compiler::Parser::parseExprNew() const {
 }
 
 /*
- *  index                = LSQBR, expression, RSQBR ;
- */
-std::unique_ptr<ast::Index> compiler::Parser::parseIndex() const {
-    const auto tokenLSQBR = this->tokeniser->tok();
-    this->tokeniser->eat(TokenKind::LSQBR);
-    auto expr = this->parseExpr();
-    this->tokeniser->eat(TokenKind::RSQBR);
-
-    return std::make_unique<ast::Index>(
-        tokenLSQBR.line,
-        tokenLSQBR.column,
-        std::move(expr)
-    );
-}
-
-/*
  *  array_initialiser           = LCBR, [ array_initialiser_element, { COMMA, array_initialiser_element } ], RCBR ;
  */
 std::unique_ptr<ast::ArrayInitialiser> compiler::Parser::parseArrayInitialiser() const {
@@ -999,7 +1026,7 @@ std::unique_ptr<ast::TypeInfo> compiler::Parser::parseReturnType() const {
         return std::make_unique<ast::TypeInfo> (
             returnType.line,
             returnType.column,
-            SemanticType{Type::VOID_RETURN_TYPE, 0}
+            Type{VOID_TYPE_ID, 0}
         );
     }
     return this->parseType();
@@ -1035,19 +1062,19 @@ std::unique_ptr<ast::TypeInfo> compiler::Parser::parsePrimitiveType(const unsign
             return std::make_unique<ast::TypeInfo>(
                 type.line,
                 type.column,
-                SemanticType{Type::INT, dimension}
+                Type{INT_TYPE_ID, dimension}
             );
         case TokenKind::FLOAT_TYPE :
             return std::make_unique<ast::TypeInfo>(
                 type.line,
                 type.column,
-                SemanticType{Type::FLOAT, dimension}
+                Type{FLOAT_TYPE_ID, dimension}
             );
         case TokenKind::BOOL_TYPE :
             return std::make_unique<ast::TypeInfo> (
                 type.line,
                 type.column,
-                SemanticType{Type::BOOL, dimension}
+                Type{BOOL_TYPE_ID, dimension}
             );
         default:
             this->throwUnexpectedTokenError(type);

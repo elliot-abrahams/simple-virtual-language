@@ -5,10 +5,11 @@
 #include <string>
 #include "../../src/compiler/Tokeniser.h"
 #include "../../src/compiler/Parser.h"
-#include "../../src/compiler/SemanticAnalyser.h"
+#include "../../src/compiler/semantic/SemanticAnalyser.h"
 #include "../../src/compiler/codegen/AssemblyGenerator.h"
 #include "../../src/include/Error.h"
 #include "../../src/assembler/Assembler.h"
+#include "../../src/compiler/Compiler.h"
 #include "../../src/vm/VM.h"
 #include "../../src/compiler/codegen/AssemblyEmitter.h"
 #include "gtest/gtest.h"
@@ -33,8 +34,14 @@ namespace integrationTests {
         // add builtin functions to symbol table
         compiler::Builtins::registerBuiltinFunctions(*symbolTable);
 
+        // create type registry
+        const auto typeRegistry = new compiler::TypeRegistry();
+
+        // register builtin type information
+        compiler::Compiler::registerBuiltinTypes(typeRegistry);
+
         // build symbol table and type check the program
-        auto semanticAnalyser = compiler::SemanticAnalyser(symbolTable, path);
+        auto semanticAnalyser = compiler::SemanticAnalyser(symbolTable, typeRegistry, path);
         semanticAnalyser.processProgram(*program);
 
         // assign slots to local symbols

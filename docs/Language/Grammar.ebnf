@@ -63,7 +63,11 @@ unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
                             | LBR, type, RBR, unary_expression
                             | [ INCREMENT | DECREMENT ], postfix_expression ;
 
-postfix_expression          = primary_expression, { index }, [ INCREMENT | DECREMENT ] ;
+index                       = LSQBR, expression, RSQBR ;
+
+field_access                = DOT, IDENTIFIER ;
+
+postfix_expression          = primary_expression, { index | field_access }, [ INCREMENT | DECREMENT ] ;
 
 primary_expression          = function_call
                             | IDENTIFIER
@@ -76,8 +80,6 @@ function_call               = IDENTIFIER, LBR, [ argument_list ], RBR ;
 argument_list               = expression, { COMMA, expression } ;
 
 new_expression              = NEW, primitive_type, index, { index }, [ array_initialiser ] ;
-
-index                       = LSQBR, expression, RSQBR ;
 
 array_initialiser           = LCBR, [ array_initialiser_element, { COMMA, array_initialiser_element } ], RCBR ;
 
@@ -104,6 +106,7 @@ TOKENS
 
 SEMI                        = ";"
 COMMA                       = ","
+DOT                         = "."
 LBR                         = "("
 RBR                         = ")"
 LCBR                        = "{"

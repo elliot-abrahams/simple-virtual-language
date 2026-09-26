@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "LanguageTypes.h"
-#include "codegen/Builtins.h"
+#include "../LanguageTypes.h"
+#include "../codegen/Builtins.h"
 
 
 namespace compiler {
@@ -17,7 +17,6 @@ namespace compiler {
     struct Symbol {
         Scope* scope;
         const Type type;
-        const unsigned int dimension;
         int localSlot;
         mutable bool isInitialised;
 
@@ -27,8 +26,8 @@ namespace compiler {
 
     struct FunctionSymbol {
         std::string label;
-        const SemanticType returnType;
-        const std::vector<SemanticType> parameterTypes;
+        const Type returnType;
+        const std::vector<Type> parameterTypes;
 
         const BuiltinFunctionId builtinId;
     };
@@ -54,8 +53,8 @@ namespace compiler {
 
         LoopContext* loopContext;
 
-        void declareSymbol(const std::string& identifier, const SemanticType& type, const int localSlot, const bool isInitialised) {
-            this->symbols.insert(std::make_pair(identifier, Symbol{this, type.type, type.dimension, localSlot, isInitialised}));
+        void declareSymbol(const std::string& identifier, const Type& type, const int localSlot, const bool isInitialised) {
+            this->symbols.insert(std::make_pair(identifier, Symbol{this, Type{type.typeId, type.dimension}, localSlot, isInitialised}));
         }
 
         std::optional<Symbol*> lookup(const std::string& identifier) {
@@ -147,8 +146,8 @@ namespace compiler {
     public:
         SymbolTable();
 
-        FunctionSymbol* declareFunction(const std::string& functionIdentifier, const std::string& functionLabel, const SemanticType& returnType, const std::vector<SemanticType>& parameterTypes);
-        void declareBuiltinFunction(const BuiltinFunctionId builtinId, const std::string& functionIdentifier, const SemanticType& returnType, const std::vector<SemanticType>& parameterTypes);
+        FunctionSymbol* declareFunction(const std::string& functionIdentifier, const std::string& functionLabel, const Type& returnType, const std::vector<Type>& parameterTypes);
+        void declareBuiltinFunction(const BuiltinFunctionId builtinId, const std::string& functionIdentifier, const Type& returnType, const std::vector<Type>& parameterTypes);
 
         std::vector<FunctionSymbol>* getFunctionSymbols(const std::string& functionIdentifier);
         FunctionSymbol* getCurrentFunctionSymbol() const;

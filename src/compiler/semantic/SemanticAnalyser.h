@@ -3,7 +3,7 @@
 #include <filesystem>
 
 #include "SymbolTable.h"
-#include "AST.h"
+#include "../AST.h"
 
 
 namespace compiler {
@@ -12,19 +12,14 @@ namespace compiler {
         bool alwaysReturns = false;
     };
 
-    enum class ExprCategory {
-        VALUE,
-        ASSIGNABLE
-    };
-
-    struct SemanticExprResult {
-        SemanticType type;
-        ExprCategory category;
+    struct ExpressionInfo {
+        Type type;
+        Assignability assignability;
     };
 
     class SemanticAnalyser {
     public:
-        SemanticAnalyser(SymbolTable* symbolTable, const std::filesystem::path* filePath);
+        SemanticAnalyser(SymbolTable* symbolTable, TypeRegistry* typeRegistry, const std::filesystem::path* filePath);
 
         void processProgram(const ast::Program& program);
 
@@ -44,27 +39,28 @@ namespace compiler {
         SemanticAnalysisResult processExpressionStatement(Scope* scope, const ast::ExpressionStatement& expressionStm);
 
         void processIndex(Scope* scope, const ast::Index& index);
-        unsigned int resolveAccessArrayDepth(const SemanticType& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const;
+        unsigned int resolveAccessArrayDepth(const Type& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const;
 
-        SemanticExprResult checkExprType(Scope* scope, const ast::Expr& expr);
-        SemanticExprResult processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
-        FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<SemanticType>& argumentTypes) const;
+        ExpressionInfo checkExprType(Scope* scope, const ast::Expr& expr);
+        ExpressionInfo processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
+        FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
 
-        static bool canImplicitlyConvert(const SemanticType& from, const SemanticType& to);
+        static bool canImplicitlyConvert(const Type& from, const Type& to);
         Symbol* checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) const;
 
-        static std::string typeToString(const SemanticType& type);
+        static std::string typeToString(const Type& type);
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
 
-        void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const SemanticType& leftType, const SemanticType& rightType) const;
+        void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType) const;
         void throwInvalidExpressionTypeAsStatement(const ast::Expr& expr) const;
-        void checkConditionType(const SemanticType& conditionType, const size_t line, const size_t column) const;
+        void checkConditionType(const Type& conditionType, const size_t line, const size_t column) const;
 
         //static std::vector<SemanticType> get
-        static std::string functionSignatureToString(const std::string& functionIdentifier, const std::vector<SemanticType>& parameterTypes);
+        static std::string functionSignatureToString(const std::string& functionIdentifier, const std::vector<Type>& parameterTypes);
 
         SymbolTable* symbolTable;
+        TypeRegistry* typeRegistry;
         const std::filesystem::path *path;
     };
 }

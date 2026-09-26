@@ -20,10 +20,10 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_NO_INITIALISER) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 1),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
             "x",
             std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 1),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
                 std::move(arrayDimension),
                 nullptr
             )
@@ -55,10 +55,10 @@ TEST(EXPR_NEW, TWO_INDICES_WITH_NO_INITIALISER) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 1),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
             "x",
             std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 2),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 2),
                 std::move(arrayDimension),
                 nullptr
             )
@@ -87,10 +87,10 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_EMPTY_INITIALISER) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 1),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
             "x",
             std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 1),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
                 std::move(arrayDimension),
                 std::move(expectedArrayInitialisers)
             )
@@ -126,10 +126,10 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_INITIALISER) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 1),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
             "x",
             std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 1),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
                 std::move(arrayDimension),
                 std::make_unique<ExpectedArrayInitialiser>(
                     std::move(arrayInitialiserElements)
@@ -182,10 +182,10 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_NESTED_INITIALISER) {
 
     expectedStatements.push_back(
         std::make_unique<ExpectedVarDecl>(
-            std::make_unique<Type>(compiler::Type::INT, 1),
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
             "x",
             std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 1),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
                 std::move(arrayDimension),
                 std::make_unique<ExpectedArrayInitialiser>(
                     std::move(arrayInitialiser)

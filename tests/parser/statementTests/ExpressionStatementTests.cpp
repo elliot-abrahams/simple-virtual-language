@@ -147,7 +147,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_INCREMENT) {
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                noExpectedIndices,
+                noExpectedPostfixOperators,
                 compiler::UnaryOperator::INCREMENT
             )
         )
@@ -170,7 +170,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_DECREMENT) {
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                noExpectedIndices,
+                noExpectedPostfixOperators,
                 compiler::UnaryOperator::DECREMENT
             )
         )
@@ -186,9 +186,9 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_INCREMENT_INDEX) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
+    std::vector<PostfixOperator> postfixOperators;
 
-    indices.push_back(
+    postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -200,7 +200,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_INCREMENT_INDEX) {
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                indices,
+                postfixOperators,
                 compiler::UnaryOperator::INCREMENT
             )
         )
@@ -216,9 +216,9 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_DECREMENT_INDEX) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
+    std::vector<PostfixOperator> postfixOperators;
 
-    indices.push_back(
+    postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -230,7 +230,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_DECREMENT_INDEX) {
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                indices,
+                postfixOperators,
                 compiler::UnaryOperator::DECREMENT
             )
         )
@@ -246,10 +246,10 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
+    std::vector<PostfixOperator> postfixOperators;
 
-    indices.push_back(
+    postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -262,7 +262,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX) {
                     "foo",
                     std::move(expectedArguments)
                 ),
-                indices,
+                postfixOperators,
                 compiler::UnaryOperator::INCREMENT
             )
         )
@@ -278,10 +278,10 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
+    std::vector<PostfixOperator> postfixOperators;
 
-    indices.push_back(
+    postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -294,7 +294,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX) {
                     "foo",
                     std::move(expectedArguments)
                 ),
-                indices,
+                postfixOperators,
                 compiler::UnaryOperator::DECREMENT
             )
         )
@@ -310,16 +310,16 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX_WITH_INDEXED_ARGUMENT)
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices2;
+    std::vector<PostfixOperator> postfixOperators;
+    std::vector<PostfixOperator> postfixOperators2;
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
-    indices2.push_back(
+    postfixOperators2.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(0)
         )
     );
-    indices2.push_back(
+    postfixOperators2.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(0)
         )
@@ -330,17 +330,17 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX_WITH_INDEXED_ARGUMENT)
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("x")
             ),
-            indices2,
+            postfixOperators2,
             compiler::UnaryOperator::INCREMENT
         )
     );
 
-    indices.push_back(
+    postfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
     );
-    indices.push_back(
+    postfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -353,7 +353,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX_WITH_INDEXED_ARGUMENT)
                     "foo",
                     std::move(expectedArguments)
                 ),
-                indices,
+                postfixOperators,
                 compiler::UnaryOperator::INCREMENT
             )
         )
@@ -369,16 +369,16 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX_WITH_INDEXED_ARGUMENT)
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices;
-    std::vector<std::unique_ptr<ExpectedIndex>> indices2;
+    std::vector<PostfixOperator> postfixOperators;
+    std::vector<PostfixOperator> postfixOperators2;
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
-    indices2.push_back(
+    postfixOperators2.emplace_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(0)
         )
     );
-    indices2.push_back(
+    postfixOperators2.emplace_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(0)
         )
@@ -389,17 +389,17 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX_WITH_INDEXED_ARGUMENT)
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("x")
             ),
-            indices2,
+            postfixOperators2,
             compiler::UnaryOperator::DECREMENT
         )
     );
 
-    indices.push_back(
+    postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
     );
-    indices.push_back(
+    postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
             std::make_unique<ExpectedIntegerLiteral>(1)
         )
@@ -412,7 +412,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX_WITH_INDEXED_ARGUMENT)
                     "foo",
                     std::move(expectedArguments)
                 ),
-                indices,
+                postfixOperators,
                 compiler::UnaryOperator::DECREMENT
             )
         )
@@ -576,7 +576,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_NEW) {
     expectedStatements.push_back(
         std::make_unique<ExpectedExpressionStatement>(
             std::make_unique<ExpectedExprNew>(
-                std::make_unique<Type>(compiler::Type::INT, 1),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
                 std::move(arrayDimensions),
                 nullptr
             )
@@ -597,7 +597,7 @@ TEST(EXPR_STM, CAST_EXPR) {
     expectedStatements.push_back(
         std::make_unique<ExpectedExpressionStatement>(
             std::make_unique<ExpectedCastExpr>(
-                std::make_unique<Type>(compiler::Type::INT, 0),
+                std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 std::make_unique<ExpectedFloatLiteral>(5.5f)
             )
         )

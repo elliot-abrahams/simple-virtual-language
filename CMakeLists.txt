@@ -39,8 +39,8 @@ set(Headers
     src/compiler/Parser.h
     src/compiler/AST.h
     src/include/Error.h
-    src/compiler/SymbolTable.h
-    src/compiler/SemanticAnalyser.h
+    src/compiler/semantic/SymbolTable.h
+    src/compiler/semantic/SemanticAnalyser.h
     src/compiler/codegen/AssemblyGenerator.h
     src/compiler/LanguageTypes.h
     src/compiler/codegen/Builtins.h
@@ -48,6 +48,7 @@ set(Headers
     src/compiler/codegen/Assembly.h
     src/compiler/codegen/AssemblyEmitter.h
     src/vm/RuntimeErrorHandler.h
+    src/compiler/semantic/TypeRegistry.h
 )
 
 set(Sources
@@ -65,12 +66,13 @@ set(Sources
     src/compiler/Compiler.cpp
     src/compiler/Tokeniser.cpp
     src/compiler/Parser.cpp
-    src/compiler/SymbolTable.cpp
-    src/compiler/SemanticAnalyser.cpp
+    src/compiler/semantic/SymbolTable.cpp
+    src/compiler/semantic/SemanticAnalyser.cpp
     src/compiler/codegen/AssemblyGenerator.cpp
     src/compiler/codegen/Builtins.cpp
     src/compiler/codegen/AssemblyEmitter.cpp
     src/vm/RuntimeErrorHandler.cpp
+    src/compiler/semantic/TypeRegistry.cpp
 )
 
 add_library(${This} STATIC ${Sources} ${Headers})

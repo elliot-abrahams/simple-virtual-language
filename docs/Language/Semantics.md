@@ -30,8 +30,9 @@
   - [6.6 Logical Operators](#66-logical-operators)
   - [6.7 Unary Operators](#67-unary-operators)
   - [6.8 Postfix Expressions](#68-postfix-expressions)
-    - [6.8.1 Indexing](#681-indexing)
-    - [6.8.2 Increment and Decrement](#682-increment-and-decrement)
+    - [6.8.1 Array Access](#681-array-access)
+    - [6.8.2 Field Access](#682-field-access)
+    - [6.8.3 Increment and Decrement](#683-increment-and-decrement)
   - [6.9 Function Calls](#69-function-calls)
   - [6.10 Cast Expressions](#610-cast-expressions)
   - [6.11 New Expressions](#611-new-expressions)
@@ -460,7 +461,7 @@ The resulting type of unary expressions is the resulting type of its base expres
 
 A postfix expression evaluates its base expression and then applies each postfix operation in order.
 
-#### 6.8.1 Indexing
+#### 6.8.1 Array Access
 
 An index may only be applied to an array.
 
@@ -481,7 +482,13 @@ arr[0]      // has type int[]
 arr[0][1]   // has type int 
 ```
 
-#### 6.8.2 Increment and Decrement
+#### 6.8.2 Field Access
+
+A field access may only be applied to a type that contains the specified field.
+
+The resulting type of a field access is the type of the specified field access.
+
+#### 6.8.3 Increment and Decrement
 
 The postfix increment operator `++` increments the value of its base expression by `1`.
 
