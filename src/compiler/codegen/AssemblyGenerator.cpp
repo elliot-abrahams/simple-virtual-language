@@ -516,31 +516,34 @@ void compiler::AssemblyGenerator::compileExpr(Scope* scope, const ast::Expr& exp
     if (auto* integerLiteral = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
         this->compileExprIntegerLiteral(*integerLiteral);
     }
-    if (auto* floatLiteral = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
+    else if (auto* floatLiteral = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
         this->compileExprFloatLiteral(*floatLiteral);
     }
-    if (auto* boolLiteral = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
+    else if (auto* boolLiteral = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
         this->compileExprBoolLiteral(*boolLiteral);
     }
-    if (auto* identifier = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
+    else if (auto* charLiteral = dynamic_cast<const ast::ExprCharLiteral*>(&expr)) {
+        this->compilerExprCharLiteral(*charLiteral);
+    }
+    else if (auto* identifier = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
         this->compileExprIdentifier(scope, *identifier, exprResult);
     }
-    if (auto* binaryExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
+    else if (auto* binaryExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
         this->compileBinaryExpr(scope, *binaryExpr);
     }
-    if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
+    else if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
         this->compileUnaryExpr(scope, *unaryExpr, ExprResult::VALUE);
     }
-    if (auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
+    else if (auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
         this->compilePostfixExpr(scope, *postfixExpr, exprResult);
     }
-    if (auto* castExpr = dynamic_cast<const ast::ExprCast*>(&expr)) {
+    else if (auto* castExpr = dynamic_cast<const ast::ExprCast*>(&expr)) {
         this->compileCastExpr(scope, *castExpr);
     }
-    if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
+    else if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
         this->compileFunctionCall(scope, *functionCall);
     }
-    if (auto* newExpr = dynamic_cast<const ast::ExprNew*>(&expr)) {
+    else if (auto* newExpr = dynamic_cast<const ast::ExprNew*>(&expr)) {
         this->compileNewExpr(scope, *newExpr);
     }
 }
@@ -549,8 +552,8 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
     this->compileExpr(scope, *expr.left, ExprResult::VALUE);
 
     switch (expr.binaryOperatorInfo->binaryOperator) {
-        case BinaryOperator::PLUS:
-        case BinaryOperator::MINUS:
+        case BinaryOperator::ADD:
+        case BinaryOperator::SUBTRACT:
         case BinaryOperator::MULTIPLY:
         case BinaryOperator::DIVIDE:
         case BinaryOperator::MODULO: {
@@ -675,6 +678,9 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
             ) {
                 // if either operand is float -> convert left expr to float
                 this->compileTypeConversionIfRequired(expr.left->resultingType, Type{FLOAT_TYPE_ID, 0}, SourceLocation{0, expr.left->line, expr.left->column});
+            } else {
+                // convert left expr to int
+                this->compileTypeConversionIfRequired(expr.left->resultingType, Type{INT_TYPE_ID, 0}, SourceLocation{0, expr.left->line, expr.left->column});
             }
 
             // compile right expression
@@ -685,6 +691,9 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
             ) {
                 // if either operand is float -> convert right expr to float
                 this->compileTypeConversionIfRequired(expr.right->resultingType, Type{FLOAT_TYPE_ID, 0}, SourceLocation{0, expr.right->line, expr.right->column});
+            } else {
+                // convert right expr to int
+                this->compileTypeConversionIfRequired(expr.right->resultingType, Type{INT_TYPE_ID, 0}, SourceLocation{0, expr.right->line, expr.right->column});
             }
 
             this->compileBinaryOperator(*expr.binaryOperatorInfo);
@@ -713,8 +722,8 @@ void compiler::AssemblyGenerator::compileBinaryOperator(const ast::BinaryOperato
     const auto sourceLocation = SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column};
 
     switch (binaryOperatorInfo.binaryOperator) {
-        case BinaryOperator::PLUS: this->emit(Instruction{Opcode::ADD, {}, sourceLocation}); break;
-        case BinaryOperator::MINUS: this->emit(Instruction{Opcode::SUB, {}, sourceLocation}); break;
+        case BinaryOperator::ADD: this->emit(Instruction{Opcode::ADD, {}, sourceLocation}); break;
+        case BinaryOperator::SUBTRACT: this->emit(Instruction{Opcode::SUB, {}, sourceLocation}); break;
         case BinaryOperator::MULTIPLY: this->emit(Instruction{Opcode::MUL, {}, sourceLocation}); break;
 
         case BinaryOperator::DIVIDE:
@@ -1679,6 +1688,16 @@ void compiler::AssemblyGenerator::compileExprBoolLiteral(const ast::ExprBoolLite
     });
 }
 
+void compiler::AssemblyGenerator::compilerExprCharLiteral(const ast::ExprCharLiteral &charLiteral) {
+    // push char value onto stack
+    this->emit(Instruction{Opcode::PUSH,
+        {
+            AssemblyType::UI32,
+            Immediate{getNumber(charLiteral.resultingType, charLiteral.value)}
+        }
+    });
+}
+
 void compiler::AssemblyGenerator::compileTypeConversionIfRequired(const Type& currentType, const Type& newType, const SourceLocation& sourceLocation) {
     // convert to new type if current type is different from the new type
     this->compileTypeConversionIfRequired(toAssemblyType(currentType), toAssemblyType(newType), sourceLocation);
@@ -1739,7 +1758,10 @@ compiler::AssemblyType compiler::AssemblyGenerator::toAssemblyType(const Type& t
     switch (type.typeId) {
         case INT_TYPE_ID: return AssemblyType::I32;
         case FLOAT_TYPE_ID: return AssemblyType::F32;
-        case BOOL_TYPE_ID: return AssemblyType::UI32;
+
+        case BOOL_TYPE_ID:
+        case CHAR_TYPE_ID:
+            return AssemblyType::UI32;
     }
 }
 
@@ -1748,6 +1770,9 @@ compiler::Number compiler::AssemblyGenerator::getNumber(const Type& type, const 
     switch (type.typeId) {
         case INT_TYPE_ID: return Number{static_cast<int32_t>(value)};
         case FLOAT_TYPE_ID: return Number{static_cast<float>(value)};
-        case BOOL_TYPE_ID: return Number{static_cast<uint32_t>(value)};
+
+        case BOOL_TYPE_ID:
+        case CHAR_TYPE_ID:
+            return Number{static_cast<uint32_t>(value)};
     }
 }

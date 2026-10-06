@@ -21,6 +21,8 @@ namespace compiler {
     private:
         Token readToken();
         void advance();
+        void advance(size_t n);
+        void advanceUtf8CodePoint();
 
         void throwUnexpectedCharError(const char character) const;
 

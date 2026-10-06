@@ -129,6 +129,42 @@ TEST(STM_VAR_DECL, BOOL_ARRAY_NOT_INITIALISED) {
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
+TEST(STM_VAR_DECL, CHAR_NOT_INITIALISED) {
+    const auto testCode = R"(
+        char x;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::CHAR_TYPE_ID, 0),
+            "x",
+            nullptr
+        )
+    );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_VAR_DECL, CHAR_ARRAY_NOT_INITIALISED) {
+    const auto testCode = R"(
+        char[] x;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::CHAR_TYPE_ID, 1),
+            "x",
+            nullptr
+        )
+    );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
 TEST(STM_VAR_DECL, INT_LIT) {
     const auto testCode = R"(
         int x = 5;
@@ -203,6 +239,24 @@ TEST(STM_VAR_DECL, BOOL_LIT) {
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
+TEST(STM_VAR_DECL, CHAR_LIT) {
+    const auto testCode = R"(
+        char c = 'a';
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::CHAR_TYPE_ID, 0),
+            "c",
+            std::make_unique<ExpectedCharLiteral>('a')
+        )
+    );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
 TEST(STM_VAR_DECL, INT_IDENTIFIER_EXPR) {
     const auto testCode = R"(
         int b = x;
@@ -259,7 +313,7 @@ TEST(STM_VAR_DECL, INT_BINARY_EXPR) {
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
             std::make_unique<ExpectedBinaryExpr>(
-                compiler::BinaryOperator::PLUS,
+                compiler::BinaryOperator::ADD,
                 std::make_unique<ExpectedIntegerLiteral>(
                     1
                 ),

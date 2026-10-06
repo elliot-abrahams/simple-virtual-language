@@ -13,7 +13,7 @@ TEST(EXPR_STM, BINARY_EXPR) {
     expectedStatements.push_back(
         std::make_unique<ExpectedExpressionStatement>(
             std::make_unique<ExpectedBinaryExpr>(
-                compiler::BinaryOperator::PLUS,
+                compiler::BinaryOperator::ADD,
                 std::make_unique<ExpectedIntegerLiteral>(1),
                 std::make_unique<ExpectedIntegerLiteral>(2)
             )
@@ -552,6 +552,23 @@ TEST(EXPR_STM, PRIMARY_EXPR_BOOL_LIT) {
     expectedStatements.push_back(
         std::make_unique<ExpectedExpressionStatement>(
             std::make_unique<ExpectedBoolLiteral>(true)
+        )
+    );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_STM, PRIMARY_EXPR_CHAR_LIT) {
+    const auto testCode = R"(
+        'a';
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+
+    expectedStatements.push_back(
+        std::make_unique<ExpectedExpressionStatement>(
+            std::make_unique<ExpectedCharLiteral>('a')
         )
     );
     std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;

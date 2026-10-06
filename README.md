@@ -35,7 +35,7 @@ Assembly Language    (.svma)
 - Block scopes
 - Functions and function overloading
 - Control flow (`if`, `while`, `break`, `continue`)
-- Integer, floating-point and boolean types
+- Integer, floating-point, boolean, and char types
 - Arrays
 - Implicit and explicit type conversions
 - Arithmetic, comparison and logical operators
@@ -233,7 +233,7 @@ tests        Unit and Integration tests
 
 ## Future Improvements
 
-- Character and string types
+- String type
 - Long and double types
 - User-defined types (e.g. structs) 
 - Additional built-in functions

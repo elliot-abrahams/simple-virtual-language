@@ -74,6 +74,28 @@ TEST(FUNCTION, IMPLICIT_CONVERSION_INT_TO_FLOAT) {
     );
 }
 
+TEST(FUNCTION, IMPLICIT_CONVERSION_CHAR_TO_INT) {
+    ASSERT_SEMANTICALLY_VALID(R"(
+            float foo(int a) {
+                return a;
+            }
+
+            float res = foo('a');
+        )"
+    );
+}
+
+TEST(FUNCTION, IMPLICIT_CONVERSION_CHAR_TO_FLOAT) {
+    ASSERT_SEMANTICALLY_VALID(R"(
+            float foo(float a) {
+                return a;
+            }
+
+            float res = foo('a');
+        )"
+    );
+}
+
 TEST(FUNCTION, IMPLICIT_CONVERSION_MULTIPLE_INT_TO_FLOAT) {
     ASSERT_SEMANTICALLY_VALID(R"(
             float foo(float a, float b) {

@@ -33,6 +33,16 @@ TEST(ARRAY, BOOL_ARRAY_1D) {
     );
 }
 
+TEST(ARRAY, CHAR_ARRAY_1D) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            char[] arr = new char[3];
+            print(arr[0]);
+        )",
+        std::string{static_cast<char>(0)}
+    );
+}
+
 TEST(ARRAY, INT_ARRAY_2D) {
     ASSERT_OUTPUT_EQ(
         R"(
@@ -60,6 +70,16 @@ TEST(ARRAY, BOOL_ARRAY_2D) {
             print(arr[0][0]);
         )",
         "false"
+    );
+}
+
+TEST(ARRAY, CHAR_ARRAY_2D) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            char[][] arr = new char[3][3];
+            print(arr[0][0]);
+        )",
+        std::string{static_cast<char>(0)}
     );
 }
 

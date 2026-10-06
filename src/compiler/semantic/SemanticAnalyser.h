@@ -45,6 +45,17 @@ namespace compiler {
         ExpressionInfo processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
         FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
 
+        Type processAddition(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processSubtraction(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processMultiplication(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processDivision(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processIntegerDivision(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processModulo(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processLogical(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processEquality(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processComparison(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+
+        static bool canCastToType(const Type& from, const Type& to);
         static bool canImplicitlyConvert(const Type& from, const Type& to);
         Symbol* checkSymbolIsDefined(Scope* scope, const std::string& identifier, const size_t line, const size_t column) const;
 

@@ -29,6 +29,18 @@ TEST(FUNCTION, RETURN_INT) {
     );
 }
 
+TEST(FUNCTION, RETURN_CHAR_TO_INT_IMPLICIT) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            int foo() {
+                return 'A';
+            }
+            print(foo());
+        )",
+        "65"
+    );
+}
+
 TEST(FUNCTION, RETURN_FLOAT) {
     ASSERT_OUTPUT_EQ(
         R"(
@@ -41,7 +53,7 @@ TEST(FUNCTION, RETURN_FLOAT) {
     );
 }
 
-TEST(FUNCTION, RETURN_FLOAT_IMPLICIT) {
+TEST(FUNCTION, RETURN_INT_TO_FLOAT_IMPLICIT) {
     ASSERT_OUTPUT_EQ(
         R"(
             float foo() {
@@ -50,6 +62,18 @@ TEST(FUNCTION, RETURN_FLOAT_IMPLICIT) {
             print(foo());
         )",
         "5.0"
+    );
+}
+
+TEST(FUNCTION, RETURN_CHAR_TO_FLOAT_IMPLICIT) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            float foo() {
+                return 'A';
+            }
+            print(foo());
+        )",
+        "65.0"
     );
 }
 
@@ -62,6 +86,18 @@ TEST(FUNCTION, RETURN_BOOL) {
             print(foo());
         )",
         "false"
+    );
+}
+
+TEST(FUNCTION, RETURN_CHAR) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            char foo() {
+                return 'h';
+            }
+            print(foo());
+        )",
+        "h"
     );
 }
 

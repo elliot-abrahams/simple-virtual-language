@@ -24,6 +24,13 @@ TEST(STM_WHILE, INVALID_FLOAT_CONDITION) {
     );
 }
 
+TEST(STM_WHILE, INVALID_CHAR_CONDITION) {
+    ASSERT_THROWS_TYPE_ERROR(R"(
+            while ('a') {}
+        )"
+    );
+}
+
 TEST(STM_WHILE, INVALID_BOOL_ARRAY_CONDITION) {
     ASSERT_THROWS_TYPE_ERROR(R"(
             while (new bool[3]) {}

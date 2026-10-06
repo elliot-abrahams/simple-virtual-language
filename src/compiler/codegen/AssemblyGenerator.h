@@ -59,6 +59,7 @@ namespace compiler {
         void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
         void compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);
         void compileExprBoolLiteral(const ast::ExprBoolLiteral& boolLiteral);
+        void compilerExprCharLiteral(const ast::ExprCharLiteral& charLiteral);
 
         void compileTypeConversionIfRequired(const Type& currentType, const Type& newType, const SourceLocation& sourceLocation);
         void compileTypeConversionIfRequired(const AssemblyType currentType, const AssemblyType newType, const SourceLocation& sourceLocation);

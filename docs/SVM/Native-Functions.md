@@ -6,6 +6,8 @@
 - [2. Native Functions](#2-native-functions)
   - [2.1 exit](#21-exit)
   - [2.2 print](#22-print)
+  - [2.3 print_char](#23-print_char)
+  - [2.4 print_str](#24-print_str)
 
 ## 1. Overview
 
@@ -54,7 +56,24 @@ Native functions interact with the operand stack to receive arguments and produc
 
 ---
 
-### 2.3 print_str
+### 2.3 print_char
+
+**Native Ref:** `print_char'
+
+**ID:** `0x02`
+
+**Stack:** `[value]→ []`
+
+**Semantics:**
+- Pops `value` from the operand stack
+- `value` is interpreted as a Unicode code point.
+- Encodes the Unicode code point as UTF-8
+- Outputs the resulting UTF-8 bytes to standard output 
+
+**Type Rules:**
+- `value` must have type `ui32`
+
+### 2.4 print_str
 
 **Native Ref:** `print_str`
 

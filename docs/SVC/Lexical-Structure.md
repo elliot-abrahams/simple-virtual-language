@@ -12,6 +12,7 @@
   - [8.1 Int Literals](#81-int-literals)
   - [8.2 Float Literals](#82-float-literals)
   - [8.3 Bool Literals](#83-bool-literals)
+  - [8.4 Char Literal](#84-char-literals)
 
 ---
 
@@ -214,3 +215,27 @@ A sign is represented by a separate unary operator.
 SV provides two boolean literals:
 - `true`
 - `false`
+
+### 8.4 Char Literals
+
+A char literal is enclosed in single quotes `'` and represents a single Unicode character encoded as UTF-8.
+
+Examples:
+```
+'a'
+'😀' 
+'\n'
+```
+
+A char literal may also contain an escape sequence.
+
+| Escape Sequence | Represents      |
+|-----------------|-----------------|
+| `\n`            | Newline         |
+| `\t`            | Tab             |
+| `\r`            | Carriage return |
+| `\0`            | Null character  |
+| `\\`            | Backslash       |
+| `\'`            | Single quote    |
+
+Char literals represent Unicode code points. The underlying character value is not the UTF-8 byte sequence.

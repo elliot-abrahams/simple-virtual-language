@@ -13,6 +13,7 @@ public:
         switch (id) {
             case 0x00: executeExit(vm); break;
             case 0x01: executePrint(vm); break;
+            case 0x02: executePrintChar(vm); break;
             case 0x03: executePrintStr(vm); break;
 
             default:
@@ -68,6 +69,36 @@ private:
         }
 
         std::cout << output;
+    }
+
+    static void executePrintChar(VM* vm) {
+        const Value value = vm->getOperandStack()->pop();
+        // type of value must be ui32
+        vm->checkType(
+            "native print",
+            {static_cast<uint8_t>(ISA::Type::UI32)},
+            static_cast<uint8_t>(value.type)
+        );
+
+        std::string utf8;
+
+        if (value.rawValue <= 0x7F) {
+            utf8 += static_cast<char>(value.rawValue);
+        } else if (value.rawValue <= 0x7FF) {
+            utf8 += static_cast<char>(0xC0 | (value.rawValue >> 6));
+            utf8 += static_cast<char>(0x80 | (value.rawValue & 0x3F));
+        } else if (value.rawValue <= 0xFFFF) {
+            utf8 += static_cast<char>(0xE0 | (value.rawValue >> 12));
+            utf8 += static_cast<char>(0x80 | ((value.rawValue >> 6) & 0x3F));
+            utf8 += static_cast<char>(0x80 | (value.rawValue & 0x3F));
+        } else if (value.rawValue <= 0x10FFFF) {
+            utf8 += static_cast<char>(0xF0 | (value.rawValue >> 18));
+            utf8 += static_cast<char>(0x80 | ((value.rawValue >> 12) & 0x3F));
+            utf8 += static_cast<char>(0x80 | ((value.rawValue >> 6) & 0x3F));
+            utf8 += static_cast<char>(0x80 | (value.rawValue & 0x3F));
+        }
+
+        std::cout << utf8;
     }
 
     static void executePrintStr(VM* vm) {

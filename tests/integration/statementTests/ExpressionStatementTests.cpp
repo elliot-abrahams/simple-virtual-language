@@ -91,6 +91,50 @@ TEST(EXPR_STM, POST_DECREMENT_FLOAT_VARIABLE) {
     );
 }
 
+TEST(EXPR_STM, PRE_INCREMENT_CHAR_VARIABLE) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            char c = 'A';
+            ++c;
+            print(c);
+        )",
+        "B"
+    );
+}
+
+TEST(EXPR_STM, POST_INCREMENT_CHAR_VARIABLE) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            char c = 'A';
+            c++;
+            print(c);
+        )",
+        "B"
+    );
+}
+
+TEST(EXPR_STM, PRE_DECREMENT_CHAR_VARIABLE) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            char c = 'b';
+            --c;
+            print(c);
+        )",
+        "a"
+    );
+}
+
+TEST(EXPR_STM, POST_DECREMENT_CHAR_VARIABLE) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            char c = 'b';
+            c--;
+            print(c);
+        )",
+        "a"
+    );
+}
+
 TEST(EXPR_STM, PRE_INCREMENT_ARRAY_ELEMENT) {
     ASSERT_OUTPUT_EQ(
         R"(

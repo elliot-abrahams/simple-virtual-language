@@ -72,6 +72,29 @@ TEST(STM_ASSIGN, BOOL_LIT) {
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
+TEST(STM_ASSIGN, CHAR_LIT) {
+    const auto testCode = R"(
+        x = 'a';
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::EQUAL,
+            std::make_unique<ExpectedCharLiteral>(
+                'a'
+            )
+        )
+    );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
 TEST(STM_ASSIGN, IDENTIFIER_EXPR) {
     const auto testCode = R"(
         x = y;
@@ -136,7 +159,7 @@ TEST(STM_ASSIGN, BINARY_EXPR) {
             noExpectedIndices,
             compiler::AssignmentOperator::EQUAL,
             std::make_unique<ExpectedBinaryExpr>(
-                compiler::BinaryOperator::PLUS,
+                compiler::BinaryOperator::ADD,
                 std::make_unique<ExpectedIntegerLiteral>(1),
                 std::make_unique<ExpectedIntegerLiteral>(2)
             )

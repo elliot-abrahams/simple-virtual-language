@@ -132,6 +132,47 @@ Token compiler::Tokeniser::readToken() {
                 this->advance();
                 return token;
             }
+            case '\'': {
+                const auto line = this->line;
+                const auto column = this->column;
+                std::string image = "'";
+                this->advance();
+                if (this->source[this->current] == '\\') {
+                    image += "\\";
+                    this->advance();
+                    switch (const char escapeChar = this->source[this->current]) {
+                        case 'n':
+                        case 't':
+                        case 'r':
+                        case '0':
+                        case '\\':
+                        case '\'':
+                            image += escapeChar;
+                            this->advance();
+                            break;
+
+                        default:
+                            throw SyntaxError(
+                                *this->path,
+                                this->line,
+                                this->column,
+                                "invalid escape character '" +
+                                    std::string(1, escapeChar) +
+                                    "'"
+                            );
+                    }
+                } else {
+                    const auto start = this->current;
+                    this->advanceUtf8CodePoint();
+                    image += this->source.substr(start, this->current - start);
+                }
+                if (this->source[this->current] != '\'') {
+                    this->throwUnexpectedCharError(this->source[this->current]);
+                }
+                image += "\'";
+                this->advance();
+                return Token{TokenKind::CHAR_LITERAL, image, line, column};
+            }
             case '=': {
                 if (this->current + 1 < this->source.size() &&
                     this->source[this->current + 1] == '=') {
@@ -140,7 +181,7 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     this->advance();
                     return token;
-                    }
+                }
 
                 const Token token = Token{TokenKind::EQUAL, "=", this->line, this->column};
                 this->advance();
@@ -154,7 +195,7 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     this->advance();
                     return token;
-                    }
+                }
                 const Token token = Token{TokenKind::PLUS, "+", this->line, this->column};
                 this->advance();
                 return token;
@@ -167,7 +208,7 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     this->advance();
                     return token;
-                    }
+                }
                 const Token token = Token{TokenKind::MINUS, "-", this->line, this->column};
                 this->advance();
                 return token;
@@ -185,7 +226,7 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     this->advance();
                     return token;
-                    }
+                }
                 const Token token = Token{TokenKind::DIVIDE, "/", this->line, this->column};
                 this->advance();
                 return token;
@@ -225,7 +266,7 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     this->advance();
                     return token;
-                    }
+                }
 
                 const Token token = Token{TokenKind::LOGICAL_NOT, "!", this->line, this->column};
                 this->advance();
@@ -239,7 +280,7 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     this->advance();
                     return token;
-                    }
+                }
 
                 const Token token = Token{TokenKind::LESS_THAN, "<", this->line, this->column};
                 this->advance();
@@ -253,7 +294,7 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     this->advance();
                     return token;
-                    }
+                }
 
                 const Token token = Token{TokenKind::GREATER_THAN, ">", this->line, this->column};
                 this->advance();
@@ -265,7 +306,7 @@ Token compiler::Tokeniser::readToken() {
                     while (this->current < this->source.size() &&
                           (std::isalnum(this->source[this->current]) || this->source[this->current] == '_')) {
                         this->advance();
-                          }
+                    }
 
                     // parse keyword or identifier
                     const std::string image(this->source.substr(this->start, this->current - this->start));
@@ -278,10 +319,12 @@ Token compiler::Tokeniser::readToken() {
                     if (image == "return") return Token{TokenKind::RETURN, image, this->line, this->column - 6};
                     if (image == "new") return Token{TokenKind::NEW, image, this->line, this->column - 3};
 
+                    if (image == "void") return Token{TokenKind::VOID_TYPE, image, this->line, this->column - 4};
                     if (image == "int") return Token{TokenKind::INT_TYPE, image, this->line, this->column - 3};
                     if (image == "float") return Token{TokenKind::FLOAT_TYPE, image, this->line, this->column - 5};
-                    if (image == "void") return Token{TokenKind::VOID_TYPE, image, this->line, this->column - 4};
                     if (image == "bool") return Token{TokenKind::BOOL_TYPE, image, this->line, this->column - 4};
+                    if (image == "char") return Token{TokenKind::CHAR_TYPE, image, this->line, this->column - 4};
+
                     if (image == "true") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column - 4};
                     if (image == "false") return Token{TokenKind::BOOL_LITERAL, image, this->line, this->column - 5};
 
@@ -351,6 +394,49 @@ Token compiler::Tokeniser::readToken() {
 void compiler::Tokeniser::advance() {
     this->current++;
     this->column++;
+}
+
+void compiler::Tokeniser::advance(size_t n) {
+    this->current += n;
+    this->column += n;
+}
+
+void compiler::Tokeniser::advanceUtf8CodePoint() {
+    const auto first = static_cast<unsigned char>(this->source[this->current]);
+
+    std::size_t length;
+
+    if (first <= 0x7F) {
+        length = 1;
+    } else if ((first & 0xE0) == 0xC0) {
+        length = 2;
+    } else if ((first & 0xF0) == 0xE0) {
+        length = 3;
+    } else if ((first & 0xF8) == 0xF0) {
+        length = 4;
+    } else {
+        throw SyntaxError(
+            *this->path,
+            this->line,
+            this->column,
+            "invalid UTF-8 sequence"
+        );
+    }
+
+    for (std::size_t i = 1; i < length; ++i) {
+        const auto byte = static_cast<unsigned char>(this->source[this->current + i]);
+
+        if ((byte & 0xC0) != 0x80) {
+            throw SyntaxError(
+                *this->path,
+                this->line,
+                this->column,
+                "invalid UTF-8 sequence"
+            );
+        }
+    }
+
+    this->advance(length);
 }
 
 void compiler::Tokeniser::throwUnexpectedCharError(const char character) const {

@@ -34,7 +34,11 @@ namespace compiler {
         }
 
         bool isNumeric() const {
-            return !this->isArray() && (this->typeId == INT_TYPE_ID || this->typeId == FLOAT_TYPE_ID);
+            return !this->isArray() && (
+                this->typeId == INT_TYPE_ID ||
+                this->typeId == FLOAT_TYPE_ID ||
+                this->typeId == CHAR_TYPE_ID
+                );
         }
 
         bool isArray() const {
@@ -56,8 +60,8 @@ namespace compiler {
     };
 
     enum class BinaryOperator {
-        PLUS,
-        MINUS,
+        ADD,
+        SUBTRACT,
         MULTIPLY,
         DIVIDE,
         INTEGER_DIVIDE,

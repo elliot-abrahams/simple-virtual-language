@@ -232,6 +232,107 @@ TEST(NATIVE, PRINT_INVALID_UNDERFLOW) {
     );
 }
 
+TEST(NATIVE, PRINT_CHAR_UI32) {
+    EXPECT_CONSOLE_OUTPUT(
+        R"(
+            push ui32 #97
+            native print_char
+            halt
+        )",
+        "a"
+    );
+}
+
+TEST(NATIVE, PRINT_CHAR_UI32_UTF_8) {
+    EXPECT_CONSOLE_OUTPUT(
+        R"(
+            push ui32 #128512
+            native print_char
+            halt
+        )",
+        "😀"
+    );
+}
+
+TEST(NATIVE, PRINT_CHAR_INVALID_I32) {
+    EXPECT_RUNTIME_ERROR(
+        R"(
+            push i32 #97
+            native print_char
+            halt
+        )",
+        RuntimeErrorType::INTERNAL
+    );
+}
+
+TEST(NATIVE, PRINT_CHAR_INVALID_I64) {
+    EXPECT_RUNTIME_ERROR(
+        R"(
+            push i64 #97
+            native print_char
+            halt
+        )",
+        RuntimeErrorType::INTERNAL
+    );
+}
+
+TEST(NATIVE, PRINT_CHAR_INVALID_UI64) {
+    EXPECT_RUNTIME_ERROR(
+        R"(
+            push ui64 #97
+            native print_char
+            halt
+        )",
+        RuntimeErrorType::INTERNAL
+    );
+}
+
+TEST(NATIVE, PRINT_CHAR_INVALID_F32) {
+    EXPECT_RUNTIME_ERROR(
+        R"(
+            push f32 #97.0
+            native print_char
+            halt
+        )",
+        RuntimeErrorType::INTERNAL
+    );
+}
+
+TEST(NATIVE, PRINT_CHAR_INVALID_F64) {
+    EXPECT_RUNTIME_ERROR(
+        R"(
+            push f64 #97.0
+            native print_char
+            halt
+        )",
+        RuntimeErrorType::INTERNAL
+    );
+}
+
+TEST(NATIVE, PRINT_CHAR_INVALID_PTR) {
+    EXPECT_RUNTIME_ERROR(
+        R"(
+            push ptr $x
+            native print_char
+            halt
+
+            .data
+            $x: i32 0
+        )",
+        RuntimeErrorType::INTERNAL
+    );
+}
+
+TEST(NATIVE, PRINT_CHAR_INVALID_UNDERFLOW) {
+    EXPECT_RUNTIME_ERROR(
+        R"(
+            native print_char
+            halt
+        )",
+        RuntimeErrorType::INTERNAL
+    );
+}
+
 TEST(NATIVE, PRINT_STR_PTR) {
     EXPECT_CONSOLE_OUTPUT(
         R"(

@@ -39,6 +39,15 @@ TEST(EXPR_POSTFIX, BOOL) {
     );
 }
 
+TEST(EXPR_POSTFIX, CHAR) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            char x = 'a';
+            char y = x;
+        )"
+    );
+}
+
 TEST(EXPR_POSTFIX, ONE_DIMENSIONAL_INT_ARRAY_ZERO_INDICES) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
@@ -66,6 +75,15 @@ TEST(EXPR_POSTFIX, ONE_DIMENSIONAL_BOOL_ARRAY_ZERO_INDICES) {
     );
 }
 
+TEST(EXPR_POSTFIX, ONE_DIMENSIONAL_CHAR_ARRAY_ZERO_INDICES) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            char[] x = new char[3];
+            char[] y = x;
+        )"
+    );
+}
+
 TEST(EXPR_POSTFIX, ONE_DIMENSIONAL_INT_ARRAY_ONE_INDEX) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
@@ -89,6 +107,15 @@ TEST(EXPR_POSTFIX, ONE_DIMENSIONAL_BOOL_ARRAY_ONE_INDEX) {
         R"(
             bool[] x = new bool[3];
             bool y = x[1];
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, ONE_DIMENSIONAL_CHAR_ARRAY_ONE_INDEX) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            char[] x = new char[3];
+            char y = x[1];
         )"
     );
 }
@@ -169,6 +196,24 @@ TEST(EXPR_POSTFIX, DECREMENT_FLOAT_VARIABLE) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
             float x = 5.5f;
+            float y = x--;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INCREMENT_CHAR_VARIABLE) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            char x = 'a';
+            char y = x++;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, DECREMENT_CHAR_VARIABLE) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            float x = 'a';
             float y = x--;
         )"
     );
@@ -258,7 +303,7 @@ TEST(EXPR_POSTFIX, INVALID_INT_TO_INT_ARRAY) {
 TEST(EXPR_POSTFIX, INVALID_FLOAT_TO_FLOAT_ARRAY) {
     ASSERT_THROWS_TYPE_ERROR(
         R"(
-            float x = 5;
+            float x = 5.5f;
             float[] y = x;
         )"
     );
@@ -267,8 +312,17 @@ TEST(EXPR_POSTFIX, INVALID_FLOAT_TO_FLOAT_ARRAY) {
 TEST(EXPR_POSTFIX, INVALID_BOOL_TO_BOOL_ARRAY) {
     ASSERT_THROWS_TYPE_ERROR(
         R"(
-            bool x = 5;
+            bool x = true;
             bool[] y = x;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_CHAR_TO_CHAR_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            char x = 'a';
+            char[] y = x;
         )"
     );
 }
@@ -296,6 +350,15 @@ TEST(EXPR_POSTFIX, INVALID_BOOL_ARRAY_TO_BOOL) {
         R"(
             bool[] x = new bool[3];
             bool y = x;
+        )"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_CHAR_ARRAY_TO_CHAR) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            char[] x = new char[3];
+            char y = x;
         )"
     );
 }
@@ -336,6 +399,15 @@ TEST(EXPR_POSTFIX, INVALID_BOOL_INDEX_EXPR) {
     );
 }
 
+TEST(EXPR_POSTFIX, INVALID_CHAR_INDEX_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] x = new int[3];
+            int y = x['a'];
+        )"
+    );
+}
+
 TEST(EXPR_POSTFIX, INVALID_INCREMENT_INT) {
     ASSERT_THROWS_SEMANTIC_ERROR(
         "int x = 5++;"
@@ -362,13 +434,25 @@ TEST(EXPR_POSTFIX, INVALID_DECREMENT_FLOAT) {
 
 TEST(EXPR_POSTFIX, INVALID_INCREMENT_BOOL) {
     ASSERT_THROWS_SEMANTIC_ERROR(
-        "int x = true++;"
+        "bool x = true++;"
     );
 }
 
 TEST(EXPR_POSTFIX, INVALID_DECREMENT_BOOL) {
     ASSERT_THROWS_SEMANTIC_ERROR(
-        "int x = true--;"
+        "bool x = true--;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_INCREMENT_CHAR) {
+    ASSERT_THROWS_SEMANTIC_ERROR(
+        "char x = 'a'++;"
+    );
+}
+
+TEST(EXPR_POSTFIX, INVALID_DECREMENT_CHAR) {
+    ASSERT_THROWS_SEMANTIC_ERROR(
+        "char x = 'a'--;"
     );
 }
 

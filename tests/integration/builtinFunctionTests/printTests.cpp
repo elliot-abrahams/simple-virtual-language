@@ -44,3 +44,17 @@ TEST(PRINT, BOOL_FALSE) {
         "false"
     );
 }
+
+TEST(PRINT, CHAR) {
+    ASSERT_OUTPUT_EQ(
+        "print('a');",
+        "a"
+    );
+}
+
+TEST(PRINT, CHAR_ESCAPE_SEQUENCE) {
+    ASSERT_OUTPUT_EQ(
+        "print('\n');",
+        "\n"
+    );
+}

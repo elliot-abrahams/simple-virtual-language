@@ -18,6 +18,7 @@ namespace compiler {
         PRINT_INT,
         PRINT_FLOAT,
         PRINT_BOOL,
+        PRINT_CHAR
     };
 
     enum class BuiltinDataId {
@@ -104,6 +105,18 @@ namespace compiler {
                 "    ret",
             },
                 {BuiltinDataId::TRUE_STRING, BuiltinDataId::FALSE_STRING}
+            }},
+
+        {BuiltinFunctionId::PRINT_CHAR, BuiltinFunction{
+            "__Builtin__print(char)",
+            1,
+            0,
+            {
+                "    loadL ui32 #1",
+                "    native print_char",
+                "    ret"
+            },
+                {}
             }}
 
         };

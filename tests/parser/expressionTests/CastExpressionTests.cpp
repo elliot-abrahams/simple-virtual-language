@@ -45,9 +45,30 @@ TEST(EXPR_CAST, INT_TO_FLOAT) {
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
-TEST(EXPR_CAST, BOOL_TO_BOOL) {
+TEST(EXPR_CAST, BOOL_TO_CHAR) {
     const auto testCode = R"(
-        int x = (bool)true;
+        int x = (char)true;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedCastExpr>(
+                std::make_unique<Type>(compiler::CHAR_TYPE_ID, 0),
+                std::make_unique<ExpectedBoolLiteral>(true)
+            )
+        )
+    );
+    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_CAST, CHAR_TO_BOOL) {
+    const auto testCode = R"(
+        int x = (bool)'a';
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
@@ -57,7 +78,7 @@ TEST(EXPR_CAST, BOOL_TO_BOOL) {
             "x",
             std::make_unique<ExpectedCastExpr>(
                 std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
-                std::make_unique<ExpectedBoolLiteral>(true)
+                std::make_unique<ExpectedCharLiteral>('a')
             )
         )
     );

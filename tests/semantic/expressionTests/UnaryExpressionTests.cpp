@@ -156,13 +156,25 @@ TEST(EXPR_UNARY, DECREMENT_FLOAT) {
 
 TEST(EXPR_UNARY, INVALID_INCREMENT_BOOL) {
     ASSERT_THROWS_SEMANTIC_ERROR(
-        "int x = ++true;"
+        "bool x = ++true;"
     );
 }
 
 TEST(EXPR_UNARY, INVALID_DECREMENT_BOOL) {
     ASSERT_THROWS_SEMANTIC_ERROR(
-        "int x = --true;"
+        "bool x = --true;"
+    );
+}
+
+TEST(EXPR_UNARY, INVALID_INCREMENT_CHAR) {
+    ASSERT_THROWS_SEMANTIC_ERROR(
+        "char x = ++'a';"
+    );
+}
+
+TEST(EXPR_UNARY, INVALID_DECREMENT_CHAR) {
+    ASSERT_THROWS_SEMANTIC_ERROR(
+        "char x = --'a';"
     );
 }
 

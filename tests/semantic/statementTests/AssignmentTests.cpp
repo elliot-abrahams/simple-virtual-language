@@ -12,6 +12,14 @@ TEST(STM_ASSIGN, INT) {
     );
 }
 
+TEST(STM_ASSIGN, IMPLICIT_CHAR_TO_INT) {
+    ASSERT_SEMANTICALLY_VALID(R"(
+            int x;
+            x = 'a';
+        )"
+    );
+}
+
 TEST(STM_ASSIGN, FLOAT) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
@@ -29,11 +37,28 @@ TEST(STM_ASSIGN, IMPLICIT_INT_TO_FLOAT) {
     );
 }
 
+TEST(STM_ASSIGN, IMPLICIT_CHAR_TO_FLOAT) {
+    ASSERT_SEMANTICALLY_VALID(R"(
+            float x;
+            x = 'a';
+        )"
+    );
+}
+
 TEST(STM_ASSIGN, BOOL) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
             bool x;
             x = true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, CHAR) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            char x;
+            x = 'a';
         )"
     );
 }
@@ -65,6 +90,15 @@ TEST(STM_ASSIGN, BOOL_ARRAY) {
     );
 }
 
+TEST(STM_ASSIGN, CHAR_ARRAY) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            char[] x;
+            x = new char[3];
+        )"
+    );
+}
+
 TEST(STM_ASSIGN, ASSIGN_INT_ARRAY_ELEMENT) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
@@ -88,6 +122,15 @@ TEST(STM_ASSIGN, ASSIGN_BOOL_ARRAY_ELEMENT) {
         R"(
             bool[] x = new bool[5];
             x[0] = true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, ASSIGN_CHAR_ARRAY_ELEMENT) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            char[] x = new char[5];
+            x[0] = 'a';
         )"
     );
 }
@@ -135,6 +178,14 @@ TEST(STM_ASSIGN, INVALID_ASSIGN_FLOAT_TO_BOOL) {
     );
 }
 
+TEST(STM_ASSIGN, INVALID_ASSIGN_FLOAT_TO_CHAR) {
+    ASSERT_THROWS_TYPE_ERROR(R"(
+            char x;
+            x = 5.5f;
+        )"
+    );
+}
+
 TEST(STM_ASSIGN, INVALID_ASSIGN_INT_TO_INT_ARRAY) {
     ASSERT_THROWS_TYPE_ERROR(
         R"(
@@ -162,6 +213,15 @@ TEST(STM_ASSIGN, INVALID_ASSIGN_BOOL_TO_BOOL_ARRAY) {
     );
 }
 
+TEST(STM_ASSIGN, INVALID_ASSIGN_CHAR_TO_CHAR_ARRAY) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            char[] x;
+            x = 'a';
+        )"
+    );
+}
+
 TEST(STM_ASSIGN, INVALID_ASSIGN_INT_ARRAY_TO_INT) {
     ASSERT_THROWS_TYPE_ERROR(
         R"(
@@ -185,6 +245,15 @@ TEST(STM_ASSIGN, INVALID_ASSIGN_BOOL_ARRAY_TO_BOOL) {
         R"(
             bool x;
             x = new bool[3];
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_ASSIGN_CHAR_ARRAY_TO_CHAR) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            char x;
+            x = new char[3];
         )"
     );
 }

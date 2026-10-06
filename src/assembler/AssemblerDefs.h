@@ -120,6 +120,7 @@ namespace assembler {
     inline const std::map<std::string, uint8_t> nativeRef {
         {"exit", 0x00},
         {"print", 0x01},
+        {"print_char", 0x02},
         {"print_str", 0x03}
     };
 

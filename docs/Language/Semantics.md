@@ -8,9 +8,10 @@
   - [3.1 Int Type](#31-int-type)
   - [3.2 Float Type](#32-float-type)
   - [3.3 Bool Type](#33-bool-type)
-  - [3.4 Void Type](#34-void-type)
-  - [3.5 Array Types](#35-array-types)
-  - [3.6 Implicit Conversion](#36-implicit-conversion)
+  - [3.4 Char Type](#34-char-type)
+  - [3.5 Void Type](#35-void-type)
+  - [3.6 Array Types](#36-array-types)
+  - [3.7 Implicit Conversion](#37-implicit-conversion)
 - [4. Variables](#4-variables)
   - [4.1 Variable Declaration](#41-variable-declaration)
   - [4.2 Variable Initialisation](#42-variable-initialisation)
@@ -25,9 +26,9 @@
   - [6.1 Literals](#61-literals)
   - [6.2 Variable Access](#62-variable-access)
   - [6.3 Arithmetic Operators](#63-arithmetic-operators)
-  - [6.4 Comparison Operators](#64-comparison-operators)
+  - [6.4 Logical Operators](#64-logical-operators)
   - [6.5 Equality Operators](#65-equality-operators)
-  - [6.6 Logical Operators](#66-logical-operators)
+  - [6.6 Comparison Operators](#66-comparison-operators)
   - [6.7 Unary Operators](#67-unary-operators)
   - [6.8 Postfix Expressions](#68-postfix-expressions)
     - [6.8.1 Array Access](#681-array-access)
@@ -117,13 +118,17 @@ SV also provides array types.
 
 A boolean value is either `true` or `false`.
 
-### 3.4 Void Type
+### 3.4 Char Type
+
+`char` represents a single Unicode character and is encoded as UTF-8.
+
+### 3.5 Void Type
 
 `void` represents the absence of a value.
 
 `void` may only be used as the return type of a function.
 
-### 3.5 Array Types
+### 3.6 Array Types
 
 An array type consists of an element type and one or more dimensions.
 
@@ -139,32 +144,28 @@ int[][] arr;
 ```
 has base type `int` and dimension `2`.
 
-### 3.6 Implicit Conversion
+### 3.7 Implicit Conversion
 
 SV supports implicit conversion between certain types.
 
-An implicit conversion is performed when an expression is used in a context where its type differs from the expected type and a valid implicit conversion exists.
+An implicit conversion occurs when a value is used where a different type is expected and the source type can be implicitly converted to the target type. 
 
-Array types cannot be implicitly converted to other array types.
-
-The only implicit conversion supported is:
+The following implicit conversions are supported:
 
 | Source Type | Target Type |
 |-------------|-------------|
 | `int`       | `float`     |
+| `char`      | `int`       |
+| `char`      | `float`     |
 
 For example:
 ```
 float x = 5; 
+int y = 'A';
 ```
-The `int` value `5` is implicitly converted to `float`.
+In the first example, the `int` value `5` is implicitly converted to a `float` with the value `5.0`.
 
-Implicit conversion may be required when:
-- Initialising a variable
-- Assigning a value to a variable
-- Passing an argument to a function
-- Returning a value from a function
-- Combining numeric operands of different types
+In the second example, the `char` value `A` is implicitly converted to its Unicode code point value `65`.
 
 ---
 
@@ -334,7 +335,7 @@ Each literal has a fixed resulting type.
 | `10`    | `int`   |
 | `10.5f` | `float` |
 | `true`  | `bool`  |
-| `false` | `bool`  |
+| `'a'`   | `char`  |
 
 ### 6.2 Variable Access
 
@@ -342,7 +343,7 @@ A variable access produces the value stored in the referenced variable.
 
 The resulting type is the declared type of the variable.
 
-See [Section 3.4](#34-variable-access) for the rules governing variable access.
+See [Section 4.4](#44-variable-access) for the rules governing variable access.
 
 ### 6.3 Arithmetic Operators
 
@@ -357,40 +358,72 @@ The arithmetic operators are:
 | `//`     | Integer division   |
 | `%`      | Remainder (modulo) | 
 
-Arithmetic operators require numeric operands.
+The following tables defines the valid operand types and resulting type of each operator.
 
-`bool` operands are not permitted.
+**Addition**
 
-For `+`, `-`, `*`, `%` operators:
-- If either operand is a `float` the resulting type is`float`.
-- Otherwise, the resulting type is `int`.
+| Left \ Right | `int`   | `float` | `char`  |
+|--------------|---------|---------|---------|
+| `int`        | `int`   | `float` | `int`   |
+| `float`      | `float` | `float` | `float` |
+| `char`       | `int`   | `float` | `int`   |
 
-The resulting type of division `/` is always `float`.
+**Subtraction**
 
-The resulting type of integer division `//` is always `int`.
+| Left \ Right | `int`   | `float` | `char`  |
+|--------------|---------|---------|---------|
+| `int`        | `int`   | `float` | `int`   |
+| `float`      | `float` | `float` | `float` |
+| `char`       | `int`   | `float` | `int`   |
 
-For example:
-```
-10 + 2       <- int
-1- + 2.0f    <- float
-10 / 2       <- float
-`10 // 2     <- int 
-```
+**Multiplication**
 
-### 6.4 Comparison Operators
+| Left \ Right | `int`   | `float` | `char`  |
+|--------------|---------|---------|---------|
+| `int`        | `int`   | `float` | `int`   |
+| `float`      | `float` | `float` | `float` |
+| `char`       | `int`   | `float` | `int`   |
 
-The comparison operators are:
+**Division**
 
-| Operator | Purpose                  |
-|----------|--------------------------|
-| `<`      | Less than                |
-| `<=`     | Less than or equal to    |
-| `>`      | Greater than             |
-| `>=`     | Greater than or equal to |
+| Left \ Right | `int`   | `float` | `char`  |
+|--------------|---------|---------|---------|
+| `int`        | `float` | `float` | `float` |
+| `float`      | `float` | `float` | `float` |
+| `char`       | `float` | `float` | `float` |
 
-The operands of comparison operators must be numeric.
 
-The resulting type is always `bool`.
+**Integer Division**
+
+| Left \ Right | `int` | `float` | `char` |
+|--------------|-------|---------|--------|
+| `int`        | `int` | `int`   | `int`  |
+| `float`      | `int` | `int`   | `int`  |
+| `char`       | `int` | `int`   | `int`  |
+
+**Remainder**
+
+| Left \ Right | `int`   | `float` | `char`  |
+|--------------|---------|---------|---------|
+| `int`        | `int`   | `float` | `int`   |
+| `float`      | `float` | `float` | `float` |
+| `char`       | `int`   | `float` | `int`   |
+
+### 6.4 Logical Operators
+
+The logical operators are:
+
+| Operator | Purpose     |
+|----------|-------------|
+| `&&`     | Logical AND | 
+| `\|\|`   | Logical OR  |
+
+The following table defines the valid operand types for logical operators.
+
+| Left \ Right | `bool`  |
+|--------------|---------|
+| `bool`       | `bool`  |
+
 
 ### 6.5 Equality Operators
 
@@ -401,22 +434,33 @@ The equality operators are:
 | `==`     | Equal to     |
 | `!=`     | Not equal to |
 
-Both operands must be `bool`, or both operands must be numeric.
+The following table defines the valid operand types for equality operators.
 
-The resulting type is always `bool`.
+| Left \ Right | `int`   | `float` | `bool`  | `char`  |
+|--------------|---------|---------|---------|---------|
+| `int`        | `bool`  | `bool`  | invalid | `bool`  |
+| `float`      | `bool`  | `bool`  | invalid | `char`  |
+| `bool`       | invalid | invalid | `bool`  | invalid |
+| `char`       | `bool`  | `bool`  | invalid | `bool`  |
 
-### 6.6 Logical Operators
+### 6.6 Comparison Operators
 
-The logical operators are:
+The comparison operators are:
 
-| Operator | Purpose     |
-|----------|-------------|
-| `&&`     | Logical AND | 
-| `\|\|`   | Logical OR  |
+| Operator | Purpose                  |
+|----------|--------------------------|
+| `<`      | Less than                |
+| `<=`     | Less than or equal to    |
+| `>`      | Greater than             |
+| `>=`     | Greater than or equal to |
 
-Both operands must be `bool`.
+The following table defines the valid operand types for comparison operators.
 
-The resulting type is always `bool`.
+| Left \ Right | `int`  | `float` | `char` |
+|--------------|--------|---------|--------|
+| `int`        | `bool` | `bool`  | `bool` |
+| `float`      | `bool` | `bool`  | `bool` |
+| `char`       | `bool` | `bool`  | `bool` |
 
 ### 6.7 Unary Operators
 
@@ -430,19 +474,19 @@ The unary operators are:
 | `++`     | Prefix increment |
 | `--`     | Prefix decrement |
 
-The `+` and `-` operators can only be applied to numeric operands.
+The following table defines the valid operand types for unary operators.
 
-The `!` operator can only be applied to a `bool` operand.
-
-The prefix increment operator `++` increments the value of its base expression by `1`.
-
-The prefix decrement operator `--` decrements the value of its base expression by `1`.
+| Operator | `int`   | `float` | `bool`  |
+|----------|---------|---------|---------|
+| `+`      | `int`   | `float` | invalid | 
+| `++`     | `int`   | `float` | invalid |
+| `-`      | `int`   | `float` | invalid |
+| `--`     | `int`   | `float` | invalid |
+| `!`      | invalid | invalid | `bool`  |
 
 For prefix increment and decrement, the base expression must be an assignable expression.
 
 An expression is assignable when it refers to a variable or array element.
-
-The `++` and `--` operators may only be applied to numeric types.
 
 The `++` and `--` operators produce the value of the base expression after the increment or decrement has been performed.
 
@@ -450,7 +494,7 @@ For example:
 
 ```
 int x = 5;
-[Semantics.md](Semantics.md)
+
 int a = ++x; // x = 6, a = 6
 int b = --x; // x = 5, b = 5
 ```
@@ -529,7 +573,14 @@ A cast expression explicitly converts the resulting value of an expression to th
 
 The resulting type of a cast expression is the type specified by the cast.
 
-Conversions can only be made between numeric types.
+The following conversions are permitted:
+
+| Source \ Target | `int`   | `float` | `bool`  | `char`  |
+|-----------------|---------|---------|---------|---------|
+| `int`           | `int`   | `float` | invalid | `char`  |
+| `float`         | `int`   | `float` | invalid | `char`  |
+| `bool`          | invalid | invalid | `bool`  | invalid |
+| `char`          | `int`   | `float` | invalid | `char`  |
 
 Array types cannot be used as either the source or target type of a cast.
 
@@ -709,7 +760,7 @@ For example:
 
 A variable declaration is a statement that introduces a variable in the current scope.
 
-See [Section 3.1](#31-variable-declaration) and [Section 3.2](#32-variable-initialisation) for the rules governing variable declarations and initialisation.
+See [Section 4.1](#41-variable-declaration) and [Section 4.2](#42-variable-initialisation) for the rules governing variable declarations and initialisation.
 
 For example:
 ```
@@ -723,7 +774,7 @@ int[] arr;
 
 Variable assignment is a statement that stores the resulting value of an expression in an existing variable.
 
-See [Section 3.3](#33-variable-assignment) for assignment rules.
+See [Section 4.3](#43-variable-assignment) for assignment rules.
 
 For example:
 ```

@@ -58,6 +58,7 @@ Terminates program execution using the arguments as the exit code.
 void print(int)
 void print(float)
 void print(bool)
+void print(char)
 ```
 
 **Description:**
@@ -66,4 +67,5 @@ Outputs the argument to standard output.
 - `int` values are output as decimal integers
 - `float` values are output as decimal floating-point values
 - `bool` values are output as `true` or `false`
+- `char` values are output as their corresponding Unicode character, encoded as UTF-8.
 

@@ -59,8 +59,10 @@ namespace compiler {
         std::unique_ptr<ast::AssignmentOperatorInfo> parseAssignmentOperator() const;
         std::unique_ptr<ast::UnaryOperatorInfo> parseIncrementDecrementOperator() const;
 
-        static bool isTypeToken(const TokenKind& kind);
+        static bool isPrimitiveTypeToken(const TokenKind& kind);
         static bool isAssignmentOperator(const TokenKind& kind);
+
+        static uint32_t decodeUtf8CodePoint(const std::string& str);
 
         void throwUnexpectedTokenError(const Token& token) const;
         void throwLiteralOutOfRangeError(const Token& token, const std::string& type) const;

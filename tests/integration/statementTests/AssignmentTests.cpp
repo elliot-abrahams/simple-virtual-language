@@ -13,6 +13,16 @@ TEST(STM_ASSIGN, INT) {
     );
 }
 
+TEST(STM_ASSIGN, IMPLICIT_CHAR_TO_INT) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            int i = 'A';
+            print(i);
+        )",
+        "65"
+    );
+}
+
 TEST(STM_ASSIGN, FLOAT) {
     ASSERT_OUTPUT_EQ(
         R"(
@@ -33,6 +43,16 @@ TEST(STM_ASSIGN, IMPLICIT_INT_TO_FLOAT) {
     );
 }
 
+TEST(STM_ASSIGN, IMPLICIT_CHAR_TO_FLOAT) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            float f = 'A';
+            print(f);
+        )",
+        "65.0"
+    );
+}
+
 TEST(STM_ASSIGN, BOOL) {
     ASSERT_OUTPUT_EQ(
         R"(
@@ -40,6 +60,16 @@ TEST(STM_ASSIGN, BOOL) {
             print(b);
         )",
         "true"
+    );
+}
+
+TEST(STM_ASSIGN, CHAR) {
+    ASSERT_OUTPUT_EQ(
+        R"(
+            char c = 'h';
+            print(c);
+        )",
+        "h"
     );
 }
 

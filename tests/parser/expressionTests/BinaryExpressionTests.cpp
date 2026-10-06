@@ -14,7 +14,7 @@ TEST(EXPR_BINARY, ADD) {
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
-                compiler::BinaryOperator::PLUS,
+                compiler::BinaryOperator::ADD,
                 std::make_unique<ExpectedIntegerLiteral>(1),
                 std::make_unique<ExpectedIntegerLiteral>(2)
             )
@@ -36,7 +36,7 @@ TEST(EXPR_BINARY, SUBTRACT) {
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
-                compiler::BinaryOperator::MINUS,
+                compiler::BinaryOperator::SUBTRACT,
                 std::make_unique<ExpectedIntegerLiteral>(1),
                 std::make_unique<ExpectedIntegerLiteral>(2)
             )
@@ -322,9 +322,9 @@ TEST(EXPR_BINARY, ASSOCIATIVE_ADD) {
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
-                compiler::BinaryOperator::PLUS,
+                compiler::BinaryOperator::ADD,
                 std::make_unique<ExpectedBinaryExpr>(
-                    compiler::BinaryOperator::PLUS,
+                    compiler::BinaryOperator::ADD,
                     std::make_unique<ExpectedIntegerLiteral>(1),
                     std::make_unique<ExpectedIntegerLiteral>(2)
                 ),

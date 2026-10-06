@@ -18,6 +18,7 @@
     - [5.1.1 Integer Literal](#511-integer-literal)
     - [5.1.2 Float Literal](#512-float-literal)
     - [5.1.3 Bool Literal](#513-bool-literal)
+    - [5.1.4 Char Literal](#514-char-literal)
   - [5.2 Variable Access](#52-variable-access)
     - [5.2.1 Global Variable Access](#521-global-variable-access)
     - [5.2.2 Local Variable Access](#522-local-variable-access)
@@ -491,6 +492,18 @@ A bool literal is pushed onto the operand stack as an `ui32`.
 Where:
 - `[value]` is `1` when the bool literal is `true`.
 - `[value]` is `0` when the bool literal is `false`.
+
+#### 5.1.4 Char Literal
+
+A char literal is pushed onto the operand stack as an `ui32`.
+
+```
+    push ui32 #[value]
+    ; Stack: <[value]: ui32>
+```
+
+Where:
+- `[value]` is the Unicode code point of the char literal.
 
 ---
 
@@ -2122,6 +2135,19 @@ def $__Builtin__print(bool):
 **Required builtin data:**
 - `$__true__string`
 - `$__false__string`
+
+#### 8.1.4 void print(char)
+
+**Assembly:**
+```
+def $__Builtin__print(char):
+        args 1
+        locals 0
+
+        loadL ui32 #1
+        native print_char
+        ret
+```
 
 ---
 

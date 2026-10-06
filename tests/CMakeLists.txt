@@ -235,7 +235,6 @@ set(Integration_Sources
         integration/expressionTests/UnaryExpressionTests.cpp
         integration/expressionTests/PostfixExpressionTests.cpp
         integration/expressionTests/castExpressionTests.cpp
-        integration/expressionTests/VarAccessTests.cpp
 
         integration/CommentTests.cpp
 

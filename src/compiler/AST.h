@@ -64,6 +64,14 @@ namespace ast {
             value(value) {}
     };
 
+    struct ExprCharLiteral final : Expr {
+        const uint32_t value;
+
+        ExprCharLiteral(const uint32_t line, const uint16_t column, const uint32_t value) :
+            Expr(line, column),
+            value(value) {}
+    };
+
     struct TypeInfo final : ASTNode {
         compiler::Type type;
 

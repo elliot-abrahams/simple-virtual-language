@@ -35,4 +35,12 @@ void compiler::Builtins::registerBuiltinFunctions(SymbolTable& symbolTable) {
         Type{VOID_TYPE_ID, 0},
         {Type{BOOL_TYPE_ID, 0}}
     );
+
+    // void print(char)
+    symbolTable.declareBuiltinFunction(
+        BuiltinFunctionId::PRINT_CHAR,
+        "print",
+        Type{VOID_TYPE_ID, 0},
+        {Type{CHAR_TYPE_ID, 0}}
+    );
 }

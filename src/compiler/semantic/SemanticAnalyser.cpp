@@ -425,74 +425,40 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::checkExprType(Scope* scope,
             Assignability::NON_ASSIGNABLE
         };
     }
+    if (auto charLit = dynamic_cast<const ast::ExprCharLiteral*>(&expr)) {
+        charLit->resultingType = Type{CHAR_TYPE_ID, 0};
+        return ExpressionInfo{
+            Type{CHAR_TYPE_ID, 0},
+            Assignability::NON_ASSIGNABLE
+        };
+    }
     if (auto* binaryOperator = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
         const Type leftType = this->checkExprType(scope, *binaryOperator->left).type;
         const Type rightType = this->checkExprType(scope, *binaryOperator->right).type;
 
-        if (leftType.isArray() || rightType.isArray()) {
-            this->throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-        }
+        if (leftType.isArray() || rightType.isArray()) this->throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
 
         switch (binaryOperator->binaryOperatorInfo->binaryOperator) {
-            case BinaryOperator::PLUS:
-            case BinaryOperator::MINUS:
-            case BinaryOperator::MULTIPLY:
-            case BinaryOperator::DIVIDE:
-            case BinaryOperator::MODULO: {
-                // ensure either operand is not bool
-                if (leftType.typeId == BOOL_TYPE_ID || rightType.typeId == BOOL_TYPE_ID) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-
-                // result is float if either operand is a float or binary operator is divide
-                if ((leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) ||
-                    binaryOperator->binaryOperatorInfo->binaryOperator == BinaryOperator::DIVIDE
-                ) {
-                    auto resultingType = Type{FLOAT_TYPE_ID, 0};
-                    binaryOperator->resultingType = resultingType;
-                    return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
-                }
-                const auto resultingType = Type{INT_TYPE_ID, 0};
-                binaryOperator->resultingType = resultingType;
-                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
-            }
-
-            case BinaryOperator::INTEGER_DIVIDE: {
-                // ensure either operand is not bool
-                if (leftType.typeId == BOOL_TYPE_ID || rightType.typeId == BOOL_TYPE_ID) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                const auto resultingType = Type{INT_TYPE_ID, 0};
-                binaryOperator->resultingType = resultingType;
-                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
-            }
+            case BinaryOperator::ADD: return ExpressionInfo{this->processAddition(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
+            case BinaryOperator::SUBTRACT: return ExpressionInfo{this->processSubtraction(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
+            case BinaryOperator::MULTIPLY: return ExpressionInfo{this->processMultiplication(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
+            case BinaryOperator::DIVIDE: return ExpressionInfo{this->processDivision(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
+            case BinaryOperator::INTEGER_DIVIDE: return ExpressionInfo{this->processIntegerDivision(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
+            case BinaryOperator::MODULO: return ExpressionInfo{this->processModulo(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
 
             case BinaryOperator::LOGICAL_OR:
-            case BinaryOperator::LOGICAL_AND: {
-                if (leftType.typeId != BOOL_TYPE_ID || rightType.typeId != BOOL_TYPE_ID) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                const auto resultingType = Type{BOOL_TYPE_ID, 0};
-                binaryOperator->resultingType = resultingType;
-                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
-            }
+            case BinaryOperator::LOGICAL_AND:
+                return ExpressionInfo{this->processLogical(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
+
+            case BinaryOperator::EQUAL_EQUAL:
+            case BinaryOperator::NOT_EQUAL:
+                return ExpressionInfo{this->processEquality(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
 
             case BinaryOperator::LESS_THAN:
             case BinaryOperator::LESS_THAN_OR_EQUAL:
             case BinaryOperator::GREATER_THAN:
-            case BinaryOperator::GREATER_THAN_OR_EQUAL: {
-                if (leftType.typeId == BOOL_TYPE_ID || rightType.typeId == BOOL_TYPE_ID) throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                const auto resultingType = Type{BOOL_TYPE_ID, 0};
-                binaryOperator->resultingType = resultingType;
-                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
-            }
-
-            default:
-                // EQUAL_EQUAL / NOT_EQUAL
-
-                // if either left or right type is bool and the other operand is not bool
-                if ((leftType.typeId == BOOL_TYPE_ID || rightType.typeId == BOOL_TYPE_ID) &&
-                    leftType.typeId != rightType.typeId
-                ) {
-                    throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
-                }
-                const auto resultingType = Type{BOOL_TYPE_ID, 0};
-                binaryOperator->resultingType = resultingType;
-                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
+            case BinaryOperator::GREATER_THAN_OR_EQUAL:
+                return ExpressionInfo{this->processComparison(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
         }
     }
     if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
@@ -514,12 +480,19 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::checkExprType(Scope* scope,
             }
         }
 
-        // if operator is logical not and (type is not bool or type is an array)
-        // OR
-        // if operator is not logical not and (types is not numeric)
-        if ((unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT &&
-                        (exprTypeResult.type.typeId != BOOL_TYPE_ID || exprTypeResult.type.isArray())) ||
-             (unaryOperator->unaryOperatorInfo->unaryOperator != UnaryOperator::LOGICAL_NOT && !exprTypeResult.type.isNumeric())
+        if (
+            // if expr is an array
+            exprTypeResult.type.isArray() ||
+            // if operator is logical not and type is not bool
+            unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT &&
+                    exprTypeResult.type.typeId != BOOL_TYPE_ID ||
+            // if operator is plus or minus and type is not numeric
+            ((unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::PLUS || unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::MINUS) &&
+                    !exprTypeResult.type.isNumeric()) ||
+
+            // if operator is increment or decrement and type is neither numeric nor char
+            (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT || unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT) &&
+                    !exprTypeResult.type.isNumeric() && exprTypeResult.type.typeId != CHAR_TYPE_ID
         ) {
             throw TypeError(
                 *this->path,
@@ -601,8 +574,8 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::checkExprType(Scope* scope,
                 );
             }
 
-            // throw error if expr type is not numeric
-            if (!exprTypeInfo.type.isNumeric()) {
+            // throw error if expr type is not numeric and not char
+            if (!exprTypeInfo.type.isNumeric() && exprTypeInfo.type.typeId != CHAR_TYPE_ID) {
                 throw TypeError(
                     *this->path,
                     exprPostfix->line,
@@ -735,19 +708,13 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::checkExprType(Scope* scope,
     if (auto* castExpression = dynamic_cast<const ast::ExprCast*>(&expr)) {
         const auto exprTypeResult = this->checkExprType(scope, *castExpression->expr);
 
-        // if target's type is an array
-        // OR
-        // if expr's type is an array
-        // OR
-        // if target's type is a bool
-        // OR
-        // if expr's type is a bool
-        if (castExpression->typeInfo->type.isArray() ||
-            exprTypeResult.type.isArray() ||
-            exprTypeResult.type.typeId == BOOL_TYPE_ID ||
-            castExpression->typeInfo->type.typeId == BOOL_TYPE_ID
-        ) {
-            throw TypeError(
+        if (canCastToType(exprTypeResult.type, castExpression->typeInfo->type)) {
+            const auto resultingType = castExpression->typeInfo->type;
+            castExpression->resultingType = resultingType;
+            return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
+        }
+
+        throw TypeError(
                 *this->path,
                 castExpression->line,
                 castExpression->column,
@@ -757,11 +724,6 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::checkExprType(Scope* scope,
                     typeToString(castExpression->typeInfo->type) +
                     "'"
             );
-        }
-
-        const auto resultingType = castExpression->typeInfo->type;
-        castExpression->resultingType = resultingType;
-        return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
     }
 
     if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
@@ -862,6 +824,221 @@ compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::v
     return functionSymbol;
 }
 
+compiler::Type compiler::SemanticAnalyser::processAddition(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `int`   | `float` | `char`  |
+       |--------------|---------|---------|---------|
+       | `int`        | `int`   | `float` | `int`   |
+       | `float`      | `float` | `float` | `float` |
+       | `char`       | `int`   | `float` | `int`   |
+     */
+
+    // numeric + numeric
+    if (leftType.isNumeric() && rightType.isNumeric()) {
+        Type resultingType;
+        if (leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) {
+            resultingType = Type{FLOAT_TYPE_ID, 0};
+        } else {
+            resultingType = Type{INT_TYPE_ID, 0};
+        }
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+compiler::Type compiler::SemanticAnalyser::processSubtraction(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `int`   | `float` | `char`  |
+       |--------------|---------|---------|---------|
+       | `int`        | `int`   | `float` | `int`   |
+       | `float`      | `float` | `float` | `float` |
+       | `char`       | `int`   | `float` | `int`   |
+     */
+
+    // numeric - numeric
+    if (leftType.isNumeric() && rightType.isNumeric()) {
+        Type resultingType;
+        if (leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) {
+            resultingType = Type{FLOAT_TYPE_ID, 0};
+        } else {
+            resultingType = Type{INT_TYPE_ID, 0};
+        }
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+compiler::Type compiler::SemanticAnalyser::processMultiplication(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `int`   | `float` | `char`  |
+       |--------------|---------|---------|---------|
+       | `int`        | `int`   | `float` | `int`   |
+       | `float`      | `float` | `float` | `float` |
+       | `char`       | `int`   | `float` | `int`   |
+     */
+
+    // numeric * numeric
+    if (leftType.isNumeric() && rightType.isNumeric()) {
+        Type resultingType;
+        if (leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) {
+            resultingType = Type{FLOAT_TYPE_ID, 0};
+        } else {
+            resultingType = Type{INT_TYPE_ID, 0};
+        }
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+compiler::Type compiler::SemanticAnalyser::processDivision(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `int`   | `float` | `char`  |
+       |--------------|---------|---------|---------|
+       | `int`        | `float` | `float` | `float` |
+       | `float`      | `float` | `float` | `float` |
+       | `char`       | `float` | `float` | `float` |
+     */
+
+    //    numeric / numeric
+    if (leftType.isNumeric() && rightType.isNumeric()) {
+        const auto resultingType = Type{FLOAT_TYPE_ID, 0};
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+compiler::Type compiler::SemanticAnalyser::processIntegerDivision(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `int`   | `float` | `char`  |
+       |--------------|---------|---------|---------|
+       | `int`        | `int`   | `int`   | `int`   |
+       | `float`      | `int`   | `int`   | `int`   |
+       | `char`       | `int`   | `int`   | `int`   |
+     */
+
+    //    numeric // numeric
+    if (leftType.isNumeric() && rightType.isNumeric()) {
+        const auto resultingType = Type{INT_TYPE_ID, 0};
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+compiler::Type compiler::SemanticAnalyser::processModulo(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `int`   | `float` | `char`  |
+       |--------------|---------|---------|---------|
+       | `int`        | `int`   | `float` | `int`   |
+       | `float`      | `float` | `float` | `float` |
+       | `char`       | `int`   | `float` | `int`   |
+     */
+
+    // numeric % numeric
+    if (leftType.isNumeric() && rightType.isNumeric()) {
+        Type resultingType;
+        if (leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) {
+            resultingType = Type{FLOAT_TYPE_ID, 0};
+        } else {
+            resultingType = Type{INT_TYPE_ID, 0};
+        }
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+compiler::Type compiler::SemanticAnalyser::processLogical(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `bool`  |
+       |--------------|---------|
+       | `bool`       | `bool`  |
+     */
+
+    // bool && bool
+    if (leftType.typeId == BOOL_TYPE_ID && rightType.typeId == BOOL_TYPE_ID) {
+        const auto resultingType = Type{BOOL_TYPE_ID, 0};
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+compiler::Type compiler::SemanticAnalyser::processEquality(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `int`   | `float` | `bool`  | `char`  |
+       |--------------|---------|---------|---------|---------|
+       | `int`        | `bool`  | `bool`  | invalid | `bool`  |
+       | `float`      | `bool`  | `bool`  | invalid | `bool`  |
+       | `bool`       | invalid | invalid | `bool`  | invalid |
+       | `char`       | `bool`  | `bool`  | invalid | `bool`  |
+     */
+
+    if (
+        // numeric == numeric
+        leftType.isNumeric() && rightType.isNumeric() ||
+        // bool == bool
+        leftType.typeId == rightType.typeId
+    ) {
+        const auto resultingType = Type{BOOL_TYPE_ID, 0};
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+compiler::Type compiler::SemanticAnalyser::processComparison(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `int`  | `float` | `char`  |
+       |--------------|--------|---------|---------|
+       | `int`        | `bool` | `bool`  | `bool`  |
+       | `float`      | `bool` | `bool`  | `bool`  |
+       | `char`       | `bool` | `bool`  | `bool`  |
+     */
+
+    // numeric < numeric
+    if (leftType.isNumeric() && rightType.isNumeric()) {
+        const auto resultingType = Type{BOOL_TYPE_ID, 0};
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+bool compiler::SemanticAnalyser::canCastToType(const Type& from, const Type& to) {
+    /*
+       | Source \ Target | `int`   | `float` | `bool`  | `char`  |
+       |-----------------|---------|---------|---------|---------|
+       | `int`           | `int`   | `float` | invalid | `char`  |
+       | `float`         | `int`   | `float` | invalid | `char`  |
+       | `bool`          | invalid | invalid | `bool`  | invalid |
+       | `char`          | `int`   | 'float' | invalid | `char`  |
+     */
+
+    if (
+        // numeric -> numeric
+        from.isNumeric() && to.isNumeric() ||
+        // bool -> bool
+        from.typeId == BOOL_TYPE_ID && to.typeId == BOOL_TYPE_ID
+    ) {
+        return true;
+    }
+    return false;
+}
+
 bool compiler::SemanticAnalyser::canImplicitlyConvert(const Type& from, const Type& to) {
     if (from.typeId == to.typeId && from.dimension == to.dimension) return true; // types are identical
     if (from.dimension != 0 || to.dimension != 0) return false; // return false as array types cannot be implicity converted
@@ -870,11 +1047,8 @@ bool compiler::SemanticAnalyser::canImplicitlyConvert(const Type& from, const Ty
         case INT_TYPE_ID:
             return to.typeId == FLOAT_TYPE_ID;
 
-        case FLOAT_TYPE_ID:
-            return false;
-
-        case BOOL_TYPE_ID:
-            return false;
+        case CHAR_TYPE_ID:
+            return to.typeId == INT_TYPE_ID || to.typeId == FLOAT_TYPE_ID;
 
         default:
             return false;
@@ -903,6 +1077,7 @@ std::string compiler::SemanticAnalyser::typeToString(const Type& type) {
         case INT_TYPE_ID: result += "int"; break;
         case FLOAT_TYPE_ID: result += "float"; break;
         case BOOL_TYPE_ID: result += "bool"; break;
+        case CHAR_TYPE_ID: result += "char"; break;
     }
     for (int i = 0; i < type.dimension; i++) {
         result += "[]";
@@ -912,8 +1087,8 @@ std::string compiler::SemanticAnalyser::typeToString(const Type& type) {
 
 std::string compiler::SemanticAnalyser::binaryOperatorToString(const BinaryOperator &binaryOperator) {
     switch (binaryOperator) {
-        case BinaryOperator::PLUS: return "+";
-        case BinaryOperator::MINUS: return "-";
+        case BinaryOperator::ADD: return "+";
+        case BinaryOperator::SUBTRACT: return "-";
         case BinaryOperator::MULTIPLY: return "*";
         case BinaryOperator::DIVIDE: return "/";
         case BinaryOperator::INTEGER_DIVIDE: return "//";

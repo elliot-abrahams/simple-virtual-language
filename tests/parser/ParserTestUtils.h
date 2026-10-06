@@ -53,6 +53,12 @@ namespace parserTest {
         ExpectedBoolLiteral(const bool value) : value(value) {}
     };
 
+    struct ExpectedCharLiteral final : ExpectedExpr {
+        const char value;
+
+        ExpectedCharLiteral(const char value) : value(value) {}
+    };
+
     struct ExpectedIdentifier final {
         const std::string name;
 

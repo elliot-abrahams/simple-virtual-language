@@ -15,6 +15,18 @@ TEST(EXPR_FUNCTION_CALL, INT) {
     );
 }
 
+TEST(EXPR_FUNCTION_CALL, CHAR_TO_INT_IMPLICIT) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int foo() {
+                return 'a';
+            }
+
+            int x = foo();
+        )"
+    );
+}
+
 TEST(EXPR_FUNCTION_CALL, INT_ARRAY) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
@@ -63,11 +75,23 @@ TEST(EXPR_FUNCTION_CALL, FLOAT_ARRAY) {
     );
 }
 
-TEST(EXPR_FUNCTION_CALL, FLOAT_IMPLICIT) {
+TEST(EXPR_FUNCTION_CALL, INT_TO_FLOAT_IMPLICIT) {
     ASSERT_SEMANTICALLY_VALID(
         R"(
             float foo() {
                 return 5;
+            }
+
+            float x = foo();
+        )"
+    );
+}
+
+TEST(EXPR_FUNCTION_CALL, CHAR_TO_FLOAT_IMPLICIT) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            float foo() {
+                return 'a';
             }
 
             float x = foo();
@@ -119,6 +143,30 @@ TEST(EXPR_FUNCTION_CALL, BOOL_BINARY_EXPR) {
             }
 
             bool x = foo() && true;
+        )"
+    );
+}
+
+TEST(EXPR_FUNCTION_CALL, CHAR) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            char foo() {
+                return 'a';
+            }
+
+            char x = foo();
+        )"
+    );
+}
+
+TEST(EXPR_FUNCTION_CALL, CHAR_ARRAY) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            char[] foo() {
+                return new char[3];
+            }
+
+            char[] x = foo();
         )"
     );
 }

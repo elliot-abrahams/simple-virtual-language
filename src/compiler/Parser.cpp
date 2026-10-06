@@ -18,19 +18,19 @@ std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
 
     while (this->tokeniser->tok().kind != TokenKind::END_OF_FILE) {
         const Token token = this->tokeniser->tok();
-        switch (token.kind) {
-            case TokenKind::INT_TYPE:
-            case TokenKind::FLOAT_TYPE:
-            case TokenKind::BOOL_TYPE: {
-                auto type = this->parseType();
-                // to determine whether to parse varDecl or functionDecl
-                if (this->tokeniser->lookAhead(1).kind == TokenKind::LBR) {
-                    functionDecls.push_back(this->parseFunctionDecl(std::move(type)));
-                } else {
-                    statements.push_back(this->parseVarDecl(std::move(type)));
-                }
-                break;
+
+        if (isPrimitiveTypeToken(token.kind)) {
+            auto type = this->parseType();
+            // to determine whether to parse varDecl or functionDecl
+            if (this->tokeniser->lookAhead(1).kind == TokenKind::LBR) {
+                functionDecls.push_back(this->parseFunctionDecl(std::move(type)));
+            } else {
+                statements.push_back(this->parseVarDecl(std::move(type)));
             }
+            continue;
+        }
+
+        switch (token.kind) {
             case TokenKind::VOID_TYPE:
                 functionDecls.push_back(this->parseFunctionDecl(this->parseReturnType()));
                 break;
@@ -124,17 +124,14 @@ std::unique_ptr<ast::Parameter> compiler::Parser::parseParameter() const {
  */
 std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
     const Token stm = tokeniser->tok();
+
+    if (isPrimitiveTypeToken(stm.kind)) {
+        return this->parseVarDecl(this->parseType());
+    }
+
     switch (stm.kind) {
         case TokenKind::LCBR: return this->parseBlock();
-
-        case TokenKind::INT_TYPE:
-        case TokenKind::FLOAT_TYPE:
-        case TokenKind::BOOL_TYPE:
-            return this->parseVarDecl(this->parseType());
-
-        case TokenKind::IDENTIFIER:
-            return this->parseIdentifierStm();
-
+        case TokenKind::IDENTIFIER: return this->parseIdentifierStm();
         case TokenKind::IF: return this->parseIfStatement();
         case TokenKind::WHILE: return this->parseWhileStatement();
         case TokenKind::CONTINUE: return this->parseContinueStatement();
@@ -585,14 +582,14 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    BinaryOperator::PLUS
+                    BinaryOperator::ADD
                 );
                 break;
             case TokenKind::MINUS:
                 binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
                     token.line,
                     token.column,
-                    BinaryOperator::MINUS
+                    BinaryOperator::SUBTRACT
                 );
                 break;
             default:
@@ -722,7 +719,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
     }
 
     if (token.kind == TokenKind::LBR &&
-        isTypeToken(this->tokeniser->lookAhead(1).kind)
+        isPrimitiveTypeToken(this->tokeniser->lookAhead(1).kind)
     ) {
         // parse cast expression
 
@@ -857,6 +854,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
         case TokenKind::INT_LITERAL:
         case TokenKind::FLOAT_LITERAL:
         case TokenKind::BOOL_LITERAL:
+        case TokenKind::CHAR_LITERAL:
             return this->parseLiteral();
 
         case TokenKind::IDENTIFIER: {
@@ -1052,7 +1050,8 @@ std::unique_ptr<ast::TypeInfo> compiler::Parser::parseType() const {
 /*
  *  primitive_type              = INT_TYPE
  *                              | FLOAT_TYPE
- *                              | BOOL_TYPE ;
+ *                              | BOOL_TYPE
+ *                              | CHAR_TYPE ;
  */
 std::unique_ptr<ast::TypeInfo> compiler::Parser::parsePrimitiveType(const unsigned int dimension) const {
     const Token type = this->tokeniser->tok();
@@ -1076,21 +1075,28 @@ std::unique_ptr<ast::TypeInfo> compiler::Parser::parsePrimitiveType(const unsign
                 type.column,
                 Type{BOOL_TYPE_ID, dimension}
             );
+        case TokenKind::CHAR_TYPE:
+            return std::make_unique<ast::TypeInfo>(
+                type.line,
+                type.column,
+                Type{CHAR_TYPE_ID, dimension}
+            );
         default:
             this->throwUnexpectedTokenError(type);
     }
 }
 
 /*
- *  literal             = INTEGER_LITERAL
+ *  literal             = INT_LITERAL
  *                      | FLOAT_LITERAL
- *                      | BOOL_LITERAL;
+ *                      | BOOL_LITERAL
+ *                      | CHAR_LITERAL ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
     const Token literal = this->tokeniser->tok();
+    this->tokeniser->next();
     switch (literal.kind) {
         case TokenKind::INT_LITERAL : {
-            this->tokeniser->next();
             try {
                 return std::make_unique<ast::ExprIntegerLiteral>(
                     literal.line,
@@ -1102,7 +1108,6 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
             }
         }
         case TokenKind::FLOAT_LITERAL : {
-            this->tokeniser->next();
             try {
                 return std::make_unique<ast::ExprFloatLiteral>(
                     literal.line,
@@ -1114,11 +1119,33 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
             }
         }
         case TokenKind::BOOL_LITERAL : {
-            this->tokeniser->next();
             return std::make_unique<ast::ExprBoolLiteral>(
                 literal.line,
                 literal.column,
                 literal.image == "true"
+            );
+        }
+        case TokenKind::CHAR_LITERAL : {
+            uint32_t charValue = 0;
+
+            if (literal.image.at(1) == '\\') {
+                // escape sequence
+                switch (literal.image.at(2)) {
+                    case 'n': charValue = '\n'; break;
+                    case 't': charValue = '\t'; break;
+                    case 'r': charValue = '\r'; break;
+                    case '0': charValue = '\0'; break;
+                    case '\\': charValue = '\\'; break;
+                    case '\'': charValue = '\''; break;
+                }
+            } else {
+                charValue = decodeUtf8CodePoint(literal.image.substr(1));
+            }
+
+            return std::make_unique<ast::ExprCharLiteral>(
+                literal.line,
+                literal.column,
+                charValue
             );
         }
         default:
@@ -1160,11 +1187,12 @@ std::unique_ptr<ast::UnaryOperatorInfo> compiler::Parser::parseIncrementDecremen
     );
 }
 
-bool compiler::Parser::isTypeToken(const TokenKind& kind) {
+bool compiler::Parser::isPrimitiveTypeToken(const TokenKind& kind) {
     switch (kind) {
         case TokenKind::INT_TYPE:
         case TokenKind::FLOAT_TYPE:
         case TokenKind::BOOL_TYPE:
+        case TokenKind::CHAR_TYPE:
             return true;
 
         default:
@@ -1180,6 +1208,42 @@ bool compiler::Parser::isAssignmentOperator(const TokenKind& kind) {
         default:
             return false;
     }
+}
+
+uint32_t compiler::Parser::decodeUtf8CodePoint(const std::string& str) {
+    const auto first = static_cast<unsigned char>(str.at(0));
+
+    if (first <= 0x7F) {
+        return first;
+    }
+
+    uint32_t codePoint;
+    std::size_t length;
+
+    if ((first & 0xE0) == 0xC0) {
+        codePoint = first & 0x1F;
+        length = 2;
+    } else if ((first & 0xF0) == 0xE0) {
+        codePoint = first & 0x0F;
+        length = 3;
+    } else if ((first & 0xF8) == 0xF0) {
+        codePoint = first & 0x07;
+        length = 4;
+    } else {
+        throw std::runtime_error("invalid UTF-8 sequence");
+    }
+
+    for (std::size_t i = 1; i < length; ++i) {
+        const auto byte = static_cast<unsigned char>(str.at(i));
+
+        if ((byte & 0xC0) != 0x80) {
+            throw std::runtime_error("invalid UTF-8 sequence");
+        }
+
+        codePoint = (codePoint << 6) | (byte & 0x3F);
+    }
+
+    return codePoint;
 }
 
 void compiler::Parser::throwUnexpectedTokenError(const Token& token) const {

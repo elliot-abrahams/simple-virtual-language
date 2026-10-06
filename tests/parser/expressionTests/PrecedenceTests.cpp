@@ -67,7 +67,7 @@ TEST(EXPR_PRECEDENCE, PARETHESES_BEFORE_MULTIPLICATIVE) {
                 compiler::BinaryOperator::MULTIPLY,
                 std::make_unique<ExpectedIntegerLiteral>(1),
                 std::make_unique<ExpectedBinaryExpr>(
-                    compiler::BinaryOperator::PLUS,
+                    compiler::BinaryOperator::ADD,
                     std::make_unique<ExpectedIntegerLiteral>(2),
                     std::make_unique<ExpectedIntegerLiteral>(3)
                 )
@@ -90,7 +90,7 @@ TEST(EXPR_PRECEDENCE, MULTIPLICATIVE_BEFORE_ADDITIVE_1) {
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
-                compiler::BinaryOperator::PLUS,
+                compiler::BinaryOperator::ADD,
                 std::make_unique<ExpectedIntegerLiteral>(1),
                 std::make_unique<ExpectedBinaryExpr>(
                     compiler::BinaryOperator::MULTIPLY,
@@ -116,7 +116,7 @@ TEST(EXPR_PRECEDENCE, MULTIPLICATIVE_BEFORE_ADDITIVE_2) {
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedBinaryExpr>(
-                compiler::BinaryOperator::PLUS,
+                compiler::BinaryOperator::ADD,
                 std::make_unique<ExpectedBinaryExpr>(
                     compiler::BinaryOperator::MULTIPLY,
                     std::make_unique<ExpectedIntegerLiteral>(1),
@@ -145,7 +145,7 @@ TEST(EXPR_PRECEDENCE, ADDITIVE_BEFORE_COMPARISON) {
                 compiler::BinaryOperator::LESS_THAN,
                 std::make_unique<ExpectedIntegerLiteral>(1),
                 std::make_unique<ExpectedBinaryExpr>(
-                    compiler::BinaryOperator::PLUS,
+                    compiler::BinaryOperator::ADD,
                     std::make_unique<ExpectedIntegerLiteral>(2),
                     std::make_unique<ExpectedIntegerLiteral>(3)
                 )
