@@ -134,25 +134,25 @@ Display the available commands:
 Example:
 
 ```bash
-.\sv.exe run ../../examples/example.sv
+.\sv.exe run ../../examples/basics.sv
 ```
 
 ```bash
-.\sv.exe run -a ../../examples/example.sv
+.\sv.exe run -a ../../examples/basics.sv
 ```
 
 ```bash
-.\sv.exe run -b ../../examples/example.sv
+.\sv.exe run -b ../../examples/basics.sv
 ```
 
 ```bash
-.\sv.exe run -a -b ../../examples/example.sv
+.\sv.exe run -a -b ../../examples/basics.sv
 ```
 
 ```bash
-.\sv.exe compile ../../examples/example.sv
-.\sv.exe assemble ../../examples/example.svma
-.\sv.exe execute ../../examples/example.svmb
+.\sv.exe compile ../../examples/basics.sv
+.\sv.exe assemble ../../examples/basics.svma
+.\sv.exe execute ../../examples/basics.svmb
 ```
 
 ---
