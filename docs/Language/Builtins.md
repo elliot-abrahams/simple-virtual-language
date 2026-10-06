@@ -9,6 +9,7 @@
 - [3. Built-in Functions](#3-built-in-functions)
   - [3.1 exit](#31-exit)
   - [3.2 print](#32-print)
+  - [3.3 println](#33-println)
 
 ---
 
@@ -69,3 +70,16 @@ Outputs the argument to standard output.
 - `bool` values are output as `true` or `false`
 - `char` values are output as their corresponding Unicode character, encoded as UTF-8.
 
+### 3.3 println
+
+**Signature:**
+```
+void println(int)
+void println(float)
+void println(bool)
+void println(char)
+```
+
+**Description:**
+
+Outputs the argument to standard output using the same formatting as the built-in function `print`, followed by a newline.

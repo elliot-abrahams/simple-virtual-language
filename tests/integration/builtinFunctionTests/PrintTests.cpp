@@ -54,7 +54,7 @@ TEST(PRINT, CHAR) {
 
 TEST(PRINT, CHAR_ESCAPE_SEQUENCE) {
     ASSERT_OUTPUT_EQ(
-        "print('\n');",
+        "print('\\n');",
         "\n"
     );
 }

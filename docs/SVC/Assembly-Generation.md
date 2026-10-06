@@ -2072,7 +2072,7 @@ Builtin functions are emitted after user-defined functions.
 
 Each builtin function has a fixed assembly implementation.
 
-Only the builtin functions that have been called are included in the assembly.
+Only builtin functions that are called, or are required by a called builtin function, are included in the assembly.
 
 #### 8.1.1 void exit(int)
 
@@ -2136,7 +2136,7 @@ def $__Builtin__print(bool):
 - `$__true__string`
 - `$__false__string`
 
-#### 8.1.4 void print(char)
+#### 8.1.5 void print(char)
 
 **Assembly:**
 ```
@@ -2145,6 +2145,66 @@ def $__Builtin__print(char):
         locals 0
 
         loadL ui32 #1
+        native print_char
+        ret
+```
+
+#### 8.1.6 void println(int)
+
+**Assembly:**
+```
+def $__Builtin__println(int):
+        args 1
+        locals 0
+
+        loadL i32 #1
+        call $__Builtin__print(int)
+        push ui32 #10
+        native print_char
+        ret
+```
+
+#### 8.1.7 void println(float)
+
+**Assembly:**
+```
+def $__Builtin__println(float):
+        args 1
+        locals 0
+
+        loadL f32 #1
+        call $__Builtin__print(float)
+        push ui32 #10
+        native print_char
+        ret
+```
+
+#### 8.1.8 void println(bool)
+
+**Assembly:**
+```
+def $__Builtin__println(bool):
+        args 1
+        locals 0
+
+        loadL i32 #1
+        call $__Builtin__print(bool)
+        push ui32 #10
+        native print_char
+        ret
+```
+
+#### 8.1.9 void println(char)
+
+**Assembly:**
+```
+def $__Builtin__println(char):
+        args 1
+        locals 0
+
+        loadL i32 #1
+        call $__Builtin__print(char)
+        push ui32 #10
         native print_char
         ret
 ```

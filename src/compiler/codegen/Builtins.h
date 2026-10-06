@@ -14,11 +14,18 @@ namespace compiler {
 
     enum class BuiltinFunctionId {
         NONE,
+
         EXIT_INT,
+
         PRINT_INT,
         PRINT_FLOAT,
         PRINT_BOOL,
-        PRINT_CHAR
+        PRINT_CHAR,
+
+        PRINTLN_INT,
+        PRINTLN_FLOAT,
+        PRINTLN_BOOL,
+        PRINTLN_CHAR,
     };
 
     enum class BuiltinDataId {
@@ -31,6 +38,7 @@ namespace compiler {
         const uint8_t numberOfArguments;
         const uint32_t numberOfLocals;
         const std::vector<std::string> functionBodyAssembly;
+        const std::vector<BuiltinFunctionId> requiredBuiltinFunctions;
         const std::vector<BuiltinDataId> requiredBuiltinData;
     };
 
@@ -62,6 +70,7 @@ namespace compiler {
                 "    native exit",
                 "    ret"
                 },
+                {},
                 {}
             }},
 
@@ -74,6 +83,7 @@ namespace compiler {
                 "    native print",
                 "    ret"
             },
+                {},
                 {}
             }},
 
@@ -86,6 +96,7 @@ namespace compiler {
                 "    native print",
                 "    ret"
             },
+                {},
                 {}
             }},
 
@@ -104,6 +115,7 @@ namespace compiler {
                 "    native print_str",
                 "    ret",
             },
+                {},
                 {BuiltinDataId::TRUE_STRING, BuiltinDataId::FALSE_STRING}
             }},
 
@@ -116,8 +128,69 @@ namespace compiler {
                 "    native print_char",
                 "    ret"
             },
+                {},
                 {}
-            }}
+            }},
+
+        {BuiltinFunctionId::PRINTLN_INT, BuiltinFunction{
+            "__Builtin__println(int)",
+            1,
+            0,
+            {
+                "    loadL i32 #1",
+                "    call $__Builtin__print(int)",
+                "    push ui32 #10",
+                "    native print_char",
+                "    ret"
+            },
+                {BuiltinFunctionId::PRINT_INT},
+                {}
+        }},
+
+        {BuiltinFunctionId::PRINTLN_FLOAT, BuiltinFunction{
+            "__Builtin__println(float)",
+            1,
+            0,
+            {
+                "    loadL f32 #1",
+                "    call $__Builtin__print(float)",
+                "    push ui32 #10",
+                "    native print_char",
+                "    ret"
+            },
+                {BuiltinFunctionId::PRINT_FLOAT},
+                {}
+        }},
+
+        {BuiltinFunctionId::PRINTLN_BOOL, BuiltinFunction{
+            "__Builtin__println(bool)",
+            1,
+            0,
+            {
+                "    loadL i32 #1",
+                "    call $__Builtin__print(bool)",
+                "    push ui32 #10",
+                "    native print_char",
+                "    ret"
+            },
+                {BuiltinFunctionId::PRINT_BOOL},
+                {}
+        }},
+
+        {BuiltinFunctionId::PRINTLN_CHAR, BuiltinFunction{
+            "__Builtin__println(char)",
+            1,
+            0,
+            {
+                "    loadL i32 #1",
+                "    call $__Builtin__print(char)",
+                "    push ui32 #10",
+                "    native print_char",
+                "    ret"
+            },
+                {BuiltinFunctionId::PRINT_CHAR},
+                {}
+        }}
 
         };
 

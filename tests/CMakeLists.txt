@@ -216,8 +216,9 @@ set(INTEGRATION_TESTS integration_tests)
 set(Integration_Sources
         integration/RuntimeErrorTests.cpp
 
-        integration/builtinFunctionTests/printTests.cpp
-        integration/builtinFunctionTests/exitTests.cpp
+        integration/builtinFunctionTests/PrintlnTests.cpp
+        integration/builtinFunctionTests/PrintTests.cpp
+        integration/builtinFunctionTests/ExitTests.cpp
 
         integration/ArrayTests.cpp
 
@@ -234,7 +235,7 @@ set(Integration_Sources
         integration/expressionTests/BinaryExpressionTests.cpp
         integration/expressionTests/UnaryExpressionTests.cpp
         integration/expressionTests/PostfixExpressionTests.cpp
-        integration/expressionTests/castExpressionTests.cpp
+        integration/expressionTests/CastExpressionTests.cpp
 
         integration/CommentTests.cpp
 

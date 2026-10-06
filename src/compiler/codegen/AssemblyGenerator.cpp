@@ -1612,6 +1612,9 @@ void compiler::AssemblyGenerator::compileFunctionCall(Scope* scope, const ast::F
             SourceLocation{0, functionCall.line, functionCall.column}
         });
         this->requiredBuiltinFunctions.insert(functionCall.functionSymbol->builtinId);
+        for (const BuiltinFunctionId requiredFunctionId : Builtins::getBuiltinFunction(functionCall.functionSymbol->builtinId)->requiredBuiltinFunctions) {
+            this->requiredBuiltinFunctions.insert(requiredFunctionId);
+        }
     }
 }
 

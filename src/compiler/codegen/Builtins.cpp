@@ -43,4 +43,36 @@ void compiler::Builtins::registerBuiltinFunctions(SymbolTable& symbolTable) {
         Type{VOID_TYPE_ID, 0},
         {Type{CHAR_TYPE_ID, 0}}
     );
+
+    // void println(int)
+    symbolTable.declareBuiltinFunction(
+        BuiltinFunctionId::PRINTLN_INT,
+        "println",
+        Type{VOID_TYPE_ID, 0},
+        {Type{INT_TYPE_ID, 0}}
+    );
+
+    // void println(float)
+    symbolTable.declareBuiltinFunction(
+        BuiltinFunctionId::PRINTLN_FLOAT,
+        "println",
+        Type{VOID_TYPE_ID, 0},
+        {Type{FLOAT_TYPE_ID, 0}}
+    );
+
+    // void println(bool)
+    symbolTable.declareBuiltinFunction(
+        BuiltinFunctionId::PRINTLN_BOOL,
+        "println",
+        Type{VOID_TYPE_ID, 0},
+        {Type{BOOL_TYPE_ID, 0}}
+    );
+
+    // void println(char)
+    symbolTable.declareBuiltinFunction(
+        BuiltinFunctionId::PRINTLN_CHAR,
+        "println",
+        Type{VOID_TYPE_ID, 0},
+        {Type{CHAR_TYPE_ID, 0}}
+    );
 }
