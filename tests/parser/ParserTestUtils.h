@@ -315,6 +315,11 @@ namespace parserTest {
             ASSERT_NE(actualBoolLiteral, nullptr);
             ASSERT_EQ(actualBoolLiteral->value, expectedBoolLiteral->value);
 
+        } else if (auto* expectedCharLiteral = dynamic_cast<const ExpectedCharLiteral*>(&expectedExpr)) {
+            auto* actualCharLiteral = dynamic_cast<const ast::ExprCharLiteral*>(&actualExpr);
+            ASSERT_NE(actualCharLiteral, nullptr);
+            ASSERT_EQ(actualCharLiteral->value, expectedCharLiteral->value);
+
         } else if (auto* expectedIdentifier = dynamic_cast<const ExpectedExprIdentifier*>(&expectedExpr)) {
             auto* actualVarAccess = dynamic_cast<const ast::ExprIdentifier*>(&actualExpr);
             ASSERT_NE(actualVarAccess, nullptr);
