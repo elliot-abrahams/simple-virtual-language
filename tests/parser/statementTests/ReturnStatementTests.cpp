@@ -15,8 +15,7 @@ TEST(STM_RETURN, RETURN_WITHOUT_EXPRESSION) {
             nullptr
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -32,8 +31,7 @@ TEST(STM_RETURN, RETURN_WITH_EXPRESSION) {
             std::make_unique<ExpectedIntegerLiteral>(5)
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 

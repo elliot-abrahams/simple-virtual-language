@@ -19,8 +19,7 @@ TEST(EXPR_STM, BINARY_EXPR) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -41,8 +40,7 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_PLUS_SIGN) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -63,8 +61,7 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_MINUS_SIGN) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -85,8 +82,7 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_LOGICAL_NOT) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -107,8 +103,7 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_INCREMENT) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -129,8 +124,7 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_DECREMENT) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -152,8 +146,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_INCREMENT) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -175,8 +168,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_DECREMENT) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -205,8 +197,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_INCREMENT_INDEX) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -235,8 +226,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_DECREMENT_INDEX) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -267,8 +257,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -299,8 +288,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -358,8 +346,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX_WITH_INDEXED_ARGUMENT)
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -417,8 +404,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX_WITH_INDEXED_ARGUMENT)
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -438,8 +424,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_FUNCTION_CALL) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -459,8 +444,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_PAREN_FUNCTION_CALL) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -484,8 +468,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_FUNCTION_CALL_WITH_ONE_ARGUMENT) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -503,8 +486,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_PAREN) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -520,8 +502,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_INT_LIT) {
             std::make_unique<ExpectedIntegerLiteral>(5)
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -537,8 +518,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_FLOAT_LIT) {
             std::make_unique<ExpectedFloatLiteral>(5.5f)
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -554,8 +534,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_BOOL_LIT) {
             std::make_unique<ExpectedBoolLiteral>(true)
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -571,8 +550,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_CHAR_LIT) {
             std::make_unique<ExpectedCharLiteral>('a')
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -599,8 +577,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_NEW) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -619,7 +596,6 @@ TEST(EXPR_STM, CAST_EXPR) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }

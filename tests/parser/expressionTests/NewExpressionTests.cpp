@@ -29,8 +29,7 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_NO_INITIALISER) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -64,8 +63,7 @@ TEST(EXPR_NEW, TWO_INDICES_WITH_NO_INITIALISER) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -96,8 +94,7 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_EMPTY_INITIALISER) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -137,8 +134,7 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_INITIALISER) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
@@ -193,8 +189,7 @@ TEST(EXPR_NEW, ONE_INDEX_WITH_NESTED_INITIALISER) {
             )
         )
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 

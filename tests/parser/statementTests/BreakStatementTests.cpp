@@ -12,8 +12,7 @@ TEST(STM_BREAK, BREAK) {
     expectedStatements.push_back(
         std::make_unique<ExpectedBreakStm>()
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 

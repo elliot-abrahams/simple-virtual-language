@@ -7,6 +7,7 @@
 
 namespace parserTest {
 
+    struct ExpectedFunctionDecl;
     struct ExpectedFieldAccess;
     struct ExpectedIndex;
     struct ExpectedArrayInitialiser;
@@ -17,6 +18,7 @@ namespace parserTest {
 
     using PostfixOperator = std::variant<std::unique_ptr<ExpectedIndex>, std::unique_ptr<ExpectedFieldAccess>>;
 
+    inline std::vector<std::unique_ptr<ExpectedFunctionDecl>> noExpectedFunctionDecls;
     inline std::vector<std::unique_ptr<ExpectedIndex>> noExpectedIndices;
     inline std::vector<PostfixOperator> noExpectedPostfixOperators;
 

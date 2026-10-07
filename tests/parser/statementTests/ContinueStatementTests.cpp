@@ -12,8 +12,7 @@ TEST(STM_CONTINUE, CONTINUE) {
     expectedStatements.push_back(
         std::make_unique<ExpectedContinueStm>()
     );
-    std::vector<std::unique_ptr<ExpectedFunctionDecl>> expectedFunctionDecls;
-    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(expectedFunctionDecls));
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
