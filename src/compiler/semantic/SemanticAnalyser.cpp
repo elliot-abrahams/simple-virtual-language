@@ -1,6 +1,5 @@
 #include "SemanticAnalyser.h"
 
-#include <iostream>
 #include <queue>
 
 #include "../../include/Error.h"
@@ -490,9 +489,9 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::checkExprType(Scope* scope,
             ((unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::PLUS || unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::MINUS) &&
                     !exprTypeResult.type.isNumeric()) ||
 
-            // if operator is increment or decrement and type is neither numeric nor char
+            // if operator is increment or decrement and type is not numeric
             (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT || unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT) &&
-                    !exprTypeResult.type.isNumeric() && exprTypeResult.type.typeId != CHAR_TYPE_ID
+                    !exprTypeResult.type.isNumeric()
         ) {
             throw TypeError(
                 *this->path,
@@ -574,8 +573,8 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::checkExprType(Scope* scope,
                 );
             }
 
-            // throw error if expr type is not numeric and not char
-            if (!exprTypeInfo.type.isNumeric() && exprTypeInfo.type.typeId != CHAR_TYPE_ID) {
+            // throw error if expr type is not numeric
+            if (!exprTypeInfo.type.isNumeric()) {
                 throw TypeError(
                     *this->path,
                     exprPostfix->line,

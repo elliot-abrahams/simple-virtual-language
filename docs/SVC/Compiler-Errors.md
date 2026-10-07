@@ -5,11 +5,12 @@
 - [1 Overview](#1-overview)
 - [2. Error Format](#2-error-format)
 - [3. Syntax Errors](#3-syntax-errors)
-  - [3.1](#31-unexpected-token)
+  - [3.1 Unexpected Token](#31-unexpected-token)
   - [3.2 Reserved Identifier](#32-reserved-identifier)
   - [3.3 Missing Float Digit](#33-missing-float-digit)
   - [3.4 Missing Float Suffix](#34-missing-float-suffix)
-  - [3.5 Value Out of Range](#35-value-out-of-range)
+  - [3.5 Invalid Escape Character](#35-invalid-escape-character)
+  - [3.6 Value Out of Range](#36-value-out-of-range)
 - [4. Semantic Errors](#4-semantic-errors)
   - [4.1 Variable Already Defined](#41-variable-already-defined)
   - [4.2 Undefined Variable](#42-undefined-variable)
@@ -167,7 +168,27 @@ Floating-point values must use the `f` suffix.
 
 ---
 
-### 3.5 Value Out of Range
+### 3.5 Invalid Escape Character
+
+**Message:**
+```
+invalid escape character '<char>'
+```
+
+**Example:**
+```
+char c = '\y';
+```
+
+```
+SyntaxError: invalid escape character 'y'
+```
+
+Only the supported escape characters may be used after a backslash.
+
+---
+
+### 3.6 Value Out of Range
 
 **Message:**
 ```
