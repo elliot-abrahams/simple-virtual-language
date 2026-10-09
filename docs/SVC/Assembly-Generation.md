@@ -906,7 +906,9 @@ Where:
 
 #### 5.8.2 Field Access
 
-A field access adds the field offset to the current address:
+A field access adds the field offset to the current address.
+
+If `[field_offset]` is zero, no assembly is generated. Otherwise:
 
 ```
     ; Stack: <ptr: ptr>

@@ -892,18 +892,20 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
             // compile field access
             auto& fieldAccess = std::get<std::unique_ptr<ast::FieldAccess>>(expr.postfixOperators[idx]);
 
-            this->emit(Instruction{Opcode::PUSH,
+            if (fieldAccess->fieldInfo->addressOffset != 0) {
+                this->emit(Instruction{Opcode::PUSH,
                 {
-                    AssemblyType::UI32,
-                    Immediate{Number{fieldAccess->fieldInfo->addressOffset}}
-                },
-                SourceLocation{0, fieldAccess->line, fieldAccess->column}
-            });
+                        AssemblyType::UI32,
+                        Immediate{Number{fieldAccess->fieldInfo->addressOffset}}
+                    },
+                    SourceLocation{0, fieldAccess->line, fieldAccess->column}
+                });
 
-            this->emit(Instruction{Opcode::ADD,
-                {},
-                SourceLocation{0, fieldAccess->line, fieldAccess->column}
-            });
+                this->emit(Instruction{Opcode::ADD,
+                    {},
+                    SourceLocation{0, fieldAccess->line, fieldAccess->column}
+                });
+            }
         }
     }
 
