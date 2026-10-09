@@ -113,7 +113,7 @@ TEST(SYMBOL, GREATER_THAN_OR_EQUAL) {
 
 
 TEST(SYMBOL, END_OF_FILE) {
-    ASSERT_TOKEN_EQ("", TokenKind::END_OF_FILE, "");
+    ASSERT_TOKEN_EQ("", TokenKind::END_OF_FILE, "End of File");
 }
 TEST(SYMBOL, HASH) {
     ASSERT_TOKEN_EQ(
@@ -131,6 +131,6 @@ TEST(SYMBOL, HASH_END_OF_FILE) {
             # this is a comment
 
         )",
-        TokenKind::END_OF_FILE, ""
+        TokenKind::END_OF_FILE, "End of File"
     );
 }

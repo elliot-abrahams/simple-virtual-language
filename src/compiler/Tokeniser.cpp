@@ -64,7 +64,7 @@ Token compiler::Tokeniser::readToken() {
 
         // check reached end
         if (this->current == this->source.size()) {
-            return Token{TokenKind::END_OF_FILE, "", this->line, this->column};
+            return Token{TokenKind::END_OF_FILE, "End of File", this->line, this->column};
         }
 
         this->start = this->current;
