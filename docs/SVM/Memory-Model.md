@@ -99,20 +99,20 @@ Each stack frame contains:
 
 All memory accesses perform bounds checking before reading and writing.
 
-| Operation                                                              | Region Access |
-|------------------------------------------------------------------------|---------------|
-| Fetch instruction at program counter (PC)                              | Code          |
-| Fetch operand of instruction                                           | Code          |
-| Reading from memory using the instruction `loadG`                      | Data          |
-| Reading from memory using the instructions `load`, `loadB`             | Data, Heap    |
-| Reading from memory using the instruction `loadL`                      | Call Stack    |
-| Writing to memory using the instruction `storeG`                       | Data          |
-| Writing to memory using the instructions `store`, `storeB`             | Data, Heap    |
-| Writing to memory using the instruction `storeL`                       | Call Stack    |
-| Reading a method's argument / local variable metadata                  | Code          |
-| Write stack frame to memory after the instruction `call` is run        | Call Stack    |
-| Read stack frame from memory after the instruction `ret` is run        | Call Stack    | 
-| Write heap block header to memory after the instruction `alloc` is run | Heap          |
-| Read heap block header from memory after the instruction `free` is run | Heap          |
+| Operation                                                              | Region Access          |
+|------------------------------------------------------------------------|------------------------|
+| Fetch instruction at program counter (PC)                              | Code                   |
+| Fetch operand of instruction                                           | Code                   |
+| Reading from memory using the instruction `loadG`                      | Data                   |
+| Reading from memory using the instructions `load`, `loadB`             | Data, Heap, Call Stack |
+| Reading from memory using the instruction `loadL`                      | Call Stack             |
+| Writing to memory using the instruction `storeG`                       | Data                   |
+| Writing to memory using the instructions `store`, `storeB`             | Data, Heap, Call Stack |
+| Writing to memory using the instruction `storeL`                       | Call Stack             |
+| Reading a method's argument / local variable metadata                  | Code                   |
+| Write stack frame to memory after the instruction `call` is run        | Call Stack             |
+| Read stack frame from memory after the instruction `ret` is run        | Call Stack             | 
+| Write heap block header to memory after the instruction `alloc` is run | Heap                   |
+| Read heap block header from memory after the instruction `free` is run | Heap                   |
 
 An error is thrown if the address used during an operation is outside the permitted region access.

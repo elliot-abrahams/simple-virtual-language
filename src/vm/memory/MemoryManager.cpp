@@ -178,7 +178,7 @@ void MemoryManager::checkAddressInRegion(const MemoryAccessScope region, const u
             break;
         }
         case MemoryAccessScope::PTR: {
-            if (this->inDataRegion(address) || this->inHeapRegion(address)) {
+            if (this->inDataRegion(address) || this->inHeapRegion(address) || this->inCallStackRegion(address)) {
                 return;
             }
             break;
