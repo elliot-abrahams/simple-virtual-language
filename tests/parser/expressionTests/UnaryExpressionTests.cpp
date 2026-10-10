@@ -162,7 +162,7 @@ TEST(EXPR_UNARY, VARIABLE_LOGICAL_NOT) {
 
 TEST(EXPR_UNARY, INT_BITWISE_NOT) {
     const auto testCode = R"(
-        int x = !~5;
+        int x = ~5;
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
