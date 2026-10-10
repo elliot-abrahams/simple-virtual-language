@@ -45,6 +45,41 @@ TEST(EXPR_UNARY, LOGICAL_NOT_FALSE) {
     );
 }
 
+TEST(EXPR_UNARY, BITWISE_NOT_ZERO) {
+    ASSERT_OUTPUT_EQ(
+        "print(~0);",
+        "-1"
+    );
+}
+
+TEST(EXPR_UNARY, BITWISE_NOT_ONE) {
+    ASSERT_OUTPUT_EQ(
+        "print(~1);",
+        "-2"
+    );
+}
+
+TEST(EXPR_UNARY, BITWISE_NOT_POSITIVE) {
+    ASSERT_OUTPUT_EQ(
+        "print(~12);",
+        "-13"
+    );
+}
+
+TEST(EXPR_UNARY, BITWISE_NOT_NEGATIVE_ONE) {
+    ASSERT_OUTPUT_EQ(
+        "print(~(-1));",
+        "0"
+    );
+}
+
+TEST(EXPR_UNARY, BITWISE_NOT_CHAR) {
+    ASSERT_OUTPUT_EQ(
+        "print(~'A');",
+        "-66"
+    );
+}
+
 TEST(EXPR_UNARY, INCREMENT_INT_VARIABLE) {
     ASSERT_OUTPUT_EQ(
         R"(

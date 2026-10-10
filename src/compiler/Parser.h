@@ -38,8 +38,12 @@ namespace compiler {
         std::unique_ptr<ast::Expr> parseExpr() const;
         std::unique_ptr<ast::Expr> parseLogicalOrExpression() const;
         std::unique_ptr<ast::Expr> parseLogicalAndExpression() const;
+        std::unique_ptr<ast::Expr> parseBitwiseOrExpression() const;
+        std::unique_ptr<ast::Expr> parseBitwiseXorExpression() const;
+        std::unique_ptr<ast::Expr> parseBitwiseAndExpression() const;
         std::unique_ptr<ast::Expr> parseEqualityExpression() const;
         std::unique_ptr<ast::Expr> parseComparisonExpression() const;
+        std::unique_ptr<ast::Expr> parseShiftExpression() const;
         std::unique_ptr<ast::Expr> parseAdditiveExpression() const;
         std::unique_ptr<ast::Expr> parseMultiplicativeExpression() const;
         std::unique_ptr<ast::Expr> parseUnaryExpression() const;
@@ -63,6 +67,9 @@ namespace compiler {
 
         std::unique_ptr<ast::AssignmentOperatorInfo> parseAssignmentOperator() const;
         std::unique_ptr<ast::UnaryOperatorInfo> parseIncrementDecrementOperator() const;
+
+        UnaryOperator getUnaryOperator(const Token& token) const;
+        BinaryOperator getBinaryOperator(const Token& token) const;
 
         static bool isPrimitiveTypeToken(const TokenKind& kind);
         static bool isAssignmentOperator(const TokenKind& kind);

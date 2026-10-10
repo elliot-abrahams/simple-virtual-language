@@ -65,6 +65,7 @@ namespace compiler {
         Type processDivision(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
         Type processIntegerDivision(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
         Type processModulo(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processBitwiseOp(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
         Type processLogical(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
         Type processEquality(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
         Type processComparison(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
@@ -77,6 +78,7 @@ namespace compiler {
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
 
+        void throwTypeErrorFromUnaryOperator(const ast::ExprUnaryOperator& unaryOperator, const Type& type) const;
         void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType) const;
         void throwInvalidExpressionTypeAsStatement(const ast::Expr& expr) const;
         void throwTypeErrorFromForVariable(const Type& variableType, const uint32_t forVariableLine, const uint16_t forVariableColumn) const;

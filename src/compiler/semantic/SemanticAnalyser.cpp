@@ -566,6 +566,14 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::processBinaryExpr(Scope* sc
         case BinaryOperator::INTEGER_DIVIDE: return ExpressionInfo{this->processIntegerDivision(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
         case BinaryOperator::MODULO: return ExpressionInfo{this->processModulo(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
 
+        case BinaryOperator::BITWISE_OR:
+        case BinaryOperator::BITWISE_XOR:
+        case BinaryOperator::BITWISE_AND:
+        case BinaryOperator::LEFT_SHIFT:
+        case BinaryOperator::ARITHMETIC_RIGHT_SHIFT:
+        case BinaryOperator::LOGICAL_RIGHT_SHIFT:
+            return ExpressionInfo{this->processBitwiseOp(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
+
         case BinaryOperator::LOGICAL_OR:
         case BinaryOperator::LOGICAL_AND:
             return ExpressionInfo{this->processLogical(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
@@ -601,33 +609,56 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::processUnaryExpr(Scope* sco
         }
     }
 
-    if (
-        // if expr is an array
-        exprTypeResult.type.isArray() ||
-        // if operator is logical not and type is not bool
-        unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT &&
-                exprTypeResult.type.typeId != BOOL_TYPE_ID ||
-        // if operator is plus or minus and type is not numeric
-        ((unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::PLUS || unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::MINUS) &&
-                !exprTypeResult.type.isNumeric()) ||
-
-        // if operator is increment or decrement and type is not numeric
-        (unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT || unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT) &&
-                !exprTypeResult.type.isNumeric()
-    ) {
-        throw TypeError(
-            *this->path,
-            unaryOperatorExpr.line,
-            unaryOperatorExpr.column,
-            "cannot apply operator '" +
-                unaryOperatorToString(unaryOperatorExpr.unaryOperatorInfo->unaryOperator) +
-                "' to type '" +
-                typeToString(exprTypeResult.type) +
-                "'"
-        );
+    if (exprTypeResult.type.isArray()) {
+        this->throwTypeErrorFromUnaryOperator(unaryOperatorExpr, exprTypeResult.type);
     }
-    unaryOperatorExpr.resultingType = exprTypeResult.type;
-    return exprTypeResult;
+
+    switch (unaryOperatorExpr.unaryOperatorInfo->unaryOperator) {
+        case UnaryOperator::PLUS:
+        case UnaryOperator::MINUS: {
+            if (
+                exprTypeResult.type.typeId == INT_TYPE_ID ||
+                exprTypeResult.type.typeId == FLOAT_TYPE_ID
+            ) {
+                unaryOperatorExpr.resultingType = exprTypeResult.type;
+                return exprTypeResult;
+            }
+            if (exprTypeResult.type.typeId == CHAR_TYPE_ID) {
+                const auto resultingType = Type{INT_TYPE_ID, 0};
+                unaryOperatorExpr.resultingType = resultingType;
+                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
+            }
+            this->throwTypeErrorFromUnaryOperator(unaryOperatorExpr, exprTypeResult.type);
+        }
+        case UnaryOperator::LOGICAL_NOT: {
+            if (exprTypeResult.type.typeId == BOOL_TYPE_ID) {
+                unaryOperatorExpr.resultingType = exprTypeResult.type;
+                return exprTypeResult;
+            }
+            this->throwTypeErrorFromUnaryOperator(unaryOperatorExpr, exprTypeResult.type);
+        }
+        case UnaryOperator::BITWISE_NOT: {
+            if (
+                exprTypeResult.type.typeId == INT_TYPE_ID ||
+                exprTypeResult.type.typeId == CHAR_TYPE_ID
+            ) {
+                const auto resultingType = Type{INT_TYPE_ID, 0};
+                unaryOperatorExpr.resultingType = resultingType;
+                return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
+            }
+            this->throwTypeErrorFromUnaryOperator(unaryOperatorExpr, exprTypeResult.type);
+        }
+        case UnaryOperator::INCREMENT:
+        case UnaryOperator::DECREMENT: {
+            if (
+                exprTypeResult.type.isNumeric()
+            ) {
+                unaryOperatorExpr.resultingType = exprTypeResult.type;
+                return exprTypeResult;
+            }
+            this->throwTypeErrorFromUnaryOperator(unaryOperatorExpr, exprTypeResult.type);
+        }
+    }
 }
 
 compiler::ExpressionInfo compiler::SemanticAnalyser::processPostfixExpr(Scope* scope, const ast::ExprPostfix& postfixExpr) {
@@ -1108,6 +1139,28 @@ compiler::Type compiler::SemanticAnalyser::processModulo(const ast::ExprBinaryOp
     this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
 }
 
+compiler::Type compiler::SemanticAnalyser::processBitwiseOp(const ast::ExprBinaryOperator &binaryOperator, const Type &leftType, const Type &rightType) {
+    /*
+       | Left \ Right | `int` | `char` |
+       |--------------|-------|--------|
+       | `int`        | `int` | `int`  |
+       | `char`       | `int` | `int`  |
+     */
+
+    if (
+        // int & int  // int & char
+        (leftType.typeId == INT_TYPE_ID && (rightType.typeId == INT_TYPE_ID || rightType.typeId == CHAR_TYPE_ID)) ||
+        // char & int  // char & char
+        (leftType.typeId == CHAR_TYPE_ID && (rightType.typeId == INT_TYPE_ID || rightType.typeId == CHAR_TYPE_ID))
+    ) {
+        const auto resultingType = Type{INT_TYPE_ID, 0};
+        binaryOperator.resultingType = resultingType;
+        return resultingType;
+    }
+    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+}
+
+
 compiler::Type compiler::SemanticAnalyser::processLogical(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
     /*
        | Left \ Right | `bool`  |
@@ -1244,6 +1297,14 @@ std::string compiler::SemanticAnalyser::binaryOperatorToString(const BinaryOpera
         case BinaryOperator::INTEGER_DIVIDE: return "//";
         case BinaryOperator::MODULO: return "%";
 
+        case BinaryOperator::BITWISE_OR: return "|";
+        case BinaryOperator::BITWISE_XOR: return "^";
+        case BinaryOperator::BITWISE_AND: return "&";
+
+        case BinaryOperator::LEFT_SHIFT: return "<<";
+        case BinaryOperator::ARITHMETIC_RIGHT_SHIFT: return ">>";
+        case BinaryOperator::LOGICAL_RIGHT_SHIFT: return ">>>";
+
         case BinaryOperator::LOGICAL_OR: return "||";
         case BinaryOperator::LOGICAL_AND: return "&&";
 
@@ -1261,11 +1322,26 @@ std::string compiler::SemanticAnalyser::unaryOperatorToString(const UnaryOperato
     switch (unaryOperator) {
         case UnaryOperator::PLUS: return "+";
         case UnaryOperator::MINUS: return "-";
+        case UnaryOperator::BITWISE_NOT: return "~";
         case UnaryOperator::LOGICAL_NOT: return "!";
         case UnaryOperator::INCREMENT: return "++";
         case UnaryOperator::DECREMENT: return "--";
     }
 }
+
+void compiler::SemanticAnalyser::throwTypeErrorFromUnaryOperator(const ast::ExprUnaryOperator& unaryOperator, const Type& type) const {
+    throw TypeError(
+            *this->path,
+            unaryOperator.line,
+            unaryOperator.column,
+            "cannot apply operator '" +
+                unaryOperatorToString(unaryOperator.unaryOperatorInfo->unaryOperator) +
+                "' to type '" +
+                typeToString(type) +
+                "'"
+        );
+}
+
 
 void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType) const {
     throw TypeError(

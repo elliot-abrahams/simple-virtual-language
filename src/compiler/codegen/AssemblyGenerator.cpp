@@ -1089,7 +1089,13 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
         case BinaryOperator::SUBTRACT:
         case BinaryOperator::MULTIPLY:
         case BinaryOperator::DIVIDE:
-        case BinaryOperator::MODULO: {
+        case BinaryOperator::MODULO:
+        case BinaryOperator::BITWISE_OR:
+        case BinaryOperator::BITWISE_XOR:
+        case BinaryOperator::BITWISE_AND:
+        case BinaryOperator::LEFT_SHIFT:
+        case BinaryOperator::ARITHMETIC_RIGHT_SHIFT:
+        case BinaryOperator::LOGICAL_RIGHT_SHIFT: {
             // convert left expr to expr resulting type
             this->compileTypeConversionIfRequired(expr.left->resultingType, expr.resultingType, SourceLocation{0, expr.left->line, expr.left->column});
             // compile right expr
@@ -1265,6 +1271,13 @@ void compiler::AssemblyGenerator::compileBinaryOperator(const ast::BinaryOperato
             break;
 
         case BinaryOperator::MODULO: this->emit(Instruction{Opcode::MOD, {}, sourceLocation}); break;
+
+        case BinaryOperator::BITWISE_OR: this->emit(Instruction{Opcode::ORR, {}, sourceLocation}); break;
+        case BinaryOperator::BITWISE_XOR: this->emit(Instruction{Opcode::XOR, {}, sourceLocation}); break;
+        case BinaryOperator::BITWISE_AND: this->emit(Instruction{Opcode::AND, {}, sourceLocation}); break;
+        case BinaryOperator::LEFT_SHIFT: this->emit(Instruction{Opcode::SHL, {}, sourceLocation}); break;
+        case BinaryOperator::ARITHMETIC_RIGHT_SHIFT: this->emit(Instruction{Opcode::SAR, {}, sourceLocation}); break;
+        case BinaryOperator::LOGICAL_RIGHT_SHIFT: this->emit(Instruction{Opcode::SHR, {}, sourceLocation}); break;
         case BinaryOperator::EQUAL_EQUAL: this->emit(Instruction{Opcode::CEQ, {}, sourceLocation}); break;
         case BinaryOperator::NOT_EQUAL: this->emit(Instruction{Opcode::CNE, {}, sourceLocation}); break;
         case BinaryOperator::LESS_THAN: this->emit(Instruction{Opcode::CLT, {}, sourceLocation}); break;
@@ -1275,7 +1288,6 @@ void compiler::AssemblyGenerator::compileBinaryOperator(const ast::BinaryOperato
         default: {}
     }
 }
-
 
 void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr, const ExprResult exprResult) {
     switch (expr.unaryOperatorInfo->unaryOperator) {
@@ -1297,6 +1309,15 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
 
             // subtract value of expression from 0
             this->emit(Instruction{Opcode::SUB,
+                {},
+                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+            });
+            break;
+        }
+        case UnaryOperator::BITWISE_NOT: {
+            this->compileExpr(scope, *expr.expr, ExprResult::VALUE);
+            this->compileTypeConversionIfRequired(expr.expr->resultingType, expr.resultingType, SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column});
+            this->emit(Instruction{Opcode::NOT,
                 {},
                 SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
             });

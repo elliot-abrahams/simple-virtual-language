@@ -67,6 +67,14 @@ namespace compiler {
         INTEGER_DIVIDE,
         MODULO,
 
+        BITWISE_OR,
+        BITWISE_XOR,
+        BITWISE_AND,
+
+        LEFT_SHIFT,
+        ARITHMETIC_RIGHT_SHIFT,
+        LOGICAL_RIGHT_SHIFT,
+
         LOGICAL_OR,
         LOGICAL_AND,
 
@@ -83,6 +91,7 @@ namespace compiler {
         PLUS,
         MINUS,
         LOGICAL_NOT,
+        BITWISE_NOT,
 
         INCREMENT,
         DECREMENT

@@ -129,6 +129,132 @@ TEST(EXPR_BINARY, MODULO) {
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
+TEST(EXPR_BINARY, BITWISE_OR) {
+    const auto testCode = R"(
+        int x = 1 | 2;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::BITWISE_OR,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedIntegerLiteral>(2)
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_BINARY, BITWISE_XOR) {
+    const auto testCode = R"(
+        int x = 1 ^ 2;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::BITWISE_XOR,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedIntegerLiteral>(2)
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_BINARY, BITWISE_AND) {
+    const auto testCode = R"(
+        int x = 1 & 2;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::BITWISE_AND,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedIntegerLiteral>(2)
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_BINARY, LEFT_SHIFT) {
+    const auto testCode = R"(
+        int x = 1 << 2;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::LEFT_SHIFT,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedIntegerLiteral>(2)
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_BINARY, ARITHMETIC_RIGHT_SHIFT) {
+    const auto testCode = R"(
+        int x = 1 >> 2;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::ARITHMETIC_RIGHT_SHIFT,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedIntegerLiteral>(2)
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_BINARY, LOGICAL_RIGHT_SHIFT) {
+    const auto testCode = R"(
+        int x = 1 >>> 2;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::LOGICAL_RIGHT_SHIFT,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedIntegerLiteral>(2)
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
 TEST(EXPR_BINARY, LOGICAL_OR) {
     const auto testCode = R"(
         int x = 1 || 2;

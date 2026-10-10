@@ -160,6 +160,51 @@ TEST(EXPR_UNARY, VARIABLE_LOGICAL_NOT) {
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
+TEST(EXPR_UNARY, INT_BITWISE_NOT) {
+    const auto testCode = R"(
+        int x = !~5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedUnaryExpr>(
+                compiler::UnaryOperator::BITWISE_NOT,
+                std::make_unique<ExpectedIntegerLiteral>(
+                    5
+                )
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_UNARY, VARIABLE_BITWISE_NOT) {
+    const auto testCode = R"(
+        int x = ~y;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedUnaryExpr>(
+                compiler::UnaryOperator::BITWISE_NOT,
+                std::make_unique<ExpectedExprIdentifier>(
+                    std::make_unique<ExpectedIdentifier>("y")
+                )
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
 TEST(EXPR_UNARY, INT_NESTED_LOGICAL_NOT) {
     const auto testCode = R"(
         int x = !!5;

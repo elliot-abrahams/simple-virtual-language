@@ -126,9 +126,34 @@ TEST(EXPR_PRECEDENCE, MULTIPLICATIVE_BEFORE_ADDITIVE_2) {
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
-TEST(EXPR_PRECEDENCE, ADDITIVE_BEFORE_COMPARISON) {
+TEST(EXPR_PRECEDENCE, ADDITIVE_BEFORE_SHIFT) {
     const auto testCode = R"(
-        int x = 1 < 2 + 3;
+        int x = 1 << 2 + 3;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::LEFT_SHIFT,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedBinaryExpr>(
+                    compiler::BinaryOperator::ADD,
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    std::make_unique<ExpectedIntegerLiteral>(3)
+                )
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_PRECEDENCE, SHIFT_BEFORE_COMPARISON) {
+    const auto testCode = R"(
+        int x = 1 < 2 << 3;
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
@@ -140,7 +165,7 @@ TEST(EXPR_PRECEDENCE, ADDITIVE_BEFORE_COMPARISON) {
                 compiler::BinaryOperator::LESS_THAN,
                 std::make_unique<ExpectedIntegerLiteral>(1),
                 std::make_unique<ExpectedBinaryExpr>(
-                    compiler::BinaryOperator::ADD,
+                    compiler::BinaryOperator::LEFT_SHIFT,
                     std::make_unique<ExpectedIntegerLiteral>(2),
                     std::make_unique<ExpectedIntegerLiteral>(3)
                 )
@@ -176,9 +201,84 @@ TEST(EXPR_PRECEDENCE, COMPARISON_BEFORE_EQUALITY) {
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
-TEST(EXPR_PRECEDENCE, EQUALITY_BEFORE_LOGICAL_AND) {
+TEST(EXPR_PRECEDENCE, EQUALITY_BEFORE_BITWISE_AND) {
     const auto testCode = R"(
-        int x = 1 && 2 == 3;
+        int x = 1 & 2 == 3;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::BITWISE_AND,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedBinaryExpr>(
+                    compiler::BinaryOperator::EQUAL_EQUAL,
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    std::make_unique<ExpectedIntegerLiteral>(3)
+                )
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_PRECEDENCE, BITWISE_AND_BEFORE_BITWISE_XOR) {
+    const auto testCode = R"(
+        int x = 1 ^ 2 & 3;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::BITWISE_XOR,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedBinaryExpr>(
+                    compiler::BinaryOperator::BITWISE_AND,
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    std::make_unique<ExpectedIntegerLiteral>(3)
+                )
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_PRECEDENCE, BITWISE_XOR_BEFORE_BITWISE_OR) {
+    const auto testCode = R"(
+        int x = 1 | 2 ^ 3;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedBinaryExpr>(
+                compiler::BinaryOperator::BITWISE_OR,
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedBinaryExpr>(
+                    compiler::BinaryOperator::BITWISE_XOR,
+                    std::make_unique<ExpectedIntegerLiteral>(2),
+                    std::make_unique<ExpectedIntegerLiteral>(3)
+                )
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(EXPR_PRECEDENCE, BITWISE_OR_BEFORE_LOGICAL_AND) {
+    const auto testCode = R"(
+        int x = 1 && 2 | 3;
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
@@ -190,7 +290,7 @@ TEST(EXPR_PRECEDENCE, EQUALITY_BEFORE_LOGICAL_AND) {
                 compiler::BinaryOperator::LOGICAL_AND,
                 std::make_unique<ExpectedIntegerLiteral>(1),
                 std::make_unique<ExpectedBinaryExpr>(
-                    compiler::BinaryOperator::EQUAL_EQUAL,
+                    compiler::BinaryOperator::BITWISE_OR,
                     std::make_unique<ExpectedIntegerLiteral>(2),
                     std::make_unique<ExpectedIntegerLiteral>(3)
                 )

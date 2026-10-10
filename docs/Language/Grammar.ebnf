@@ -62,17 +62,25 @@ expression                  = logical_or_expression ;
 
 logical_or_expression       = logical_and_expression, { LOGICAL_OR, logical_and_expression } ;
 
-logical_and_expression      = equality_expression, { LOGICAL_AND, equality_expression } ;
+logical_and_expression      = bitwise_or_expression, { LOGICAL_AND, bitwise_or_expression } ;
+
+bitwise_or_expression       = bitwise_xor_expression, { BITWISE_OR, bitwise_xor_expression } ;
+
+bitwise_xor_expression      = bitwise_and_expression, { BITWISE_XOR, bitwise_and_expression } ;
+
+bitwise_and_expression      = equality_expression, { BITWISE_AND, equality_expression } ;
 
 equality_expression         = comparison_expression, { ( EQUAL_EQUAL | NOT_EQUAL ), comparison_expression } ;
 
-comparison_expression       = additive_expression, { ( LESS_THAN | LESS_THAN_OR_EQUAL | GREATER_THAN | GREATER_THAN_OR_EQUAL ), additive_expression } ;
+comparison_expression       = shift_expression, { ( LESS_THAN | LESS_THAN_OR_EQUAL | GREATER_THAN | GREATER_THAN_OR_EQUAL ), shift_expression } ;
+
+shift_expression            = additive_expression, { ( LEFT_SHIFT | RIGHT_SHIFT | UNSIGNED_RIGHT_SHIFT ), additive_expression } ;
 
 additive_expression         = multiplicative_expression, { ( PLUS | MINUS ), multiplicative_expression } ;
 
 multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | INTEGER_DIVIDE | MODULO ), unary_expression } ;
 
-unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
+unary_expression            = ( PLUS | MINUS | LOGICAL_NOT | BITWISE_NOT ), unary_expression
                             | cast_expression
                             | [ INCREMENT | DECREMENT ], postfix_expression ;
 
@@ -145,6 +153,15 @@ MULTIPLY                    = "*"
 DIVIDE                      = "/"
 INTEGER_DIVIDE              = "//"
 MODULO                      = "%"
+
+BITWISE_OR                  = "|"
+BITWISE_XOR                 = "^"
+BITWISE_AND                 = "&"
+BITWISE_NOT                 = "~"
+
+LEFT_SHIFT                  = "<<"
+RIGHT_SHIFT                 = ">>"
+UNSIGNED_RIGHT_SHIFT        = ">>>"
 
 LOGICAL_OR                  = "||"
 LOGICAL_AND                 = "&&"

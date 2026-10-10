@@ -26,17 +26,18 @@
   - [6.1 Literals](#61-literals)
   - [6.2 Variable Access](#62-variable-access)
   - [6.3 Arithmetic Operators](#63-arithmetic-operators)
-  - [6.4 Logical Operators](#64-logical-operators)
-  - [6.5 Equality Operators](#65-equality-operators)
-  - [6.6 Comparison Operators](#66-comparison-operators)
-  - [6.7 Unary Operators](#67-unary-operators)
-  - [6.8 Postfix Expressions](#68-postfix-expressions)
-    - [6.8.1 Array Access](#681-array-access)
-    - [6.8.2 Field Access](#682-field-access)
-    - [6.8.3 Increment and Decrement](#683-increment-and-decrement)
-  - [6.9 Function Calls](#69-function-calls)
-  - [6.10 Cast Expressions](#610-cast-expressions)
-  - [6.11 New Expressions](#611-new-expressions)
+  - [6.4 Bitwise Operators](#64-bitwise-operators)
+  - [6.5 Logical Operators](#65-logical-operators)
+  - [6.6 Equality Operators](#66-equality-operators)
+  - [6.7 Comparison Operators](#67-comparison-operators)
+  - [6.8 Unary Operators](#68-unary-operators)
+  - [6.9 Postfix Expressions](#69-postfix-expressions)
+    - [6.9.1 Array Access](#691-array-access)
+    - [6.9.2 Field Access](#692-field-access)
+    - [6.9.3 Increment and Decrement](#693-increment-and-decrement)
+  - [6.10 Function Calls](#610-function-calls)
+  - [6.11 Cast Expressions](#611-cast-expressions)
+  - [6.12 New Expressions](#612-new-expressions)
 - [7. Functions](#7-functions)
   - [7.1 Function Declarations](#71-function-declarations)
   - [7.2 Parameters](#72-parameters)
@@ -410,7 +411,27 @@ The following tables defines the valid operand types and resulting type of each 
 | `float`      | `float` | `float` | `float` |
 | `char`       | `int`   | `float` | `int`   |
 
-### 6.4 Logical Operators
+### 6.4 Bitwise Operators
+
+The bitwise operators are:
+
+| Operator | Purpose                |
+|----------|------------------------|
+| `&`      | Bitwise AND            | 
+| `\|`     | Bitwise OR             |
+| `^`      | Bitwise XOR            |
+| `<<`     | Left Shift             |
+| `>>`     | Arithmetic Right Shift |
+| `>>>`    | Logical Right Shift    |
+
+The following table defines the valid operand types for bitwise operators.
+
+| Left \ Right | `int` | `char` |
+|--------------|-------|--------|
+| `int`        | `int` | `int`  |
+| `char`       | `int` | `int`  |
+
+### 6.5 Logical Operators
 
 The logical operators are:
 
@@ -425,8 +446,7 @@ The following table defines the valid operand types for logical operators.
 |--------------|---------|
 | `bool`       | `bool`  |
 
-
-### 6.5 Equality Operators
+### 6.6 Equality Operators
 
 The equality operators are:
 
@@ -444,7 +464,7 @@ The following table defines the valid operand types for equality operators.
 | `bool`       | invalid | invalid | `bool`  | invalid |
 | `char`       | `bool`  | `bool`  | invalid | `bool`  |
 
-### 6.6 Comparison Operators
+### 6.7 Comparison Operators
 
 The comparison operators are:
 
@@ -463,7 +483,7 @@ The following table defines the valid operand types for comparison operators.
 | `float`      | `bool` | `bool`  | `bool` |
 | `char`       | `bool` | `bool`  | `bool` |
 
-### 6.7 Unary Operators
+### 6.8 Unary Operators
 
 The unary operators are:
 
@@ -472,18 +492,20 @@ The unary operators are:
 | `+`      | Positive sign    |
 | `-`      | Negative sign    |
 | `!`      | Logical NOT      |
+| `~`      | Bitwise NOT      |
 | `++`     | Prefix increment |
 | `--`     | Prefix decrement |
 
 The following table defines the valid operand types for unary operators.
 
-| Operator | `int`   | `float` | `bool`  |
-|----------|---------|---------|---------|
-| `+`      | `int`   | `float` | invalid | 
-| `++`     | `int`   | `float` | invalid |
-| `-`      | `int`   | `float` | invalid |
-| `--`     | `int`   | `float` | invalid |
-| `!`      | invalid | invalid | `bool`  |
+| Operator | `int`   | `float` | `bool`  | `char`  |
+|----------|---------|---------|---------|---------|
+| `+`      | `int`   | `float` | invalid | `int`   |
+| `-`      | `int`   | `float` | invalid | `int`   |
+| `!`      | invalid | invalid | `bool`  | invalid |
+| `~`      | `int`   | invalid | invalid | `int`   | 
+| `++`     | `int`   | `float` | invalid | `char`  |
+| `--`     | `int`   | `float` | invalid | `char`  |
 
 For prefix increment and decrement, the base expression must be an assignable expression.
 
@@ -502,11 +524,11 @@ int b = --x; // x = 5, b = 5
 
 The resulting type of unary expressions is the resulting type of its base expression.
 
-### 6.8 Postfix Expressions
+### 6.9 Postfix Expressions
 
 A postfix expression evaluates its base expression and then applies each postfix operation in order.
 
-#### 6.8.1 Array Access
+#### 6.9.1 Array Access
 
 An index may only be applied to an array.
 
@@ -527,13 +549,13 @@ arr[0]      // has type int[]
 arr[0][1]   // has type int 
 ```
 
-#### 6.8.2 Field Access
+#### 6.9.2 Field Access
 
 A field access may only be applied to a type that contains the specified field.
 
 The resulting type of a field access is the type of the specified field access.
 
-#### 6.8.3 Increment and Decrement
+#### 6.9.3 Increment and Decrement
 
 The postfix increment operator `++` increments the value of its base expression by `1`.
 
@@ -558,7 +580,7 @@ int b = x--;  // b is 6, x is 5
 
 The resulting type of a postfix increment or decrement expression is the resulting type of its base expression.
 
-### 6.9 Function Calls
+### 6.10 Function Calls
 
 A function call is an expression that evaluates to the return value of the selected function.
 
@@ -568,7 +590,7 @@ A function call with a `void` return type does not produce a value and therefore
 
 Function selection is defined in [Section 7.4](#74-function-resolution).
 
-### 6.10 Cast Expressions
+### 6.11 Cast Expressions
 
 A cast expression explicitly converts the resulting value of an expression to the specified type.
 
@@ -585,7 +607,7 @@ The following conversions are permitted:
 
 Array types cannot be used as either the source or target type of a cast.
 
-### 6.11 New Expressions
+### 6.12 New Expressions
 
 A new expression creates an array of the specified type and dimensions.
 

@@ -381,6 +381,237 @@ TEST(EXPR_BINARY, MODULO_INT_NEGATIVE_THREE) {
     );
 }
 
+TEST(EXPR_BINARY, BITWISE_AND_INT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(12 & 10);",
+        "8"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_AND_INT_ZERO) {
+    ASSERT_OUTPUT_EQ(
+        "print(123 & 0);",
+        "0"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_AND_INT_NEGATIVE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-1 & 10);",
+        "10"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_AND_CHAR_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print('A' & 15);",
+        "1"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_AND_INT_CHAR) {
+    ASSERT_OUTPUT_EQ(
+        "print(65 & 'A');",
+        "65"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_AND_CHAR_CHAR) {
+    ASSERT_OUTPUT_EQ(
+        "print('A' & 'B');",
+        "64"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_OR_INT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(12 | 10);",
+        "14"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_OR_INT_ZERO) {
+    ASSERT_OUTPUT_EQ(
+        "print(123 | 0);",
+        "123"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_OR_INT_NEGATIVE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-1 | 10);",
+        "-1"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_OR_CHAR_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print('A' | 32);",
+        "97"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_OR_CHAR_CHAR) {
+    ASSERT_OUTPUT_EQ(
+        "print('A' | 'B');",
+        "67"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_XOR_INT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(12 ^ 10);",
+        "6"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_XOR_EQUAL_VALUES) {
+    ASSERT_OUTPUT_EQ(
+        "print(42 ^ 42);",
+        "0"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_XOR_INT_ZERO) {
+    ASSERT_OUTPUT_EQ(
+        "print(123 ^ 0);",
+        "123"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_XOR_INT_NEGATIVE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-1 ^ 10);",
+        "-11"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_XOR_CHAR_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print('A' ^ 1);",
+        "64"
+    );
+}
+
+TEST(EXPR_BINARY, BITWISE_XOR_CHAR_CHAR) {
+    ASSERT_OUTPUT_EQ(
+        "print('A' ^ 'B');",
+        "3"
+    );
+}
+
+TEST(EXPR_BINARY, LEFT_SHIFT_INT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(1 << 3);",
+        "8"
+    );
+}
+
+TEST(EXPR_BINARY, LEFT_SHIFT_ZERO) {
+    ASSERT_OUTPUT_EQ(
+        "print(123 << 0);",
+        "123"
+    );
+}
+
+TEST(EXPR_BINARY, LEFT_SHIFT_MULTIPLE_BITS) {
+    ASSERT_OUTPUT_EQ(
+        "print(5 << 2);",
+        "20"
+    );
+}
+
+TEST(EXPR_BINARY, LEFT_SHIFT_NEGATIVE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-8 << 2);",
+        "-32"
+    );
+}
+
+TEST(EXPR_BINARY, LEFT_SHIFT_CHAR_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print('A' << 1);",
+        "130"
+    );
+}
+
+TEST(EXPR_BINARY, LEFT_SHIFT_INT_CHAR) {
+    ASSERT_OUTPUT_EQ(
+        "print(1 << '\\0');",
+        "1"
+    );
+}
+
+TEST(EXPR_BINARY, ARITHMETIC_RIGHT_SHIFT_INT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(16 >> 2);",
+        "4"
+    );
+}
+
+TEST(EXPR_BINARY, ARITHMETIC_RIGHT_SHIFT_ZERO) {
+    ASSERT_OUTPUT_EQ(
+        "print(123 >> 0);",
+        "123"
+    );
+}
+
+TEST(EXPR_BINARY, ARITHMETIC_RIGHT_SHIFT_NEGATIVE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-8 >> 1);",
+        "-4"
+    );
+}
+
+TEST(EXPR_BINARY, ARITHMETIC_RIGHT_SHIFT_NEGATIVE_ROUNDS_DOWN) {
+    ASSERT_OUTPUT_EQ(
+        "print(-7 >> 1);",
+        "-4"
+    );
+}
+
+TEST(EXPR_BINARY, ARITHMETIC_RIGHT_SHIFT_CHAR_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print('A' >> 1);",
+        "32"
+    );
+}
+
+TEST(EXPR_BINARY, LOGICAL_RIGHT_SHIFT_INT_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print(16 >>> 2);",
+        "4"
+    );
+}
+
+TEST(EXPR_BINARY, LOGICAL_RIGHT_SHIFT_ZERO) {
+    ASSERT_OUTPUT_EQ(
+        "print(123 >>> 0);",
+        "123"
+    );
+}
+
+TEST(EXPR_BINARY, LOGICAL_RIGHT_SHIFT_NEGATIVE_ONE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-1 >>> 1);",
+        "2147483647"
+    );
+}
+
+TEST(EXPR_BINARY, LOGICAL_RIGHT_SHIFT_NEGATIVE_VALUE) {
+    ASSERT_OUTPUT_EQ(
+        "print(-128 >>> 1);",
+        "2147483584"
+    );
+}
+
+TEST(EXPR_BINARY, LOGICAL_RIGHT_SHIFT_CHAR_INT) {
+    ASSERT_OUTPUT_EQ(
+        "print('A' >>> 1);",
+        "32"
+    );
+}
+
 TEST(EXPR_BINARY, LOGICAL_OR_FALSE_FALSE) {
     ASSERT_OUTPUT_EQ(
         "print(false || false);",

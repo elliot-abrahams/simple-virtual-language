@@ -249,6 +249,16 @@ Token compiler::Tokeniser::readToken() {
                 this->advance();
                 return token;
             }
+            case '^': {
+                const Token token = Token{TokenKind::BITWISE_XOR, "^", this->line, this->column};
+                this->advance();
+                return token;
+            }
+            case '~': {
+                const Token token = Token{TokenKind::BITWISE_NOT, "~", this->line, this->column};
+                this->advance();
+                return token;
+            }
             case '|': {
                 if (this->current + 1 < this->source.size() &&
                     this->source[this->current + 1] == '|') {
@@ -258,7 +268,9 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     return token;
                 }
-                this->throwUnexpectedCharError('|');
+                const Token token = Token{TokenKind::BITWISE_OR, "|", this->line, this->column};
+                this->advance();
+                return token;
             }
             case '&': {
                 if (this->current + 1 < this->source.size() &&
@@ -269,7 +281,9 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     return token;
                 }
-                this->throwUnexpectedCharError('&');
+                const Token token = Token{TokenKind::BITWISE_AND, "&", this->line, this->column};
+                this->advance();
+                return token;
             }
             case '!': {
                 if (this->current + 1 < this->source.size() &&
@@ -295,6 +309,15 @@ Token compiler::Tokeniser::readToken() {
                     return token;
                 }
 
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '<') {
+
+                    const Token token = Token{TokenKind::LEFT_SHIFT, "<<", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
+
                 const Token token = Token{TokenKind::LESS_THAN, "<", this->line, this->column};
                 this->advance();
                 return token;
@@ -304,6 +327,25 @@ Token compiler::Tokeniser::readToken() {
                     this->source[this->current + 1] == '=') {
 
                     const Token token = Token{TokenKind::GREATER_THAN_OR_EQUAL, ">=", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
+
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '>') {
+
+                    if (this->current + 2 < this->source.size() &&
+                    this->source[this->current + 2] == '>') {
+
+                        const Token token = Token{TokenKind::LOGICAL_RIGHT_SHIFT, ">>>", this->line, this->column};
+                        this->advance();
+                        this->advance();
+                        this->advance();
+                        return token;
+                    }
+
+                    const Token token = Token{TokenKind::ARITHMETIC_RIGHT_SHIFT, ">>", this->line, this->column};
                     this->advance();
                     this->advance();
                     return token;

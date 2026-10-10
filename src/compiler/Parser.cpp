@@ -470,13 +470,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLogicalOrExpression() const {
     Token token = this->tokeniser->tok();
 
     while (token.kind == TokenKind::LOGICAL_OR) {
-
         // parse binary operator
-        std::unique_ptr<ast::BinaryOperatorInfo>  binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-            token.line,
-            token.column,
-            BinaryOperator::LOGICAL_OR
-        );
         this->tokeniser->next();
 
         // parse right expression
@@ -486,7 +480,11 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLogicalOrExpression() const {
             line,
             column,
             std::move(left),
-            std::move(binaryOperatorInfo),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                BinaryOperator::LOGICAL_OR
+            ),
             std::move(right)
         );
         token = this->tokeniser->tok();
@@ -495,23 +493,119 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLogicalOrExpression() const {
 }
 
 /*
- *  logical_and_expression      = equality_expression, { LOGICAL_AND, equality_expression } ;
+ *  logical_and_expression      = bitwise_or_expression, { LOGICAL_AND, bitwise_or_expression } ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseLogicalAndExpression() const {
-    auto left = this->parseEqualityExpression();
+    auto left = this->parseBitwiseOrExpression();
     const auto line = left->line;
     const auto column = left->column;
 
     Token token = this->tokeniser->tok();
 
     while (token.kind == TokenKind::LOGICAL_AND) {
+        // parse binary operator
+        this->tokeniser->next();
+
+        // parse right expression
+        std::unique_ptr<ast::Expr> right = this->parseBitwiseOrExpression();
+
+        left = std::make_unique<ast::ExprBinaryOperator>(
+            line,
+            column,
+            std::move(left),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                BinaryOperator::LOGICAL_AND
+            ),
+            std::move(right)
+        );
+        token = this->tokeniser->tok();
+    }
+    return left;
+}
+
+/*
+ *  bitwise_or_expression       = bitwise_xor_expression, { BITWISE_OR, bitwise_xor_expression } ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseBitwiseOrExpression() const {
+    auto left = this->parseBitwiseXorExpression();
+    const auto line = left->line;
+    const auto column = left->column;
+
+    Token token = this->tokeniser->tok();
+
+    while (token.kind == TokenKind::BITWISE_OR) {
 
         // parse binary operator
-        std::unique_ptr<ast::BinaryOperatorInfo>  binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-            token.line,
-            token.column,
-            BinaryOperator::LOGICAL_AND
+        this->tokeniser->next();
+
+        // parse right expression
+        std::unique_ptr<ast::Expr> right = this->parseBitwiseXorExpression();
+
+        left = std::make_unique<ast::ExprBinaryOperator>(
+            line,
+            column,
+            std::move(left),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                BinaryOperator::BITWISE_OR
+            ),
+            std::move(right)
         );
+        token = this->tokeniser->tok();
+    }
+    return left;
+}
+
+/*
+ *  bitwise_xor_expression      = bitwise_and_expression, { BITWISE_XOR, bitwise_and_expression } ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseBitwiseXorExpression() const {
+    auto left = this->parseBitwiseAndExpression();
+    const auto line = left->line;
+    const auto column = left->column;
+
+    Token token = this->tokeniser->tok();
+
+    while (token.kind == TokenKind::BITWISE_XOR) {
+
+        // parse binary operator
+        this->tokeniser->next();
+
+        // parse right expression
+        std::unique_ptr<ast::Expr> right = this->parseBitwiseAndExpression();
+
+        left = std::make_unique<ast::ExprBinaryOperator>(
+            line,
+            column,
+            std::move(left),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                BinaryOperator::BITWISE_XOR
+            ),
+            std::move(right)
+        );
+        token = this->tokeniser->tok();
+    }
+    return left;
+}
+
+/*
+ *  bitwise_and_expression      = equality_expression, { BITWISE_AND, equality_expression } ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseBitwiseAndExpression() const {
+    auto left = this->parseEqualityExpression();
+    const auto line = left->line;
+    const auto column = left->column;
+
+    Token token = this->tokeniser->tok();
+
+    while (token.kind == TokenKind::BITWISE_AND) {
+
+        // parse binary operator
         this->tokeniser->next();
 
         // parse right expression
@@ -521,7 +615,11 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLogicalAndExpression() const {
             line,
             column,
             std::move(left),
-            std::move(binaryOperatorInfo),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                BinaryOperator::BITWISE_AND
+            ),
             std::move(right)
         );
         token = this->tokeniser->tok();
@@ -542,25 +640,6 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseEqualityExpression() const {
     while (token.kind == TokenKind::EQUAL_EQUAL || token.kind == TokenKind::NOT_EQUAL) {
 
         // parse binary operator
-        std::unique_ptr<ast::BinaryOperatorInfo> binaryOperatorInfo = nullptr;
-        switch (token.kind) {
-            case TokenKind::EQUAL_EQUAL:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::EQUAL_EQUAL
-                );
-                break;
-            case TokenKind::NOT_EQUAL:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::NOT_EQUAL
-                );
-                break;
-            default:
-                this->throwUnexpectedTokenError(this->tokeniser->tok());
-        }
         this->tokeniser->next();
 
         // parse right expression
@@ -570,7 +649,11 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseEqualityExpression() const {
             line,
             column,
             std::move(left),
-            std::move(binaryOperatorInfo),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                this->getBinaryOperator(token)
+            ),
             std::move(right)
         );
         token = this->tokeniser->tok();
@@ -579,10 +662,10 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseEqualityExpression() const {
 }
 
 /*
- *  comparison_expression       = additive_expression, { ( LESS_THAN | LESS_THAN_OR_EQUAL | GREATER_THAN | GREATER_THAN_OR_EQUAL ), additive_expression } ;
+ *  comparison_expression       = shift_expression, { ( LESS_THAN | LESS_THAN_OR_EQUAL | GREATER_THAN | GREATER_THAN_OR_EQUAL ), shift_expression } ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseComparisonExpression() const {
-    auto left = this->parseAdditiveExpression();
+    auto left = this->parseShiftExpression();
     const auto line = left->line;
     const auto column = left->column;
 
@@ -591,42 +674,47 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseComparisonExpression() const {
     while (token.kind == TokenKind::LESS_THAN ||
         token.kind == TokenKind::LESS_THAN_OR_EQUAL ||
         token.kind == TokenKind::GREATER_THAN ||
-        token.kind == TokenKind::GREATER_THAN_OR_EQUAL) {
+        token.kind == TokenKind::GREATER_THAN_OR_EQUAL
+    ) {
 
         // parse binary operator
-        std::unique_ptr<ast::BinaryOperatorInfo> binaryOperatorInfo = nullptr;
-        switch (token.kind) {
-            case TokenKind::LESS_THAN:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::LESS_THAN
-                );
-                break;
-            case TokenKind::LESS_THAN_OR_EQUAL:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::LESS_THAN_OR_EQUAL
-                );
-                break;
-            case TokenKind::GREATER_THAN:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::GREATER_THAN
-                );
-                break;
-            case TokenKind::GREATER_THAN_OR_EQUAL:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::GREATER_THAN_OR_EQUAL
-                );
-                break;
-            default:
-                this->throwUnexpectedTokenError(this->tokeniser->tok());
-        }
+        this->tokeniser->next();
+
+        // parse right expression
+        std::unique_ptr<ast::Expr> right = this->parseShiftExpression();
+
+        left = std::make_unique<ast::ExprBinaryOperator>(
+            line,
+            column,
+            std::move(left),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                this->getBinaryOperator(token)
+            ),
+            std::move(right)
+        );
+        token = this->tokeniser->tok();
+    }
+    return left;
+}
+
+/*
+ *  shift_expression            = additive_expression, { ( LEFT_SHIFT | RIGHT_SHIFT | UNSIGNED_RIGHT_SHIFT ), additive_expression } ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseShiftExpression() const {
+    auto left = this->parseAdditiveExpression();
+    const auto line = left->line;
+    const auto column = left->column;
+
+    Token token = this->tokeniser->tok();
+
+    while (token.kind == TokenKind::LEFT_SHIFT ||
+        token.kind == TokenKind::ARITHMETIC_RIGHT_SHIFT ||
+        token.kind == TokenKind::LOGICAL_RIGHT_SHIFT
+    ) {
+
+        // parse binary operator
         this->tokeniser->next();
 
         // parse right expression
@@ -636,7 +724,11 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseComparisonExpression() const {
             line,
             column,
             std::move(left),
-            std::move(binaryOperatorInfo),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                this->getBinaryOperator(token)
+            ),
             std::move(right)
         );
         token = this->tokeniser->tok();
@@ -657,25 +749,6 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
     while (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS) {
 
         // parse binary operator
-        std::unique_ptr<ast::BinaryOperatorInfo> binaryOperatorInfo = nullptr;
-        switch (token.kind) {
-            case TokenKind::PLUS:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::ADD
-                );
-                break;
-            case TokenKind::MINUS:
-                binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    BinaryOperator::SUBTRACT
-                );
-                break;
-            default:
-                this->throwUnexpectedTokenError(this->tokeniser->tok());
-        }
         this->tokeniser->next();
 
         // parse right expression
@@ -685,7 +758,11 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
             line,
             column,
             std::move(left),
-            std::move(binaryOperatorInfo),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                this->getBinaryOperator(token)
+            ),
             std::move(right)
         );
         token = this->tokeniser->tok();
@@ -705,34 +782,6 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
 
     while (token.kind == TokenKind::MULTIPLY || token.kind == TokenKind::DIVIDE || token.kind == TokenKind::INTEGER_DIVIDE || token.kind == TokenKind::MODULO) {
         // parse binary operator
-        BinaryOperator binaryOperator;
-        switch (token.kind) {
-            case TokenKind::MULTIPLY:
-                binaryOperator = BinaryOperator::MULTIPLY;
-                break;
-
-            case TokenKind::DIVIDE:
-                binaryOperator = BinaryOperator::DIVIDE;
-                break;
-
-            case TokenKind::INTEGER_DIVIDE:
-                binaryOperator = BinaryOperator::INTEGER_DIVIDE;
-                break;
-
-            case TokenKind::MODULO:
-                binaryOperator = BinaryOperator::MODULO;
-                break;
-
-            default:
-                this->throwUnexpectedTokenError(this->tokeniser->tok());
-        }
-
-        auto binaryOperatorInfo = std::make_unique<ast::BinaryOperatorInfo>(
-            token.line,
-            token.column,
-            binaryOperator
-        );
-
         this->tokeniser->next();
 
         // parse right expression
@@ -742,7 +791,11 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
             line,
             column,
             std::move(left),
-            std::move(binaryOperatorInfo),
+            std::make_unique<ast::BinaryOperatorInfo>(
+                token.line,
+                token.column,
+                this->getBinaryOperator(token)
+            ),
             std::move(right)
         );
         token = this->tokeniser->tok();
@@ -751,89 +804,51 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
 }
 
 /*
- *  unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
+ *  unary_expression            = ( PLUS | MINUS | LOGICAL_NOT | BITWISE_NOT ), unary_expression
  *                              | cast_expression
  *                              | [ INCREMENT | DECREMENT ], postfix_expression ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
     const auto token = this->tokeniser->tok();
 
-    if (token.kind == TokenKind::PLUS || token.kind == TokenKind::MINUS || token.kind == TokenKind::LOGICAL_NOT) {
-
+    if (token.kind == TokenKind::PLUS ||
+        token.kind == TokenKind::MINUS ||
+        token.kind == TokenKind::LOGICAL_NOT ||
+        token.kind == TokenKind::BITWISE_NOT
+    ) {
         // parse unary operator
-        std::unique_ptr<ast::UnaryOperatorInfo> unaryOperatorInfo = nullptr;
-        switch (token.kind) {
-            case TokenKind::PLUS: {
-                unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    UnaryOperator::PLUS
-                );
-                break;
-            }
-            case TokenKind::MINUS: {
-                unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    UnaryOperator::MINUS
-                );
-                break;
-            }
-            case TokenKind::LOGICAL_NOT: {
-                unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    UnaryOperator::LOGICAL_NOT
-                );
-                break;
-            }
-        }
         this->tokeniser->next();
         auto expr = this->parseUnaryExpression();
 
         return std::make_unique<ast::ExprUnaryOperator>(
             expr->line,
             expr->column,
-            std::move(unaryOperatorInfo),
+            std::make_unique<ast::UnaryOperatorInfo>(
+                token.line,
+                token.column,
+                this->getUnaryOperator(token)
+            ),
             std::move(expr)
         );
     }
 
-    if (token.kind == TokenKind::LBR &&
-        isPrimitiveTypeToken(this->tokeniser->lookAhead(1).kind)
-    ) {
+    if (token.kind == TokenKind::LBR && isPrimitiveTypeToken(this->tokeniser->lookAhead(1).kind)) {
         return this->parseCastExpression();
     }
 
     if (token.kind == TokenKind::INCREMENT || token.kind == TokenKind::DECREMENT) {
-        std::unique_ptr<ast::UnaryOperatorInfo> unaryOperatorInfo = nullptr;
-
-        switch (token.kind) {
-            case TokenKind::INCREMENT: {
-                unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    UnaryOperator::INCREMENT
-                );
-                break;
-            }
-            case TokenKind::DECREMENT: {
-                unaryOperatorInfo = std::make_unique<ast::UnaryOperatorInfo>(
-                    token.line,
-                    token.column,
-                    UnaryOperator::DECREMENT
-                );
-                break;
-            }
-        }
         this->tokeniser->next();
-        auto expression = this->parseExprPostfix();
+        auto expr = this->parseExprPostfix();
 
         return std::make_unique<ast::ExprUnaryOperator>(
-            unaryOperatorInfo->line,
-            unaryOperatorInfo->column,
-            std::move(unaryOperatorInfo),
-            std::move(expression)
+            expr->line,
+            expr->column,
+            std::make_unique<ast::UnaryOperatorInfo>(
+                token.line,
+                token.column,
+                this->getUnaryOperator(token)
+            ),
+            std::move(expr)
         );
     }
 
@@ -1269,6 +1284,46 @@ std::unique_ptr<ast::UnaryOperatorInfo> compiler::Parser::parseIncrementDecremen
         token.column,
         token.kind == TokenKind::INCREMENT ? UnaryOperator::INCREMENT : UnaryOperator::DECREMENT
     );
+}
+
+compiler::UnaryOperator compiler::Parser::getUnaryOperator(const Token& token) const {
+    switch (token.kind) {
+        case TokenKind::PLUS: return UnaryOperator::PLUS;
+        case TokenKind::MINUS: return UnaryOperator::MINUS;
+        case TokenKind::LOGICAL_NOT: return UnaryOperator::LOGICAL_NOT;
+        case TokenKind::BITWISE_NOT: return UnaryOperator::BITWISE_NOT;
+        case TokenKind::INCREMENT: return UnaryOperator::INCREMENT;
+        case TokenKind::DECREMENT: return UnaryOperator::DECREMENT;
+        default:
+            this->throwUnexpectedTokenError(token);
+    }
+}
+
+compiler::BinaryOperator compiler::Parser::getBinaryOperator(const Token& token) const {
+    switch (token.kind) {
+        case TokenKind::PLUS: return BinaryOperator::ADD;
+        case TokenKind::MINUS: return BinaryOperator::SUBTRACT;
+        case TokenKind::MULTIPLY: return BinaryOperator::MULTIPLY;
+        case TokenKind::DIVIDE: return BinaryOperator::DIVIDE;
+        case TokenKind::INTEGER_DIVIDE: return BinaryOperator::INTEGER_DIVIDE;
+        case TokenKind::MODULO: return BinaryOperator::MODULO;
+        case TokenKind::BITWISE_OR: return BinaryOperator::BITWISE_OR;
+        case TokenKind::BITWISE_XOR: return BinaryOperator::BITWISE_XOR;
+        case TokenKind::BITWISE_AND: return BinaryOperator::BITWISE_AND;
+        case TokenKind::LEFT_SHIFT: return BinaryOperator::LEFT_SHIFT;
+        case TokenKind::ARITHMETIC_RIGHT_SHIFT: return BinaryOperator::ARITHMETIC_RIGHT_SHIFT;
+        case TokenKind::LOGICAL_RIGHT_SHIFT: return BinaryOperator::LOGICAL_RIGHT_SHIFT;
+        case TokenKind::LOGICAL_OR: return BinaryOperator::LOGICAL_OR;
+        case TokenKind::LOGICAL_AND: return BinaryOperator::LOGICAL_AND;
+        case TokenKind::EQUAL_EQUAL: return BinaryOperator::EQUAL_EQUAL;
+        case TokenKind::NOT_EQUAL: return BinaryOperator::NOT_EQUAL;
+        case TokenKind::LESS_THAN: return BinaryOperator::LESS_THAN;
+        case TokenKind::LESS_THAN_OR_EQUAL: return BinaryOperator::LESS_THAN_OR_EQUAL;
+        case TokenKind::GREATER_THAN: return BinaryOperator::GREATER_THAN;
+        case TokenKind::GREATER_THAN_OR_EQUAL: return BinaryOperator::GREATER_THAN_OR_EQUAL;
+        default:
+            this->throwUnexpectedTokenError(token);
+    }
 }
 
 bool compiler::Parser::isPrimitiveTypeToken(const TokenKind& kind) {

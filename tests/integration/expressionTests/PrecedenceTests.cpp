@@ -17,6 +17,20 @@ TEST(EXPR_PRECEDENCE, LOGICAL_AND_BEFORE_LOGICAL_OR_TWO) {
     );
 }
 
+TEST(EXPR_PRECEDENCE, BITWISE_XOR_BEFORE_BITWISE_OR) {
+    ASSERT_OUTPUT_EQ(
+        "print(1 | 2 ^ 3);",
+        "1"
+    );
+}
+
+TEST(EXPR_PRECEDENCE, BITWISE_AND_BEFORE_BITWISE_XOR) {
+    ASSERT_OUTPUT_EQ(
+        "print(7 & 3 ^ 1);",
+        "2"
+    );
+}
+
 TEST(EXPR_PRECEDENCE, EQUALITY_BEFORE_LOGICAL_AND_ONE) {
     ASSERT_OUTPUT_EQ(
         "print(false == false && false);",
@@ -45,10 +59,17 @@ TEST(EXPR_PRECEDENCE, COMPARISON_BEFORE_EQUALITY_TWO) {
     );
 }
 
-TEST(EXPR_PRECEDENCE, ADDITIVE_BEFORE_COMPARISON_ONE) {
+TEST(EXPR_PRECEDENCE, SHIFT_BEFORE_COMPARISON) {
     ASSERT_OUTPUT_EQ(
-        "print(5 + 8 > 8);",
+        "print(2 << 2 > 5);",
         "true"
+    );
+}
+
+TEST(EXPR_PRECEDENCE, ADDITIVE_BEFORE_SHIFT) {
+    ASSERT_OUTPUT_EQ(
+        "print(1 << 2 + 1);",
+        "8"
     );
 }
 
