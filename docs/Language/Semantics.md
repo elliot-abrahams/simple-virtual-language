@@ -446,6 +446,8 @@ The following table defines the valid operand types for logical operators.
 |--------------|---------|
 | `bool`       | `bool`  |
 
+Logical AND (&&) and logical OR (||) use short-circuit evaluation. For logical AND, the right-hand expression is not evaluated if the left-hand expression evaluates to false. For logical OR, the right-hand expression is not evaluated if the left-hand expression evaluates to true.
+
 ### 6.6 Equality Operators
 
 The equality operators are:
