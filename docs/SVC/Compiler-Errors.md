@@ -34,12 +34,16 @@
   - [5.1 Invalid Assignment](#51-invalid-assignment)
   - [5.2 Invalid Return Type](#52-invalid-return-type)
   - [5.3 Invalid Condition Type](#53-invalid-condition-type)
-  - [5.4 Invalid Binary Operator](#54-invalid-binary-operator)
-  - [5.5 Invalid Unary Operator](#55-invalid-unary-operator)
-  - [5.6 Invalid Array Index Type](#56-invalid-array-index-type)
-  - [5.7 Invalid Array Indexing](#57-invalid-array-indexing)
-  - [5.8 Invalid Array Initialiser Element](#58-invalid-array-initialiser-element)
-  - [5.9 Invalid Cast](#59-invalid-cast)
+  - [5.4 Invalid Range Type](#54-invalid-range-type)
+  - [5.5 Incompatible Range Type](#55-incompatible-range-type)
+  - [5.6 Invalid Iterable Type](#56-invalid-iterable-type)
+  - [5.7 Incompatible Loop Variable Type](#57-incompatible-loop-variable-type)
+  - [5.8 Invalid Binary Operator](#58-invalid-binary-operator)
+  - [5.9 Invalid Unary Operator](#59-invalid-unary-operator)
+  - [5.10 Invalid Array Index Type](#510-invalid-array-index-type)
+  - [5.11 Invalid Array Indexing](#511-invalid-array-indexing)
+  - [5.12 Invalid Array Initialiser Element](#512-invalid-array-initialiser-element)
+  - [5.13 Invalid Cast](#513-invalid-cast)
    
 ## 1. Overview
 
@@ -665,7 +669,89 @@ A condition must have type `bool`.
 
 ---
 
-### 5.4 Invalid Binary Operator
+### 5.4 Invalid Range Type
+
+**Message:**
+```
+cannot use type '<type>' as a range
+```
+
+**Example:**
+```
+for (bool i: true .. false) {}
+```
+
+```
+TypeError: cannot use type 'bool' as a range
+```
+
+Ranges must be numeric.
+
+---
+
+### 5.5 Incompatible Range Type
+
+**Message:**
+```
+cannot use type '<type>>' as a range for type '<type>'
+```
+
+**Example:**
+```
+for (int i: 0.5f .. 1.5f) {}
+```
+
+```
+TypeError: cannot use type 'float' as a range for type 'int'
+```
+
+Range type must be implicitly convertable to the variable type of the for loop.
+
+---
+
+### 5.6 Invalid Iterable Type
+
+**Message:**
+```
+cannot iterate over value of type '<type>'
+```
+
+**Example:**
+```
+int num = 5;
+for (int i: num) {}
+```
+
+```
+TypeError: cannot iterate over value of type 'int'
+```
+
+Iterable must be an array.
+
+---
+
+### 5.7 Incompatible Loop Variable Type
+
+**Message:**
+```
+cannot use type '<type>' as a loop variable for elements of type '<type>'
+```
+
+**Example:**
+```
+int[] arr = new int[3];
+for (bool i: arr) {}
+```
+
+```
+TypeError: cannot use type 'bool' as a loop variable for elements of type 'int'
+```
+
+elements of iterable must be implicitly convertible to the variable type of the for loop.
+
+---
+
+### 5.8 Invalid Binary Operator
 
 **Message:**
 ```
@@ -685,7 +771,7 @@ The binary operator cannot be applied to the types of its operands.
 
 ---
 
-### 5.5 Invalid Unary Operator
+### 5.9 Invalid Unary Operator
 
 **Message:**
 ```
@@ -705,7 +791,7 @@ The unary operator cannot be applied to the operand's type.
 
 ---
 
-### 5.6 Invalid Array Index Type
+### 5.10 Invalid Array Index Type
 
 **Message:**
 ```
@@ -726,7 +812,7 @@ The array index must have a valid index type.
 
 ---
 
-### 5.7 Invalid Array Indexing
+### 5.11 Invalid Array Indexing
 
 **Message:**
 ```
@@ -747,7 +833,7 @@ Indexing can only be applied to an array.
 
 ---
 
-### 5.8 Invalid Array Initialiser Element
+### 5.12 Invalid Array Initialiser Element
 
 **Message:**
 ```
@@ -767,7 +853,7 @@ The value used to initialise an array element is not compatible with the array's
 
 ---
 
-### 5.9 Invalid Cast
+### 5.13 Invalid Cast
 
 **Message:**
 ```

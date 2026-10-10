@@ -15,6 +15,11 @@ namespace compiler {
         DISCARD  // produce nothing
     };
 
+    using ScopeFunctionBody = std::variant<
+        const ast::Block*,
+        const ast::ForStm*
+    >;
+
     class AssemblyGenerator {
     public:
         AssemblyGenerator(SymbolTable* symbolTable);
@@ -26,7 +31,7 @@ namespace compiler {
 
     private:
         void compileUserDefinedFunction(const ast::FunctionDecl& functionDecl);
-        void compileFunctionDeclaration(const MethodDefType methodType, const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefualtReturn, const uint32_t line, const uint16_t column, const uint32_t functionBodyEndLine, const uint16_t functionBodyEndColumn);
+        void compileFunctionDeclaration(const MethodDefType methodType, const std::string& functionIdentifier, const ast::Stm& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefaultReturn, const uint32_t line, const uint16_t column, const uint32_t functionBodyEndLine, const uint16_t functionBodyEndColumn);
         void compilePendingScopeFunctions();
 
         void compileArrayIndex(Scope* scope, const ast::Index& index, Type& typeAtDepth);
@@ -37,6 +42,7 @@ namespace compiler {
         void compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment);
         void compileIfStatement(Scope* scope, const ast::IfStm& ifStm);
         void compileWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
+        void compileForStatement(Scope* scope, const ast::ForStm& forStm);
         void compileContinueStatement(Scope* scope, const ast::ContinueStm& continueStm);
         void compileBreakStatement(Scope* scope, const ast::BreakStm& breakStm);
         void compileReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
@@ -69,18 +75,21 @@ namespace compiler {
 
         std::string generateLabel(const std::string& label);
         static std::string generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber);
+        void registerScopeFunction(const ScopeFunctionBody& scopeFunctionBody, const uint32_t blockEndLine, const uint16_t blockEndColumn);
 
         void emit(const AssemblyItem& assemblyItem);
 
         static AssemblyType toAssemblyType(const Type& type);
         Number getNumber(const Type& type, const uint64_t value);
+        Number getNumber(const AssemblyType, const uint64_t value);
 
         std::vector<AssemblyItem> assembly;
         SymbolTable* symbolTable;
         uint32_t labelCounter;
         uint32_t scopeFunctionCounter;
+        bool isCompilingScopeFunctions = false;
 
-        std::vector<const ast::Block*> pendingScopeFunctions;
+        std::vector<ScopeFunctionBody> pendingScopeFunctions;
         std::unordered_set<BuiltinFunctionId> requiredBuiltinFunctions;
         std::unordered_set<BuiltinDataId> requiredBuiltinData;
     };

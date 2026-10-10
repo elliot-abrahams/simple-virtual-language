@@ -18,7 +18,7 @@
   - [4.3 Variable Assignment](#43-variable-assignment)
   - [4.4 Variable Access](#44-variable-access)
 - [5. Scopes](#5-scopes)
-  - [5.1 Global Scopes](#51-global-scopes)
+  - [5.1 Global Scope](#51-global-scope)
   - [5.2 Block Scopes](#52-block-scopes)
   - [5.3 Function Scopes](#53-function-scopes)
   - [5.4 Variable Visibility](#54-variable-visibility)
@@ -53,11 +53,12 @@
     - [8.5.2 Increment and Decrement](#852-increment-and-decrement)
 - [9. Control Flow](#9-control-flow)
   - [9.1 If Statements](#91-if-statements)
-  - [9.2 While Statements](#92-while-statements)
-  - [9.3 Break Statements](#93-break-statements)
-  - [9.4 Continue Statements](#94-continue-statements)
-  - [9.5 Return Statements](#95-return-statements)
-  - [9.6 Return Paths](#96-return-paths)
+  - [9.2 While Loops](#92-while-loops)
+  - [9.3 For Loops](#93-for-loops)
+  - [9.4 Break Statements](#94-break-statements)
+  - [9.5 Continue Statements](#95-continue-statements)
+  - [9.6 Return Statements](#96-return-statements)
+  - [9.7 Return Paths](#97-return-paths)
 
 ---
 
@@ -271,7 +272,7 @@ int x = 10;
 ```
 This is valid because `x` is a global variable.
 
-### 5.2 Block Scope
+### 5.2 Block Scopes
 
 Each block introduces a new scope.
 
@@ -288,7 +289,7 @@ For example:
 int y = x;     <- invalid
 ```
 
-### 5.3 Function Scope
+### 5.3 Function Scopes
 
 Each function introduces a function scope.
 
@@ -565,7 +566,7 @@ The resulting type of a function call is the return type of the selected functio
 
 A function call with a `void` return type does not produce a value and therefore cannot be used where an expression value is required.
 
-Function selection is defined in [Section 6.4](#64-function-resolution).
+Function selection is defined in [Section 7.4](#74-function-resolution).
 
 ### 6.10 Cast Expressions
 
@@ -747,7 +748,7 @@ A block introduces a new scope.
 
 The statements within a block are analysed in order.
 
-See [Section 4.2](#42-block-scope) for block scope rules.
+See [Section 5.2](#52-block-scopes) for block scope rules.
 
 For example:
 ```
@@ -801,8 +802,8 @@ arr[0]--;
 
 The called function must have a `void` return type.
 
-See [5.9 Function Calls](#59-function-calls) for the semantics of function call expressions.
-See [6.4 Function Resolution](#64-function-resolution) for function resolution rules.
+See [6.9 Function Calls](#69-function-calls) for the semantics of function call expressions.
+See [7.4 Function Resolution](#74-function-resolution) for function resolution rules.
 
 For example:
 ```
@@ -880,9 +881,9 @@ if (false) {
 }
 ```
 
-### 9.2 While Statements
+### 9.2 While Loops
 
-A `while` statement evaluates its condition.
+A `while loop` evaluates its condition.
 
 The condition must have a resulting type of `bool`.
 
@@ -898,9 +899,66 @@ while (x < 4) {
     x = x + 1;
 }
 ```
-### 9.3 Break Statements
 
-A `break` statement terminates the innermost enclosing `while` loop.
+### 9.3 For Loops
+
+A `for loop` iterates over a sequence of values. The sequence is defined either by a range or by the elements of an array.
+
+A `for loop` can declare a new loop variable or use an existing variable to hold the value of each iteration.
+
+A loop variable declared in a for loop is scoped to the loop and cannot be accessed outside of it. Using an existing variable as the loop variable does not change its scope.
+
+An existing loop variable does not need to be initialised before the loop, as it is assigned a value during each iteration.
+
+For example:
+```
+for (int i : 0 .. 5) {}
+print(1);           # invalid: i is out of scope
+
+int j;
+for (j : 0 .. 5) {}
+print(j);           # valid: j was declared outside the loop
+
+```
+
+**Range-based For Loops**
+
+A range-based `for loop` iterates over a sequence of numeric values defined by a start expression, an end expression, and an optional step expression.
+
+The start, end, and step expressions must be implicitly convertible to the type of the loop variable.
+
+The default step is `1` and must not be zero.
+
+The expressions are evaluated once when the loop begins. Their evaluated values are used throughout the loop, even if the variables referenced by the expressions are subsequently modified.
+
+At each iteration, the loop variable is assigned the current value in the sequence, and the loop body is executed. The end value is exclusive: iteration continues while the current value is less than the end value for a positive step, or greater than the end value for a negative step.
+
+Modifying the loop variable within the loop body does not affect the sequence of values being iterated over.
+
+For example:
+```
+for (int i : 0 .. 5) {}        # 0, 1, 2, 3, 4
+for (int i : 0 .. 5 : 2) {}    # 0, 2, 4
+for (int i : 10 .. 5 : -1) {}  # 10, 9, 8, 7, 6
+```
+
+**Iterable-based For Loops**
+
+An iterable-based `for loop` iterates over the elements of an array.
+
+The type of the array's elements must be implicitly convertible to the type of the loop variable.
+
+For each iteration, the loop variable is assigned the value of the next element in the array, and the loop body is executed. The loop terminates once every element has been visited.
+
+For example:
+```
+int[] arr = new int[3]{10, 20, 30};
+for (int i : arr) {}                # sequence -> 10, 20, 30
+```
+
+### 9.4 Break Statements
+
+A `break` statement terminates the innermost enclosing loop.
 
 A `break` statement must only appear within a loop.
 
@@ -912,9 +970,9 @@ while (true) {
 }
 ```
 
-### 9.4 Continue Statements
+### 9.5 Continue Statements
 
-A `continue` statement skips the remainder of the current iteration of the innermost enclosing while loop.
+A `continue` statement skips the remainder of the current iteration of the innermost enclosing loop.
 
 A `continue` statement must only appear within a loop.
 
@@ -927,7 +985,7 @@ while (x < 10) {
 }
 ```
 
-### 9.5 Return Statements
+### 9.6 Return Statements
 
 A `return` statement terminates execution of the current function and transfers control to the caller.
 
@@ -946,7 +1004,7 @@ int foo(int a) {
 }
 ```
 
-### 9.6 Return Paths
+### 9.7 Return Paths
 
 A `non-void` function must have a return value on every possible execution path.
 

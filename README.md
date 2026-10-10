@@ -34,7 +34,7 @@ Assembly Language    (.svma)
 - Global and local variables
 - Block scopes
 - Functions and function overloading
-- Control flow (`if`, `while`, `break`, `continue`)
+- Control flow (`if`, `while`, `for`, `break`, `continue`)
 - Integer, floating-point, boolean, and char types
 - Arrays
 - Implicit and explicit type conversions
@@ -188,14 +188,15 @@ float add(float x, float y) {
     return x + y;
 }
 
-print(add(1, 5));
+println(add(1, 5));
 print(add(1.5f, 5.75f));
 ```
 
 Output:
 
 ```
-67.25
+6
+7.25
 ```
 
 ---
@@ -212,10 +213,27 @@ int sumTo(int n) {
 }
 print(sumTo(10));
 ```
+
 Output:
 
 ```
 55
+```
+
+---
+
+```
+char[] string = new char[12]{'H', 'e', 'l', 'l', 'o', '\n', 'W', 'o', 'r', 'l', 'd', '!'}; 
+for (char c : string) {
+    print(c);
+}
+```
+
+Output:
+
+```
+Hello
+World!
 ```
 
 ---

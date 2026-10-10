@@ -1,6 +1,7 @@
 #include "AssemblyGenerator.h"
 
 #include <stdexcept>
+#include <bits/fs_fwd.h>
 
 compiler::AssemblyGenerator::AssemblyGenerator(SymbolTable* symbolTable) :
     symbolTable(symbolTable), labelCounter(0), scopeFunctionCounter(0) {}
@@ -47,7 +48,18 @@ void compiler::AssemblyGenerator::compileUserDefinedFunction(const ast::Function
     );
 }
 
-void compiler::AssemblyGenerator::compileFunctionDeclaration(const MethodDefType methodType, const std::string& functionIdentifier, const ast::Block& body, const uint8_t numberOfArguments, const uint32_t numberOfLocals, const bool includeDefaultReturn, const uint32_t line, const uint16_t column, const uint32_t functionBodyEndLine, const uint16_t functionBodyEndColumn) {
+void compiler::AssemblyGenerator::compileFunctionDeclaration(
+    const MethodDefType methodType,
+    const std::string& functionIdentifier,
+    const ast::Stm& body,
+    const uint8_t numberOfArguments,
+    const uint32_t numberOfLocals,
+    const bool includeDefaultReturn,
+    const uint32_t line,
+    const uint16_t column,
+    const uint32_t functionBodyEndLine,
+    const uint16_t functionBodyEndColumn
+) {
     // compile function header
 
     this->emit(MethodDef{
@@ -59,8 +71,13 @@ void compiler::AssemblyGenerator::compileFunctionDeclaration(const MethodDefType
     });
 
     // compile body
-    for (const auto& stm : body.statements) {
-        this->compileStm(body.scope, *stm);
+    if (auto* block = dynamic_cast<const ast::Block*>(&body)) {
+        for (const auto& stm : block->statements) {
+            this->compileStm(block->scope, *stm);
+        }
+    } else {
+        auto* forStm = dynamic_cast<const ast::ForStm*>(&body);
+        this->compileForStatement(forStm->body->scope, *forStm);
     }
 
     if (includeDefaultReturn) {
@@ -77,22 +94,44 @@ void compiler::AssemblyGenerator::compileFunctionDeclaration(const MethodDefType
 }
 
 void compiler::AssemblyGenerator::compilePendingScopeFunctions() {
+    this->isCompilingScopeFunctions = true;
     for (int scopeCounter = 0; scopeCounter < this->pendingScopeFunctions.size(); scopeCounter++) {
-        const auto block = this->pendingScopeFunctions.at(scopeCounter);
-        // compile a function declaration for this scope
-        this->compileFunctionDeclaration(
-            MethodDefType::SCOPE,
-            generateScopeFunctionIdentifier(scopeCounter),
-            *block,
-            0,
-            block->scope->calculateNumberOfLocalSlots(),
-            true,
-            block->line,
-            block->column,
-            block->blockEndLine,
-            block->blockEndColumn
-        );
+        if (std::holds_alternative<const ast::Block*>(this->pendingScopeFunctions.at(scopeCounter))) {
+            const auto* block = std::get<const ast::Block*>(this->pendingScopeFunctions.at(scopeCounter));
+
+            // compile a function declaration for this scope
+            this->compileFunctionDeclaration(
+                MethodDefType::SCOPE,
+                generateScopeFunctionIdentifier(scopeCounter),
+                *block,
+                0,
+                block->scope->calculateNumberOfLocalSlots(),
+                true,
+                block->line,
+                block->column,
+                block->blockEndLine,
+                block->blockEndColumn
+            );
+        } else {
+            // forStm
+            const auto* forStm = std::get<const ast::ForStm*>(this->pendingScopeFunctions.at(scopeCounter));
+
+            // compile a function declaration for this scope
+            this->compileFunctionDeclaration(
+                MethodDefType::SCOPE,
+                generateScopeFunctionIdentifier(scopeCounter),
+                *forStm,
+                0,
+                forStm->body->scope->calculateNumberOfLocalSlots(),
+                true,
+                forStm->line,
+                forStm->column,
+                forStm->body->blockEndLine,
+                forStm->body->blockEndColumn
+            );
+        }
     }
+    this->isCompilingScopeFunctions = false;
 }
 
 void compiler::AssemblyGenerator::compileArrayIndex(Scope *scope, const ast::Index &index, Type& typeAtDepth) {
@@ -266,6 +305,9 @@ void compiler::AssemblyGenerator::compileStm(Scope* scope, const ast::Stm& stm) 
     else if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
         this->compileWhileStatement(scope, *whileStm);
     }
+    else if (auto* forStm = dynamic_cast<const ast::ForStm*>(&stm)) {
+        this->compileForStatement(scope, *forStm);
+    }
     else if (auto* continueStm = dynamic_cast<const ast::ContinueStm*>(&stm)) {
         this->compileContinueStatement(scope, *continueStm);
     }
@@ -283,12 +325,7 @@ void compiler::AssemblyGenerator::compileStm(Scope* scope, const ast::Stm& stm) 
 void compiler::AssemblyGenerator::compileBlock(const ast::Block& block) {
     // if scope declared in global scope and not a scope within a function
     if (block.scope->parent->isGlobalScope()) {
-        this->pendingScopeFunctions.push_back(&block);
-        // call scope function
-        this->emit(Instruction{Opcode::CALL,
-            {LabelRef{generateScopeFunctionIdentifier(this->scopeFunctionCounter++)}},
-            SourceLocation{0, block.blockEndLine, block.blockEndColumn}
-        });
+        this->registerScopeFunction(&block, block.blockEndLine, block.blockEndColumn);
     } else {
         for (auto& stm : block.statements) {
             this->compileStm(block.scope, *stm);
@@ -443,10 +480,10 @@ void compiler::AssemblyGenerator::compileIfStatement(Scope* scope, const ast::If
 }
 
 void compiler::AssemblyGenerator::compileWhileStatement(Scope* scope, const ast::WhileStm &whileStm) {
-    const std::string startWhileLabel = generateLabel("start_while");
-    const std::string endWhileLabel = generateLabel("end_while");
+    const std::string startWhileLabel = this->generateLabel("start_while");
+    const std::string endWhileLabel = this->generateLabel("end_while");
 
-    whileStm.block->scope->loopContext = new LoopContext{startWhileLabel, endWhileLabel};
+    whileStm.body->scope->loopContext = new LoopContext{startWhileLabel, endWhileLabel};
 
     this->emit(LabelDef{startWhileLabel});
 
@@ -458,7 +495,7 @@ void compiler::AssemblyGenerator::compileWhileStatement(Scope* scope, const ast:
         SourceLocation{0, whileStm.line, whileStm.column}
     });
 
-    this->compileBlock(*whileStm.block); // compile while block
+    this->compileBlock(*whileStm.body); // compile while block
 
     // jump to start of while (evaluate condition again)
     this->emit(Instruction{Opcode::JMP,
@@ -469,8 +506,504 @@ void compiler::AssemblyGenerator::compileWhileStatement(Scope* scope, const ast:
     this->emit(LabelDef{endWhileLabel});
 }
 
+void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::ForStm& forStm) {
+    if (!isCompilingScopeFunctions) {
+        // to prevent a forVariable that gets declared within the nested scope from being accessed from a global scope context
+        // -> add forStm to pendingScopeFunctions
+        this->registerScopeFunction(&forStm, forStm.body->blockEndLine, forStm.body->blockEndColumn);
+        return;
+    }
+
+    const auto forSourceLocation = SourceLocation{0, forStm.line, forStm.column};
+
+    const bool forHasVarDecl = std::holds_alternative<std::unique_ptr<ast::StmVarDecl>>(forStm.variable);
+    Type* forVariableType;
+    const bool forHasRange = std::holds_alternative<std::unique_ptr<ast::ForRange>>(forStm.iterable);
+    bool rangeHasStep = false;
+
+    const std::unique_ptr<ast::StmVarDecl>* forVarDecl;
+    const std::unique_ptr<ast::ExprIdentifier>* forVariable;
+    const std::unique_ptr<ast::ForRange>* forRange;
+    const std::unique_ptr<ast::Expr>* forIterable;
+
+    if (forHasVarDecl) {
+        forVarDecl = &std::get<std::unique_ptr<ast::StmVarDecl>>(forStm.variable);
+        forVariableType = &forVarDecl->get()->typeInfo->type;
+    } else {
+        forVariable = &std::get<std::unique_ptr<ast::ExprIdentifier>>(forStm.variable);
+        forVariableType = &forVariable->get()->resultingType;
+    }
+
+    if (forHasRange) {
+        forRange = &std::get<std::unique_ptr<ast::ForRange>>(forStm.iterable);
+    } else {
+        forIterable = &std::get<std::unique_ptr<ast::Expr>>(forStm.iterable);
+    }
+
+    if (forHasRange) {
+        rangeHasStep = forRange->get()->step != nullptr;
+    }
+
+    std::string forLoopStepValidLabel;
+    if (rangeHasStep) {
+        forLoopStepValidLabel = this->generateLabel("for_loop_step_valid");
+    }
+
+    const auto forLoopStartLabel = this->generateLabel("for_loop_start");
+
+    std::string forLoopNegativeStepCondition;
+    std::string forLoopConditionJoinLabel;
+    if (rangeHasStep) {
+        forLoopNegativeStepCondition = this->generateLabel("for_loop_negative_step_condition");
+        forLoopConditionJoinLabel = this->generateLabel("for_loop_condition_join");
+    }
+    const auto forLoopContinueLabel = this->generateLabel("for_loop_continue");
+    const auto forLoopEndLabel = this->generateLabel("for_loop_end");
+
+    forStm.body->scope->parent->loopContext = new LoopContext{forLoopContinueLabel, forLoopEndLabel};
+
+    // ====================================================
+    // compile step
+    // ====================================================
+    if (forHasRange) {
+        if (rangeHasStep) {
+            // compile step expr
+            this->compileExpr(scope, *forRange->get()->step, ExprResult::VALUE);
+            this->compileTypeConversionIfRequired(forRange->get()->step->resultingType, *forVariableType, SourceLocation{0, forRange->get()->step->line, forRange->get()->step->column});
+            // [range_step]
+
+            // ====================================================
+            // throw runtime error if step is zero
+            // ====================================================
+
+            this->emit(Instruction{Opcode::DUP,
+                {Immediate{static_cast<uint32_t>(0)}},
+                SourceLocation{0, forRange->get()->step->line, forRange->get()->step->column}
+            });
+            // [range_step, range_step]
+
+            this->emit(Instruction{Opcode::JNZ,
+                {LabelRef{forLoopStepValidLabel}},
+                SourceLocation{0, forRange->get()->step->line, forRange->get()->step->column}
+            });
+            // [range_step]
+
+            this->emit(Instruction{Opcode::THROW,
+                {ErrorRef::ZERO_RANGE_STEP},
+                SourceLocation{0, forRange->get()->step->line, forRange->get()->step->column}
+            });
+
+            this->emit(LabelDef{forLoopStepValidLabel});
+            // [range_step]
+
+            // ====================================================
+            // check if range_step is negative or positive
+            // positive = 1
+            // negative = 0
+            // ====================================================
+
+            this->emit(Instruction{Opcode::DUP,
+                {Immediate{Number{static_cast<uint32_t>(0)}}},
+                SourceLocation{0, forRange->get()->step->line, forRange->get()->step->column}
+            });
+            // [range_step, range_step]
+
+            this->emit(Instruction{Opcode::PUSH,
+                {
+                    toAssemblyType(*forVariableType),
+                    Immediate{getNumber(toAssemblyType(*forVariableType), 0)}
+                },
+                 SourceLocation{0, forRange->get()->step->line, forRange->get()->step.get()->column}
+            });
+            // [range_step, range_step, 0]
+
+            this->emit(Instruction{Opcode::CGE,
+                {},
+                SourceLocation{0, forRange->get()->step->line, forRange->get()->step->column}
+            });
+            // [range_step, is_range_step_positive]
+
+            this->emit(Instruction{Opcode::SWAP,
+                {},
+                forSourceLocation
+            });
+            // [is_range_step_positive, range_step]
+
+        } else {
+            // for with a range but with no step -> range_step is defaulted to a value of 1
+            this->emit(Instruction{Opcode::PUSH,
+                {
+                    toAssemblyType(*forVariableType),
+                    Immediate{getNumber(*forVariableType, 1)}
+                },
+                forSourceLocation
+            });
+        }
+
+    } else {
+        // for with an iterable -> range_step is defaulted to a value of 1 of type ui32
+
+        // ====================================================
+        // get first element of iterable
+        // ====================================================
+
+        this->compileExpr(scope, **forIterable, ExprResult::PTR);
+        // [iterable_ptr]
+
+        this->emit(Instruction{Opcode::DUP,
+             {Immediate{Number{static_cast<uint32_t>(0)}}},
+            forSourceLocation
+        });
+        // [iterable_ptr, iterable_ptr]
+
+        this->emit(Instruction{Opcode::PUSH,
+            {
+                AssemblyType::UI32,
+                Immediate{static_cast<uint32_t>(4)}
+            },
+            forSourceLocation
+        });
+        // [iterable_ptr, iterable_ptr, 4]
+
+        this->emit(Instruction{Opcode::ADD,
+            {},
+            forSourceLocation
+        });
+        // [iterable_ptr, first_element_of_iterable_ptr]
+
+        this->emit(Instruction{Opcode::PUSH,
+            {
+                AssemblyType::UI32,
+                Immediate{getNumber(AssemblyType::UI32, 1)}
+            },
+            forSourceLocation
+        });
+        // [iterable_ptr, first_element_of_iterable_ptr, 1]
+    }
+    // [is_range_step_positive           , iterable_ptr            , first_element_of_iterable_ptr, range_step]
+    // [if for loop has user defined step, if for loop has iterable, if for loop has iterable     ,           ]
+
+    // ====================================================
+    // compile range end
+    // ====================================================
+
+    if (forHasRange) {
+        // range_end is defined by the user
+        this->compileExpr(scope, *forRange->get()->end, ExprResult::VALUE);
+        this->compileTypeConversionIfRequired(forRange->get()->end->resultingType, *forVariableType, SourceLocation{0, forRange->get()->line, forRange->get()->column});
+    } else {
+        // range end is the length of the iterator (array's length)
+
+        // [iterable_ptr, first_element_of_iterable_ptr, range_step]
+
+        this->emit(Instruction{Opcode::ROTD,
+            {Immediate{Number{static_cast<uint32_t>(3)}}},
+            forSourceLocation
+        });
+        // [first_element_of_iterable_ptr, range_step, iterable_ptr]
+
+        this->emit(Instruction{Opcode::LOAD,
+            {
+                AssemblyType::UI32
+            },
+            SourceLocation{0, forIterable->get()->line, forIterable->get()->column}
+        });
+        // [first_element_of_iterable_ptr, range_step, iterable_length]
+    }
+    // [is_range_step_positive           , first_element_of_iterable_ptr, range_step, range_end]
+    // [if for loop has user defined step, if for loop has iterable     ,           ,          ]
+
+    // ====================================================
+    // get pointer of for_variable
+    // ====================================================
+
+    if (forHasVarDecl) {
+        // create identifierExpr from VarDecl
+        auto identifierExpr = std::make_unique<ast::ExprIdentifier>(
+            forVarDecl->get()->line,
+            forVarDecl->get()->column,
+            std::make_unique<ast::Identifier>(
+                forVarDecl->get()->line,
+                forVarDecl->get()->column,
+                forVarDecl->get()->identifier->name
+            )
+        );
+        this->compileExprIdentifier(forStm.body->scope, *identifierExpr, ExprResult::PTR);
+
+    } else {
+        // compile identifierExpr
+        this->compileExprIdentifier(scope, **forVariable, ExprResult::PTR);
+    }
+    // [is_range_step_positive           , first_element_of_iterable_ptr, range_step, range_end, for_variable_ptr]
+    // [if for loop has user defined step, if for loop has iterable     ,           ,          ,                 ]
+
+    // ====================================================
+    // compile range start
+    // ====================================================
+
+    if (forHasRange) {
+        this->compileExpr(scope, *forRange->get()->start.get(), ExprResult::VALUE);
+        this->compileTypeConversionIfRequired(forRange->get()->start->resultingType, *forVariableType, SourceLocation{0, forRange->get()->start->line, forRange->get()->column});
+    } else {
+        // for with an iterable -> range_start is defaulted to 0
+        this->emit(Instruction{Opcode::PUSH,
+            {
+                AssemblyType::UI32,
+                Immediate{getNumber(AssemblyType::UI32, 0)}
+            },
+            SourceLocation{0, forIterable->get()->line, forIterable->get()->column}
+        });
+    }
+    // [is_range_step_positive           , first_element_of_iterable_ptr, range_step, range_end, for_variable_ptr, range_start]
+    // [if for loop has user defined step, if for loop has iterable     ,           ,          ,                 ,            ]
+
+    // ====================================================
+    // start for loop
+    // ====================================================
+
+    this->emit(LabelDef{forLoopStartLabel});
+
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ]
+
+    this->emit(Instruction{Opcode::DUP,
+        {Immediate{Number{static_cast<uint32_t>(2)}}},
+        forSourceLocation
+    });
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current, range_end]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ,          ]
+
+    this->emit(Instruction{Opcode::DUP,
+        {Immediate{Number{static_cast<uint32_t>(1)}}},
+        forSourceLocation
+    });
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current, range_end, range_current]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ,          ,              ]
+
+    if (rangeHasStep) {
+
+        // ====================================================
+        // jump to appropriate condition check
+        // if range_step is positive -> use instruction cle
+        // if range_step is negative -> use instruction cge
+        // ====================================================
+
+        // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current, range_end, range_current]
+
+        this->emit(Instruction{Opcode::DUP,
+            {Immediate{Number{static_cast<uint32_t>(6)}}},
+            forSourceLocation
+        });
+        // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current, range_end, range_current, is_range_step_positive]
+
+        this->emit(Instruction{Opcode::JEZ,
+            {LabelRef{forLoopNegativeStepCondition}},
+            forSourceLocation
+        });
+        // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current, range_end, range_current]
+    }
+
+    // ====================================================
+    // compile condition with positive step
+    // ====================================================
+
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current, range_end, range_current]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ,          ,              ]
+
+    this->emit(Instruction{Opcode::CLE,
+        {},
+        forSourceLocation
+    });
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current, range_end <= range_current]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ,                           ]
+
+    this->emit(Instruction{Opcode::JNZ,
+        {LabelRef{forLoopEndLabel}},
+        forSourceLocation
+    });
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ]
+
+    if (rangeHasStep) {
+        // step is positive -> jump to end of condition
+        this->emit(Instruction{Opcode::JMP,
+            {LabelRef{forLoopConditionJoinLabel}},
+            forSourceLocation
+        });
+
+        // ====================================================
+        // compile condition with negative step
+        // ====================================================
+
+        this->emit(LabelDef{forLoopNegativeStepCondition});
+
+        // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current, range_end, range_current]
+
+        this->emit(Instruction{Opcode::CGE,
+            {},
+            forSourceLocation
+        });
+        // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current, range_end >= range_current]
+
+        this->emit(Instruction{Opcode::JNZ,
+            {LabelRef{forLoopEndLabel}},
+            forSourceLocation
+        });
+        // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current]
+
+        this->emit(LabelDef{forLoopConditionJoinLabel});
+    }
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ]
+
+    // ====================================================
+    // if forHasRange -> store range_current to forVariable
+    // else (for has iterable) -> store element stored at index range_current to forVariable
+    //                         -> increase iterable_element_ptr to next element
+    // ====================================================
+
+    if (forHasRange) {
+        // [is_range_step_positive           , range_step, range_end, for_variable_ptr, range_current]
+        // [if for loop has user defined step,           ,          ,                 ,              ]
+
+        this->emit(Instruction{Opcode::DUP,
+            {Immediate{Number{static_cast<uint32_t>(1)}}},
+            forSourceLocation
+        });
+        // [is_range_step_positive           , range_step, range_end, for_variable_ptr, range_current, for_variable_ptr]
+        // [if for loop has user defined step,           ,          ,                 ,              ,                 ]
+
+        this->emit(Instruction{Opcode::DUP,
+            {Immediate{Number{static_cast<uint32_t>(1)}}},
+            forSourceLocation
+        });
+        // [is_range_step_positive           , range_step, range_end, for_variable_ptr, range_current, for_variable_ptr, range_current]
+        // [if for loop has user defined step,           ,          ,                 ,              ,                 ,              ]
+
+        this->emit(Instruction{Opcode::STORE,
+            {},
+            forSourceLocation
+        });
+        // [is_range_step_positive           , range_step, range_end, for_variable_ptr, range_current]
+        // [if for loop has user defined step,           ,          ,                 ,              ]
+
+    } else {
+        auto iterableElementType = forIterable->get()->resultingType;
+        iterableElementType.dimension--;
+
+        // [iterable_element_ptr, range_step, range_end, for_variable_ptr, range_current]
+
+        this->emit(Instruction{Opcode::DUP,
+            {Immediate{Number{static_cast<uint32_t>(1)}}},
+            forSourceLocation
+        });
+        // [iterable_element_ptr, range_step, range_end, for_variable_ptr, range_current, for_variable_ptr]
+
+        this->emit(Instruction{Opcode::DUP,
+            {Immediate{Number{static_cast<uint32_t>(5)}}},
+            forSourceLocation
+        });
+        // [iterable_element_ptr, range_step, range_end, for_variable_ptr, range_current, for_variable_ptr, iterable_element_ptr]
+
+        this->emit(Instruction{Opcode::LOAD,
+            {toAssemblyType(iterableElementType)},
+            forSourceLocation
+        });
+        // [iterable_element_ptr, range_step, range_end, for_variable_ptr, range_current, for_variable_ptr, iterable_element]
+
+        this->emit(Instruction{Opcode::STORE,
+            {},
+            forSourceLocation
+        });
+        // [iterable_element_ptr, range_step, range_end, for_variable_ptr, range_current]
+
+        // ================================================
+        // move iterable_element_ptr to the next element
+        // ================================================
+
+        this->emit(Instruction{Opcode::ROTD,
+            {Immediate{Number{static_cast<uint32_t>(5)}}},
+            forSourceLocation
+        });
+        // [range_step, range_end, for_variable_ptr, range_current, iterable_element_ptr]
+
+        this->emit(Instruction{Opcode::PUSH,
+            {
+                AssemblyType::UI32,
+                Immediate{Number{iterableElementType.getSize()}}
+            }
+        });
+        // [range_step, range_end, for_variable_ptr, range_current, iterable_element_ptr, size_of_iterable_element]
+
+        this->emit(Instruction{Opcode::ADD,
+            {},
+            forSourceLocation
+        });
+        // [range_step, range_end, for_variable_ptr, range_current, next_iterable_element_ptr]
+
+        this->emit(Instruction{Opcode::ROTU,
+            {Immediate{Number{static_cast<uint32_t>(5)}}},
+            forSourceLocation
+        });
+        // [next_iterable_element_ptr, range_step, range_end, for_variable_ptr, range_current]
+    }
+
+    // ====================================================
+    // compile body
+    // ====================================================
+
+    this->compileBlock(*forStm.body);
+
+    this->emit(LabelDef{forLoopContinueLabel});
+
+    // ====================================================
+    // add range_step to range_current
+    // ====================================================
+
+    this->emit(Instruction{Opcode::DUP,
+        {Immediate{Number{static_cast<uint32_t>(3)}}},
+        forSourceLocation
+    });
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current, range_step]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ,           ]
+
+    this->emit(Instruction{Opcode::ADD,
+        {},
+        forSourceLocation
+    });
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current + range_step]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,                           ]
+
+    // ====================================================
+    // jump to start of for loop
+    // ====================================================
+
+    this->emit(Instruction{Opcode::JMP,
+        {LabelRef{forLoopStartLabel}},
+        forSourceLocation
+    });
+
+    // ====================================================
+    // remove items on stack relating to forStm
+    // ====================================================
+
+    this->emit(LabelDef{forLoopEndLabel});
+    // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current]
+    // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ]
+
+    const int itemsOnStack = (rangeHasStep || !forHasRange)? 5 : 4;
+
+    for (int i = 0; i < itemsOnStack; i++) {
+        this->emit(Instruction{Opcode::POP,
+            {},
+            forSourceLocation
+        });
+    }
+    // []
+}
+
 void compiler::AssemblyGenerator::compileContinueStatement(Scope* scope, const ast::ContinueStm &continueStm) {
-    const auto loopContext = scope->lookupWhileScope()->loopContext;
+    const auto loopContext = scope->lookupLoopScope()->loopContext;
     // jump to start of while block (evaluate condition again)
     this->emit(Instruction{Opcode::JMP,
         {LabelRef{loopContext->continueLabel}},
@@ -479,7 +1012,7 @@ void compiler::AssemblyGenerator::compileContinueStatement(Scope* scope, const a
 }
 
 void compiler::AssemblyGenerator::compileBreakStatement(Scope* scope, const ast::BreakStm &breakStm) {
-    const auto loopContext = scope->lookupWhileScope()->loopContext;
+    const auto loopContext = scope->lookupLoopScope()->loopContext;
     // jump to end of while block
     this->emit(Instruction{Opcode::JMP,
         {LabelRef{loopContext->breakLabel}},
@@ -1754,6 +2287,16 @@ std::string compiler::AssemblyGenerator::generateScopeFunctionIdentifier(const u
     return "__Scope__" + std::to_string(scopeFunctionNumber);
 }
 
+void compiler::AssemblyGenerator::registerScopeFunction(const ScopeFunctionBody& scopeFunctionBody, const uint32_t blockEndLine, const uint16_t blockEndColumn) {
+    this->pendingScopeFunctions.push_back(scopeFunctionBody);
+    // call scope function
+
+    this->emit(Instruction{Opcode::CALL,
+        {LabelRef{generateScopeFunctionIdentifier(this->scopeFunctionCounter++)}},
+        SourceLocation{0, blockEndLine, blockEndColumn}
+    });
+}
+
 void compiler::AssemblyGenerator::emit(const AssemblyItem& assemblyItem) {
     this->assembly.push_back(assemblyItem);
 }
@@ -1778,6 +2321,20 @@ compiler::Number compiler::AssemblyGenerator::getNumber(const Type& type, const 
 
         case BOOL_TYPE_ID:
         case CHAR_TYPE_ID:
+            return Number{static_cast<uint32_t>(value)};
+    }
+}
+
+compiler::Number compiler::AssemblyGenerator::getNumber(const AssemblyType type, const uint64_t value) {
+    switch (type) {
+        case AssemblyType::I32: return Number{static_cast<int32_t>(value)};
+        case AssemblyType::I64: return Number{static_cast<int64_t>(value)};
+        case AssemblyType::UI64: return Number{static_cast<uint64_t>(value)};
+        case AssemblyType::F32: return Number{static_cast<float>(value)};
+        case AssemblyType::F64: return Number{static_cast<double>(value)};
+
+        case AssemblyType::UI32:
+        case AssemblyType::PTR:
             return Number{static_cast<uint32_t>(value)};
     }
 }

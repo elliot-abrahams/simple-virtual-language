@@ -64,15 +64,19 @@
     - [6.4.1 If Statement](#641-if-statement)
     - [6.4.2 If-Else Statement](#642-if-else-statement)
     - [6.4.3 Else-If Statement](#643-else-if-statement)
-  - [6.5 While Statement](#65-while-statement)
-  - [6.6 Break Statement](#66-break-statement)
-  - [6.7 Continue Statement](#67-continue-statement)
-  - [6.8 Return Statement](#68-return-statement)
-    - [6.8.1 Return Statement With Expression](#681-return-with-expression)
-    - [6.8.2 Return Statement Without Expression](#682-return-without-expression)
-  - [6.9 Expression Statement](#69-expression-statement)
-    - [6.9.1 Function Call](#691-function-call)
-    - [6.9.2 Increment and Decrement](#692-increment-and-decrement)
+  - [6.5 While Loop](#65-while-loop)
+  - [6.6 For Loop](#66-for-loop)
+    - [6.6.1 Range-Based For Loop]()
+    - [6.6.2 Range-Based For Loop With Explicit Step]()
+    - [6.6.3 Iterable-Based For Loop]()
+  - [6.7 Break Statement](#67-break-statement)
+  - [6.8 Continue Statement](#68-continue-statement)
+  - [6.9 Return Statement](#69-return-statement)
+    - [6.9.1 Return Statement With Expression](#691-return-with-expression)
+    - [6.9.2 Return Statement Without Expression](#692-return-without-expression)
+  - [6.10 Expression Statement](#610-expression-statement)
+    - [6.10.1 Function Call](#6101-function-call)
+    - [6.10.2 Increment and Decrement](#6102-increment-and-decrement)
 - [7. Functions](#7-functions)
   - [7.1 Function Declaration](#71-function-declaration)
   - [7.2 Function Labels](#72-function-labels)
@@ -1836,7 +1840,7 @@ An `else if` statement is generated as an `if` statement contained within the `e
 
 ---
 
-### 6.5 While Statement
+### 6.5 While Loop
 
 A `while` statement is generated as:
 
@@ -1859,35 +1863,305 @@ The condition is evaluated at the beginning of every iteration.
 
 ---
 
-### 6.6 Break Statement
+### 6.6 For Loop
 
-A `break` statement jumps to the end of the innermost enclosing `while` loop.
+#### 6.6.1 Range-Based For Loop Without Step
+
+A range-based for loop with no explicit step is generated as:
+
+```
+    push [type] #[1]
+    ; Stack: <1: type>
+    
+    {{Range End Expression}}
+    {{Implicit Conversion to [type]}}
+    ; Stack: <1: type, end: type>
+    
+    {{Loop Variable : PTR}}
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr>
+    
+    {{Range Start Expression}}
+    {{Implicit Conversion to [type]}}
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr, start: type>
+    
+$for_loop_start_[N0]:
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type>
+    
+    dup #2
+    dup #1
+    cle
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type, end <= current: ui32>
+    
+    jnz $for_loop_end_[N1]
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type>
+
+    dup #1
+    dup #1
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type, loop_var_ptr: ptr, current: type>
+    
+    store
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type>
+    
+    {{For Loop Body}}
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type>
+    
+    dup #3
+    add
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr, current + 1: type>
+
+    jmp $for_loop_start_[N0]
+    
+$for_loop_end_[N1]:
+    ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type>
+    
+    pop
+    pop
+    pop
+    pop
+    ; Stack: <>
+```
+
+Where:
+- `[type]` is the type of the loop variable
+- `[N0]` and `[N1]` are unique label numbers.
+
+### 6.6.2 Range-Based For Loop With Step
+
+A range-based for loop with explicit step is generated as:
+
+```
+    {{Step Expression}}
+    {{Implicit Conversion to [type]}}
+    ; Stack: <step: type>
+    
+    dup #0
+    ; Stack: <step: type, step: type>
+    
+    jnz $for_loop_step_valid_[N0]
+    throw zero_range_step
+
+$for_loop_step_valid_[N0]:
+    
+    ; Stack: <step: type>
+    
+    dup #0
+    ; Stack: <step: type, step: type>
+    
+    push [type] #[0]
+    cge
+    ; Stack: <step: type, is_step_positive: ui32>
+    
+    swap
+    ; Stack: <is_step_positive: ui32, step: type>
+    
+    {{Range End Expression}}
+    {{Implicit Conversion to [type]}}
+    ; Stack: <is_step_positive: ui32, step: type, end: type>
+    
+    {{Loop Variable : PTR}}
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr>
+    
+    {{Range Start Expression}}
+    {{Implicit Conversion to [type]}}
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, start: type>
+    
+$for_loop_start_[N1]:
+    dup #2
+    dup #1
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end: type, current: type>
+
+    dup #6
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end: type, current: type, is_step_positive: ui32>
+
+    jez $for_loop_negative_step_condition_[N2]
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end: type, current: type>
+
+    cle
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end <= current: ui32>
+
+    jnz $for_loop_end_[N5]
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type>
+
+    jmp $for_loop_condition_join_[N3]
+    
+$for_loop_negative_step_condition_[N2]:
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end: type, current: type>
+
+    cge
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end <= current: ui32>
+
+    jnz $for_loop_end_[N5]
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type>
+
+$for_loop_condition_join_[N3]:
+    dup #1
+    dup #1
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, loop_var_ptr: ptr, current: type>
+
+    store
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type>
+
+    {{For Loop Body}}
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type>
+
+$for_loop_continue_[N4]:
+
+    dup #3
+    add
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current + step: type>
+
+    jmp $for_loop_start_[N1]
+    
+$for_loop_end_[N5]:
+    ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type>
+    
+    pop
+    pop
+    pop
+    pop
+    pop
+    ; Stack: <>
+```
+
+Where:
+- `[type]` is the type of the loop variable
+- `[N0]`, `[N1]`, `[N2]`, `[N3]`, `[N4]`, and `[N5]` are unique label numbers.
+
+### 6.6.3 Iterable-Based For Loop
+
+A iterable-based for loop is generated as:
+
+```
+    {{Iterable Expression : PTR}}
+    dup #0
+    ; Stack: <iterable_ptr: ptr, iterable_ptr: ptr>
+    
+    push ui32 #4
+    add
+    {{Iterable Expression : PTR}}
+    ; Stack: <iterable_ptr: ptr, iterable_first_element_ptr: ptr>
+    
+    push ui32 #1
+    ; Stack: <iterable_ptr: ptr, iterable_first_element_ptr: ptr, 1: ui32>
+    
+    rotD #3
+    ; Stack: <iterable_first_element_ptr: ptr, 1: ui32, iterable_ptr: ptr>
+    
+    load ui32
+    ; Stack: <iterable_first_element_ptr: ptr, 1: ui32, iterable_length: ui32>
+    
+    {{Loop Variable : PTR}}
+    ; Stack: <iterable_first_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr>
+    
+    push ui32 #0
+    ; Stack: <iterable_first_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, 0: ui32>
+
+$for_loop_start_[N0]:
+    ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
+
+    dup #2
+    dup #1
+    cle
+    ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32, iterable_length <= current: ui32>
+
+    jnz $for_loop_end_[N2]
+    ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
+    
+    dup #1
+    dup #5
+    ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32, loop_var_ptr: ptr, iterable_element_ptr: ptr>
+    
+    load [element_type]
+    ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32, loop_var_ptr: ptr, iterable_element: element_type>
+
+    store
+    ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
+
+    dotD #5
+    ; Stack: <1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32, iterable_element_ptr: ptr>
+    
+    push ui32 #[size_of_element_type]
+    add
+    ; Stack: <1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32, iterable_element_ptr + size_of_element_type: ptr>
+
+    rotU #5
+    ; Stack: <iterable_element_ptr + size_of_element_type: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
+
+    {{For Loop Body}}
+    ; Stack: <iterable_element_ptr + size_of_element_type: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
+
+$for_loop_continue_[N1]:
+
+    dup #3
+    add
+    ; Stack: <iterable_element_ptr + size_of_element_type: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current + 1: ui32>
+
+    jmp $for_loop_start_[N0]
+    
+$for_loop_end_[N2]:
+    ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
+
+    pop
+    pop
+    pop
+    pop
+    pop
+    ; Stack: <>
+```
+
+Where:
+- `[type]` is the type of the loop variable
+- `[element_type]` is the type of the elements of the iterable
+- `[size_element_type]` is the number of bytes used to store `[element_type]`
+- `[N0]`, `[N1]`, and `[N2]` are unique label numbers.
+
+---
+
+### 6.7 Break Statement
+
+A `break` statement jumps to the end of the innermost enclosing loop.
+
+If the innermost enclosing loop is a `while loop` it generates:
 
 ```
     jmp $end_while_[N]
 ```
 
+If the innermost enclosing loop is a `fpr loop` it generates:
+
+```
+    jmp for_loop_end[N]
+```
+
 Where:
-- `[N]` identifies the end label of the innermost enclosing `while` loop.
+- `[N]` is the unique identifier of the corresponding loop label.
 
 ---
 
-### 6.7 Continue Statement
+### 6.8 Continue Statement
 
-A `continue` statement jumps to the start of the innermost enclosing `while` loop.
+A `continue` statement jumps to the start of the innermost enclosing loop.
+
+If the innermost enclosing loop is a `while loop` it generates:
 
 ```
     jmp $start_while_[N]
 ```
 
+If the innermost enclosing loop is a `for loop` it generates:
+
+```
+    jmp $for_loop_continue_[N]
+```
+
 Where:
-- `[N]` identifies the start label of the innermost enclosing `while` loop.
+- `[N]` is the unique identifier of the corresponding loop label.
 
 ---
 
-### 6.8 Return Statement
+### 6.9 Return Statement
 
-#### 6.8.1 Return With Expression
+#### 6.9.1 Return With Expression
 
 A return statement containing an expression generates:
 
@@ -1899,7 +2173,7 @@ A return statement containing an expression generates:
 
 The expression is converted to the function's return type when required.
 
-#### 6.8.2 Return Without Expression
+#### 6.9.2 Return Without Expression
 
 A `void` function may return without an expression.
 
@@ -1909,11 +2183,11 @@ A `void` function may return without an expression.
 
 ---
 
-### 6.9 Expression Statement
+### 6.10 Expression Statement
 
 Expression Statements evaluate the expression without resulting in a value.
 
-#### 6.9.1 Function Call
+#### 6.10.1 Function Call
 
 A function call statement is generated in the same way as a function call expression.
 
@@ -1921,7 +2195,7 @@ A function call statement is generated in the same way as a function call expres
     {{Function Call Expression}}
 ```
 
-#### 6.9.2 Increment and Decrement
+#### 6.10.2 Increment and Decrement
 
 The base expression is generated to produce its address. The current value is then loaded from the address, incremented or decremented, and stored back at the same address. 
 

@@ -22,6 +22,7 @@ statement                   = block
                             | assignment
                             | if_statement
                             | while_statement
+                            | for_statement
                             | continue_statement
                             | break_statement
                             | return_statement
@@ -36,6 +37,18 @@ assignment                  = IDENTIFIER, { index }, assignment_operator, expres
 if_statement                = IF, LBR, expression, RBR, block, [ ELSE, ( block | if_statement ) ] ;
 
 while_statement             = WHILE, LBR, expression, RBR, block ;
+
+for_statement               = FOR, LBR, for_variable, COLON, for_iterable, RBR, block ;
+
+for_variable                = for_var_decl
+                            | IDENTIFIER ;
+
+for_var_decl                = type, IDENTIFIER ;
+
+for_iterable                = expression
+                            | expression, DOT_DOT, expression, [ for_step ] ;
+
+for_step                    = COLON, expression ;
 
 continue_statement          = CONTINUE, SEMI ;
 
@@ -60,8 +73,10 @@ additive_expression         = multiplicative_expression, { ( PLUS | MINUS ), mul
 multiplicative_expression   = unary_expression, { ( MULTIPLY | DIVIDE | INTEGER_DIVIDE | MODULO ), unary_expression } ;
 
 unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
-                            | LBR, type, RBR, unary_expression
+                            | cast_expression
                             | [ INCREMENT | DECREMENT ], postfix_expression ;
+
+cast_expression             = LBR, type, RBR, unary_expression ;
 
 index                       = LSQBR, expression, RSQBR ;
 
@@ -109,8 +124,10 @@ TOKENS
 =================================================
 
 SEMI                        = ";"
+COLON                       = ":"
 COMMA                       = ","
 DOT                         = "."
+DOT_DOT                     = ".."
 LBR                         = "("
 RBR                         = ")"
 LCBR                        = "{"
@@ -142,6 +159,7 @@ GREATER_THAN_OR_EQUAL       = ">="
 IF                          = "if"
 ELSE                        = "else"
 WHILE                       = "while"
+FOR                         = "for"
 CONTINUE                    = "continue"
 BREAK                       = "break"
 RETURN                      = "return"

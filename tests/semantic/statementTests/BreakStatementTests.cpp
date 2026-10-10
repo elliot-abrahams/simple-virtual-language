@@ -3,9 +3,18 @@
 
 using namespace semanticTest;
 
-TEST(STM_BREAK, VALID) {
+TEST(STM_BREAK, WHILE) {
     ASSERT_SEMANTICALLY_VALID(R"(
             while (true) {
+                break;
+            }
+        )"
+    );
+}
+
+TEST(STM_BREAK, FOR) {
+    ASSERT_SEMANTICALLY_VALID(R"(
+            for (int i : 0 .. 10) {
                 break;
             }
         )"

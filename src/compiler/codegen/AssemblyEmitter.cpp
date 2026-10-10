@@ -243,6 +243,7 @@ std::string compiler::AssemblyEmitter::emitErrorRef(const ErrorRef& errorRef) {
         case ErrorRef::ARRAY_INDEX_OUT_OF_RANGE: return "array_index_out_of_range";
         case ErrorRef::NEGATIVE_ARRAY_SIZE: return "negative_array_length";
         case ErrorRef::ARRAY_INITIALISER_SIZE: return "array_initialiser_length";
+        case ErrorRef::ZERO_RANGE_STEP: return "zero_range_step";
     }
     return "";
 }

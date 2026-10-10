@@ -92,12 +92,25 @@ Token compiler::Tokeniser::readToken() {
                 this->advance();
                 return token;
             }
+            case ':': {
+                const Token token = Token{TokenKind::COLON, ":", this->line, this->column};
+                this->advance();
+                return token;
+            }
             case ',': {
                 const Token token = Token{TokenKind::COMMA, ",", this->line, this->column};
                 this->advance();
                 return token;
             }
             case '.': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '.') {
+
+                    const Token token = Token{TokenKind::DOT_DOT, "..", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
                 const Token token = Token{TokenKind::DOT, ".", this->line, this->column};
                 this->advance();
                 return token;
@@ -314,6 +327,7 @@ Token compiler::Tokeniser::readToken() {
                     if (image == "if") return Token{TokenKind::IF, image, this->line, this->column - 2};
                     if (image == "else") return Token{TokenKind::ELSE, image, this->line, this->column - 4};
                     if (image == "while") return Token{TokenKind::WHILE, image, this->line, this->column - 5};
+                    if (image == "for") return Token{TokenKind::FOR, image, this->line, this->column - 3};
                     if (image == "continue") return Token{TokenKind::CONTINUE, image, this->line, this->column - 8};
                     if (image == "break") return Token{TokenKind::BREAK, image, this->line, this->column - 5};
                     if (image == "return") return Token{TokenKind::RETURN, image, this->line, this->column - 6};
@@ -347,7 +361,10 @@ Token compiler::Tokeniser::readToken() {
                     }
 
                     // check for a float
-                    if (this->current < this->source.size() && this->source[this->current] == '.') {
+                    // if DOT is followed by a DOT, create INT_LITERAL token
+                    if ((this->current < this->source.size() && this->source[this->current] == '.') &&
+                        (this->current + 1 < this->source.size() && this->source[this->current + 1] != '.')
+                    ) {
                         this->advance();
 
                         // enforce digits after '.'

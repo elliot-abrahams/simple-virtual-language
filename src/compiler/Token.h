@@ -4,8 +4,10 @@
 
 enum class TokenKind {
     SEMI,
+    COLON,
     COMMA,
     DOT,
+    DOT_DOT,
     LBR,
     RBR,
     LCBR,
@@ -38,6 +40,7 @@ enum class TokenKind {
     IF,
     ELSE,
     WHILE,
+    FOR,
     CONTINUE,
     BREAK,
     RETURN,

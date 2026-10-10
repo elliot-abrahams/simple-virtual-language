@@ -39,6 +39,7 @@ std::unique_ptr<ast::Program> compiler::Parser::parseProgram() const {
             case TokenKind::IDENTIFIER:
             case TokenKind::IF:
             case TokenKind::WHILE:
+            case TokenKind::FOR:
             case TokenKind::CONTINUE:
             case TokenKind::BREAK:
             case TokenKind::RETURN:
@@ -134,6 +135,7 @@ std::unique_ptr<ast::Stm> compiler::Parser::parseStm() const {
         case TokenKind::IDENTIFIER: return this->parseIdentifierStm();
         case TokenKind::IF: return this->parseIfStatement();
         case TokenKind::WHILE: return this->parseWhileStatement();
+        case TokenKind::FOR: return this->parseForStatement();
         case TokenKind::CONTINUE: return this->parseContinueStatement();
         case TokenKind::BREAK: return this->parseBreakStatement();
         case TokenKind::RETURN: return this->parseReturnStatement();
@@ -308,6 +310,85 @@ std::unique_ptr<ast::WhileStm> compiler::Parser::parseWhileStatement() const {
         std::move(condition),
         std::move(block)
     );
+}
+
+/*
+ *  for_statement               = FOR, LBR, for_variable, COLON, for_iterable, RBR, block ;
+ */
+std::unique_ptr<ast::ForStm> compiler::Parser::parseForStatement() const {
+    const auto tokenFOR = this->tokeniser->tok();
+    this->tokeniser->next();
+    this->tokeniser->eat(TokenKind::LBR);
+    auto variable = this->parseForVariable();
+    this->tokeniser->eat(TokenKind::COLON);
+    auto iterable = this->parseForIterable();
+    this->tokeniser->eat(TokenKind::RBR);
+    auto body = this->parseBlock();
+
+    return std::make_unique<ast::ForStm>(
+        tokenFOR.line,
+        tokenFOR.column,
+        variable,
+        iterable,
+        std::move(body)
+    );
+}
+
+/*
+ *  for_variable                = for_var_decl
+ *                              | IDENTIFIER ;
+ *
+ *  for_var_decl                = type, IDENTIFIER ;
+ */
+ast::ForVariable compiler::Parser::parseForVariable() const {
+    if (this->isPrimitiveTypeToken(this->tokeniser->tok().kind)) {
+        auto type = this->parseType();
+        std::unique_ptr<ast::Identifier> identifier = this->parseIdentifier();
+        return std::make_unique<ast::StmVarDecl>(
+            type->line,
+            type->column,
+            std::move(type),
+            std::move(identifier),
+            nullptr
+        );
+    }
+    return this->parseExprIdentifier();
+}
+
+/*
+ *  for_iterable                = expression
+ *                              | expression, DOT_DOT, expression, [ for_step ] ;
+ */
+ast::ForIterable compiler::Parser::parseForIterable() const {
+    auto firstExpr = this->parseExpr();
+
+    if (this->tokeniser->tok().kind != TokenKind::DOT_DOT) {
+        return firstExpr;
+    }
+
+    this->tokeniser->next(); // eat DOT_DOT
+    auto secondExpr = this->parseExpr();
+    auto step = this->parseForStep();
+
+    return std::make_unique<ast::ForRange>(
+        firstExpr->line,
+        firstExpr->column,
+        std::move(firstExpr),
+        std::move(secondExpr),
+        std::move(step)
+    );
+}
+
+/*
+ *  for_step                    = COLON, expression ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseForStep() const {
+    if (this->tokeniser->tok().kind != TokenKind::COLON) {
+        return nullptr;
+    }
+
+    this->tokeniser->next(); // eat COLON
+    return this->parseExpr();
 }
 
 /*
@@ -671,7 +752,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
 
 /*
  *  unary_expression            = ( PLUS | MINUS | LOGICAL_NOT ), unary_expression
- *                              | LBR, type, RBR, unary_expression
+ *                              | cast_expression
  *                              | [ INCREMENT | DECREMENT ], postfix_expression ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
@@ -721,19 +802,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
     if (token.kind == TokenKind::LBR &&
         isPrimitiveTypeToken(this->tokeniser->lookAhead(1).kind)
     ) {
-        // parse cast expression
-
-        this->tokeniser->eat(TokenKind::LBR);
-        auto typeInfo = this->parseType();
-        this->tokeniser->eat(TokenKind::RBR);
-        auto expression = this->parseUnaryExpression();
-
-        return std::make_unique<ast::ExprCast>(
-            token.line,
-            token.column,
-            std::move(typeInfo),
-            std::move(expression)
-        );
+        return this->parseCastExpression();
     }
 
     if (token.kind == TokenKind::INCREMENT || token.kind == TokenKind::DECREMENT) {
@@ -769,6 +838,25 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
     }
 
     return this->parseExprPostfix();
+}
+
+/*
+ *  LBR, type, RBR, unary_expression ;
+ */
+std::unique_ptr<ast::Expr> compiler::Parser::parseCastExpression() const {
+    const auto token = this->tokeniser->tok();
+
+    this->tokeniser->eat(TokenKind::LBR);
+    auto typeInfo = this->parseType();
+    this->tokeniser->eat(TokenKind::RBR);
+    auto expression = this->parseUnaryExpression();
+
+    return std::make_unique<ast::ExprCast>(
+        token.line,
+        token.column,
+        std::move(typeInfo),
+        std::move(expression)
+    );
 }
 
 /*
@@ -819,10 +907,6 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseExprPostfix() const {
 
             default: morePostfixOperatorsToParse = false;
         }
-    }
-
-    while (this->tokeniser->tok().kind == TokenKind::LSQBR) {
-
     }
 
     auto incDecOp = this->parseIncrementDecrementOperator();

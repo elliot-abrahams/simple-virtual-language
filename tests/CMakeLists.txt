@@ -141,6 +141,7 @@ set(Parser_Sources
         parser/statementTests/ReturnStatementTests.cpp
         parser/statementTests/BreakStatementTests.cpp
         parser/statementTests/ContinueStatementTests.cpp
+        parser/statementTests/ForStatementTests.cpp
         parser/statementTests/WhileStatementTests.cpp
         parser/statementTests/IfStatementTests.cpp
         parser/statementTests/AssignmentTests.cpp
@@ -168,7 +169,10 @@ target_link_libraries(${PARSER_TESTS} PRIVATE
         sv_lib
 )
 
-gtest_discover_tests(${PARSER_TESTS})
+gtest_discover_tests(
+        ${PARSER_TESTS}
+        DISCOVERY_TIMEOUT 60
+)
 
 
 # SEMANTIC TESTS
@@ -183,6 +187,7 @@ set(Semantic_Sources
         semantic/statementTests/FunctionCallStatementTests.cpp
         semantic/statementTests/BreakStatementTests.cpp
         semantic/statementTests/ContinueStatementTests.cpp
+        semantic/statementTests/ForStatementTests.cpp
         semantic/statementTests/WhileStatementTests.cpp
         semantic/statementTests/IfStatementTests.cpp
         semantic/statementTests/AssignmentTests.cpp
@@ -225,6 +230,9 @@ set(Integration_Sources
         integration/FunctionTests.cpp
         integration/ScopeTests.cpp
 
+        integration/statementTests/BreakStatementTests.cpp
+        integration/statementTests/ContinueStatementTests.cpp
+        integration/statementTests/ForStatementTests.cpp
         integration/statementTests/WhileStatementTests.cpp
         integration/statementTests/IfStatementTests.cpp
         integration/statementTests/AssignmentTests.cpp

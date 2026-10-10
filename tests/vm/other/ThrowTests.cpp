@@ -327,3 +327,13 @@ TEST(THROW, INVALID_ARRAY_INITIALISER_UNDERFLOW) {
         RuntimeErrorType::INTERNAL
     );
 }
+
+TEST(THROW, ZERO_RANGE_STEP) {
+    EXPECT_RUNTIME_ERROR(
+        R"(
+            throw zero_range_step
+            halt
+        )",
+        RuntimeErrorType::EXPLICIT_ZERO_RANGE_STEP
+    );
+}

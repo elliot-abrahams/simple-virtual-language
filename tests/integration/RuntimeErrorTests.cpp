@@ -97,3 +97,13 @@ TEST(RUNTIME_ERROR, STACK_OVERFLOW_ERROR) {
         VMTestScenario::NEAR_CALL_STACK_OVERFLOW
     );
 }
+
+TEST(RUNTIME_ERROR, ZERO_RANGE_STEP_ERROR) {
+    ASSERT_THROWS_RUNTIME_ERROR(
+        R"(
+            for(int i: 0 .. 10 : 0) {}
+        )",
+        RuntimeErrorType::EXPLICIT_ZERO_RANGE_STEP,
+        VMTestScenario::NONE
+    );
+}

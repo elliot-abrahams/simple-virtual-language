@@ -3,28 +3,31 @@
 
 using namespace integrationTests;
 
-TEST(STM_WHILE, RUN_LOOP) {
+TEST(STM_CONTINUE, WHILE) {
     ASSERT_OUTPUT_EQ(
         R"(
             int x = 0;
-            while (x <= 2) {
+            while (x <= 3) {
                 print(x);
                 x = x + 1;
+                continue;
+                x = x + 1;
             }
-            print(0);
         )",
-        "0120"
+        "0123"
     );
 }
 
-TEST(STM_WHILE, SKIP_LOOP) {
+TEST(STM_CONTINUE, FOR) {
     ASSERT_OUTPUT_EQ(
         R"(
-            while (false) {
-                print(5);
+            int j = 10;
+            for (int i : 0 .. 3) {
+                continue;
+                j++;
             }
-            print(0);
+            print(j);
         )",
-        "0"
+        "10"
     );
 }

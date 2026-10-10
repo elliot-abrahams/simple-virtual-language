@@ -11,6 +11,7 @@
   - [3.1 ArrayIndexOutOfRangeError](#31-arrayindexoutofrangeerror)
   - [3.2 NegativeArrayLengthError](#32-negativearraylengtherror)
   - [3.3 ArrayInitialiserLengthError](#33-arrayinitialiserlengtherror)
+  - [3.4 ZeroRangeStepError](#34-zerorangesteperror)
 - [4. Implicit Runtime Errors](#4-implicit-runtime-errors)
   - [4.1 DivisionByZeroError](#41-divisionbyzeroerror)
   - [4.2 OutOfRangeError](#42-outofrangeerror)
@@ -158,6 +159,26 @@ Occurs when the array initialiser contains more elements than the size of the ar
 **Messages:**
 ```
 array initialiser contains too many elements for array with length <array_length>
+```
+
+---
+
+### 3.4 ZeroRangeStepError
+
+Occurs when the step of a for loop's range is zero.
+
+**Error Ref:** `zero_range_step`
+
+**ID:** `0x03`
+
+**Stack:** `[] → []`
+
+**Semantics:**
+- Throws `ZeroRangeStepError`
+
+**Messages:**
+```
+range step cannot be zero
 ```
 
 ---

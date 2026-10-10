@@ -41,7 +41,7 @@ namespace compiler {
         GLOBAL,
         BLOCK,
         FUNCTION,
-        WHILE
+        LOOP
     };
 
     struct Scope {
@@ -82,10 +82,10 @@ namespace compiler {
             return this->parent->lookup(identifier);
         }
 
-        const Scope* lookupWhileScope() const {
+        const Scope* lookupLoopScope() const {
             auto scopeToCheck = this;
             while (!scopeToCheck->isGlobalScope() && !scopeToCheck->isFunctionScope()) {
-                if (scopeToCheck->isWhileScope()) {
+                if (scopeToCheck->isLoopScope()) {
                     return scopeToCheck;
                 }
                 scopeToCheck = scopeToCheck->parent;
@@ -137,8 +137,8 @@ namespace compiler {
             return this->kind == ScopeKind::FUNCTION;
         }
 
-        bool isWhileScope() const {
-            return this->kind == ScopeKind::WHILE;
+        bool isLoopScope() const {
+            return this->kind == ScopeKind::LOOP;
         }
     };
 

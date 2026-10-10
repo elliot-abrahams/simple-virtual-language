@@ -26,6 +26,10 @@ namespace compiler {
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
         std::unique_ptr<ast::IfStm> parseIfStatement() const;
         std::unique_ptr<ast::WhileStm> parseWhileStatement() const;
+        std::unique_ptr<ast::ForStm> parseForStatement() const;
+        ast::ForVariable parseForVariable() const;
+        ast::ForIterable parseForIterable() const;
+        std::unique_ptr<ast::Expr> parseForStep() const;
         std::unique_ptr<ast::ContinueStm> parseContinueStatement() const;
         std::unique_ptr<ast::BreakStm> parseBreakStatement() const;
         std::unique_ptr<ast::ReturnStm> parseReturnStatement() const;
@@ -39,6 +43,7 @@ namespace compiler {
         std::unique_ptr<ast::Expr> parseAdditiveExpression() const;
         std::unique_ptr<ast::Expr> parseMultiplicativeExpression() const;
         std::unique_ptr<ast::Expr> parseUnaryExpression() const;
+        std::unique_ptr<ast::Expr> parseCastExpression() const;
         std::unique_ptr<ast::Index> parseIndex() const;
         std::unique_ptr<ast::FieldAccess> parseFieldAccess() const;
         std::unique_ptr<ast::Expr> parseExprPostfix() const;

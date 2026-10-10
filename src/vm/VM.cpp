@@ -919,6 +919,12 @@ void VM::executeThrow() {
                 errorMsg
             };
         }
+        case 0x03: { // ZeroRangeStepError
+            throw RuntimeError{
+                RuntimeErrorType::EXPLICIT_ZERO_RANGE_STEP,
+                "range step cannot be zero"
+            };
+        }
     }
 }
 

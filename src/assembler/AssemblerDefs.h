@@ -127,7 +127,8 @@ namespace assembler {
     inline const std::map<std::string, uint8_t> errorRef {
         {"array_index_out_of_range", 0x00},
         {"negative_array_length", 0x01},
-        {"array_initialiser_length", 0x02}
+        {"array_initialiser_length", 0x02},
+        {"zero_range_step", 0x03}
     };
 
     enum class OperandType {

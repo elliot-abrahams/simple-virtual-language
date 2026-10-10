@@ -64,65 +64,61 @@ The contents of a comment are not interpreted as SV source code.
 ## 4. Delimiters
 
 SV provides the following delimiters:
-
-| Token   | Character |
-|---------|-----------|
-| `SEMI`  | `;`       |
-| `COMMA` | `,`       |
-| `DOT`   | `.`       |
-| `LBR`   | `(`       |
-| `RBR`   | `)`       |
-| `LCBR`  | `{`       |
-| `RCBR`  | `}`       |
-| `LSQBR` | `[`       |
-| `RSQBR` | `]`       |
+- `;`
+- `:`
+- `,`
+- `.`
+- `..`
+- `(`
+- `)`
+- `{`
+- `}`
+- `[`
+- `]`
+- `'`
 
 ---
 
 ## 5. Operators
 
-SV provides the following operators
-
-| Token                   | Character |
-|-------------------------|-----------|
-| `EQUAL`                 | `=`       |
-| `PLUS`                  | `+`       |
-| `INCREMENT`             | `++`      |
-| `MINUS`                 | `-`       |
-| `DECREMENT`             | `--`      |
-| `MULTIPLY`              | `*`       |
-| `DIVIDE`                | `/`       |
-| `INTEGER_DIVIDE`        | `//`      |
-| `MODULO`                | `%`       |
-| `LOGICAL_OR`            | `\|\|`    |
-| `LOGICAL_AND`           | `&&`      |
-| `LOGICAL_NOT`           | `!`       |
-| `EQUAL_EQUAL`           | `==`      |
-| `NOT_EQUAL`             | `!=`      |
-| `LESS_THAN`             | `<`       |
-| `LESS_THAN_OR_EQUAL`    | `<=`      |
-| `GREATER_THAN`          | `>`       |
-| `GREATER_THAN_OR_EQUAL` | `>=`      |
+SV provides the following operators:
+- `=`
+- `+`
+- `++`
+- `-`
+- `--`
+- `*`
+- `/`
+- `//`
+- `%`
+- `||`
+- `&&`
+- `!`
+- `==`
+- `!=`
+- `<`
+- `<=`
+- `>`
+- `>=`
 
 ---
 
 ## 6. Keywords
 
-The following sequences are reserved as keywords:
-
-| Token        | Keyword    |
-|--------------|------------|
-| `IF`         | `if`       |
-| `ELSE`       | `else`     |
-| `WHILE`      | `while`    |
-| `CONTINUE`   | `continue` |
-| `BREAK`      | `break`    |
-| `RETURN`     | `return`   |
-| `NEW`        | `new`      |
-| `INT_TYPE`   | `int`      |
-| `FLOAT_TYPE` | `float`    |
-| `BOOL_TYPE`  | `bool`     |
-| `VOID_TYPE`  | `void`     |
+The following are reserved as keywords:
+- `if`
+- `else`
+- `while`
+- `for`
+- `continue`
+- `break`
+- `return`
+- `new`
+- `void`
+- `int`
+- `float`
+- `bool`
+- `char`
 
 Keywords have a predefined meaning in the SV language and cannot be used as identifiers.
 

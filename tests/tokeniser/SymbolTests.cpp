@@ -7,12 +7,20 @@ TEST(SYMBOL, SEMI) {
     ASSERT_TOKEN_EQ(";", TokenKind::SEMI, ";");
 }
 
+TEST(SYMBOL, COLON) {
+    ASSERT_TOKEN_EQ(":", TokenKind::COLON, ":");
+}
+
 TEST(SYMBOL, COMMA) {
     ASSERT_TOKEN_EQ(",", TokenKind::COMMA, ",");
 }
 
 TEST(SYMBOL, DOT) {
     ASSERT_TOKEN_EQ(".", TokenKind::DOT, ".");
+}
+
+TEST(SYMBOL, DOT_DOT) {
+    ASSERT_TOKEN_EQ("..", TokenKind::DOT_DOT, "..");
 }
 
 TEST(SYMBOL, LBR) {

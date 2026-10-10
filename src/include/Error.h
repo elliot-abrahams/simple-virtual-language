@@ -14,6 +14,7 @@ enum class RuntimeErrorType {
     EXPLICIT_ARRAY_INDEX_OUT_OF_RANGE,
     EXPLICIT_NEGATIVE_ARRAY_LENGTH,
     EXPLICIT_ARRAY_INITIALISER_LENGTH,
+    EXPLICIT_ZERO_RANGE_STEP,
 
     DIVISION_BY_ZERO,
     OUT_OF_RANGE,
@@ -68,7 +69,7 @@ protected:
             errorMessage += spaces.substr(0, (lineNumber.size() + 3)) + "|" + spaces.substr(0, 3 + (column - leadingWhitespace)) + "^" + "\n";
 
         } else { // unable to read source file
-            errorMessage += "    | source code unavailable";
+            errorMessage += "    | source code unavailable\n";
         }
         return errorMessage;
     }
@@ -86,6 +87,7 @@ struct RuntimeError final : SVLError {
             case RuntimeErrorType::EXPLICIT_ARRAY_INDEX_OUT_OF_RANGE: errorType =  "ArrayIndexOutOfRangeError"; break;
             case RuntimeErrorType::EXPLICIT_NEGATIVE_ARRAY_LENGTH: errorType = "NegativeArrayLengthError"; break;
             case RuntimeErrorType::EXPLICIT_ARRAY_INITIALISER_LENGTH: errorType =  "ArrayInitialiserLengthError"; break;
+            case RuntimeErrorType::EXPLICIT_ZERO_RANGE_STEP: errorType =  "ZeroRangeStepError"; break;
             case RuntimeErrorType::DIVISION_BY_ZERO: errorType = "DivisionByZeroError"; break;
             case RuntimeErrorType::OUT_OF_RANGE: errorType = "OutOfRangeError"; break;
             case RuntimeErrorType::STACK_OVERFLOW: errorType = "StackOverflowError"; break;

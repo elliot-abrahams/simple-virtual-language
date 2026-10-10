@@ -8,6 +8,7 @@
 namespace parserTest {
 
     struct ExpectedFunctionDecl;
+    struct ExpectedVarDecl;
     struct ExpectedFieldAccess;
     struct ExpectedIndex;
     struct ExpectedArrayInitialiser;
@@ -17,6 +18,8 @@ namespace parserTest {
     using ArrayInitialiserElement = std::variant<std::unique_ptr<ExpectedExpr>, std::unique_ptr<ExpectedArrayInitialiser>>;
 
     using PostfixOperator = std::variant<std::unique_ptr<ExpectedIndex>, std::unique_ptr<ExpectedFieldAccess>>;
+
+    inline void ASSERT_VAR_DECL_EQ(const ExpectedVarDecl& expectedVarDecl, const ast::StmVarDecl& actualVarDecl);
 
     inline std::vector<std::unique_ptr<ExpectedFunctionDecl>> noExpectedFunctionDecls;
     inline std::vector<std::unique_ptr<ExpectedIndex>> noExpectedIndices;
@@ -173,6 +176,42 @@ namespace parserTest {
 
     struct ExpectedContinueStm final : ExpectedStm {};
 
+    using ExpectedForVariable = std::variant<
+        std::unique_ptr<ExpectedVarDecl>,
+        std::unique_ptr<ExpectedExprIdentifier>
+    >;
+
+    struct ExpectedForRange final {
+        const std::unique_ptr<ExpectedExpr> expectedStart;
+        const std::unique_ptr<ExpectedExpr> expectedEnd;
+        const std::unique_ptr<ExpectedExpr> expectedStep;
+
+        ExpectedForRange(std::unique_ptr<ExpectedExpr> expectedStart,
+            std::unique_ptr<ExpectedExpr> expectedEnd,
+            std::unique_ptr<ExpectedExpr> expectedStep) :
+        expectedStart(std::move(expectedStart)),
+        expectedEnd(std::move(expectedEnd)),
+        expectedStep(std::move(expectedStep)) {}
+    };
+
+    using ExpectedForIterable = std::variant<
+        std::unique_ptr<ExpectedExpr>,
+        std::unique_ptr<ExpectedForRange>
+    >;
+
+    struct ExpectedForStm final : ExpectedStm {
+        const ExpectedForVariable expectedVariable;
+        const ExpectedForIterable expectedIterable;
+        const std::unique_ptr<ExpectedBlock> expectedBody;
+
+        ExpectedForStm(ExpectedForVariable expectedVariable,
+            ExpectedForIterable expectedIterable,
+            std::unique_ptr<ExpectedBlock> expectedBody) :
+        expectedVariable(std::move(expectedVariable)),
+        expectedIterable(std::move(expectedIterable)),
+        expectedBody(std::move(expectedBody)) {}
+    };
+
     struct ExpectedWhileStm final : ExpectedStm {
         const std::unique_ptr<ExpectedExpr> expectedCondition;
         const std::unique_ptr<ExpectedBlock> expectedBody;
@@ -298,6 +337,27 @@ namespace parserTest {
                 }
                 ASSERT_EXPR_EQ(*std::get<std::unique_ptr<ExpectedExpr>>(expectedArrayInitialiser.expectedElements[i]), *std::get<std::unique_ptr<ast::Expr>>(actualArrayInitialiser.elements[i]));
             }
+        }
+    }
+
+    inline void ASSERT_FOR_VARIABLE_EQ(const ExpectedForVariable& expectedForVariable, const ast::ForVariable& actualForVariable) {
+        if (std::holds_alternative<std::unique_ptr<ExpectedVarDecl>>(expectedForVariable)) {
+            ASSERT_VAR_DECL_EQ(*std::get<std::unique_ptr<ExpectedVarDecl>>(expectedForVariable), *std::get<std::unique_ptr<ast::StmVarDecl>>(actualForVariable));
+        } else {
+            ASSERT_EXPR_EQ(*std::get<std::unique_ptr<ExpectedExprIdentifier>>(expectedForVariable), *std::get<std::unique_ptr<ast::ExprIdentifier>>(actualForVariable));
+        }
+    }
+
+    inline void ASSERT_FOR_ITERABLE_EQ(const ExpectedForIterable& expectedForIterable, const ast::ForIterable& actualForIterable) {
+        if (std::holds_alternative<std::unique_ptr<ExpectedForRange>>(expectedForIterable)) {
+            auto& expectedForRange = std::get<std::unique_ptr<ExpectedForRange>>(expectedForIterable);
+            auto& actualForRange = std::get<std::unique_ptr<ast::ForRange>>(actualForIterable);
+
+            ASSERT_EXPR_EQ(*expectedForRange->expectedStart, *actualForRange->start);
+            ASSERT_EXPR_EQ(*expectedForRange->expectedEnd, *actualForRange->end);
+            if (expectedForRange->expectedStep) ASSERT_EXPR_EQ(*expectedForRange->expectedStep, *actualForRange->step);
+        } else {
+            ASSERT_EXPR_EQ(*std::get<std::unique_ptr<ExpectedExpr>>(expectedForIterable), *std::get<std::unique_ptr<ast::Expr>>(actualForIterable));
         }
     }
 
@@ -456,8 +516,15 @@ namespace parserTest {
             auto* actualWhileStm = dynamic_cast<const ast::WhileStm*>(&actualStm);
             ASSERT_NE(actualWhileStm, nullptr);
             ASSERT_EXPR_EQ(*expectedWhileStm->expectedCondition, *actualWhileStm->condition);
-            ASSERT_EQ(expectedWhileStm->expectedBody->statements.size(), actualWhileStm->block->statements.size());
-            ASSERT_STATEMENT_EQ(*expectedWhileStm->expectedBody, *actualWhileStm->block);
+            ASSERT_EQ(expectedWhileStm->expectedBody->statements.size(), actualWhileStm->body->statements.size());
+            ASSERT_STATEMENT_EQ(*expectedWhileStm->expectedBody, *actualWhileStm->body);
+
+        } else if (auto* expectedForStm = dynamic_cast<const ExpectedForStm*>(&expectedStm)) {
+            auto* actualForStm = dynamic_cast<const ast::ForStm*>(&actualStm);
+            ASSERT_NE(actualForStm, nullptr);
+            ASSERT_FOR_VARIABLE_EQ(expectedForStm->expectedVariable, actualForStm->variable);
+            ASSERT_FOR_ITERABLE_EQ(expectedForStm->expectedIterable, actualForStm->iterable);
+            ASSERT_STATEMENT_EQ(*expectedForStm->expectedBody, *actualForStm->body);
 
         } else if (auto* expectedContinueStm = dynamic_cast<const ExpectedContinueStm*>(&expectedStm)) {
             auto* actualContinueStm = dynamic_cast<const ast::ContinueStm*>(&actualStm);

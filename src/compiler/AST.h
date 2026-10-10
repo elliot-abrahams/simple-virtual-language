@@ -15,6 +15,7 @@ namespace compiler {
 }
 
 namespace ast {
+    struct StmVarDecl;
     struct Index;
     struct ArrayInitialiser;
     struct Block;
@@ -281,17 +282,59 @@ namespace ast {
             Stm(line, column) {}
     };
 
+    using ForVariable = std::variant<
+        std::unique_ptr<StmVarDecl>,
+        std::unique_ptr<ExprIdentifier>
+    >;
+
+    struct ForRange final : ASTNode {
+        const std::unique_ptr<Expr> start;
+        const std::unique_ptr<Expr> end;
+        const std::unique_ptr<Expr> step;
+
+        ForRange(const uint32_t line,
+                const uint16_t column,
+                std::unique_ptr<Expr> start,
+                std::unique_ptr<Expr> end,
+                std::unique_ptr<Expr> step) :
+            ASTNode(line, column),
+            start(std::move(start)),
+            end(std::move(end)),
+            step(std::move(step)) {}
+    };
+
+    using ForIterable = std::variant<
+        std::unique_ptr<Expr>,
+        std::unique_ptr<ForRange>
+    >;
+
+    struct ForStm final : Stm {
+        const ForVariable variable;
+        const ForIterable iterable;
+        const std::unique_ptr<Block> body;
+
+        ForStm(const uint32_t line,
+                const uint16_t column,
+                ForVariable& variable,
+                ForIterable& iterable,
+                std::unique_ptr<Block> body) :
+            Stm(line, column),
+            variable(std::move(variable)),
+            iterable(std::move(iterable)),
+            body(std::move(body)) {}
+    };
+
     struct WhileStm final : Stm {
         const std::unique_ptr<Expr> condition;
-        const std::unique_ptr<Block> block;
+        const std::unique_ptr<Block> body;
 
         WhileStm(const uint32_t line,
                 const uint16_t column,
                 std::unique_ptr<Expr> condition,
-                std::unique_ptr<Block> block) :
+                std::unique_ptr<Block> body) :
             Stm(line, column),
             condition(std::move(condition)),
-            block(std::move(block)) {}
+            body(std::move(body)) {}
     };
 
     struct IfStm final : Stm {

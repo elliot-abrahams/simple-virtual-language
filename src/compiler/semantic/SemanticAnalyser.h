@@ -28,11 +28,13 @@ namespace compiler {
 
         SemanticAnalysisResult processStm(Scope* scope, const ast::Stm& stm);
         SemanticAnalysisResult processBlock(const ast::Block& block, const ScopeKind scopeKind);
+        SemanticAnalysisResult processBlockWithScope(Scope* scope, const ast::Block& block);
         SemanticAnalysisResult processFunctionBody(const ast::FunctionDecl& functionDecl, FunctionSymbol* functionSymbol);
-        SemanticAnalysisResult processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
+        SemanticAnalysisResult processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl, const bool markAsInitialised);
         SemanticAnalysisResult processAssignment(Scope* scope, const ast::StmAssignment& assignment);
         SemanticAnalysisResult processIfStatement(Scope* scope, const ast::IfStm& ifStm);
         SemanticAnalysisResult processWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
+        SemanticAnalysisResult processForStatement(Scope* scope, const ast::ForStm& forStm);
         SemanticAnalysisResult processContinueStatement(Scope* scope, const ast::ContinueStm& continueStm);
         SemanticAnalysisResult processBreakStatement(Scope* scope, const ast::BreakStm& breakStm);
         SemanticAnalysisResult processReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
@@ -41,8 +43,20 @@ namespace compiler {
         void processIndex(Scope* scope, const ast::Index& index);
         unsigned int resolveAccessArrayDepth(const Type& arrayType, const std::vector<std::unique_ptr<ast::Index>>& indices) const;
 
-        ExpressionInfo checkExprType(Scope* scope, const ast::Expr& expr);
+        ExpressionInfo processExpr(Scope* scope, const ast::Expr& expr);
+
+        ExpressionInfo processBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& binaryOperatorExpr);
+        ExpressionInfo processUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& unaryOperatorExpr);
+        ExpressionInfo processPostfixExpr(Scope* scope, const ast::ExprPostfix& postfixExpr);
+        ExpressionInfo processCastExpr(Scope* scope, const ast::ExprCast& castExpr);
         ExpressionInfo processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
+        ExpressionInfo processNewExpr(Scope* scope, const ast::ExprNew& newExpr);
+        ExpressionInfo processIdentifierExpr(Scope* scope, const ast::ExprIdentifier& identifierExpr, const bool markAsInitialised);
+        ExpressionInfo processIntegerLiteral(const ast::ExprIntegerLiteral& integerLiteral);
+        ExpressionInfo processFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);
+        ExpressionInfo processBoolLiteral(const ast::ExprBoolLiteral& boolLiteral);
+        ExpressionInfo processCharLiteral(const ast::ExprCharLiteral& charLiteral);
+
         FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
 
         Type processAddition(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
@@ -65,6 +79,8 @@ namespace compiler {
 
         void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType) const;
         void throwInvalidExpressionTypeAsStatement(const ast::Expr& expr) const;
+        void throwTypeErrorFromForVariable(const Type& variableType, const uint32_t forVariableLine, const uint16_t forVariableColumn) const;
+        void throwTypeErrorFromForRange(const ast::Expr& rangeExpr, const Type& rangeType, const Type& variableType) const;
         void checkConditionType(const Type& conditionType, const size_t line, const size_t column) const;
 
         //static std::vector<SemanticType> get

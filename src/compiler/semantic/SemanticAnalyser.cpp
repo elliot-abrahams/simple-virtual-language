@@ -64,7 +64,7 @@ void compiler::SemanticAnalyser::processFunctionDecl(const ast::FunctionDecl& fu
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStm(Scope* scope, const ast::Stm& stm) {
     if (auto* varDecl = dynamic_cast<const ast::StmVarDecl*>(&stm)) {
-        return this->processStmVarDecl(scope, *varDecl);
+        return this->processStmVarDecl(scope, *varDecl, false);
     }
     if (auto* assignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
         return this->processAssignment(scope, *assignment);
@@ -77,6 +77,9 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStm(Scope* s
     }
     if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
         return this->processWhileStatement(scope, *whileStm);
+    }
+    if (auto* forStm = dynamic_cast<const ast::ForStm*>(&stm)) {
+        return this->processForStatement(scope, *forStm);
     }
     if (auto* continueStm = dynamic_cast<const ast::ContinueStm*>(&stm)) {
         return this->processContinueStatement(scope, *continueStm);
@@ -94,7 +97,11 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStm(Scope* s
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBlock(const ast::Block& block, const ScopeKind scopeKind) {
     Scope* newScope = this->symbolTable->enterScope(scopeKind);
-    block.scope = newScope; // set scope of block
+    return this->processBlockWithScope(newScope, block);
+}
+
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBlockWithScope(Scope* scope, const ast::Block& block) {
+    block.scope = scope; // set scope of block
 
     bool alwaysReturns = false;
 
@@ -133,7 +140,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processFunctionBody
     return SemanticAnalysisResult{alwaysReturns};
 }
 
-compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl, const bool markAsInitialised) {
     // check symbol with same name has not been initialised already
     if (scope->symbols.find(varDecl.identifier->name) != scope->symbols.end()) {
         throw SemanticError(
@@ -149,13 +156,17 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmVarDecl(S
     // declare symbol (as uninitialised)
     scope->declareSymbol(varDecl.identifier->name, varDecl.typeInfo->type, 0, false);
 
+    if (markAsInitialised) {
+        scope->lookup(varDecl.identifier->name).value()->isInitialised = true;
+    }
+
     // if var decl does not have an initialiser
     if (varDecl.optionalInitialiser == nullptr) {
         return SemanticAnalysisResult{false};
     }
 
     // check type of expr
-    const auto initializerType = this->checkExprType(scope, *varDecl.optionalInitialiser).type;
+    const auto initializerType = this->processExpr(scope, *varDecl.optionalInitialiser).type;
     // set symbol as initialised after checking optional initialiser (prevents self initialisation)
     scope->lookup(varDecl.identifier->name).value()->isInitialised = true;
 
@@ -196,7 +207,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
         }
     }
 
-    const auto exprType = this->checkExprType(scope, *assignment.expression).type;
+    const auto exprType = this->processExpr(scope, *assignment.expression).type;
 
     // check type of indices
     for (const auto& index : assignment.indices) {
@@ -226,7 +237,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processIfStatement(Scope *scope, const ast::IfStm &ifStm) {
     // ensure condition type is bool
-    const auto conditionType = this->checkExprType(scope, *ifStm.condition).type;
+    const auto conditionType = this->processExpr(scope, *ifStm.condition).type;
     this->checkConditionType(conditionType, ifStm.condition->line, ifStm.condition->column);
 
     const bool ifBlockAlwaysReturns = this->processBlock(*ifStm.ifBlock, ScopeKind::BLOCK).alwaysReturns;
@@ -240,15 +251,118 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processIfStatement(
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processWhileStatement(Scope* scope, const ast::WhileStm& whileStm) {
     // ensure condition type is bool
-    const auto conditionType = this->checkExprType(scope, *whileStm.condition).type;
+    const auto conditionType = this->processExpr(scope, *whileStm.condition).type;
     this->checkConditionType(conditionType, whileStm.condition->line, whileStm.condition->column);
 
-    this->processBlock(*whileStm.block, ScopeKind::WHILE);
+    this->processBlock(*whileStm.body, ScopeKind::LOOP);
+    return SemanticAnalysisResult{false};
+}
+
+compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processForStatement(Scope *scope, const ast::ForStm &forStm) {
+    // create scope for both forStm and body
+    // this means bodyScope's parent an never be the global scope
+    // which prevents 2 scope functions being created (1 from the for loop and 1 from the body)
+    this->symbolTable->enterScope(ScopeKind::LOOP);
+    auto bodyScope = this->symbolTable->enterScope(ScopeKind::BLOCK);
+
+    // process range iterable
+    // (this is done before variable so if the same assignable expression is used as both variable and start range, an error occurs)
+    bool isIterableRange = false;
+    bool rangeHasStep = false;
+    ExpressionInfo rangeStartExprInfo;
+    ExpressionInfo rangeEndExprInfo;
+    ExpressionInfo rangeStepExprInfo;
+    if (std::holds_alternative<std::unique_ptr<ast::ForRange>>(forStm.iterable)) {
+        const auto& forRange = std::get<std::unique_ptr<ast::ForRange>>(forStm.iterable);
+        rangeStartExprInfo = this->processExpr(scope, *forRange->start);
+        rangeEndExprInfo = this->processExpr(scope, *forRange->end);
+        if (forRange->step) {
+            rangeStepExprInfo = this->processExpr(scope, *forRange->step);
+            rangeHasStep = true;
+        }
+        isIterableRange = true;
+    }
+
+    // process variable
+    Type variableType;
+    uint32_t forVariableLine;
+    uint16_t forVariableColumn;
+    if (std::holds_alternative<std::unique_ptr<ast::StmVarDecl>>(forStm.variable)) {
+        const auto& varDecl = *std::get<std::unique_ptr<ast::StmVarDecl>>(forStm.variable);
+        this->processStmVarDecl(bodyScope, varDecl, true); // declare variable within nested scope, and mark variable as initialised
+        // enforce forVariable is numeric if used as a range
+        if (isIterableRange && !varDecl.typeInfo->type.isNumeric()) {
+            this->throwTypeErrorFromForVariable(varDecl.typeInfo->type, varDecl.line, varDecl.column);
+        }
+        variableType = varDecl.typeInfo->type;
+        forVariableLine = varDecl.line;
+        forVariableColumn = varDecl.column;
+    } else {
+        const auto& forVariable = *std::get<std::unique_ptr<ast::ExprIdentifier>>(forStm.variable);
+        ExpressionInfo forVariableExpressionInfo;
+        // process exprIdentifier and mark identifierExpr as initialised
+        forVariableExpressionInfo = this->processIdentifierExpr(scope, forVariable, true);
+
+        if (!forVariableExpressionInfo.type.isNumeric()) {
+            this->throwTypeErrorFromForVariable(forVariableExpressionInfo.type, forVariable.line, forVariable.column);
+        }
+        variableType = forVariableExpressionInfo.type;
+        forVariableLine = forVariable.line;
+        forVariableColumn = forVariable.column;
+    }
+
+    if (isIterableRange) {
+        // enforce range types can implicitly convert to variableType
+        if (!canImplicitlyConvert(rangeStartExprInfo.type, variableType)) {
+            this->throwTypeErrorFromForRange(*std::get<std::unique_ptr<ast::ForRange>>(forStm.iterable)->start, rangeStartExprInfo.type, variableType);
+        }
+        if (!canImplicitlyConvert(rangeEndExprInfo.type, variableType)) {
+            this->throwTypeErrorFromForRange(*std::get<std::unique_ptr<ast::ForRange>>(forStm.iterable)->end, rangeEndExprInfo.type, variableType);
+        }
+        if (rangeHasStep && !canImplicitlyConvert(rangeStepExprInfo.type, variableType)) {
+            this->throwTypeErrorFromForRange(*std::get<std::unique_ptr<ast::ForRange>>(forStm.iterable)->step, rangeStepExprInfo.type, variableType);
+        }
+    } else {
+        // enforce iterable is an array
+        const auto& iterable = std::get<std::unique_ptr<ast::Expr>>(forStm.iterable);
+        this->processExpr(scope, *iterable);
+        if (!iterable->resultingType.isArray()) {
+            throw TypeError(
+                *this->path,
+                iterable->line,
+                iterable->column,
+                "cannot iterate over value of type '" +
+                    typeToString(iterable->resultingType) +
+                    "'"
+            );
+        }
+        // enforce element of array can implicitly convert to variableType
+        Type elementType = iterable->resultingType;
+        elementType.dimension--;
+
+        if (!canImplicitlyConvert(elementType, variableType)) {
+            throw TypeError(
+                *this->path,
+                forVariableLine,
+                forVariableColumn,
+                "cannot use type '" +
+                    typeToString(variableType) +
+                    "' as a loop variable for elements of type '" +
+                    typeToString(elementType) +
+                    "'"
+            );
+        }
+    }
+
+    this->processBlockWithScope(bodyScope, *forStm.body);
+
+    this->symbolTable->leaveScope();
+
     return SemanticAnalysisResult{false};
 }
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processContinueStatement(Scope* scope, const ast::ContinueStm &continueStm) {
-    const auto loopScope = scope->lookupWhileScope();
+    const auto loopScope = scope->lookupLoopScope();
 
     if (loopScope == nullptr) {
         throw SemanticError(
@@ -263,7 +377,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processContinueStat
 }
 
 compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processBreakStatement(Scope* scope, const ast::BreakStm &breakStm) {
-    const auto loopScope = scope->lookupWhileScope();
+    const auto loopScope = scope->lookupLoopScope();
 
     if (loopScope == nullptr) {
         throw SemanticError(
@@ -305,7 +419,7 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processReturnStatem
     } else {
         // return has expression
 
-        const auto exprType = this->checkExprType(scope, *returnStm.returnExpression).type;
+        const auto exprType = this->processExpr(scope, *returnStm.returnExpression).type;
 
         if (currentFunctionSymbol->returnType.typeId == VOID_TYPE_ID) { // function return type is void
             if (returnStm.returnExpression != nullptr) { // return has an expression
@@ -368,13 +482,13 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processExpressionSt
     // invalid expression type
     } else this->throwInvalidExpressionTypeAsStatement(*expressionStm.expression);
 
-    this->checkExprType(scope, *expressionStm.expression);
+    this->processExpr(scope, *expressionStm.expression);
 
     return SemanticAnalysisResult{false};
 }
 
 void compiler::SemanticAnalyser::processIndex(Scope* scope, const ast::Index& index) {
-    const auto indexType = this->checkExprType(scope, *index.index).type;
+    const auto indexType = this->processExpr(scope, *index.index).type;
 
     if (indexType.typeId != INT_TYPE_ID || indexType.isArray()) {
         throw TypeError(
@@ -402,340 +516,242 @@ unsigned int compiler::SemanticAnalyser::resolveAccessArrayDepth(const Type& arr
     return arrayType.dimension - indices.size();
 }
 
-compiler::ExpressionInfo compiler::SemanticAnalyser::checkExprType(Scope* scope, const ast::Expr& expr) {
+compiler::ExpressionInfo compiler::SemanticAnalyser::processExpr(Scope* scope, const ast::Expr& expr) {
+    if (auto* binaryOperatorExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
+        return this->processBinaryExpr(scope, *binaryOperatorExpr);
+    }
+    if (auto* unaryOperatorExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
+        return this->processUnaryExpr(scope, *unaryOperatorExpr);
+    }
+    if (auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
+        return this->processPostfixExpr(scope, *postfixExpr);
+    }
+    if (auto* castExpr = dynamic_cast<const ast::ExprCast*>(&expr)) {
+        return this->processCastExpr(scope, *castExpr);
+    }
+    if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
+        return this->processFunctionCall(scope, *functionCall);
+    }
+    if (auto* newExpr = dynamic_cast<const ast::ExprNew*>(&expr)) {
+        return this->processNewExpr(scope, *newExpr);
+    }
+    if (auto* identifierExpr = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
+        return this->processIdentifierExpr(scope, *identifierExpr, false);
+    }
     if (auto* intLit = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
-        intLit->resultingType = Type{INT_TYPE_ID, 0};
-        return ExpressionInfo{
-            Type{INT_TYPE_ID, 0},
-            Assignability::NON_ASSIGNABLE
-        };
+        return this->processIntegerLiteral(*intLit);
     }
     if (auto* floatLit = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
-        floatLit->resultingType = Type{FLOAT_TYPE_ID, 0};
-        return ExpressionInfo{
-            Type{FLOAT_TYPE_ID, 0},
-            Assignability::NON_ASSIGNABLE
-        };
+        return this->processFloatLiteral(*floatLit);
     }
     if (auto* boolLit = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
-        boolLit->resultingType = Type{BOOL_TYPE_ID, 0};
-        return ExpressionInfo{
-            Type{BOOL_TYPE_ID, 0},
-            Assignability::NON_ASSIGNABLE
-        };
+        return this->processBoolLiteral(*boolLit);
     }
     if (auto charLit = dynamic_cast<const ast::ExprCharLiteral*>(&expr)) {
-        charLit->resultingType = Type{CHAR_TYPE_ID, 0};
-        return ExpressionInfo{
-            Type{CHAR_TYPE_ID, 0},
-            Assignability::NON_ASSIGNABLE
-        };
+        return this->processCharLiteral(*charLit);
     }
-    if (auto* binaryOperator = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
-        const Type leftType = this->checkExprType(scope, *binaryOperator->left).type;
-        const Type rightType = this->checkExprType(scope, *binaryOperator->right).type;
+}
 
-        if (leftType.isArray() || rightType.isArray()) this->throwTypeErrorFromBinaryOperator(*binaryOperator, leftType, rightType);
+compiler::ExpressionInfo compiler::SemanticAnalyser::processBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& binaryOperatorExpr) {
+    const Type leftType = this->processExpr(scope, *binaryOperatorExpr.left).type;
+    const Type rightType = this->processExpr(scope, *binaryOperatorExpr.right).type;
 
-        switch (binaryOperator->binaryOperatorInfo->binaryOperator) {
-            case BinaryOperator::ADD: return ExpressionInfo{this->processAddition(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
-            case BinaryOperator::SUBTRACT: return ExpressionInfo{this->processSubtraction(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
-            case BinaryOperator::MULTIPLY: return ExpressionInfo{this->processMultiplication(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
-            case BinaryOperator::DIVIDE: return ExpressionInfo{this->processDivision(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
-            case BinaryOperator::INTEGER_DIVIDE: return ExpressionInfo{this->processIntegerDivision(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
-            case BinaryOperator::MODULO: return ExpressionInfo{this->processModulo(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
+    if (leftType.isArray() || rightType.isArray()) this->throwTypeErrorFromBinaryOperator(binaryOperatorExpr, leftType, rightType);
 
-            case BinaryOperator::LOGICAL_OR:
-            case BinaryOperator::LOGICAL_AND:
-                return ExpressionInfo{this->processLogical(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
+    switch (binaryOperatorExpr.binaryOperatorInfo->binaryOperator) {
+        case BinaryOperator::ADD: return ExpressionInfo{this->processAddition(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
+        case BinaryOperator::SUBTRACT: return ExpressionInfo{this->processSubtraction(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
+        case BinaryOperator::MULTIPLY: return ExpressionInfo{this->processMultiplication(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
+        case BinaryOperator::DIVIDE: return ExpressionInfo{this->processDivision(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
+        case BinaryOperator::INTEGER_DIVIDE: return ExpressionInfo{this->processIntegerDivision(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
+        case BinaryOperator::MODULO: return ExpressionInfo{this->processModulo(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
 
-            case BinaryOperator::EQUAL_EQUAL:
-            case BinaryOperator::NOT_EQUAL:
-                return ExpressionInfo{this->processEquality(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
+        case BinaryOperator::LOGICAL_OR:
+        case BinaryOperator::LOGICAL_AND:
+            return ExpressionInfo{this->processLogical(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
 
-            case BinaryOperator::LESS_THAN:
-            case BinaryOperator::LESS_THAN_OR_EQUAL:
-            case BinaryOperator::GREATER_THAN:
-            case BinaryOperator::GREATER_THAN_OR_EQUAL:
-                return ExpressionInfo{this->processComparison(*binaryOperator, leftType, rightType), Assignability::NON_ASSIGNABLE};
-        }
+        case BinaryOperator::EQUAL_EQUAL:
+        case BinaryOperator::NOT_EQUAL:
+            return ExpressionInfo{this->processEquality(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
+
+        case BinaryOperator::LESS_THAN:
+        case BinaryOperator::LESS_THAN_OR_EQUAL:
+        case BinaryOperator::GREATER_THAN:
+        case BinaryOperator::GREATER_THAN_OR_EQUAL:
+            return ExpressionInfo{this->processComparison(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
     }
-    if (auto* unaryOperator = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
-        const auto exprTypeResult = this->checkExprType(scope, *unaryOperator->expr);
+}
 
-        // if operator is increment or decrement and expression is not assignable
-        if (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ||
-            unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT
-        ) {
-            if (exprTypeResult.assignability != Assignability::ASSIGNABLE) {
-                throw SemanticError(
-                    *this->path,
-                    unaryOperator->unaryOperatorInfo->line,
-                    unaryOperator->unaryOperatorInfo->column,
-                    "cannot apply operator '" +
-                        unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) +
-                        "' to a non-assignable expression"
-                );
-            }
-        }
+compiler::ExpressionInfo compiler::SemanticAnalyser::processUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& unaryOperatorExpr) {
+    const auto exprTypeResult = this->processExpr(scope, *unaryOperatorExpr.expr);
 
-        if (
-            // if expr is an array
-            exprTypeResult.type.isArray() ||
-            // if operator is logical not and type is not bool
-            unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT &&
-                    exprTypeResult.type.typeId != BOOL_TYPE_ID ||
-            // if operator is plus or minus and type is not numeric
-            ((unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::PLUS || unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::MINUS) &&
-                    !exprTypeResult.type.isNumeric()) ||
-
-            // if operator is increment or decrement and type is not numeric
-            (unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT || unaryOperator->unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT) &&
-                    !exprTypeResult.type.isNumeric()
-        ) {
-            throw TypeError(
-                *this->path,
-                unaryOperator->line,
-                unaryOperator->column,
-                "cannot apply operator '" +
-                    unaryOperatorToString(unaryOperator->unaryOperatorInfo->unaryOperator) +
-                    "' to type '" +
-                    typeToString(exprTypeResult.type) +
-                    "'"
-            );
-        }
-        unaryOperator->resultingType = exprTypeResult.type;
-        return exprTypeResult;
-    }
-
-    if (auto* exprPostfix = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
-        auto exprTypeInfo = this->checkExprType(scope, *exprPostfix->expression);
-
-        if (!exprPostfix->postfixOperators.empty()) {
-            for (const auto& postfixOperator : exprPostfix->postfixOperators) {
-                if (std::holds_alternative<std::unique_ptr<ast::Index>>(postfixOperator)) {
-
-                    // ensure expr is an array
-                    if (!exprTypeInfo.type.isArray()) {
-                        throw TypeError(
-                            *this->path,
-                            exprPostfix->line,
-                            exprPostfix->column,
-                            "cannot index a value of type '" +
-                                typeToString(exprTypeInfo.type) +
-                                "'"
-                        );
-                    }
-
-                    // process index
-                    this->processIndex(scope, *std::get<std::unique_ptr<ast::Index>>(postfixOperator));
-
-                    // decrement resulting dimension
-                    exprTypeInfo.type.dimension--;
-                    exprTypeInfo.assignability = Assignability::ASSIGNABLE;
-
-                } else {
-
-                    auto fieldAccess = std::get<std::unique_ptr<ast::FieldAccess>>(postfixOperator).get();
-
-                    // get field info
-                    auto fieldInfo = this->typeRegistry->getFieldInfo(exprTypeInfo.type, fieldAccess->identifier->name);
-
-                    if (!fieldInfo.has_value()) {
-                        throw SemanticError(
-                            *this->path,
-                            fieldAccess->line,
-                            fieldAccess->column,
-                            "type '" +
-                                typeToString(exprTypeInfo.type) +
-                                "' has no field '" +
-                                fieldAccess->identifier->name +
-                                "'"
-                        );
-                    }
-                    exprTypeInfo.type = fieldInfo.value()->type;
-                    exprTypeInfo.assignability = fieldInfo.value()->assignability;
-                    fieldAccess->fieldInfo = fieldInfo.value();
-                }
-            }
-        }
-
-        if (exprPostfix->unaryOperatorInfo != nullptr) {
-            // throw error if expr is not assignable
-            if (exprTypeInfo.assignability != Assignability::ASSIGNABLE) {
-                throw SemanticError(
-                    *this->path,
-                    exprPostfix->line,
-                    exprPostfix->column,
-                    "cannot apply operator '" +
-                        unaryOperatorToString(exprPostfix->unaryOperatorInfo->unaryOperator) +
-                        "' to a non-assignable expression"
-                );
-            }
-
-            // throw error if expr type is not numeric
-            if (!exprTypeInfo.type.isNumeric()) {
-                throw TypeError(
-                    *this->path,
-                    exprPostfix->line,
-                    exprPostfix->column,
-                    "cannot apply operator '" +
-                        unaryOperatorToString(exprPostfix->unaryOperatorInfo->unaryOperator) +
-                            "' to type '" +
-                            typeToString(exprPostfix->expression->resultingType) +
-                            "'"
-                );
-            }
-        }
-
-        exprPostfix->resultingType = exprTypeInfo.type;
-
-        // postfix is only assignable if expression is assignable
-        // AND
-        // does not have a ++ or -- operator
-        // AND
-        // resulting expression is not an array
-        return ExpressionInfo{
-            exprTypeInfo.type,
-            exprTypeInfo.assignability == Assignability::ASSIGNABLE &&
-                exprPostfix->unaryOperatorInfo == nullptr &&
-                !exprTypeInfo.type.isArray()
-            ? Assignability::ASSIGNABLE : Assignability::NON_ASSIGNABLE
-        };
-    }
-
-    if (auto* exprIdentifier = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
-        // check if symbol has been initialised
-        const auto symbol = this->checkSymbolIsDefined(scope, exprIdentifier->identifier->name, exprIdentifier->line, exprIdentifier->column);
-        if (!symbol->isInitialised) {
+    // if operator is increment or decrement and expression is not assignable
+    if (unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ||
+        unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT
+    ) {
+        if (exprTypeResult.assignability != Assignability::ASSIGNABLE) {
             throw SemanticError(
                 *this->path,
-                exprIdentifier->line,
-                exprIdentifier->column,
-                "variable '" +
-                    exprIdentifier->identifier->name +
-                    "' may not have been initialised"
+                unaryOperatorExpr.unaryOperatorInfo->line,
+                unaryOperatorExpr.unaryOperatorInfo->column,
+                "cannot apply operator '" +
+                    unaryOperatorToString(unaryOperatorExpr.unaryOperatorInfo->unaryOperator) +
+                    "' to a non-assignable expression"
+            );
+        }
+    }
+
+    if (
+        // if expr is an array
+        exprTypeResult.type.isArray() ||
+        // if operator is logical not and type is not bool
+        unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::LOGICAL_NOT &&
+                exprTypeResult.type.typeId != BOOL_TYPE_ID ||
+        // if operator is plus or minus and type is not numeric
+        ((unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::PLUS || unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::MINUS) &&
+                !exprTypeResult.type.isNumeric()) ||
+
+        // if operator is increment or decrement and type is not numeric
+        (unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT || unaryOperatorExpr.unaryOperatorInfo->unaryOperator == UnaryOperator::DECREMENT) &&
+                !exprTypeResult.type.isNumeric()
+    ) {
+        throw TypeError(
+            *this->path,
+            unaryOperatorExpr.line,
+            unaryOperatorExpr.column,
+            "cannot apply operator '" +
+                unaryOperatorToString(unaryOperatorExpr.unaryOperatorInfo->unaryOperator) +
+                "' to type '" +
+                typeToString(exprTypeResult.type) +
+                "'"
+        );
+    }
+    unaryOperatorExpr.resultingType = exprTypeResult.type;
+    return exprTypeResult;
+}
+
+compiler::ExpressionInfo compiler::SemanticAnalyser::processPostfixExpr(Scope* scope, const ast::ExprPostfix& postfixExpr) {
+    auto exprTypeInfo = this->processExpr(scope, *postfixExpr.expression);
+
+    if (!postfixExpr.postfixOperators.empty()) {
+        for (const auto& postfixOperator : postfixExpr.postfixOperators) {
+            if (std::holds_alternative<std::unique_ptr<ast::Index>>(postfixOperator)) {
+
+                // ensure expr is an array
+                if (!exprTypeInfo.type.isArray()) {
+                    throw TypeError(
+                        *this->path,
+                        postfixExpr.line,
+                        postfixExpr.column,
+                        "cannot index a value of type '" +
+                            typeToString(exprTypeInfo.type) +
+                            "'"
+                    );
+                }
+
+                // process index
+                this->processIndex(scope, *std::get<std::unique_ptr<ast::Index>>(postfixOperator));
+
+                // decrement resulting dimension
+                exprTypeInfo.type.dimension--;
+                exprTypeInfo.assignability = Assignability::ASSIGNABLE;
+
+            } else {
+
+                auto fieldAccess = std::get<std::unique_ptr<ast::FieldAccess>>(postfixOperator).get();
+
+                // get field info
+                auto fieldInfo = this->typeRegistry->getFieldInfo(exprTypeInfo.type, fieldAccess->identifier->name);
+
+                if (!fieldInfo.has_value()) {
+                    throw SemanticError(
+                        *this->path,
+                        fieldAccess->line,
+                        fieldAccess->column,
+                        "type '" +
+                            typeToString(exprTypeInfo.type) +
+                            "' has no field '" +
+                            fieldAccess->identifier->name +
+                            "'"
+                    );
+                }
+                exprTypeInfo.type = fieldInfo.value()->type;
+                exprTypeInfo.assignability = fieldInfo.value()->assignability;
+                fieldAccess->fieldInfo = fieldInfo.value();
+            }
+        }
+    }
+
+    if (postfixExpr.unaryOperatorInfo != nullptr) {
+        // throw error if expr is not assignable
+        if (exprTypeInfo.assignability != Assignability::ASSIGNABLE) {
+            throw SemanticError(
+                *this->path,
+                postfixExpr.line,
+                postfixExpr.column,
+                "cannot apply operator '" +
+                    unaryOperatorToString(postfixExpr.unaryOperatorInfo->unaryOperator) +
+                    "' to a non-assignable expression"
             );
         }
 
-        // get return type of identifier
-        const auto resultingType = symbol->type;
-
-        expr.resultingType = resultingType;
-        return ExpressionInfo{resultingType, Assignability::ASSIGNABLE};
+        // throw error if expr type is not numeric
+        if (!exprTypeInfo.type.isNumeric()) {
+            throw TypeError(
+                *this->path,
+                postfixExpr.line,
+                postfixExpr.column,
+                "cannot apply operator '" +
+                    unaryOperatorToString(postfixExpr.unaryOperatorInfo->unaryOperator) +
+                        "' to type '" +
+                        typeToString(postfixExpr.expression->resultingType) +
+                        "'"
+            );
+        }
     }
 
-    if (auto* newExpression = dynamic_cast<const ast::ExprNew*>(&expr)) {
-        for (const auto& index : newExpression->arrayDimensions) {
-            this->processIndex(scope, *index);
-        }
+    postfixExpr.resultingType = exprTypeInfo.type;
 
-        if (newExpression->optionalInitialiser != nullptr) {
-            std::queue<const std::unique_ptr<ast::ArrayInitialiser>*> initialisersToProcess;
-            std::queue<unsigned int> depths;
+    // postfix is only assignable if expression is assignable
+    // AND
+    // does not have a ++ or -- operator
+    // AND
+    // resulting expression is not an array
+    return ExpressionInfo{
+        exprTypeInfo.type,
+        exprTypeInfo.assignability == Assignability::ASSIGNABLE &&
+            postfixExpr.unaryOperatorInfo == nullptr &&
+            !exprTypeInfo.type.isArray()
+        ? Assignability::ASSIGNABLE : Assignability::NON_ASSIGNABLE
+    };
+}
 
-            initialisersToProcess.push(&newExpression->optionalInitialiser);
-            depths.push(1);
+compiler::ExpressionInfo compiler::SemanticAnalyser::processCastExpr(Scope* scope, const ast::ExprCast& castExpr) {
+    const auto exprTypeResult = this->processExpr(scope, *castExpr.expr);
 
-            while (!initialisersToProcess.empty()) {
-                // get first element in queue
-                const auto arrayInitialiser = initialisersToProcess.front();
-                initialisersToProcess.pop();
-                const auto depth = depths.front();
-                depths.pop();
-
-                // if initialiser requires a nested initialiser
-                if (depth < newExpression->arrayDimensions.size()) {
-                    // expecting each element to be an array initialiser
-                    // add each nested initialiser to queue
-                    for (const ast::ArrayInitialiserElement& element : arrayInitialiser->get()->elements) {
-                        // initialiser element is expr instead
-                        if (std::holds_alternative<std::unique_ptr<ast::Expr>>(element)) {
-                            const auto expr = &std::get<std::unique_ptr<ast::Expr>>(element);
-                            throw TypeError(
-                                *this->path,
-                                expr->get()->line,
-                                expr->get()->column,
-                                "array initialiser has too few dimensions for array of type '" +
-                                    typeToString(newExpression->typeInfo->type) +
-                                    "'"
-                            );
-                        }
-                        initialisersToProcess.push(&std::get<std::unique_ptr<ast::ArrayInitialiser>>(element));
-                        depths.push(depth + 1);
-                    }
-                } else {
-                    // expecting each element to be expr which can be converted to array base type
-                    for (const ast::ArrayInitialiserElement& element : arrayInitialiser->get()->elements) {
-                        if (std::holds_alternative<std::unique_ptr<ast::ArrayInitialiser>>(element)) {
-                            // initialiser element is a nested initialiser instead
-                            const auto initialiser = &std::get<std::unique_ptr<ast::ArrayInitialiser>>(element);
-                            throw TypeError(
-                                *this->path,
-                                initialiser->get()->line,
-                                initialiser->get()->column,
-                                "array initialiser has too many dimensions for array of type '" +
-                                    typeToString(newExpression->typeInfo->type) +
-                                    "'"
-                            );
-                        }
-                        // check expr is valid for array type
-                        const auto expr = &std::get<std::unique_ptr<ast::Expr>>(element);
-                        if (!canImplicitlyConvert(this->checkExprType(scope, *expr->get()).type, Type{newExpression->typeInfo->type.typeId, 0})) {
-                            newExpression->typeInfo->type.dimension = 0; // for error message
-                            throw TypeError(
-                                *this->path,
-                                expr->get()->line,
-                                expr->get()->column,
-                                "cannot initialise an array element of type '" +
-                                    typeToString(newExpression->typeInfo->type) +
-                                    "' with type '" +
-                                    typeToString(expr->get()->resultingType) +
-                                    "'"
-                            );
-                        }
-                    }
-                }
-            }
-        }
-
-        const auto resultingType = newExpression->typeInfo->type;
-        newExpression->resultingType = resultingType;
+    if (canCastToType(exprTypeResult.type, castExpr.typeInfo->type)) {
+        const auto resultingType = castExpr.typeInfo->type;
+        castExpr.resultingType = resultingType;
         return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
     }
 
-    if (auto* castExpression = dynamic_cast<const ast::ExprCast*>(&expr)) {
-        const auto exprTypeResult = this->checkExprType(scope, *castExpression->expr);
-
-        if (canCastToType(exprTypeResult.type, castExpression->typeInfo->type)) {
-            const auto resultingType = castExpression->typeInfo->type;
-            castExpression->resultingType = resultingType;
-            return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
-        }
-
-        throw TypeError(
-                *this->path,
-                castExpression->line,
-                castExpression->column,
-                "cannot cast from type '" +
-                    typeToString(exprTypeResult.type) +
-                    "' to type '" +
-                    typeToString(castExpression->typeInfo->type) +
-                    "'"
-            );
-    }
-
-    if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
-        // process function call
-        return this->processFunctionCall(scope, *functionCall);
-    }
+    throw TypeError(
+            *this->path,
+            castExpr.line,
+            castExpr.column,
+            "cannot cast from type '" +
+                typeToString(exprTypeResult.type) +
+                "' to type '" +
+                typeToString(castExpr.typeInfo->type) +
+                "'"
+        );
 }
 
 compiler::ExpressionInfo compiler::SemanticAnalyser::processFunctionCall(Scope* scope, const ast::FunctionCall& functionCall) {
     // process function call's arguments
     std::vector<Type> argumentTypes;
     for (const auto& argument : functionCall.arguments) {
-        argumentTypes.push_back(this->checkExprType(scope, *argument).type);
+        argumentTypes.push_back(this->processExpr(scope, *argument).type);
     }
 
     FunctionSymbol* functionSymbol = this->resolveFunctionCall(this->symbolTable->getFunctionSymbols(functionCall.identifier->name), functionCall, argumentTypes);
@@ -760,6 +776,141 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::processFunctionCall(Scope* 
     return ExpressionInfo{
         functionSymbol->returnType,
         functionSymbol->returnType.isArray() ? Assignability::ASSIGNABLE : Assignability::NON_ASSIGNABLE
+    };
+}
+
+compiler::ExpressionInfo compiler::SemanticAnalyser::processNewExpr(Scope *scope, const ast::ExprNew& newExpr) {
+        for (const auto& index : newExpr.arrayDimensions) {
+            this->processIndex(scope, *index);
+        }
+
+        if (newExpr.optionalInitialiser != nullptr) {
+            std::queue<const std::unique_ptr<ast::ArrayInitialiser>*> initialisersToProcess;
+            std::queue<unsigned int> depths;
+
+            initialisersToProcess.push(&newExpr.optionalInitialiser);
+            depths.push(1);
+
+            while (!initialisersToProcess.empty()) {
+                // get first element in queue
+                const auto arrayInitialiser = initialisersToProcess.front();
+                initialisersToProcess.pop();
+                const auto depth = depths.front();
+                depths.pop();
+
+                // if initialiser requires a nested initialiser
+                if (depth < newExpr.arrayDimensions.size()) {
+                    // expecting each element to be an array initialiser
+                    // add each nested initialiser to queue
+                    for (const ast::ArrayInitialiserElement& element : arrayInitialiser->get()->elements) {
+                        // initialiser element is expr instead
+                        if (std::holds_alternative<std::unique_ptr<ast::Expr>>(element)) {
+                            const auto expr = &std::get<std::unique_ptr<ast::Expr>>(element);
+                            throw TypeError(
+                                *this->path,
+                                expr->get()->line,
+                                expr->get()->column,
+                                "array initialiser has too few dimensions for array of type '" +
+                                    typeToString(newExpr.typeInfo->type) +
+                                    "'"
+                            );
+                        }
+                        initialisersToProcess.push(&std::get<std::unique_ptr<ast::ArrayInitialiser>>(element));
+                        depths.push(depth + 1);
+                    }
+                } else {
+                    // expecting each element to be expr which can be converted to array base type
+                    for (const ast::ArrayInitialiserElement& element : arrayInitialiser->get()->elements) {
+                        if (std::holds_alternative<std::unique_ptr<ast::ArrayInitialiser>>(element)) {
+                            // initialiser element is a nested initialiser instead
+                            const auto initialiser = &std::get<std::unique_ptr<ast::ArrayInitialiser>>(element);
+                            throw TypeError(
+                                *this->path,
+                                initialiser->get()->line,
+                                initialiser->get()->column,
+                                "array initialiser has too many dimensions for array of type '" +
+                                    typeToString(newExpr.typeInfo->type) +
+                                    "'"
+                            );
+                        }
+                        // check expr is valid for array type
+                        const auto expr = &std::get<std::unique_ptr<ast::Expr>>(element);
+                        if (!canImplicitlyConvert(this->processExpr(scope, *expr->get()).type, Type{newExpr.typeInfo->type.typeId, 0})) {
+                            newExpr.typeInfo->type.dimension = 0; // for error message
+                            throw TypeError(
+                                *this->path,
+                                expr->get()->line,
+                                expr->get()->column,
+                                "cannot initialise an array element of type '" +
+                                    typeToString(newExpr.typeInfo->type) +
+                                    "' with type '" +
+                                    typeToString(expr->get()->resultingType) +
+                                    "'"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        const auto resultingType = newExpr.typeInfo->type;
+        newExpr.resultingType = resultingType;
+        return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
+}
+
+compiler::ExpressionInfo compiler::SemanticAnalyser::processIdentifierExpr(Scope *scope, const ast::ExprIdentifier& identifierExpr, bool markAsInitialised) {
+    // check if symbol has been initialised
+    const auto symbol = this->checkSymbolIsDefined(scope, identifierExpr.identifier->name, identifierExpr.line, identifierExpr.column);
+
+    if (markAsInitialised) {
+        symbol->isInitialised = true;
+    } else if (!symbol->isInitialised) {
+        throw SemanticError(
+            *this->path,
+            identifierExpr.line,
+            identifierExpr.column,
+            "variable '" +
+                identifierExpr.identifier->name +
+                "' may not have been initialised"
+        );
+    }
+
+    // get return type of identifier
+    const auto resultingType = symbol->type;
+
+    identifierExpr.resultingType = resultingType;
+    return ExpressionInfo{resultingType, Assignability::ASSIGNABLE};
+}
+
+compiler::ExpressionInfo compiler::SemanticAnalyser::processIntegerLiteral(const ast::ExprIntegerLiteral& integerLiteral) {
+    integerLiteral.resultingType = Type{INT_TYPE_ID, 0};
+    return ExpressionInfo{
+        Type{INT_TYPE_ID, 0},
+        Assignability::NON_ASSIGNABLE
+    };
+}
+
+compiler::ExpressionInfo compiler::SemanticAnalyser::processFloatLiteral(const ast::ExprFloatLiteral& floatLiteral) {
+    floatLiteral.resultingType = Type{FLOAT_TYPE_ID, 0};
+    return ExpressionInfo{
+        Type{FLOAT_TYPE_ID, 0},
+        Assignability::NON_ASSIGNABLE
+    };
+}
+
+compiler::ExpressionInfo compiler::SemanticAnalyser::processBoolLiteral(const ast::ExprBoolLiteral& boolLiteral) {
+    boolLiteral.resultingType = Type{BOOL_TYPE_ID, 0};
+    return ExpressionInfo{
+        Type{BOOL_TYPE_ID, 0},
+        Assignability::NON_ASSIGNABLE
+    };
+}
+
+compiler::ExpressionInfo compiler::SemanticAnalyser::processCharLiteral(const ast::ExprCharLiteral& charLiteral) {
+    charLiteral.resultingType = Type{CHAR_TYPE_ID, 0};
+    return ExpressionInfo{
+        Type{CHAR_TYPE_ID, 0},
+        Assignability::NON_ASSIGNABLE
     };
 }
 
@@ -1137,6 +1288,30 @@ void compiler::SemanticAnalyser::throwInvalidExpressionTypeAsStatement(const ast
         expr.line,
         expr.column,
         "expression cannot be used as a statement"
+    );
+}
+
+void compiler::SemanticAnalyser::throwTypeErrorFromForVariable(const Type &variableType, const uint32_t forVariableLine, const uint16_t forVariableColumn) const {
+    throw TypeError(
+        *this->path,
+        forVariableLine,
+        forVariableColumn,
+        "cannot use type '" +
+            typeToString(variableType) +
+            "' as a range"
+    );
+}
+
+void compiler::SemanticAnalyser::throwTypeErrorFromForRange(const ast::Expr& rangeExpr, const Type &rangeType, const Type &variableType) const {
+    throw TypeError(
+        *this->path,
+        rangeExpr.line,
+        rangeExpr.column,
+        "cannot use type '" +
+            typeToString(rangeType) +
+            "' as a range for type '" +
+            typeToString(variableType) +
+            "'"
     );
 }
 

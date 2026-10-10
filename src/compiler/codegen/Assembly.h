@@ -94,7 +94,8 @@ namespace compiler {
     enum class ErrorRef {
         ARRAY_INDEX_OUT_OF_RANGE,
         NEGATIVE_ARRAY_SIZE,
-        ARRAY_INITIALISER_SIZE
+        ARRAY_INITIALISER_SIZE,
+        ZERO_RANGE_STEP
     };
 
     enum class MethodDefType {

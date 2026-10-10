@@ -26,3 +26,11 @@ TEST(SEQUENCE, IF_LBR_IDENTIFIER_RBR) {
         {"if", "(", "x", ")"}
     );
 }
+
+TEST(SEQUENCE, INT_DOT_DOT) {
+    ASSERT_TOKEN_SEQUENCE_EQ(
+        "5..",
+        {TokenKind::INT_LITERAL, TokenKind::DOT_DOT},
+        {"5", ".."}
+    );
+}

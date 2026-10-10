@@ -15,6 +15,10 @@ TEST(KEYWORD, WHILE) {
     ASSERT_TOKEN_EQ("while", TokenKind::WHILE, "while");
 }
 
+TEST(KEYWORD, FOR) {
+    ASSERT_TOKEN_EQ("for", TokenKind::FOR, "for");
+}
+
 TEST(KEYWORD, CONTINUE) {
     ASSERT_TOKEN_EQ("continue", TokenKind::CONTINUE, "continue");
 }

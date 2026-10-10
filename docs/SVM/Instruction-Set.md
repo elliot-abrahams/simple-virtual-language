@@ -143,3 +143,4 @@
 | ArrayIndexOutOfRangeError   | array_index_out_of_range | 0x00     | 
 | NegativeArrayLengthError    | negative_array_length    | 0x01     |
 | ArrayInitialiserLengthError | array_initialiser_length | 0x02     |
+| ZeroRangeStepError          | zero_range_step          | 0x03     |
