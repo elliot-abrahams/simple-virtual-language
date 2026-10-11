@@ -209,15 +209,33 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     return token;
                 }
+
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '=') {
+
+                    const Token token = Token{TokenKind::PLUS_EQUAL, "+=", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
+
                 const Token token = Token{TokenKind::PLUS, "+", this->line, this->column};
                 this->advance();
                 return token;
             }
             case '-': {
                 if (this->current + 1 < this->source.size() &&
-                    this->source[this->current + 1] == '-') {
-
+                    this->source[this->current + 1] == '-'
+                ) {
                     const Token token = Token{TokenKind::DECREMENT, "--", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '='
+                ) {
+                    const Token token = Token{TokenKind::MINUS_EQUAL, "-=", this->line, this->column};
                     this->advance();
                     this->advance();
                     return token;
@@ -227,6 +245,14 @@ Token compiler::Tokeniser::readToken() {
                 return token;
             }
             case '*': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '='
+                ) {
+                    const Token token = Token{TokenKind::MULTIPLY_EQUAL, "*=", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
                 const Token token = Token{TokenKind::MULTIPLY, "*", this->line, this->column};
                 this->advance();
                 return token;
@@ -235,7 +261,25 @@ Token compiler::Tokeniser::readToken() {
                 if (this->current + 1 < this->source.size() &&
                     this->source[this->current + 1] == '/') {
 
+                    if (this->current + 2 < this->source.size() &&
+                    this->source[this->current + 2] == '='
+                    ) {
+                        const Token token = Token{TokenKind::INTEGER_DIVIDE_EQUAL, "//=", this->line, this->column};
+                        this->advance();
+                        this->advance();
+                        this->advance();
+                        return token;
+                    }
+
                     const Token token = Token{TokenKind::INTEGER_DIVIDE, "//", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '='
+                ) {
+                    const Token token = Token{TokenKind::DIVIDE_EQUAL, "/=", this->line, this->column};
                     this->advance();
                     this->advance();
                     return token;
@@ -245,11 +289,27 @@ Token compiler::Tokeniser::readToken() {
                 return token;
             }
             case '%': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '='
+                ) {
+                    const Token token = Token{TokenKind::MODULO_EQUAL, "%=", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
                 const Token token = Token{TokenKind::MODULO, "%", this->line, this->column};
                 this->advance();
                 return token;
             }
             case '^': {
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '='
+                ) {
+                    const Token token = Token{TokenKind::BITWISE_XOR_EQUAL, "^=", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
                 const Token token = Token{TokenKind::BITWISE_XOR, "^", this->line, this->column};
                 this->advance();
                 return token;
@@ -261,9 +321,26 @@ Token compiler::Tokeniser::readToken() {
             }
             case '|': {
                 if (this->current + 1 < this->source.size() &&
-                    this->source[this->current + 1] == '|') {
-
+                    this->source[this->current + 1] == '|'
+                ) {
+                    if (this->current + 2 < this->source.size() &&
+                        this->source[this->current + 2] == '='
+                    ) {
+                        const Token token = Token{TokenKind::LOGICAL_OR_EQUAL, "||=", this->line, this->column};
+                        this->advance();
+                        this->advance();
+                        this->advance();
+                        return token;
+                    }
                     const Token token = Token{TokenKind::LOGICAL_OR, "||", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '='
+                ) {
+                    const Token token = Token{TokenKind::BITWISE_OR_EQUAL, "|=", this->line, this->column};
                     this->advance();
                     this->advance();
                     return token;
@@ -274,9 +351,26 @@ Token compiler::Tokeniser::readToken() {
             }
             case '&': {
                 if (this->current + 1 < this->source.size() &&
-                    this->source[this->current + 1] == '&') {
-
+                    this->source[this->current + 1] == '&'
+                ) {
+                    if (this->current + 2 < this->source.size() &&
+                        this->source[this->current + 2] == '='
+                    ) {
+                        const Token token = Token{TokenKind::LOGICAL_AND_EQUAL, "&&=", this->line, this->column};
+                        this->advance();
+                        this->advance();
+                        this->advance();
+                        return token;
+                    }
                     const Token token = Token{TokenKind::LOGICAL_AND, "&&", this->line, this->column};
+                    this->advance();
+                    this->advance();
+                    return token;
+                }
+                if (this->current + 1 < this->source.size() &&
+                    this->source[this->current + 1] == '='
+                ) {
+                    const Token token = Token{TokenKind::BITWISE_AND_EQUAL, "&=", this->line, this->column};
                     this->advance();
                     this->advance();
                     return token;
@@ -310,8 +404,17 @@ Token compiler::Tokeniser::readToken() {
                 }
 
                 if (this->current + 1 < this->source.size() &&
-                    this->source[this->current + 1] == '<') {
-
+                    this->source[this->current + 1] == '<'
+                ) {
+                    if (this->current + 2 < this->source.size() &&
+                        this->source[this->current + 2] == '='
+                    ) {
+                        const Token token = Token{TokenKind::LEFT_SHIFT_EQUAL, "<<=", this->line, this->column};
+                        this->advance();
+                        this->advance();
+                        this->advance();
+                        return token;
+                    }
                     const Token token = Token{TokenKind::LEFT_SHIFT, "<<", this->line, this->column};
                     this->advance();
                     this->advance();
@@ -331,14 +434,32 @@ Token compiler::Tokeniser::readToken() {
                     this->advance();
                     return token;
                 }
-
                 if (this->current + 1 < this->source.size() &&
-                    this->source[this->current + 1] == '>') {
-
+                    this->source[this->current + 1] == '>'
+                ) {
                     if (this->current + 2 < this->source.size() &&
-                    this->source[this->current + 2] == '>') {
-
+                        this->source[this->current + 2] == '>'
+                    ) {
+                        if (this->current + 3 < this->source.size() &&
+                            this->source[this->current + 3] == '='
+                        ) {
+                            const Token token = Token{TokenKind::LOGICAL_RIGHT_SHIFT_EQUAL, ">>>=", this->line, this->column};
+                            this->advance();
+                            this->advance();
+                            this->advance();
+                            this->advance();
+                            return token;
+                        }
                         const Token token = Token{TokenKind::LOGICAL_RIGHT_SHIFT, ">>>", this->line, this->column};
+                        this->advance();
+                        this->advance();
+                        this->advance();
+                        return token;
+                    }
+                    if (this->current + 2 < this->source.size() &&
+                        this->source[this->current + 2] == '='
+                    ) {
+                        const Token token = Token{TokenKind::ARITHMETIC_RIGHT_SHIFT_EQUAL, ">>=", this->line, this->column};
                         this->advance();
                         this->advance();
                         this->advance();

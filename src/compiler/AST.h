@@ -358,6 +358,7 @@ namespace ast {
         const std::vector<std::unique_ptr<Index>> indices;
         const std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo;
         const std::unique_ptr<Expr> expression;
+        mutable compiler::Type assignmentResultingType;
 
         StmAssignment(const uint32_t line,
                     const uint16_t column,

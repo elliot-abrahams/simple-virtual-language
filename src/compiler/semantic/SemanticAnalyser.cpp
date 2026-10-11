@@ -217,17 +217,59 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processAssignment(S
     // check var access index depth is smaller than the variable's dimensions
     const unsigned int indexDepth = this->resolveAccessArrayDepth(identifierSymbol->type, assignment.indices);
 
-    if (!canImplicitlyConvert(exprType, Type{identifierSymbol->type.typeId, indexDepth})) {
-        throw TypeError(
-            *this->path,
-            assignment.line,
-            assignment.column,
-            "cannot assign " +
-                typeToString(exprType) +
-                "' to type '" +
-                typeToString(identifierSymbol->type) +
-                "'"
+    if (assignment.assignmentOperatorInfo->assignmentOperator == AssignmentOperator::EQUAL) {
+        if (!canImplicitlyConvert(exprType, Type{identifierSymbol->type.typeId, indexDepth})) {
+            throw TypeError(
+                *this->path,
+                assignment.line,
+                assignment.column,
+                "cannot assign '" +
+                    typeToString(exprType) +
+                    "' to type '" +
+                    typeToString(Type{identifierSymbol->type.typeId, indexDepth}) +
+                    "'"
+            );
+        }
+        assignment.assignmentResultingType = exprType;
+
+    } else {
+        if (!identifierSymbol->isInitialised) {
+            if (!identifierSymbol->isInitialised) {
+                throw SemanticError(
+                    *this->path,
+                    assignment.identifier->line,
+                    assignment.identifier->column,
+                    "variable '" +
+                        assignment.identifier->name +
+                        "' may not have been initialised"
+                );
+            }
+        }
+
+        // get equivalent binary operator
+        const auto* binaryOperatorInfo = new ast::BinaryOperatorInfo(
+            assignment.assignmentOperatorInfo->line,
+            assignment.assignmentOperatorInfo->column,
+            assignmentOperatorToBinaryOperator(assignment.assignmentOperatorInfo->assignmentOperator)
         );
+
+        const auto assignmentResultingType = this->processBinaryOperator(*binaryOperatorInfo, Type{identifierSymbol->type.typeId, indexDepth}, exprType);
+
+        if (!canImplicitlyConvert(assignmentResultingType, Type{identifierSymbol->type.typeId, indexDepth})) {
+            throw TypeError(
+                *this->path,
+                assignment.line,
+                assignment.column,
+                "cannot assign '" +
+                    typeToString(exprType) +
+                    "' to type '" +
+                    typeToString(Type{identifierSymbol->type.typeId, indexDepth}) +
+                    "' with assignment operator '" +
+                    assignmentOperatorToString(assignment.assignmentOperatorInfo->assignmentOperator) +
+                    "'"
+            );
+        }
+        assignment.assignmentResultingType = assignmentResultingType;
     }
 
     // update isInitialised of identifier in symbol table
@@ -556,38 +598,12 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::processBinaryExpr(Scope* sc
     const Type leftType = this->processExpr(scope, *binaryOperatorExpr.left).type;
     const Type rightType = this->processExpr(scope, *binaryOperatorExpr.right).type;
 
-    if (leftType.isArray() || rightType.isArray()) this->throwTypeErrorFromBinaryOperator(binaryOperatorExpr, leftType, rightType);
+    if (leftType.isArray() || rightType.isArray()) this->throwTypeErrorFromBinaryOperator(*binaryOperatorExpr.binaryOperatorInfo, leftType, rightType);
 
-    switch (binaryOperatorExpr.binaryOperatorInfo->binaryOperator) {
-        case BinaryOperator::ADD: return ExpressionInfo{this->processAddition(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
-        case BinaryOperator::SUBTRACT: return ExpressionInfo{this->processSubtraction(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
-        case BinaryOperator::MULTIPLY: return ExpressionInfo{this->processMultiplication(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
-        case BinaryOperator::DIVIDE: return ExpressionInfo{this->processDivision(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
-        case BinaryOperator::INTEGER_DIVIDE: return ExpressionInfo{this->processIntegerDivision(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
-        case BinaryOperator::MODULO: return ExpressionInfo{this->processModulo(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
+    const Type resultingType = this->processBinaryOperator(*binaryOperatorExpr.binaryOperatorInfo, leftType, rightType);
 
-        case BinaryOperator::BITWISE_OR:
-        case BinaryOperator::BITWISE_XOR:
-        case BinaryOperator::BITWISE_AND:
-        case BinaryOperator::LEFT_SHIFT:
-        case BinaryOperator::ARITHMETIC_RIGHT_SHIFT:
-        case BinaryOperator::LOGICAL_RIGHT_SHIFT:
-            return ExpressionInfo{this->processBitwiseOp(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
-
-        case BinaryOperator::LOGICAL_OR:
-        case BinaryOperator::LOGICAL_AND:
-            return ExpressionInfo{this->processLogical(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
-
-        case BinaryOperator::EQUAL_EQUAL:
-        case BinaryOperator::NOT_EQUAL:
-            return ExpressionInfo{this->processEquality(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
-
-        case BinaryOperator::LESS_THAN:
-        case BinaryOperator::LESS_THAN_OR_EQUAL:
-        case BinaryOperator::GREATER_THAN:
-        case BinaryOperator::GREATER_THAN_OR_EQUAL:
-            return ExpressionInfo{this->processComparison(binaryOperatorExpr, leftType, rightType), Assignability::NON_ASSIGNABLE};
-    }
+    binaryOperatorExpr.resultingType = resultingType;
+    return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
 }
 
 compiler::ExpressionInfo compiler::SemanticAnalyser::processUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& unaryOperatorExpr) {
@@ -1005,7 +1021,40 @@ compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::v
     return functionSymbol;
 }
 
-compiler::Type compiler::SemanticAnalyser::processAddition(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
+    switch (binaryOperatorInfo.binaryOperator) {
+        case BinaryOperator::ADD: return this->processAddition(binaryOperatorInfo, leftType, rightType);
+        case BinaryOperator::SUBTRACT: return this->processSubtraction(binaryOperatorInfo, leftType, rightType);
+        case BinaryOperator::MULTIPLY: return this->processMultiplication(binaryOperatorInfo, leftType, rightType);
+        case BinaryOperator::DIVIDE: return this->processDivision(binaryOperatorInfo, leftType, rightType);
+        case BinaryOperator::INTEGER_DIVIDE: return this->processIntegerDivision(binaryOperatorInfo, leftType, rightType);;
+        case BinaryOperator::MODULO: return this->processModulo(binaryOperatorInfo, leftType, rightType);
+
+        case BinaryOperator::BITWISE_OR:
+        case BinaryOperator::BITWISE_XOR:
+        case BinaryOperator::BITWISE_AND:
+        case BinaryOperator::LEFT_SHIFT:
+        case BinaryOperator::ARITHMETIC_RIGHT_SHIFT:
+        case BinaryOperator::LOGICAL_RIGHT_SHIFT:
+            return this->processBitwiseOp(binaryOperatorInfo, leftType, rightType);
+
+        case BinaryOperator::LOGICAL_OR:
+        case BinaryOperator::LOGICAL_AND:
+            return this->processLogical(binaryOperatorInfo, leftType, rightType);
+
+        case BinaryOperator::EQUAL_EQUAL:
+        case BinaryOperator::NOT_EQUAL:
+            return this->processEquality(binaryOperatorInfo, leftType, rightType);
+
+        case BinaryOperator::LESS_THAN:
+        case BinaryOperator::LESS_THAN_OR_EQUAL:
+        case BinaryOperator::GREATER_THAN:
+        case BinaryOperator::GREATER_THAN_OR_EQUAL:
+            return this->processComparison(binaryOperatorInfo, leftType, rightType);
+    }
+}
+
+compiler::Type compiler::SemanticAnalyser::processAddition(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     /*
        | Left \ Right | `int`   | `float` | `char`  |
        |--------------|---------|---------|---------|
@@ -1016,20 +1065,16 @@ compiler::Type compiler::SemanticAnalyser::processAddition(const ast::ExprBinary
 
     // numeric + numeric
     if (leftType.isNumeric() && rightType.isNumeric()) {
-        Type resultingType;
         if (leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) {
-            resultingType = Type{FLOAT_TYPE_ID, 0};
-        } else {
-            resultingType = Type{INT_TYPE_ID, 0};
+            return Type{FLOAT_TYPE_ID, 0};
         }
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return Type{INT_TYPE_ID, 0};
     }
 
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
-compiler::Type compiler::SemanticAnalyser::processSubtraction(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processSubtraction(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     /*
        | Left \ Right | `int`   | `float` | `char`  |
        |--------------|---------|---------|---------|
@@ -1040,20 +1085,16 @@ compiler::Type compiler::SemanticAnalyser::processSubtraction(const ast::ExprBin
 
     // numeric - numeric
     if (leftType.isNumeric() && rightType.isNumeric()) {
-        Type resultingType;
         if (leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) {
-            resultingType = Type{FLOAT_TYPE_ID, 0};
-        } else {
-            resultingType = Type{INT_TYPE_ID, 0};
+            return Type{FLOAT_TYPE_ID, 0};
         }
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return Type{INT_TYPE_ID, 0};
     }
 
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
-compiler::Type compiler::SemanticAnalyser::processMultiplication(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processMultiplication(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     /*
        | Left \ Right | `int`   | `float` | `char`  |
        |--------------|---------|---------|---------|
@@ -1064,20 +1105,16 @@ compiler::Type compiler::SemanticAnalyser::processMultiplication(const ast::Expr
 
     // numeric * numeric
     if (leftType.isNumeric() && rightType.isNumeric()) {
-        Type resultingType;
         if (leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) {
-            resultingType = Type{FLOAT_TYPE_ID, 0};
-        } else {
-            resultingType = Type{INT_TYPE_ID, 0};
+            return Type{FLOAT_TYPE_ID, 0};
         }
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return  Type{INT_TYPE_ID, 0};
     }
 
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
-compiler::Type compiler::SemanticAnalyser::processDivision(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processDivision(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     /*
        | Left \ Right | `int`   | `float` | `char`  |
        |--------------|---------|---------|---------|
@@ -1088,15 +1125,13 @@ compiler::Type compiler::SemanticAnalyser::processDivision(const ast::ExprBinary
 
     //    numeric / numeric
     if (leftType.isNumeric() && rightType.isNumeric()) {
-        const auto resultingType = Type{FLOAT_TYPE_ID, 0};
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return Type{FLOAT_TYPE_ID, 0};
     }
 
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
-compiler::Type compiler::SemanticAnalyser::processIntegerDivision(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processIntegerDivision(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     /*
        | Left \ Right | `int`   | `float` | `char`  |
        |--------------|---------|---------|---------|
@@ -1107,15 +1142,12 @@ compiler::Type compiler::SemanticAnalyser::processIntegerDivision(const ast::Exp
 
     //    numeric // numeric
     if (leftType.isNumeric() && rightType.isNumeric()) {
-        const auto resultingType = Type{INT_TYPE_ID, 0};
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return Type{INT_TYPE_ID, 0};
     }
-
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
-compiler::Type compiler::SemanticAnalyser::processModulo(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processModulo(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type &leftType, const Type &rightType) {
     /*
        | Left \ Right | `int`   | `float` | `char`  |
        |--------------|---------|---------|---------|
@@ -1126,20 +1158,15 @@ compiler::Type compiler::SemanticAnalyser::processModulo(const ast::ExprBinaryOp
 
     // numeric % numeric
     if (leftType.isNumeric() && rightType.isNumeric()) {
-        Type resultingType;
         if (leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) {
-            resultingType = Type{FLOAT_TYPE_ID, 0};
-        } else {
-            resultingType = Type{INT_TYPE_ID, 0};
+            return Type{FLOAT_TYPE_ID, 0};
         }
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return Type{INT_TYPE_ID, 0};
     }
-
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
-compiler::Type compiler::SemanticAnalyser::processBitwiseOp(const ast::ExprBinaryOperator &binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processBitwiseOp(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     /*
        | Left \ Right | `int` | `char` |
        |--------------|-------|--------|
@@ -1153,15 +1180,13 @@ compiler::Type compiler::SemanticAnalyser::processBitwiseOp(const ast::ExprBinar
         // char & int  // char & char
         (leftType.typeId == CHAR_TYPE_ID && (rightType.typeId == INT_TYPE_ID || rightType.typeId == CHAR_TYPE_ID))
     ) {
-        const auto resultingType = Type{INT_TYPE_ID, 0};
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return Type{INT_TYPE_ID, 0};
     }
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
 
-compiler::Type compiler::SemanticAnalyser::processLogical(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processLogical(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     /*
        | Left \ Right | `bool`  |
        |--------------|---------|
@@ -1170,15 +1195,12 @@ compiler::Type compiler::SemanticAnalyser::processLogical(const ast::ExprBinaryO
 
     // bool && bool
     if (leftType.typeId == BOOL_TYPE_ID && rightType.typeId == BOOL_TYPE_ID) {
-        const auto resultingType = Type{BOOL_TYPE_ID, 0};
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return Type{BOOL_TYPE_ID, 0};
     }
-
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
-compiler::Type compiler::SemanticAnalyser::processEquality(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processEquality(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     /*
        | Left \ Right | `int`   | `float` | `bool`  | `char`  |
        |--------------|---------|---------|---------|---------|
@@ -1194,15 +1216,12 @@ compiler::Type compiler::SemanticAnalyser::processEquality(const ast::ExprBinary
         // bool == bool
         leftType.typeId == rightType.typeId
     ) {
-        const auto resultingType = Type{BOOL_TYPE_ID, 0};
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return Type{BOOL_TYPE_ID, 0};
     }
-
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
-compiler::Type compiler::SemanticAnalyser::processComparison(const ast::ExprBinaryOperator& binaryOperator, const Type &leftType, const Type &rightType) {
+compiler::Type compiler::SemanticAnalyser::processComparison(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     /*
        | Left \ Right | `int`  | `float` | `char`  |
        |--------------|--------|---------|---------|
@@ -1213,12 +1232,9 @@ compiler::Type compiler::SemanticAnalyser::processComparison(const ast::ExprBina
 
     // numeric < numeric
     if (leftType.isNumeric() && rightType.isNumeric()) {
-        const auto resultingType = Type{BOOL_TYPE_ID, 0};
-        binaryOperator.resultingType = resultingType;
-        return resultingType;
+        return Type{BOOL_TYPE_ID, 0};
     }
-
-    this->throwTypeErrorFromBinaryOperator(binaryOperator, leftType, rightType);
+    this->throwTypeErrorFromBinaryOperator(binaryOperatorInfo, leftType, rightType);
 }
 
 bool compiler::SemanticAnalyser::canCastToType(const Type& from, const Type& to) {
@@ -1288,7 +1304,7 @@ std::string compiler::SemanticAnalyser::typeToString(const Type& type) {
     return result;
 }
 
-std::string compiler::SemanticAnalyser::binaryOperatorToString(const BinaryOperator &binaryOperator) {
+std::string compiler::SemanticAnalyser::binaryOperatorToString(const BinaryOperator& binaryOperator) {
     switch (binaryOperator) {
         case BinaryOperator::ADD: return "+";
         case BinaryOperator::SUBTRACT: return "-";
@@ -1329,6 +1345,26 @@ std::string compiler::SemanticAnalyser::unaryOperatorToString(const UnaryOperato
     }
 }
 
+std::string compiler::SemanticAnalyser::assignmentOperatorToString(const AssignmentOperator &assignmentOperator) {
+    switch (assignmentOperator) {
+        case AssignmentOperator::EQUAL: return "=";
+        case AssignmentOperator::PLUS_EQUAL: return "+=";
+        case AssignmentOperator::MINUS_EQUAL: return "-=";
+        case AssignmentOperator::MULTIPLY_EQUAL: return "*=";
+        case AssignmentOperator::DIVIDE_EQUAL: return "/=";
+        case AssignmentOperator::INTEGER_DIVIDE_EQUAL: return "//=";
+        case AssignmentOperator::MODULO_EQUAL: return "%=";
+        case AssignmentOperator::BITWISE_OR_EQUAL: return "|=";
+        case AssignmentOperator::BITWISE_XOR_EQUAL: return "^=";
+        case AssignmentOperator::BITWISE_AND_EQUAL: return "&=";
+        case AssignmentOperator::LEFT_SHIFT_EQUAL: return "<<=";
+        case AssignmentOperator::ARITHMETIC_RIGHT_SHIFT_EQUAL: return ">>=";
+        case AssignmentOperator::LOGICAL_RIGHT_SHIFT_EQUAL: return ">>>=";
+        case AssignmentOperator::LOGICAL_OR_EQUAL: return "||=";
+        case AssignmentOperator::LOGICAL_AND_EQUAL: return "&&=";
+    }
+}
+
 void compiler::SemanticAnalyser::throwTypeErrorFromUnaryOperator(const ast::ExprUnaryOperator& unaryOperator, const Type& type) const {
     throw TypeError(
             *this->path,
@@ -1342,14 +1378,13 @@ void compiler::SemanticAnalyser::throwTypeErrorFromUnaryOperator(const ast::Expr
         );
 }
 
-
-void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType) const {
+void compiler::SemanticAnalyser::throwTypeErrorFromBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) const {
     throw TypeError(
         *this->path,
-        binaryOperator.line,
-        binaryOperator.column,
+        binaryOperatorInfo.line,
+        binaryOperatorInfo.column,
         "cannot apply operator '" +
-            binaryOperatorToString(binaryOperator.binaryOperatorInfo->binaryOperator) +
+            binaryOperatorToString(binaryOperatorInfo.binaryOperator) +
             "' to types '" +
             typeToString(leftType) +
             "' and '" +

@@ -70,6 +70,7 @@ namespace compiler {
 
         UnaryOperator getUnaryOperator(const Token& token) const;
         BinaryOperator getBinaryOperator(const Token& token) const;
+        AssignmentOperator getAssignmentOperator(const Token& token) const;
 
         static bool isPrimitiveTypeToken(const TokenKind& kind);
         static bool isAssignmentOperator(const TokenKind& kind);

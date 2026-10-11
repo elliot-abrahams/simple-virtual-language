@@ -362,26 +362,44 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
 
     const auto symbol = scope->lookup(assignment.identifier->name).value();
 
+    std::unique_ptr<ast::ExprIdentifier> identifierExpr = nullptr;
+
+    Type typeAtDepth;
 
     if (assignment.indices.size() == 0) {
-        this->compileExpr(scope, *assignment.expression, ExprResult::VALUE);
-        // convert expr to variable type
-        this->compileTypeConversionIfRequired(assignment.expression->resultingType, symbol->type, SourceLocation{0, assignment.expression->line, assignment.expression->column});
+        if (assignment.assignmentOperatorInfo->assignmentOperator == AssignmentOperator::EQUAL) {
+            this->compileExpr(scope, *assignment.expression, ExprResult::VALUE);
+            // convert expr to variable type
+            this->compileTypeConversionIfRequired(assignment.expression->resultingType, symbol->type, SourceLocation{0, assignment.expression->line, assignment.expression->column});
 
-        if (symbol->isGlobal()) {
-            // store result of expression in global variable
-            this->emit(Instruction{Opcode::STOREG,
-                {LabelRef{assignment.identifier->name}},
-                SourceLocation{0, assignment.line, assignment.column}
-            });
-        } else {
-            // store result of expression in local variable
-            this->emit(Instruction{Opcode::STOREL,
-                {Immediate{Number{symbol->localSlot}}},
-                SourceLocation{0, assignment.line, assignment.column}
-            });
+            if (symbol->isGlobal()) {
+                // store result of expression in global variable
+                this->emit(Instruction{Opcode::STOREG,
+                    {LabelRef{assignment.identifier->name}},
+                    SourceLocation{0, assignment.line, assignment.column}
+                });
+            } else {
+                // store result of expression in local variable
+                this->emit(Instruction{Opcode::STOREL,
+                    {Immediate{Number{symbol->localSlot}}},
+                    SourceLocation{0, assignment.line, assignment.column}
+                });
+            }
+            return;
         }
+        // assignment operator is not 'EQUAL'
 
+        // generate exprIdentifier
+        identifierExpr = std::make_unique<ast::ExprIdentifier>(
+            assignment.identifier->line,
+            assignment.identifier->column,
+            std::make_unique<ast::Identifier>(
+                assignment.identifier->line,
+                assignment.identifier->column,
+                assignment.identifier->name
+            )
+        );
+        this->compileExprIdentifier(scope, *identifierExpr, ExprResult::PTR);
     } else {
         if (symbol->isGlobal()) {
             // store result of expression in global variable
@@ -400,7 +418,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
             });
         }
 
-        Type typeAtDepth = symbol->type;
+        typeAtDepth = symbol->type;
 
         for (int index = 0; index < assignment.indices.size(); ++index) {
 
@@ -420,21 +438,65 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
                 });
             }
         }
-
-        // =============================================================
-        // store expression
-        // =============================================================
-
-        this->compileExpr(scope, *assignment.expression, ExprResult::VALUE);
-        // convert expr to variable type
-        this->compileTypeConversionIfRequired(assignment.expression->resultingType, symbol->type, SourceLocation{0, assignment.expression->line, assignment.expression->column});
-
-
-        this->emit(Instruction{Opcode::STORE,
-            {},
-            SourceLocation{0, assignment.line, assignment.column}
-        });
     }
+
+    // =============================================================
+    // store expression
+    // =============================================================
+
+    const Type targetType = assignment.indices.size() > 0? typeAtDepth : symbol->type;
+
+    if (assignment.assignmentOperatorInfo->assignmentOperator == AssignmentOperator::EQUAL) {
+        this->compileExpr(scope, *assignment.expression, ExprResult::VALUE);
+
+    } else {
+        // assignment operator is not 'EQUAL'
+
+        // [ptr]
+        this->emit(Instruction{Opcode::DUP,
+            {Immediate{Number{static_cast<uint32_t>(0)}}},
+            SourceLocation{0, assignment.identifier->line, assignment.identifier->column}
+        });
+        // [ptr, ptr]
+
+        this->emit(Instruction{Opcode::LOAD,
+            {toAssemblyType(symbol->type)},
+            SourceLocation{0, assignment.identifier->line, assignment.identifier->column}
+        });
+        // [ptr, val]
+
+        // =============================================================
+        // compile binary expression
+        // =============================================================
+
+        // generate binaryOp
+        const auto* binaryOperatorInfo = new ast::BinaryOperatorInfo(
+            assignment.line,
+            assignment.column,
+            assignmentOperatorToBinaryOperator(assignment.assignmentOperatorInfo->assignmentOperator)
+        );
+
+        this->compileBinaryExprWithLeftExprOnStack(
+            scope,
+            *binaryOperatorInfo,
+            assignment.assignmentResultingType,
+            assignment.line,
+            assignment.column,
+            targetType,
+            assignment.line,
+            assignment.column,
+            *assignment.expression
+        );
+    }
+    // convert expr to variable type
+    this->compileTypeConversionIfRequired(assignment.assignmentResultingType, targetType, SourceLocation{0, assignment.expression->line, assignment.expression->column});
+
+    // [ptr, resulting_val]
+
+    this->emit(Instruction{Opcode::STORE,
+        {},
+        SourceLocation{0, assignment.line, assignment.column}
+    });
 }
 
 void compiler::AssemblyGenerator::compileIfStatement(Scope* scope, const ast::IfStm& ifStm) {
@@ -1084,7 +1146,11 @@ void compiler::AssemblyGenerator::compileExpr(Scope* scope, const ast::Expr& exp
 void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator &expr) {
     this->compileExpr(scope, *expr.left, ExprResult::VALUE);
 
-    switch (expr.binaryOperatorInfo->binaryOperator) {
+    this->compileBinaryExprWithLeftExprOnStack(scope, *expr.binaryOperatorInfo, expr.resultingType, expr.line, expr.column, expr.left->resultingType, expr.left->line, expr.left->column, *expr.right);
+}
+
+void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *scope, const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& exprResultingType, const uint32_t exprLine, const uint16_t exprColumn, const Type& leftType, const uint32_t leftLine, const uint16_t leftColumn, const ast::Expr& right) {
+    switch (binaryOperatorInfo.binaryOperator) {
         case BinaryOperator::ADD:
         case BinaryOperator::SUBTRACT:
         case BinaryOperator::MULTIPLY:
@@ -1097,13 +1163,13 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
         case BinaryOperator::ARITHMETIC_RIGHT_SHIFT:
         case BinaryOperator::LOGICAL_RIGHT_SHIFT: {
             // convert left expr to expr resulting type
-            this->compileTypeConversionIfRequired(expr.left->resultingType, expr.resultingType, SourceLocation{0, expr.left->line, expr.left->column});
+            this->compileTypeConversionIfRequired(leftType, exprResultingType, SourceLocation{0, leftLine, leftColumn});
             // compile right expr
-            this->compileExpr(scope, *expr.right, ExprResult::VALUE);
+            this->compileExpr(scope, right, ExprResult::VALUE);
             // convert right expr to expr resulting type
-            this->compileTypeConversionIfRequired(expr.right->resultingType, expr.resultingType, SourceLocation{0, expr.right->line, expr.right->column});
+            this->compileTypeConversionIfRequired(right.resultingType, exprResultingType, SourceLocation{0, right.line, right.column});
             // compile binary operator
-            this->compileBinaryOperator(*expr.binaryOperatorInfo);
+            this->compileBinaryOperator(binaryOperatorInfo);
             return;
         }
 
@@ -1115,15 +1181,15 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
             // evaluate to true if left expression is true
             this->emit(Instruction{Opcode::JNZ,
                 {LabelRef{evaluateToTrueLabel}},
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
-            this->compileExpr(scope, *expr.right, ExprResult::VALUE);
+            this->compileExpr(scope, right, ExprResult::VALUE);
 
             // evaluate to true if right expression is true
             this->emit(Instruction{Opcode::JNZ,
                 {LabelRef{evaluateToTrueLabel}},
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
             // push 'false' onto stack
             this->emit(Instruction{Opcode::PUSH,
@@ -1131,13 +1197,13 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
                     AssemblyType::UI32,
                     Immediate{0}
                 },
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
             // jump to end of logical OR
             this->emit(Instruction{Opcode::JMP,
                 {LabelRef{endOrLabel}},
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
             this->emit(LabelDef{evaluateToTrueLabel});
@@ -1148,13 +1214,12 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
                     AssemblyType::UI32,
                     Immediate{1}
                 },
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
             this->emit(LabelDef{endOrLabel});
             break;
         }
-
         case BinaryOperator::LOGICAL_AND: {
             const std::string evaluateToFalseLabel = this->generateLabel("evaluate_to_false");
             const std::string endAndLabel = this->generateLabel("end_and");
@@ -1163,15 +1228,15 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
             // evaluate to false if left expression is false
             this->emit(Instruction{Opcode::JEZ,
                 {LabelRef{evaluateToFalseLabel}},
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
-            this->compileExpr(scope, *expr.right, ExprResult::VALUE);
+            this->compileExpr(scope, right, ExprResult::VALUE);
 
             // evaluate to false if right expression is false
             this->emit(Instruction{Opcode::JEZ,
                 {LabelRef{evaluateToFalseLabel}},
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
             // push `true` onto stack
@@ -1180,13 +1245,13 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
                     AssemblyType::UI32,
                     Immediate{1}
                 },
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
             // jump to end of logical AND
             this->emit(Instruction{Opcode::JMP,
                 {LabelRef{endAndLabel}},
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
             this->emit(LabelDef{evaluateToFalseLabel});
@@ -1197,7 +1262,7 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
                     AssemblyType::UI32,
                     Immediate{0}
                 },
-                SourceLocation{0, expr.binaryOperatorInfo->line, expr.binaryOperatorInfo->column}
+                SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
             this->emit(LabelDef{endAndLabel});
@@ -1212,49 +1277,50 @@ void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::Exp
         case BinaryOperator::GREATER_THAN:
         case BinaryOperator::GREATER_THAN_OR_EQUAL: {
 
-            if (expr.left->resultingType.typeId == FLOAT_TYPE_ID ||
-                expr.right->resultingType.typeId == FLOAT_TYPE_ID
+            if (leftType.typeId == FLOAT_TYPE_ID ||
+                right.resultingType.typeId == FLOAT_TYPE_ID
             ) {
                 // if either operand is float -> convert left expr to float
-                this->compileTypeConversionIfRequired(expr.left->resultingType, Type{FLOAT_TYPE_ID, 0}, SourceLocation{0, expr.left->line, expr.left->column});
+                this->compileTypeConversionIfRequired(leftType, Type{FLOAT_TYPE_ID, 0}, SourceLocation{0, leftLine, leftColumn});
             } else {
                 // convert left expr to int
-                this->compileTypeConversionIfRequired(expr.left->resultingType, Type{INT_TYPE_ID, 0}, SourceLocation{0, expr.left->line, expr.left->column});
+                this->compileTypeConversionIfRequired(leftType, Type{INT_TYPE_ID, 0}, SourceLocation{0, leftLine, leftColumn});
             }
 
             // compile right expression
-            this->compileExpr(scope, *expr.right, ExprResult::VALUE);
+            this->compileExpr(scope, right, ExprResult::VALUE);
 
-            if (expr.left->resultingType.typeId == FLOAT_TYPE_ID ||
-                expr.right->resultingType.typeId == FLOAT_TYPE_ID
+            if (leftType.typeId == FLOAT_TYPE_ID ||
+                right.resultingType.typeId == FLOAT_TYPE_ID
             ) {
                 // if either operand is float -> convert right expr to float
-                this->compileTypeConversionIfRequired(expr.right->resultingType, Type{FLOAT_TYPE_ID, 0}, SourceLocation{0, expr.right->line, expr.right->column});
+                this->compileTypeConversionIfRequired(right.resultingType, Type{FLOAT_TYPE_ID, 0}, SourceLocation{0, right.line, right.column});
             } else {
                 // convert right expr to int
-                this->compileTypeConversionIfRequired(expr.right->resultingType, Type{INT_TYPE_ID, 0}, SourceLocation{0, expr.right->line, expr.right->column});
+                this->compileTypeConversionIfRequired(right.resultingType, Type{INT_TYPE_ID, 0}, SourceLocation{0, right.line, right.column});
             }
 
-            this->compileBinaryOperator(*expr.binaryOperatorInfo);
+            this->compileBinaryOperator(binaryOperatorInfo);
             break;
         }
 
         default: {}
     }
 
-    if (expr.binaryOperatorInfo->binaryOperator == BinaryOperator::INTEGER_DIVIDE) {
+    if (binaryOperatorInfo.binaryOperator == BinaryOperator::INTEGER_DIVIDE) {
         // if either operand is float -> convert result to int
-        if (expr.left->resultingType.typeId == FLOAT_TYPE_ID ||
-            expr.right->resultingType.typeId == FLOAT_TYPE_ID
+        if (leftType.typeId == FLOAT_TYPE_ID ||
+            right.resultingType.typeId == FLOAT_TYPE_ID
         ) {
             // convert result to integer
             this->emit(Instruction{Opcode::CONV,
                 {AssemblyType::I32},
-                SourceLocation{0, expr.line, expr.column}
+                SourceLocation{0, exprLine, exprColumn}
             });
         }
     }
 }
+
 
 void compiler::AssemblyGenerator::compileBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo) {
 

@@ -162,6 +162,249 @@ TEST(STM_ASSIGN, USE_INITIALISED_VAR) {
     );
 }
 
+TEST(STM_ASSIGN, PLUS_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x += 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, PLUS_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x += 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, MINUS_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x -= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, MINUS_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x -= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, MULTIPLY_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x *= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, MULTIPLY_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x *= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, DIVIDE_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            float x = 5;
+            x /= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, DIVIDE_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            float x = 5;
+            x /= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INTEGER_DIVIDE_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x //= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INTEGER_DIVIDE_EQUAL_IMPLICIT_CONVERSION_ONE) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x //= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INTEGER_DIVIDE_EQUAL_IMPLICIT_CONVERSION_TWO) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            float x = 5.5f;
+            x //= 5.5f;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, MODULO_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x &= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, MODULO_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x &= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, BITWISE_OR_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x |= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, BITWISE_OR_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x |= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, BITEISE_XOR_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x ^= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, BITEISE_XOR_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x ^= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, BITWISE_AND_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x &= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, BITWISE_AND_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x &= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, LEFT_SHIFT_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x <<= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, LEFT_SHIFT_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x <<= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, ARITHMETIC_RIGHT_SHIFT_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x >>= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, ARITHMETIC_RIGHT_SHIFT_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x >>= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, LOGICAL_RIGHT_SHIFT_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x >>>= 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, LOGICAL_RIGHT_SHIFT_EQUAL_IMPLICIT_CONVERSION) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            int x = 5;
+            x >>>= 'A';
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, LOGICAL_OR_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            bool x = true;
+            x ||= true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, LOGICAL_AND_EQUAL) {
+    ASSERT_SEMANTICALLY_VALID(
+        R"(
+            bool x = true;
+            x &&= true;
+        )"
+    );
+}
+
 TEST(STM_ASSIGN, INVALID_ASSIGN_BOOL_TO_INT) {
     ASSERT_THROWS_TYPE_ERROR(R"(
             int x;
@@ -307,6 +550,276 @@ TEST(STM_ASSIGN, INVALID_USE_VARIABLE_BEFORE_DECLARATION) {
     ASSERT_THROWS_SEMANTIC_ERROR(
         R"(
             x = 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_PLUS_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            x += 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_PLUS_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x += true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_MINUS_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            x -= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_MINUS_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x -= true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_MULTIPLY_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            x *= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_MULTIPLY_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x *= true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_DIVIDE_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            x /= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_DIVIDE_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x /= true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_INTEGER_DIVIDE_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            x //= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_INTEGER_DIVIDE_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x //= true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_MODULO_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            x &= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_MODULO_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x &= true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_BITWISE_OR_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x |= 5.5f;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_BITWISE_OR_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            float x = 5.5f;
+            x |= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_BITWISE_XOR_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x ^= 5.5f;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_BITWISE_XOR_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            float x = 5.5f;
+            x ^= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_BITWISE_AND_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x &= 5.5f;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_BITWISE_AND_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            float x = 5.5f;
+            x &= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_LEFT_SHIFT_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x <<= 5.5f;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_LEFT_SHIFT_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            float x = 5.5f;
+            x <<= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_ARITHMETIC_RIGHT_SHIFT_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x >>= 5.5f;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_ARITHMETIC_RIGHT_SHIFT_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            float x = 5.5f;
+            x >>= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_LOGICAL_RIGHT_SHIFT_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x >>>= 5.5f;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_LOGICAL_RIGHT_SHIFT_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            float x = 5.5f;
+            x >>>= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_LOGICAL_OR_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x ||= true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_LOGICAL_OR_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            x ||= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_LOGICAL_AND_EQUAL_EXPR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int x = 5;
+            x &&= true;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_LOGICAL_AND_EQUAL_VAR_TYPE) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            bool x = true;
+            x &&= 5;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_COMPLEX_ARRAY_EXPR) {
+    ASSERT_THROWS_TYPE_ERROR(
+        R"(
+            int[] arr = new int[3];
+            arr += 1;
+        )"
+    );
+}
+
+TEST(STM_ASSIGN, INVALID_COMPLEX_UNINITIALISED) {
+    ASSERT_THROWS_SEMANTIC_ERROR(
+        R"(
+            int x;
+            x += 1;
         )"
     );
 }

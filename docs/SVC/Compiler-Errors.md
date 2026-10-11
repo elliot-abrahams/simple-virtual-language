@@ -32,18 +32,19 @@
   - [4.18 Too Many Array Initialiser Dimensions](#418-too-many-array-initialiser-dimensions)
 - [5. Type Errors](#5-type-errors)
   - [5.1 Invalid Assignment](#51-invalid-assignment)
-  - [5.2 Invalid Return Type](#52-invalid-return-type)
-  - [5.3 Invalid Condition Type](#53-invalid-condition-type)
-  - [5.4 Invalid Range Type](#54-invalid-range-type)
-  - [5.5 Incompatible Range Type](#55-incompatible-range-type)
-  - [5.6 Invalid Iterable Type](#56-invalid-iterable-type)
-  - [5.7 Incompatible Loop Variable Type](#57-incompatible-loop-variable-type)
-  - [5.8 Invalid Binary Operator](#58-invalid-binary-operator)
-  - [5.9 Invalid Unary Operator](#59-invalid-unary-operator)
-  - [5.10 Invalid Array Index Type](#510-invalid-array-index-type)
-  - [5.11 Invalid Array Indexing](#511-invalid-array-indexing)
-  - [5.12 Invalid Array Initialiser Element](#512-invalid-array-initialiser-element)
-  - [5.13 Invalid Cast](#513-invalid-cast)
+  - [5.2 Invalid Compound Assignment](#52-invalid-compound-assignment)
+  - [5.3 Invalid Return Type](#53-invalid-return-type)
+  - [5.4 Invalid Condition Type](#54-invalid-condition-type)
+  - [5.5 Invalid Range Type](#55-invalid-range-type)
+  - [5.6 Incompatible Range Type](#56-incompatible-range-type)
+  - [5.7 Invalid Iterable Type](#57-invalid-iterable-type)
+  - [5.8 Incompatible Loop Variable Type](#58-incompatible-loop-variable-type)
+  - [5.9 Invalid Binary Operator](#59-invalid-binary-operator)
+  - [5.10 Invalid Unary Operator](#510-invalid-unary-operator)
+  - [5.11 Invalid Array Index Type](#511-invalid-array-index-type)
+  - [5.12 Invalid Array Indexing](#512-invalid-array-indexing)
+  - [5.13 Invalid Array Initialiser Element](#513-invalid-array-initialiser-element)
+  - [5.14 Invalid Cast](#514-invalid-cast)
    
 ## 1. Overview
 
@@ -623,11 +624,32 @@ int x = true;
 TypeError: cannot assign 'bool' to type 'int'
 ```
 
-The type of the value being assigned is not compatible with declared type.
+The resulting type of the expression must be implicitly convertible to the declared type of the assignment target.
 
 ---
 
-### 5.2 Invalid Return Type
+### 5.2 Invalid Compound Assignment
+
+**Message:**
+```
+cannot assign '<type>' to type '<type>' with assignment operator <assignment_operator>
+```
+
+**Example:**
+```
+int x = 10;
+x /= 10;
+```
+
+```
+TypeError: cannot assign 'int' to type 'int' with assignment operator '/='
+```
+
+The resulting type of the binary operation must be implicitly convertible to the declared type of the assignment target.
+
+---
+
+### 5.3 Invalid Return Type
 
 **Message:**
 ```
@@ -649,7 +671,7 @@ The type of the returned value is not compatible with the function's return type
 
 ---
 
-### 5.3 Invalid Condition Type
+### 5.4 Invalid Condition Type
 
 **Message:**
 ```
@@ -669,7 +691,7 @@ A condition must have type `bool`.
 
 ---
 
-### 5.4 Invalid Range Type
+### 5.5 Invalid Range Type
 
 **Message:**
 ```
@@ -689,7 +711,7 @@ Ranges must be numeric.
 
 ---
 
-### 5.5 Incompatible Range Type
+### 5.6 Incompatible Range Type
 
 **Message:**
 ```
@@ -709,7 +731,7 @@ Range type must be implicitly convertable to the variable type of the for loop.
 
 ---
 
-### 5.6 Invalid Iterable Type
+### 5.7 Invalid Iterable Type
 
 **Message:**
 ```
@@ -730,7 +752,7 @@ Iterable must be an array.
 
 ---
 
-### 5.7 Incompatible Loop Variable Type
+### 5.8 Incompatible Loop Variable Type
 
 **Message:**
 ```
@@ -751,7 +773,7 @@ elements of iterable must be implicitly convertible to the variable type of the 
 
 ---
 
-### 5.8 Invalid Binary Operator
+### 5.9 Invalid Binary Operator
 
 **Message:**
 ```
@@ -771,7 +793,7 @@ The binary operator cannot be applied to the types of its operands.
 
 ---
 
-### 5.9 Invalid Unary Operator
+### 5.10 Invalid Unary Operator
 
 **Message:**
 ```
@@ -791,7 +813,7 @@ The unary operator cannot be applied to the operand's type.
 
 ---
 
-### 5.10 Invalid Array Index Type
+### 5.11 Invalid Array Index Type
 
 **Message:**
 ```
@@ -812,7 +834,7 @@ The array index must have a valid index type.
 
 ---
 
-### 5.11 Invalid Array Indexing
+### 5.12 Invalid Array Indexing
 
 **Message:**
 ```
@@ -833,7 +855,7 @@ Indexing can only be applied to an array.
 
 ---
 
-### 5.12 Invalid Array Initialiser Element
+### 5.13 Invalid Array Initialiser Element
 
 **Message:**
 ```
@@ -853,7 +875,7 @@ The value used to initialise an array element is not compatible with the array's
 
 ---
 
-### 5.13 Invalid Cast
+### 5.14 Invalid Cast
 
 **Message:**
 ```

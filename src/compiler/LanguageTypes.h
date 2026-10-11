@@ -2,6 +2,7 @@
 #define SVM_LANGUAGETYPES_H
 
 #include <cstdint>
+#include <stdexcept>
 
 namespace compiler {
 
@@ -56,7 +57,21 @@ namespace compiler {
     };
 
     enum class AssignmentOperator {
-        EQUAL
+        EQUAL,
+        PLUS_EQUAL,
+        MINUS_EQUAL,
+        MULTIPLY_EQUAL,
+        DIVIDE_EQUAL,
+        INTEGER_DIVIDE_EQUAL,
+        MODULO_EQUAL,
+        BITWISE_OR_EQUAL,
+        BITWISE_XOR_EQUAL,
+        BITWISE_AND_EQUAL,
+        LEFT_SHIFT_EQUAL,
+        ARITHMETIC_RIGHT_SHIFT_EQUAL,
+        LOGICAL_RIGHT_SHIFT_EQUAL,
+        LOGICAL_OR_EQUAL,
+        LOGICAL_AND_EQUAL
     };
 
     enum class BinaryOperator {
@@ -96,6 +111,26 @@ namespace compiler {
         INCREMENT,
         DECREMENT
     };
+
+    inline BinaryOperator assignmentOperatorToBinaryOperator(const AssignmentOperator& assignmentOperator) {
+        switch (assignmentOperator) {
+            case AssignmentOperator::PLUS_EQUAL: return BinaryOperator::ADD;
+            case AssignmentOperator::MINUS_EQUAL: return BinaryOperator::SUBTRACT;
+            case AssignmentOperator::MULTIPLY_EQUAL: return BinaryOperator::MULTIPLY;
+            case AssignmentOperator::DIVIDE_EQUAL: return BinaryOperator::DIVIDE;
+            case AssignmentOperator::INTEGER_DIVIDE_EQUAL: return BinaryOperator::INTEGER_DIVIDE;
+            case AssignmentOperator::MODULO_EQUAL: return BinaryOperator::MODULO;
+            case AssignmentOperator::BITWISE_OR_EQUAL: return BinaryOperator::BITWISE_OR;
+            case AssignmentOperator::BITWISE_XOR_EQUAL: return BinaryOperator::BITWISE_XOR;
+            case AssignmentOperator::BITWISE_AND_EQUAL: return BinaryOperator::BITWISE_AND;
+            case AssignmentOperator::LEFT_SHIFT_EQUAL: return BinaryOperator::LEFT_SHIFT;
+            case AssignmentOperator::ARITHMETIC_RIGHT_SHIFT_EQUAL: return BinaryOperator::ARITHMETIC_RIGHT_SHIFT;
+            case AssignmentOperator::LOGICAL_RIGHT_SHIFT_EQUAL: return BinaryOperator::LOGICAL_RIGHT_SHIFT;
+            case AssignmentOperator::LOGICAL_OR_EQUAL: return BinaryOperator::LOGICAL_OR;
+            case AssignmentOperator::LOGICAL_AND_EQUAL: return BinaryOperator::LOGICAL_AND;
+            default: throw std::runtime_error("attempted to convert assignment operator 'EQUAL' to binary operator");
+        }
+    }
 
 }
 

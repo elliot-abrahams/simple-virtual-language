@@ -229,11 +229,35 @@ The target variable must be visible from the current scope.
 
 For an array element, the array variable must be visible and the number of indices cannot exceed its array dimension.
 
-The resulting type of the expression must either match the variable's type or be implicitly convertible to it.
+The assignment operator `=` assigns the value of the expression directly to the target. The resulting type of the expression be implicitly convertible to the variable's type.
 
-A successful assignment initialises the target variable if it was previously uninitialised.
+Compound assignment operators perform a binary operation between the current value of the target and the value of the expression, then assign the result to the target. The resulting type of the binary operation must be implicitly convertible to the variable's type.
+
+A successful assignment initialises the target variable if it was previously uninitialised. (This does not apply to array elements)
 
 Assigning an array to another array variable copies the array reference rather than the contents of the array.
+
+SV provides the following assignment operators:
+- `+=`
+- `-=`
+- `*=`
+- `/=`
+- `//=`
+- `%=`
+- `|=`
+- `^=`
+- `&=`
+- `<<=`
+- `>>=`
+- `>>>=`
+- `||=`
+- `&&=`
+
+The following assignments are equivalent:
+```
+x += 10;
+x = x + 10;
+```
 
 ### 4.4 Variable access
 

@@ -56,11 +56,12 @@
   - [6.1 Variable Declaration](#61-variable-declaration)
     - [6.1.1 Global Variable Declaration](#611-global-variable-declaration)
     - [6.1.2 Local Variable Declaration](#612-local-variable-declaration)
-  - [6.2 Variable Assignment](#62-variable-assignment)
-    - [6.2.1 Global Variable Assignment](#621-global-variable-assignment)
-    - [6.2.2 Local Variable Assignment](#622-local-variable-assignment)
-    - [6.2.3 Global Array Element Assignment](#623-global-array-element-assignment)
-    - [6.2.4 Local Array Element Assignment](#624-local-array-element-assignment)
+  - [6.2 Assignment](#62-assignment)
+    - [6.2.1 Simple Assignment](#621-simple-assignment)
+    - [6.2.2 Complex Assignment](#622-complex-assignment)
+    - [6.2.3 Global Variable Assignment](#623-global-variable-assignment)
+    - [6.2.4 Local Variable Assignment](#624-local-variable-assignment)
+    - [6.2.5 Array Element Assignment](#625-array-element-assignment)
   - [6.3 Block](#63-block)
   - [6.4 Conditional Statements](#64-conditional-statements)
     - [6.4.1 If Statement](#641-if-statement)
@@ -542,8 +543,6 @@ When the address of a global variable is required, its address is pushed using `
 
 Where:
 - `[identifier]` is the identifier of the global variable.
-
-
 
 The value loaded onto the operand stack has the assembly type of the variable.
 
@@ -1702,124 +1701,160 @@ Where:
 
 ---
 
-### 6.2 Variable Assignment
+### 6.2 Assignment
 
-#### 6.2.1 Global Variable Assignment
+#### 6.2.1 Simple Assignment
 
-A value is stored in a global variable using `storeG`.
+Simple assignments are assignments using the `=` operator.
 
 ```
     {{Expression}}
     {{Implicit Conversion}}
+```
+
+#### 6.2.2 Complex Assignment
+
+Complex assignments are assignments using an assignment operator that is not `=`.
+
+```
+    ; Stack: <target_ptr: ptr>
+    
+    load [target_type]
+    ; Stack: <target_value: target_type>
+    
+    {{Binary Expression (with left expr already on the stack and with assignment expression being the right expr)}}
+    {{Implicit Conversion to [target_type]}}
+    ; Stack: <result: target_type>
+```
+
+Where:
+- `[target_type]` is the assembly type of the target
+
+#### 6.2.3 Global Variable Assignment
+
+**Simple Assignment Operator:**
+
+```
+    {{Simple Assignment}}
+    ; Stack: <result: result_type>
+    
     storeG $[identifier]
+    ; Stack: <>
+```
+
+**Complex Assignment Operator:**
+
+```
+    push ptr $[identifier]
+    dup #0
+    ; Stack: <target_ptr: ptr, target_ptr: ptr>
+
+    {{Complex Assignment}}
+    ; Stack: <target_ptr: ptr, result: result_type>
+    
+    store
+    ; Stack: <>
 ```
 
 Where:
 - `[identifier]` is the identifier of the global variable.
 
-#### 6.2.2 Local Variable Assignment
+#### 6.2.4 Local Variable Assignment
 
-A value is stored in a local variable using `storeL`.
+**Simple Assignment Operator:**
 
 ```
-    {{Expression}}
-    {{Implicit Conversion}}
+    {{Simple Assignment}}
+    ; Stack: <result: result_type>
+    
     storeL #[slot]
+    ; Stack: <>
+```
+
+**Complex Assignment Operator:**
+
+```
+    addrL #[slot]
+    dup #0
+    ; Stack: <target_ptr: ptr, target_ptr: ptr>
+
+    {{Complex Assignment}}
+    ; Stack: <target_ptr: ptr, result: result_type>
+    
+    store
+    ; Stack: <>
 ```
 
 Where:
 - `[slot]` is the local variable's slot.
 
-### 6.2.3 Global Array Element Assignment
+#### 6.2.5 Array Element Assignment
 
-The array reference is first loaded from the global variable.
-
-```
-    loadG $[identifier]
-    
-    {{Array Index}}
-```
-
-For multiple indexes, `{{Array Index}}` is repeated. If the current index does not select the final dimension, the pointer to the nested array is loaded before processing the next index.
-
-After the final index, the operand stack contains the address of the element:
-
-```
-<element_ptr: ptr>
-```
-
-The right-hand-side expression is then evaluated and converted to the element type:
-
-```
-    {{Expression}}
-    {{Implicit Conversion}}
-    store
-```
-
-The complete operation therefore has the following structure
+For a global array:
 
 ```
     loadG $[identifier]
+    ; Stack: <array_ptr: ptr>
+```
+
+For a local array:
+
+```
+    loadL #[slot]
+    ; Stack: <array_ptr: ptr>
+```
+
+Followed by:
+
+```
+    ; Stack: <array_ptr: ptr>
     
     {{Array Index}}
+    ; Stack: <array_element_ptr: ptr>
+```
+
+For each additional dimension of an array access:
+
+```
+    ; Stack: <array_element_ptr: ptr>
+    
     load ptr
+    ; Stack: <nested_array_ptr: ptr>
     
     {{Array Index}}
-    load ptr
+    ; Stack: <nested_array_element_ptr: ptr>
+```
+
+If assignment operator is simple (`=`), this is followed by:
+
+```
+    ; Stack: <target_array_element_ptr: ptr>
     
-    ...
+    {{Simple Assignment}}
+    ; Stack: <target_array_element_ptr: ptr, result: result_type>
     
-    {{Array Index}}
-    
-    {{Expression}}
-    {{Implicit Conversion}}
     store
+    ; Stack: <>
 ```
 
-The `load ptr` instructions are emitted only between indexes.
-
-### 6.2.4 Local Array Element Assignment
-
-The array reference is first loaded from the local variable.
+Otherwise:
 
 ```
-    loadL ptr #[slot]
+    ; Stack: <target_array_element_ptr: ptr>
     
-    {{Array Index}}
-```
-
-As with global array assignment, `Array Index` is repeated for each index. A `load ptr` is emitted between indexes when another dimension remains.
-
-After the final index, the right-hand-side expression is evaluated and stored:
-
-```
-    {{Expression}}
-    {{Implicit Conversion}}
+    dup #0
+    ; Stack: <target_array_element_ptr: ptr, target_array_element_ptr: ptr>
+    
+    {{Complex Assignment}}
+    ; Stack: <target_array_element_ptr: ptr, result: result_type>
+    
     store
+    ; Store: <>
 ```
 
-The complete operation has the following structure:
-
-```
-    loadL ptr #[slot]
-    
-    {{Array Index}}
-    load ptr
-    
-    {{Array Index}}
-    load ptr
-    
-    ...
-    
-    {{Array Index}}
-    
-    {{Expression}}
-    {{Implicit Conversion}}
-    store
-```
-
-Where
-- `[slot]` is the local variable's slot.
+Where:
+- `[identifier]` is the identifier of the global array.
+- `[slot]` is the local array's slot.
 
 ---
 

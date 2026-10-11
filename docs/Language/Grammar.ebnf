@@ -74,7 +74,7 @@ equality_expression         = comparison_expression, { ( EQUAL_EQUAL | NOT_EQUAL
 
 comparison_expression       = shift_expression, { ( LESS_THAN | LESS_THAN_OR_EQUAL | GREATER_THAN | GREATER_THAN_OR_EQUAL ), shift_expression } ;
 
-shift_expression            = additive_expression, { ( LEFT_SHIFT | RIGHT_SHIFT | UNSIGNED_RIGHT_SHIFT ), additive_expression } ;
+shift_expression            = additive_expression, { ( LEFT_SHIFT | ARITHMETIC_RIGHT_SHIFT | LOGICAL_RIGHT_SHIFT ), additive_expression } ;
 
 additive_expression         = multiplicative_expression, { ( PLUS | MINUS ), multiplicative_expression } ;
 
@@ -125,7 +125,21 @@ literal                     = INT_LITERAL
 
 char_literal                =  ;
 
-assignment_operator         = EQUAL ;
+assignment_operator         = EQUAL
+                            | PLUS_EQUAL
+                            | MINUS_EQUAL
+                            | MULTIPLY_EQUAL
+                            | DIVIDE_EQUAL
+                            | INTEGER_DIVIDE_EQUAL
+                            | MODULO_EQUAL
+                            | BITWISE_OR_EQUAL
+                            | BITWISE_XOR_EQUAL
+                            | BITWISE_AND_EQUAL
+                            | LEFT_SHIFT_EQUAL
+                            | ARITHMETIC_RIGHT_SHIFT_EQUAL
+                            | LOGICAL_RIGHT_SHIFT_EQUAL
+                            | LOGICAL_OR_EQUAL
+                            | LOGICAL_AND_EQUAL ;
 
 
 TOKENS
@@ -160,8 +174,8 @@ BITWISE_AND                 = "&"
 BITWISE_NOT                 = "~"
 
 LEFT_SHIFT                  = "<<"
-RIGHT_SHIFT                 = ">>"
-UNSIGNED_RIGHT_SHIFT        = ">>>"
+ARITHMETIC_RIGHT_SHIFT      = ">>"
+LOGICAL_RIGHT_SHIFT         = ">>>"
 
 LOGICAL_OR                  = "||"
 LOGICAL_AND                 = "&&"
@@ -172,6 +186,21 @@ LESS_THAN                   = "<"
 LESS_THAN_OR_EQUAL          = "<="
 GREATER_THAN                = ">"
 GREATER_THAN_OR_EQUAL       = ">="
+
+PLUS_EQUAL                  = "+="
+MINUS_EQUAL                 = "-="
+MULTIPLY_EQUAL              = "*="
+DIVIDE_EQUAL                = "/="
+INTEGER_DIVIDE_EQUAL        = "//="
+MODULO_EQUAL                = "%="
+BITWISE_OR_EQUAL            = "|="
+BITWISE_XOR_EQUAL           = "^="
+BITWISE_AND_EQUAL           = "&="
+LEFT_SHIFT_EQUAL            = "<<="
+ARITHMETIC_RIGHT_SHIFT_EQUAL= ">>="
+LOGICAL_RIGHT_SHIFT_EQUAL   = ">>>="
+LOGICAL_OR_EQUAL            = "||="
+LOGICAL_AND_EQUAL           = "&&="
 
 IF                          = "if"
 ELSE                        = "else"

@@ -6,5 +6,5 @@ int i = 0;
 
 while (i < numbers.length) {
     println(numbers[i]);
-    i++;
+    i += 1;
 }

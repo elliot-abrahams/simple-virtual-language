@@ -208,6 +208,314 @@ TEST(STM_ASSIGN, PAREN) {
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
 
+TEST(STM_ASSIGN, PLUS_EQUAL) {
+    const auto testCode = R"(
+        x += 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::PLUS_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, MINUE_EQUAL) {
+    const auto testCode = R"(
+        x -= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::MINUS_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, MULTIPLY_EQUAL) {
+    const auto testCode = R"(
+        x *= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::MULTIPLY_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, DIVIDE_EQUAL) {
+    const auto testCode = R"(
+        x /= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::DIVIDE_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, INTEGER_DIVIDE_EQUAL) {
+    const auto testCode = R"(
+        x //= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::INTEGER_DIVIDE_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, MODULO_EQUAL) {
+    const auto testCode = R"(
+        x %= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::MODULO_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, BITWISE_OR_EQUAL) {
+    const auto testCode = R"(
+        x |= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::BITWISE_OR_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, BITWISE_XOR_EQUAL) {
+    const auto testCode = R"(
+        x ^= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::BITWISE_XOR_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, BITWISE_AND_EQUAL) {
+    const auto testCode = R"(
+        x &= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::BITWISE_AND_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, LEFT_SHIFT_EQUAL) {
+    const auto testCode = R"(
+        x <<= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::LEFT_SHIFT_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, ARITHMETIC_RIGHT_SHIFT_EQUAL) {
+    const auto testCode = R"(
+        x >>= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::ARITHMETIC_RIGHT_SHIFT_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, LOGICAL_RIGHT_SHIFT_EQUAL) {
+    const auto testCode = R"(
+        x >>>= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::LOGICAL_RIGHT_SHIFT_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, LOGICAL_OR_EQUAL) {
+    const auto testCode = R"(
+        x ||= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::LOGICAL_OR_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
+TEST(STM_ASSIGN, LOGICAL_AND_EQUAL) {
+    const auto testCode = R"(
+        x &&= 5;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedAssignment>(
+            std::make_unique<ExpectedIdentifier>(
+                "x"
+            ),
+            noExpectedIndices,
+            compiler::AssignmentOperator::LOGICAL_AND_EQUAL,
+            std::make_unique<ExpectedIntegerLiteral>(
+                5
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}
+
 TEST(STM_ASSIGN, INVALID_MISSING_IDENTIFIER) {
     const auto testCode = R"(
         = 5;

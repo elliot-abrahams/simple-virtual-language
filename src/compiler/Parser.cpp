@@ -700,7 +700,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseComparisonExpression() const {
 }
 
 /*
- *  shift_expression            = additive_expression, { ( LEFT_SHIFT | RIGHT_SHIFT | UNSIGNED_RIGHT_SHIFT ), additive_expression } ;
+ *  shift_expression            = additive_expression, { ( LEFT_SHIFT | ARITHMETIC_RIGHT_SHIFT | LOGICAL_RIGHT_SHIFT ), additive_expression } ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseShiftExpression() const {
     auto left = this->parseAdditiveExpression();
@@ -1253,19 +1253,53 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLiteral() const {
 }
 
 /*
- * assignment_operator = EQUAL ;
+ *  assignment_operator         = EQUAL
+ *                              | PLUS_EQUAL
+ *                              | MINUS_EQUAL
+ *                              | MULTIPLY_EQUAL
+ *                              | DIVIDE_EQUAL
+ *                              | INTEGER_DIVIDE_EQUAL
+ *                              | MODULO_EQUAL
+ *                              | BITWISE_OR_EQUAL
+ *                              | BITWISE_XOR_EQUAL
+ *                              | BITWISE_AND_EQUAL
+ *                              | LEFT_SHIFT_EQUAL
+ *                              | ARITHMETIC_RIGHT_SHIFT_EQUAL
+ *                              | LOGICAL_RIGHT_SHIFT_EQUAL
+ *                              | LOGICAL_OR_EQUAL
+ *                              | LOGICAL_AND_EQUAL ;
+
  */
 std::unique_ptr<ast::AssignmentOperatorInfo> compiler::Parser::parseAssignmentOperator() const {
     const Token assignmentOperator = this->tokeniser->tok();
-    if (assignmentOperator.kind == TokenKind::EQUAL) {
-        this->tokeniser->next();
-        return std::make_unique<ast::AssignmentOperatorInfo>(
-            assignmentOperator.line,
-            assignmentOperator.column,
-            AssignmentOperator::EQUAL
-        );
+
+    switch (assignmentOperator.kind) {
+        case TokenKind::EQUAL:
+        case TokenKind::PLUS_EQUAL:
+        case TokenKind::MINUS_EQUAL:
+        case TokenKind::MULTIPLY_EQUAL:
+        case TokenKind::DIVIDE_EQUAL:
+        case TokenKind::INTEGER_DIVIDE_EQUAL:
+        case TokenKind::MODULO_EQUAL:
+        case TokenKind::BITWISE_OR_EQUAL:
+        case TokenKind::BITWISE_XOR_EQUAL:
+        case TokenKind::BITWISE_AND_EQUAL:
+        case TokenKind::LEFT_SHIFT_EQUAL:
+        case TokenKind::ARITHMETIC_RIGHT_SHIFT_EQUAL:
+        case TokenKind::LOGICAL_RIGHT_SHIFT_EQUAL:
+        case TokenKind::LOGICAL_OR_EQUAL:
+        case TokenKind::LOGICAL_AND_EQUAL: {
+            break;
+        }
+        default:
+            this->throwUnexpectedTokenError(assignmentOperator);
     }
-    this->throwUnexpectedTokenError(assignmentOperator);
+    this->tokeniser->next();
+    return std::make_unique<ast::AssignmentOperatorInfo>(
+        assignmentOperator.line,
+        assignmentOperator.column,
+        this->getAssignmentOperator(assignmentOperator)
+    );
 }
 
 /*
@@ -1326,6 +1360,28 @@ compiler::BinaryOperator compiler::Parser::getBinaryOperator(const Token& token)
     }
 }
 
+compiler::AssignmentOperator compiler::Parser::getAssignmentOperator(const Token& token) const {
+    switch (token.kind) {
+        case TokenKind::EQUAL: return AssignmentOperator::EQUAL;
+        case TokenKind::PLUS_EQUAL: return AssignmentOperator::PLUS_EQUAL;
+        case TokenKind::MINUS_EQUAL: return AssignmentOperator::MINUS_EQUAL;
+        case TokenKind::MULTIPLY_EQUAL: return AssignmentOperator::MULTIPLY_EQUAL;
+        case TokenKind::DIVIDE_EQUAL: return AssignmentOperator::DIVIDE_EQUAL;
+        case TokenKind::INTEGER_DIVIDE_EQUAL: return AssignmentOperator::INTEGER_DIVIDE_EQUAL;
+        case TokenKind::MODULO_EQUAL: return AssignmentOperator::MODULO_EQUAL;
+        case TokenKind::BITWISE_OR_EQUAL: return AssignmentOperator::BITWISE_OR_EQUAL;
+        case TokenKind::BITWISE_XOR_EQUAL: return AssignmentOperator::BITWISE_XOR_EQUAL;
+        case TokenKind::BITWISE_AND_EQUAL: return AssignmentOperator::BITWISE_AND_EQUAL;
+        case TokenKind::LEFT_SHIFT_EQUAL: return AssignmentOperator::LEFT_SHIFT_EQUAL;
+        case TokenKind::ARITHMETIC_RIGHT_SHIFT_EQUAL: return AssignmentOperator::ARITHMETIC_RIGHT_SHIFT_EQUAL;
+        case TokenKind::LOGICAL_RIGHT_SHIFT_EQUAL: return AssignmentOperator::LOGICAL_RIGHT_SHIFT_EQUAL;
+        case TokenKind::LOGICAL_OR_EQUAL: return AssignmentOperator::LOGICAL_OR_EQUAL;
+        case TokenKind::LOGICAL_AND_EQUAL: return AssignmentOperator::LOGICAL_AND_EQUAL;
+        default:
+            this->throwUnexpectedTokenError(token);
+    }
+}
+
 bool compiler::Parser::isPrimitiveTypeToken(const TokenKind& kind) {
     switch (kind) {
         case TokenKind::INT_TYPE:
@@ -1342,6 +1398,20 @@ bool compiler::Parser::isPrimitiveTypeToken(const TokenKind& kind) {
 bool compiler::Parser::isAssignmentOperator(const TokenKind& kind) {
     switch (kind) {
         case TokenKind::EQUAL:
+        case TokenKind::PLUS_EQUAL:
+        case TokenKind::MINUS_EQUAL:
+        case TokenKind::MULTIPLY_EQUAL:
+        case TokenKind::DIVIDE_EQUAL:
+        case TokenKind::INTEGER_DIVIDE_EQUAL:
+        case TokenKind::MODULO_EQUAL:
+        case TokenKind::BITWISE_OR_EQUAL:
+        case TokenKind::BITWISE_XOR_EQUAL:
+        case TokenKind::BITWISE_AND_EQUAL:
+        case TokenKind::LEFT_SHIFT_EQUAL:
+        case TokenKind::ARITHMETIC_RIGHT_SHIFT_EQUAL:
+        case TokenKind::LOGICAL_RIGHT_SHIFT_EQUAL:
+        case TokenKind::LOGICAL_OR_EQUAL:
+        case TokenKind::LOGICAL_AND_EQUAL:
             return true;
 
         default:

@@ -59,16 +59,17 @@ namespace compiler {
 
         FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::FunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
 
-        Type processAddition(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
-        Type processSubtraction(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
-        Type processMultiplication(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
-        Type processDivision(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
-        Type processIntegerDivision(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
-        Type processModulo(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
-        Type processBitwiseOp(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
-        Type processLogical(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
-        Type processEquality(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
-        Type processComparison(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType);
+        Type processBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processAddition(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processSubtraction(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processMultiplication(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processDivision(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processIntegerDivision(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processModulo(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processBitwiseOp(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processLogical(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processEquality(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
+        Type processComparison(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
 
         static bool canCastToType(const Type& from, const Type& to);
         static bool canImplicitlyConvert(const Type& from, const Type& to);
@@ -77,9 +78,10 @@ namespace compiler {
         static std::string typeToString(const Type& type);
         static std::string binaryOperatorToString(const BinaryOperator& binaryOperator);
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
+        static std::string assignmentOperatorToString(const AssignmentOperator& assignmentOperator);
 
         void throwTypeErrorFromUnaryOperator(const ast::ExprUnaryOperator& unaryOperator, const Type& type) const;
-        void throwTypeErrorFromBinaryOperator(const ast::ExprBinaryOperator& binaryOperator, const Type& leftType, const Type& rightType) const;
+        void throwTypeErrorFromBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) const;
         void throwInvalidExpressionTypeAsStatement(const ast::Expr& expr) const;
         void throwTypeErrorFromForVariable(const Type& variableType, const uint32_t forVariableLine, const uint16_t forVariableColumn) const;
         void throwTypeErrorFromForRange(const ast::Expr& rangeExpr, const Type& rangeType, const Type& variableType) const;

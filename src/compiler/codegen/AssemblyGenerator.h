@@ -50,6 +50,8 @@ namespace compiler {
 
         void compileExpr(Scope* scope, const ast::Expr& expr, const ExprResult exprResult);
         void compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& expr);
+        void compileBinaryExpr(Scope* scope, const Type& exprResultingType, const ast::ExprBinaryOperator& expr);
+        void compileBinaryExprWithLeftExprOnStack(Scope* scope, const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& exprResultingType, const uint32_t exprLine, const uint16_t exprColumn, const Type& leftType, const uint32_t leftLine, const uint16_t leftColumn, const ast::Expr& right);
         void compileBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo);
         void compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr, const ExprResult exprResult);
         void compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr, const ExprResult exprResult);

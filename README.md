@@ -34,11 +34,14 @@ Assembly Language    (.svma)
 - Global and local variables
 - Block scopes
 - Functions and function overloading
+- Builtin functions (`exit`, `print`, `println`)
 - Control flow (`if`, `while`, `for`, `break`, `continue`)
 - Integer, floating-point, boolean, and char types
 - Arrays
+- Field access
 - Implicit and explicit type conversions
-- Arithmetic, comparison and logical operators
+- Arithmetic, comparison, logical, and bitwise operators
+- Assignment operators (`+=`, `<<=`, `^=` etc.)
 - Runtime error reporting with source locations and stack traces
 
 ### Compiler
@@ -207,7 +210,7 @@ int sumTo(int n) {
     int i = 1;
     while (i <= n) {
         total = total + i;
-        i = i + 1;
+        i += 1;
     }
     return total;
 }
