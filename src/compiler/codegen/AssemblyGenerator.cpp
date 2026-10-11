@@ -502,9 +502,9 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
 void compiler::AssemblyGenerator::compileIfStatement(Scope* scope, const ast::IfStm& ifStm) {
     this->compileExpr(scope, *ifStm.condition, ExprResult::VALUE);
 
-    if (ifStm.elseStm == nullptr) { // if statement without else
-        const std::string endIfLabel = generateLabel("end_if");
+    const std::string endIfLabel = generateLabel("if_end");
 
+    if (ifStm.elseStm == nullptr) { // if statement without else
         // skip if block when condition is false
         this->emit(Instruction{Opcode::JEZ,
             {LabelRef{endIfLabel}},
@@ -516,8 +516,7 @@ void compiler::AssemblyGenerator::compileIfStatement(Scope* scope, const ast::If
         this->emit(LabelDef{endIfLabel});
 
     } else { // if statement with else
-        const std::string elseLabel = generateLabel("else");
-        const std::string endIfLabel = generateLabel("end_if");
+        const std::string elseLabel = generateLabel("if_else");
 
         // jump to else block when condition is false
         this->emit(Instruction{Opcode::JEZ,
@@ -542,8 +541,8 @@ void compiler::AssemblyGenerator::compileIfStatement(Scope* scope, const ast::If
 }
 
 void compiler::AssemblyGenerator::compileWhileStatement(Scope* scope, const ast::WhileStm &whileStm) {
-    const std::string startWhileLabel = this->generateLabel("start_while");
-    const std::string endWhileLabel = this->generateLabel("end_while");
+    const std::string startWhileLabel = this->generateLabel("while_start");
+    const std::string endWhileLabel = this->generateLabel("while_end");
 
     whileStm.body->scope->loopContext = new LoopContext{startWhileLabel, endWhileLabel};
 
@@ -608,19 +607,19 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
 
     std::string forLoopStepValidLabel;
     if (rangeHasStep) {
-        forLoopStepValidLabel = this->generateLabel("for_loop_step_valid");
+        forLoopStepValidLabel = this->generateLabel("for_step_valid");
     }
 
-    const auto forLoopStartLabel = this->generateLabel("for_loop_start");
+    const auto forLoopStartLabel = this->generateLabel("for_start");
 
     std::string forLoopNegativeStepCondition;
     std::string forLoopConditionJoinLabel;
     if (rangeHasStep) {
-        forLoopNegativeStepCondition = this->generateLabel("for_loop_negative_step_condition");
-        forLoopConditionJoinLabel = this->generateLabel("for_loop_condition_join");
+        forLoopNegativeStepCondition = this->generateLabel("for_negative_step_condition");
+        forLoopConditionJoinLabel = this->generateLabel("for_condition_join");
     }
-    const auto forLoopContinueLabel = this->generateLabel("for_loop_continue");
-    const auto forLoopEndLabel = this->generateLabel("for_loop_end");
+    const auto forLoopContinueLabel = this->generateLabel("for_continue");
+    const auto forLoopEndLabel = this->generateLabel("for_end");
 
     forStm.body->scope->parent->loopContext = new LoopContext{forLoopContinueLabel, forLoopEndLabel};
 
@@ -1174,8 +1173,8 @@ void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *sc
         }
 
         case BinaryOperator::LOGICAL_OR: {
-            const std::string evaluateToTrueLabel = this->generateLabel("evaluate_to_true");
-            const std::string endOrLabel = this->generateLabel("end_or");
+            const std::string evaluateToTrueLabel = this->generateLabel("logical_or_true");
+            const std::string endOrLabel = this->generateLabel("logical_or_end");
 
             // skip right expression if left expression results to true
             // evaluate to true if left expression is true
@@ -1221,8 +1220,8 @@ void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *sc
             break;
         }
         case BinaryOperator::LOGICAL_AND: {
-            const std::string evaluateToFalseLabel = this->generateLabel("evaluate_to_false");
-            const std::string endAndLabel = this->generateLabel("end_and");
+            const std::string evaluateToFalseLabel = this->generateLabel("logical_and_false");
+            const std::string endAndLabel = this->generateLabel("logical_and_end");
 
             // skip right expression if left expression results to false
             // evaluate to false if left expression is false
@@ -1390,8 +1389,8 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
             break;
         }
         case UnaryOperator::LOGICAL_NOT: {
-            const std::string evaluateToTrueLabel = this->generateLabel("evaluate_to_true");
-            const std::string endNotLabel = this->generateLabel("end_not");
+            const std::string evaluateToTrueLabel = this->generateLabel("logical_not_true");
+            const std::string endNotLabel = this->generateLabel("logical_not_end");
 
             this->compileExpr(scope, *expr.expr, ExprResult::VALUE);
 
@@ -1606,7 +1605,7 @@ void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNe
 
     // compile index expressions
     for (int index = newExpr.arrayDimensions.size() - 1; index >= 0; index--) {
-        const auto arraySizeNotNegativeLabel = this->generateLabel("array_size_not_negative");
+        const auto arraySizeNotNegativeLabel = this->generateLabel("array_length_valid");
 
         this->compileExpr(scope, *newExpr.arrayDimensions[index]->index, ExprResult::VALUE);
 
@@ -1815,8 +1814,8 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
     // [root_array_ptr, root_array_length]
     // [ptr           , ui32             ]
 
-    const auto nestedArrayAllocLoopLabel = this->generateLabel("nested_array_alloc_loop");
-    const auto endNestedArrayAllocLoopLabel = this->generateLabel("end_nested_array_alloc_loop");
+    const auto nestedArrayAllocLoopLabel = this->generateLabel("nested_array_alloc_start");
+    const auto endNestedArrayAllocLoopLabel = this->generateLabel("nested_array_alloc_end");
 
     this->emit(LabelDef{nestedArrayAllocLoopLabel});
 
@@ -2006,7 +2005,7 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
         return;
     }
 
-    const auto validArrayInitialiserSize = this->generateLabel("valid_array_initialiser_size");
+    const auto validArrayInitialiserSize = this->generateLabel("array_initialiser_length_valid");
 
     // [root_array_ptr]
     // [ptr           ]
@@ -2371,7 +2370,7 @@ std::string compiler::AssemblyGenerator::generateLabel(const std::string& label)
 }
 
 std::string compiler::AssemblyGenerator::generateScopeFunctionIdentifier(const uint32_t scopeFunctionNumber) {
-    return "__Scope__" + std::to_string(scopeFunctionNumber);
+    return "__scope__" + std::to_string(scopeFunctionNumber);
 }
 
 void compiler::AssemblyGenerator::registerScopeFunction(const ScopeFunctionBody& scopeFunctionBody, const uint32_t blockEndLine, const uint16_t blockEndColumn) {

@@ -62,7 +62,7 @@ namespace compiler {
         inline static std::unordered_map<BuiltinFunctionId, BuiltinFunction> builtinFunctionAssembly = {
 
             {BuiltinFunctionId::EXIT_INT, BuiltinFunction{
-                "__Builtin__exit(int)",
+                "__builtin__exit(int)",
                 1,
                 0,
                 {
@@ -75,7 +75,7 @@ namespace compiler {
             }},
 
             {BuiltinFunctionId::PRINT_INT, BuiltinFunction{
-                "__Builtin__print(int)",
+                "__builtin__print(int)",
                 1,
                 0,
                 {
@@ -88,7 +88,7 @@ namespace compiler {
             }},
 
             {BuiltinFunctionId::PRINT_FLOAT, BuiltinFunction{
-                "__Builtin__print(float)",
+                "__builtin__print(float)",
                 1,
                 0,
                 {
@@ -101,17 +101,17 @@ namespace compiler {
             }},
 
             {BuiltinFunctionId::PRINT_BOOL, BuiltinFunction{
-                "__Builtin__print(bool)",
+                "__builtin__print(bool)",
                 1,
                 0,
                 {
                 "    loadL ui32 #1",
-                "    jez $__print(bool)__false",
+                "    jez $__builtin__print(bool)__false",
                 "    push ptr $__true__string",
-                "    jmp $__print(bool)__print",
-                "$__print(bool)__false:",
+                "    jmp $__builtin__print(bool)__print",
+                "$__builtin__print(bool)__false:",
                 "    push ptr $__false__string",
-                "$__print(bool)__print:",
+                "$__builtin__print(bool)__print:",
                 "    native print_str",
                 "    ret",
             },
@@ -120,7 +120,7 @@ namespace compiler {
             }},
 
         {BuiltinFunctionId::PRINT_CHAR, BuiltinFunction{
-            "__Builtin__print(char)",
+            "__builtin__print(char)",
             1,
             0,
             {
@@ -133,7 +133,7 @@ namespace compiler {
             }},
 
         {BuiltinFunctionId::PRINTLN_INT, BuiltinFunction{
-            "__Builtin__println(int)",
+            "__builtin__println(int)",
             1,
             0,
             {
@@ -148,7 +148,7 @@ namespace compiler {
         }},
 
         {BuiltinFunctionId::PRINTLN_FLOAT, BuiltinFunction{
-            "__Builtin__println(float)",
+            "__builtin__println(float)",
             1,
             0,
             {
@@ -163,7 +163,7 @@ namespace compiler {
         }},
 
         {BuiltinFunctionId::PRINTLN_BOOL, BuiltinFunction{
-            "__Builtin__println(bool)",
+            "__builtin__println(bool)",
             1,
             0,
             {
@@ -178,7 +178,7 @@ namespace compiler {
         }},
 
         {BuiltinFunctionId::PRINTLN_CHAR, BuiltinFunction{
-            "__Builtin__println(char)",
+            "__builtin__println(char)",
             1,
             0,
             {

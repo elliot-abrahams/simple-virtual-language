@@ -883,11 +883,11 @@ void VM::executeThrow() {
                 errorMsg
             };
         }
-        case 0x01: { // NegativeArraySizeError
+        case 0x01: { // NegativeArrayLengthError
             const Value arrayLength = this->operandStack.pop();
 
             checkType(
-                "throw negative_array_size",
+                "throw negative_array_length",
                 {
                     static_cast<uint8_t>(ISA::Type::I32),
                     static_cast<uint8_t>(ISA::Type::UI32),
@@ -903,10 +903,10 @@ void VM::executeThrow() {
                 errorMsg
             };
         }
-        case 0x02: { // ArrayInitialiserSizeError
+        case 0x02: { // ArrayInitialiserLengthError
             const Value arrayLength = this->operandStack.pop();
             checkType(
-                "throw array_initialiser_size",
+                "throw array_initialiser_length",
                 {
                     static_cast<uint8_t>(ISA::Type::UI32),
                 },

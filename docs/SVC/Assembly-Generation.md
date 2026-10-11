@@ -739,19 +739,19 @@ The right operand is evaluated only when the left operand evaluated to true.
 ```
     {{Left Expression}}
     
-    jez $evaluate_to_false_[N0]
+    jez $logical_and_false_[N0]
     
     {{Right Expression}}
     
-    jez $evaluate_to_false_[N0]
+    jez $logical_and_false_[N0]
     
     push ui32 #1    
-    jmp $end_and_[N1]
+    jmp $logical_and_end_[N1]
     
-$evaluate_to_false_[N0]:
+$logical_and_false_[N0]:
     push ui32 #0
     
-$end_and_[N1]:
+$logical_and_end_[N1]:
 ```
 
 Both branches leave a `ui32` result on the operand stack.
@@ -766,19 +766,19 @@ The right operand is evaluated only when the left operand evaluates to false.
 ```
     {{Left Expression}}
 
-    jnz $evaluate_to_true_[N0]
+    jnz $logical_or_true_[N0]
     
     {{Right Expression}}
     
-    jnz $evaluate_to_true_[N0]
+    jnz $logical_or_true_[N0]
     
     push ui32 #0    
-    jmp $end_or_[N1]
+    jmp $logical_or_end_[N1]
     
-$evaluate_to_true_[N0]:
+$logical_or_true_[N0]:
     push ui32 #1
     
-$end_or_[N1]:
+$logical_or_end_[N1]:
 ```
 
 Both branches leave a `ui32` result on the operand stack.
@@ -820,15 +820,15 @@ Logical NOT produces `true` when its operand is false and `false` when its opera
 ```
     {{Expression}}
     
-    jez $evaluate_to_true_[N0]
+    jez $logical_not_true_[N0]
     
     push ui32 #0
-    jmp $end_not_[N1]
+    jmp $logical_not_end_[N1]
     
-$evalate_to_true_[N0]:
+$logical_not_true_[N0]:
     push ui32 #1
     
-$end_not_[N1]:
+$logical_not_end_[N1]:
 ```
 
 Where:
@@ -1110,11 +1110,11 @@ The generated assembly is:
     push [type] #0
     clt
     
-    jez $array_size_not_negative_[N]
+    jez $array_length_valid_[N]
     
-    throw negative_array_size
+    throw negative_array_length
     
-$array_size_not_negative_[N]:
+$array_length_valid_[N]:
   
     conv ui32    ; instruction only emitted if [type] is not ui32  
     
@@ -1237,7 +1237,7 @@ The generated structure is:
     load ui32
     ; Stack: <nested_array_dimension: ui32, root_array_ptr: ptr, root_array_length: ui32>
         
-$nested_array_alloc_loop_[N0]:
+$nested_array_alloc_start_[N0]:
 
     ; root_array_length is used as a counter to allocate root_array_length number of nested arrays
    
@@ -1246,7 +1246,7 @@ $nested_array_alloc_loop_[N0]:
     ; break out of loop if counter is zero
    
     dup #0
-    jez $end_nested_array_alloc_loop_[N1]
+    jez $nested_array_alloc_end_[N1]
    
     ; calculate the pointer to the element that will store the nested array
    
@@ -1285,9 +1285,9 @@ $nested_array_alloc_loop_[N0]:
     sub
     ; Stack: <nested_array_dimension: ui32, root_array_ptr: ptr, nested_arrays_to_allocate - 1: ui32>
 
-    jmp $nested_array_alloc_loop_[N0]
+    jmp $nested_array_alloc_start_[N0]
     
-$end_nested_array_alloc_loop_[N1]:
+$nested_array_alloc_end_[N1]:
     ; Stack: <nested_array_dimension: ui32, root_array_ptr: ptr, 0: ui32>
 
     pop
@@ -1325,7 +1325,7 @@ The generated structure is:
     load ui32
     ; Stack: <nested_2_array_dimension: ui32, nested_array_dimension: ui32, root_array_ptr: ptr, root_array_length: ui32>
         
-$nested_array_alloc_loop_[N0]:
+$nested_array_alloc_start_[N0]:
 
     ; root_array_length is used as a counter to allocate root_array_length number of nested arrays
    
@@ -1334,7 +1334,7 @@ $nested_array_alloc_loop_[N0]:
     ; break out of loop if counter is zero
    
     dup #0
-    jez $end_nested_array_alloc_loop_[N1]
+    jez $nested_array_alloc_end_[N1]
    
     ; calculate the pointer to the element that will store the nested array
    
@@ -1368,7 +1368,7 @@ $nested_array_alloc_loop_[N0]:
     load ui32
     ; Stack: <nested_2_array_dimension: ui32, nested_array_dimension: ui32, root_array_ptr: ptr, nested_arrays_to_allocate: ui32, root_array_element_ptr: ptr, nested_array_ptr: ptr, nested_array_length: ui32>
 
-$nested_array_alloc_loop_[N2]:
+$nested_array_alloc_start_[N2]:
 
     ; root_array_length is used as a counter to allocate root_array_length number of nested arrays
    
@@ -1377,7 +1377,7 @@ $nested_array_alloc_loop_[N2]:
     ; break out of loop if counter is zero
    
     dup #0
-    jez $end_nested_array_alloc_loop_[N3]
+    jez $nested_array_alloc_end_[N3]
    
     ; calculate the pointer to the element that will store the nested array
    
@@ -1416,9 +1416,9 @@ $nested_array_alloc_loop_[N2]:
     sub
     ; Stack: <nested_2_array_dimension: ui32, nested_array_dimension: ui32, root_array_ptr: ptr, nested_arrays_to_allocate: ui32, root_array_element_ptr: ptr, nested_array_ptr: ptr, nested_2_arrays_to_allocate - 1: ui32>
 
-    jmp $nested_array_alloc_loop_[N2]
+    jmp $nested_array_alloc_start_[N2]
 
-$end_nested_array_alloc_loop_[N3]:
+$nested_array_alloc_end_[N3]:
     ; Stack: <nested_2_array_dimension: ui32, nested_array_dimension: ui32, root_array_ptr: ptr, nested_arrays_to_allocate: ui32, root_array_element_ptr: ptr, nested_array_ptr: ptr, nested_2_arrays_to_allocate - 1: ui32>
 
     pop
@@ -1433,9 +1433,9 @@ $end_nested_array_alloc_loop_[N3]:
     sub
     ; Stack: <nested_2_array_dimension: ui32, nested_array_dimension: ui32, root_array_ptr: ptr, nested_arrays_to_allocate - 1: ui32>
 
-    jmp $nested_array_alloc_loop_[N0]
+    jmp $nested_array_alloc_start_[N0]
     
-$end_nested_array_alloc_loop_[N1]:
+$nested_array_alloc_end_[N1]:
     ; Stack: <nested_2_array_dimension: ui32, nested_array_dimension: ui32, root_array_ptr: ptr, 0: ui32>
 
     pop
@@ -1503,14 +1503,14 @@ The generated assembly therefore compares the runtime array length with the numb
     clt
     ; Stack: <array_ptr: ptr, array_length < number_of_initialiser_elements: ui32>
     
-    jez $valid_array_initialiser_size_[N]
+    jez $array_initialiser_length_valid_[N]
     
     load ui32
     ; Stack: <array_length: ui32>
     
-    throw array_initialiser_size
+    throw array_initialiser_length
     
-$valid_array_initialiser_size_[N]:
+$array_initialiser_length_valid_[N]:
 ```
 
 The `clt` instruction checks whether the array length is less than the number of initialiser elements.
@@ -1880,11 +1880,11 @@ An `if` statement without an `else` block is generated as:
 
 ```
     {{Condition Expression}}
-    jez $end_if_[N]
+    jez $if_end_[N]
     
     {{If Block}}
     
-$end_if_[N0]:
+$if_end_[N0]:
 ```
 
 The condition value is consumed by `jez`.
@@ -1898,16 +1898,16 @@ An `if` statement with an `else` block is generated as:
 
 ```
     {{Condition Expression}}
-    jez $else_[N0]
+    jez $if_else_[N0]
     
     {{If Block}}
     
-    jmp $end_if_[N1]
+    jmp $if_end[N1]
     
-$else_[N0]:
+$if_else_[N0]:
     {{Else Block}}
     
-$end_if_[N1]:
+$if_end_[N1]:
 ```
 
 Where:
@@ -1924,15 +1924,15 @@ An `else if` statement is generated as an `if` statement contained within the `e
 A `while` statement is generated as:
 
 ```
-$start_while_[N0]:
+$while_start_[N0]:
     {{Condition Expression}}
-    jez $end_while_[N1]
+    jez $while_end_[N1]
     
     {{Block}}
     
-    jmp $start_while_[N0]
+    jmp $while_start_[N0]
     
-$end_while_[N1]:
+$while_end_[N1]:
 ```
 
 Where:
@@ -1963,7 +1963,7 @@ A range-based for loop with no explicit step is generated as:
     {{Implicit Conversion to [type]}}
     ; Stack: <1: type, end: type, loop_var_ptr: ptr, start: type>
     
-$for_loop_start_[N0]:
+$for_start_[N0]:
     ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type>
     
     dup #2
@@ -1971,7 +1971,7 @@ $for_loop_start_[N0]:
     cle
     ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type, end <= current: ui32>
     
-    jnz $for_loop_end_[N1]
+    jnz $for_end_[N1]
     ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type>
 
     dup #1
@@ -1988,9 +1988,9 @@ $for_loop_start_[N0]:
     add
     ; Stack: <1: type, end: type, loop_var_ptr: ptr, current + 1: type>
 
-    jmp $for_loop_start_[N0]
+    jmp $for_start_[N0]
     
-$for_loop_end_[N1]:
+$for_end_[N1]:
     ; Stack: <1: type, end: type, loop_var_ptr: ptr, current: type>
     
     pop
@@ -2016,10 +2016,10 @@ A range-based for loop with explicit step is generated as:
     dup #0
     ; Stack: <step: type, step: type>
     
-    jnz $for_loop_step_valid_[N0]
+    jnz $for_step_valid_[N0]
     throw zero_range_step
 
-$for_loop_step_valid_[N0]:
+$for_step_valid_[N0]:
     
     ; Stack: <step: type>
     
@@ -2044,7 +2044,7 @@ $for_loop_step_valid_[N0]:
     {{Implicit Conversion to [type]}}
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, start: type>
     
-$for_loop_start_[N1]:
+$for_start_[N1]:
     dup #2
     dup #1
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end: type, current: type>
@@ -2052,27 +2052,27 @@ $for_loop_start_[N1]:
     dup #6
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end: type, current: type, is_step_positive: ui32>
 
-    jez $for_loop_negative_step_condition_[N2]
+    jez $for_negative_step_condition_[N2]
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end: type, current: type>
 
     cle
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end <= current: ui32>
 
-    jnz $for_loop_end_[N5]
+    jnz $for_end_[N5]
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type>
 
-    jmp $for_loop_condition_join_[N3]
+    jmp $for_condition_join_[N3]
     
-$for_loop_negative_step_condition_[N2]:
+$for_negative_step_condition_[N2]:
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end: type, current: type>
 
     cge
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, end <= current: ui32>
 
-    jnz $for_loop_end_[N5]
+    jnz $for_end_[N5]
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type>
 
-$for_loop_condition_join_[N3]:
+$for_condition_join_[N3]:
     dup #1
     dup #1
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type, loop_var_ptr: ptr, current: type>
@@ -2083,15 +2083,15 @@ $for_loop_condition_join_[N3]:
     {{For Loop Body}}
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type>
 
-$for_loop_continue_[N4]:
+$for_continue_[N4]:
 
     dup #3
     add
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current + step: type>
 
-    jmp $for_loop_start_[N1]
+    jmp $for_start_[N1]
     
-$for_loop_end_[N5]:
+$for_end_[N5]:
     ; Stack: <is_step_positive: ui32, step: type, end: type, loop_var_ptr: ptr, current: type>
     
     pop
@@ -2135,7 +2135,7 @@ A iterable-based for loop is generated as:
     push ui32 #0
     ; Stack: <iterable_first_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, 0: ui32>
 
-$for_loop_start_[N0]:
+$for_start_[N0]:
     ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
 
     dup #2
@@ -2143,7 +2143,7 @@ $for_loop_start_[N0]:
     cle
     ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32, iterable_length <= current: ui32>
 
-    jnz $for_loop_end_[N2]
+    jnz $for_end_[N2]
     ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
     
     dup #1
@@ -2169,15 +2169,15 @@ $for_loop_start_[N0]:
     {{For Loop Body}}
     ; Stack: <iterable_element_ptr + size_of_element_type: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
 
-$for_loop_continue_[N1]:
+$for_continue_[N1]:
 
     dup #3
     add
     ; Stack: <iterable_element_ptr + size_of_element_type: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current + 1: ui32>
 
-    jmp $for_loop_start_[N0]
+    jmp $for_start_[N0]
     
-$for_loop_end_[N2]:
+$for_end_[N2]:
     ; Stack: <iterable_element_ptr: ptr, 1: ui32, iterable_length: ui32, loop_var_ptr: ptr, current: ui32>
 
     pop
@@ -2203,7 +2203,7 @@ A `break` statement jumps to the end of the innermost enclosing loop.
 If the innermost enclosing loop is a `while loop` it generates:
 
 ```
-    jmp $end_while_[N]
+    jmp $while_end_[N]
 ```
 
 If the innermost enclosing loop is a `fpr loop` it generates:
@@ -2224,13 +2224,13 @@ A `continue` statement jumps to the start of the innermost enclosing loop.
 If the innermost enclosing loop is a `while loop` it generates:
 
 ```
-    jmp $start_while_[N]
+    jmp $while_start_[N]
 ```
 
 If the innermost enclosing loop is a `for loop` it generates:
 
 ```
-    jmp $for_loop_continue_[N]
+    jmp $for_continue_[N]
 ```
 
 Where:
@@ -2397,13 +2397,13 @@ A scope function is generated for a block whose parent scope is the global scope
 The global code calls the generated scope function:
 
 ```
-    call $__Scope__[N]
+    call $__scope__[N]
 ```
 
 The scope function is generated as:
 
 ```
-def $__Scope__[N]:
+def $__scope__[N]:
         args 0
         locals [number_of_local_slots]
         
@@ -2433,7 +2433,7 @@ Only builtin functions that are called, or are required by a called builtin func
 
 **Assembly:**
 ```
-def $__Builtin__exit(int):
+def $__builtin__exit(int):
         args 1
         locals 0
 
@@ -2446,7 +2446,7 @@ def $__Builtin__exit(int):
 
 **Assembly:**
 ```
-def $__Builtin__print(int):
+def $__builtin__print(int):
         args 1
         locals 0
 
@@ -2459,7 +2459,7 @@ def $__Builtin__print(int):
 
 **Assembly:**
 ```
-def $__Builtin__print(float):
+def $__builtin__print(float):
         args 1
         locals 0
 
@@ -2472,17 +2472,17 @@ def $__Builtin__print(float):
 
 **Assembly:**
 ```
-def $__Builtin__print(bool):
+def $__builtin__print(bool):
         args 1
         locals 0
 
         loadL ui32 #1
-        jez $__print(bool)__false
+        jez $__builtin__print(bool)__false
         push ptr $__true__string
-        jmp $__print(bool)__print
-    $__print(bool)__false:
+        jmp $__builtin__print(bool)__print
+    $__builtin__print(bool)__false:
         push ptr $__false__string
-    $__print(bool)__print:
+    $__builtin__print(bool)__print:
         native print_str
         ret
 ```
@@ -2495,7 +2495,7 @@ def $__Builtin__print(bool):
 
 **Assembly:**
 ```
-def $__Builtin__print(char):
+def $__builtin__print(char):
         args 1
         locals 0
 
@@ -2508,7 +2508,7 @@ def $__Builtin__print(char):
 
 **Assembly:**
 ```
-def $__Builtin__println(int):
+def $__builtin__println(int):
         args 1
         locals 0
 
@@ -2519,11 +2519,14 @@ def $__Builtin__println(int):
         ret
 ```
 
+**Required builtin functions:**
+- `$__builtin__print(int)`
+
 #### 8.1.7 void println(float)
 
 **Assembly:**
 ```
-def $__Builtin__println(float):
+def $__builtin__println(float):
         args 1
         locals 0
 
@@ -2534,11 +2537,14 @@ def $__Builtin__println(float):
         ret
 ```
 
+**Required builtin functions:**
+- `$__builtin__print(float)`
+
 #### 8.1.8 void println(bool)
 
 **Assembly:**
 ```
-def $__Builtin__println(bool):
+def $__builtin__println(bool):
         args 1
         locals 0
 
@@ -2549,11 +2555,14 @@ def $__Builtin__println(bool):
         ret
 ```
 
+**Required builtin functions:**
+- `$__builtin__print(bool)`
+
 #### 8.1.9 void println(char)
 
 **Assembly:**
 ```
-def $__Builtin__println(char):
+def $__builtin__println(char):
         args 1
         locals 0
 
@@ -2563,6 +2572,9 @@ def $__Builtin__println(char):
         native print_char
         ret
 ```
+
+**Required builtin functions:**
+- `$__builtin__print(char)`
 
 ---
 
