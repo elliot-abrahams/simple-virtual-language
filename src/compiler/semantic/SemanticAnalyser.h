@@ -46,6 +46,7 @@ namespace compiler {
 
         ExpressionInfo processExpr(Scope* scope, const ast::Expr& expr);
 
+        ExpressionInfo processExprTernary(Scope* scope, const ast::ExprTernary& exprTernary);
         ExpressionInfo processExprBinary(Scope* scope, const ast::ExprBinary& exprBinary);
         ExpressionInfo processExprUnary(Scope* scope, const ast::ExprUnary& exprUnary);
         ExpressionInfo processExprPostfix(Scope* scope, const ast::ExprPostfix& exprPostfix);
@@ -60,6 +61,7 @@ namespace compiler {
 
         FunctionSymbol* resolveFunctionCall(std::vector<FunctionSymbol>* functionSymbols, const ast::ExprFunctionCall& functionCall, const std::vector<Type>& argumentTypes) const;
 
+        Type processTernaryOperator(const ast::ExprTernary& ternaryOperator);
         Type processBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
         Type processAddition(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
         Type processSubtraction(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType);
@@ -81,6 +83,7 @@ namespace compiler {
         static std::string unaryOperatorToString(const UnaryOperator& unaryOperator);
         static std::string assignmentOperatorToString(const AssignmentOperator& assignmentOperator);
 
+        void throwTypeErrorFromTernaryOperator(const ast::ExprTernary& ternaryOperator);
         void throwTypeErrorFromUnaryOperator(const ast::ExprUnary& unaryOperator, const Type& type) const;
         void throwTypeErrorFromBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) const;
         void throwInvalidExpressionTypeAsStatement(const ast::Expr& expr) const;

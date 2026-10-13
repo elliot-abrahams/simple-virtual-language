@@ -35,9 +35,10 @@
     - [6.9.1 Array Access](#691-array-access)
     - [6.9.2 Field Access](#692-field-access)
     - [6.9.3 Increment and Decrement](#693-increment-and-decrement)
-  - [6.10 Function Calls](#610-function-calls)
-  - [6.11 Cast Expressions](#611-cast-expressions)
-  - [6.12 New Expressions](#612-new-expressions)
+  - [6.10 Ternary Operator](#610-ternary-operator)
+  - [6.11 Function Calls](#611-function-calls)
+  - [6.12 Cast Expressions](#612-cast-expressions)
+  - [6.13 New Expressions](#613-new-expressions)
 - [7. Functions](#7-functions)
   - [7.1 Function Declarations](#71-function-declarations)
   - [7.2 Parameters](#72-parameters)
@@ -606,7 +607,31 @@ int b = x--;  // b is 6, x is 5
 
 The resulting type of a postfix increment or decrement expression is the resulting type of its base expression.
 
-### 6.10 Function Calls
+### 6.10 Ternary Operator
+
+The ternary operator evaluates a condition and then evaluates one of two expressions depending on the result.
+
+The condition expression must have type bool.
+
+If the condition evaluates to true, the second expression is evaluated. Otherwise, the third expression is evaluated.
+
+The valid operand types and resulting types of a ternary operator are shown in the following table. The left column represents the type of the second expression, and the top row represents the type of the third expression.
+
+| Left \ Right | `int`   | `float` | `bool`  | `char`  |
+|--------------|---------|---------|---------|---------|
+| `int`        | `int`   | `float` | invalid | `int`   |
+| `float`      | `float` | `float` | invalid | `float` |
+| `bool`       | invalid | invalid | `bool`  | invalid |
+| `char`       | `int`   | `float` | invalid | `char`  |
+
+For example:
+```
+int x = true ? 1 : 2;   # x is assigned value 1
+
+float y = false ? 1 : 2.5f;  # y is assigned value 2.5
+```
+
+### 6.11 Function Calls
 
 A function call is an expression that evaluates to the return value of the selected function.
 
@@ -616,7 +641,7 @@ A function call with a `void` return type does not produce a value and therefore
 
 Function selection is defined in [Section 7.4](#74-function-resolution).
 
-### 6.11 Cast Expressions
+### 6.12 Cast Expressions
 
 A cast expression explicitly converts the resulting value of an expression to the specified type.
 
@@ -633,7 +658,7 @@ The following conversions are permitted:
 
 Array types cannot be used as either the source or target type of a cast.
 
-### 6.12 New Expressions
+### 6.13 New Expressions
 
 A new expression creates an array of the specified type and dimensions.
 
@@ -850,7 +875,7 @@ arr[0]--;
 
 The called function must have a `void` return type.
 
-See [6.9 Function Calls](#69-function-calls) for the semantics of function call expressions.
+See [6.11 Function Calls](#611-function-calls) for the semantics of function call expressions.
 See [7.4 Function Resolution](#74-function-resolution) for function resolution rules.
 
 For example:

@@ -11,6 +11,10 @@ TEST(SYMBOL, COLON) {
     ASSERT_TOKEN_EQ(":", TokenKind::COLON, ":");
 }
 
+TEST(SYMBOL, QUESTION_MARK) {
+    ASSERT_TOKEN_EQ("?", TokenKind::QUESTION_MARK, "?");
+}
+
 TEST(SYMBOL, COMMA) {
     ASSERT_TOKEN_EQ(",", TokenKind::COMMA, ",");
 }

@@ -54,6 +54,7 @@ namespace compiler {
         void compileBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo);
         void compileExprUnary(Scope* scope, const ast::ExprUnary& exprUnary, const ExprResult exprResult);
         void compileExprPostfix(Scope* scope, const ast::ExprPostfix& exprPostfix, const ExprResult exprResult);
+        void compileExprTernary(Scope* scope, const ast::ExprTernary& exprTernary, const ExprResult exprResult);
         void compileExprCast(Scope* scope, const ast::ExprCast& exprCast);
         void compileExprNew(Scope* scope, const ast::ExprNew& exprNew);
         void compileArrayAlloc(Scope* scope, const ast::ExprNew& exprNew, unsigned int depth, Type& typeAtDepth);

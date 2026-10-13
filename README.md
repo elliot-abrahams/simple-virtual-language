@@ -42,6 +42,7 @@ Assembly Language    (.svma)
 - Implicit and explicit type conversions
 - Arithmetic, comparison, logical, and bitwise operators
 - Assignment operators (`+=`, `<<=`, `^=` etc.)
+- Ternary operator
 - Runtime error reporting with source locations and stack traces
 
 ### Compiler

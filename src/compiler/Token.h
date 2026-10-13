@@ -5,6 +5,7 @@
 enum class TokenKind {
     SEMI,
     COLON,
+    QUESTION_MARK,
     COMMA,
     DOT,
     DOT_DOT,

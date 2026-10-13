@@ -558,8 +558,8 @@ unsigned int compiler::SemanticAnalyser::resolveAccessArrayDepth(const Type& arr
 }
 
 compiler::ExpressionInfo compiler::SemanticAnalyser::processExpr(Scope* scope, const ast::Expr& expr) {
-    if (auto* binaryOperatorExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
-        return this->processBinaryExpr(scope, *binaryOperatorExpr);
+    if (auto* exprTernary = dynamic_cast<const ast::ExprTernary*>(&expr)) {
+        return this->processExprTernary(scope, *exprTernary);
     }
     if (auto* exprBinary = dynamic_cast<const ast::ExprBinary*>(&expr)) {
         return this->processExprBinary(scope, *exprBinary);
@@ -594,6 +594,21 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::processExpr(Scope* scope, c
     if (auto exprCharLiteral = dynamic_cast<const ast::ExprCharLiteral*>(&expr)) {
         return this->processExprCharLiteral(*exprCharLiteral);
     }
+}
+
+compiler::ExpressionInfo compiler::SemanticAnalyser::processExprTernary(Scope *scope, const ast::ExprTernary& exprTernary) {
+    const auto conditionType = this->processExpr(scope, *exprTernary.condition).type;
+
+    // enforce condition has type bool
+    this->checkConditionTypeIsBool(conditionType, exprTernary.condition->line, exprTernary.condition->column);
+
+    const auto trueType = this->processExpr(scope, *exprTernary.trueExpr).type;
+    const auto falseType = this->processExpr(scope, *exprTernary.falseExpr).type;
+
+    const auto resultingType = this->processTernaryOperator(exprTernary);
+
+    exprTernary.resultingType = resultingType;
+    return ExpressionInfo{resultingType, Assignability::NON_ASSIGNABLE};
 }
 
 compiler::ExpressionInfo compiler::SemanticAnalyser::processExprBinary(Scope* scope, const ast::ExprBinary& exprBinary) {
@@ -1023,6 +1038,42 @@ compiler::FunctionSymbol *compiler::SemanticAnalyser::resolveFunctionCall(std::v
     return functionSymbol;
 }
 
+compiler::Type compiler::SemanticAnalyser::processTernaryOperator(const ast::ExprTernary& ternaryOperator) {
+    /*
+       | Left \ Right | `int`   | `float` | `bool`  | `char`  |
+       |--------------|---------|---------|---------|---------|
+       | `int`        | `int`   | `float` | invalid | `int`   |
+       | `float`      | `float` | `float` | invalid | `float` |
+       | `bool`       | invalid | invalid | `bool`  | invalid |
+       | `char`       | `int`   | `float` | invalid | `char`  |
+     */
+
+    const auto leftType = ternaryOperator.trueExpr->resultingType;
+    const auto rightType = ternaryOperator.falseExpr->resultingType;
+
+    if (leftType.isArray() || rightType.isArray()) {
+        this->throwTypeErrorFromTernaryOperator(ternaryOperator);
+    }
+
+    if (leftType.isNumeric() && rightType.isNumeric()) {
+
+        if (leftType.typeId == FLOAT_TYPE_ID || rightType.typeId == FLOAT_TYPE_ID) {
+            return Type{FLOAT_TYPE_ID, 0};
+        }
+
+        if (leftType.typeId == CHAR_TYPE_ID || rightType.typeId == CHAR_TYPE_ID) {
+            return Type{CHAR_TYPE_ID, 0};
+        }
+
+        return Type{INT_TYPE_ID, 0};
+    }
+
+    if (leftType.typeId == BOOL_TYPE_ID && rightType.typeId == BOOL_TYPE_ID) {
+        return Type{BOOL_TYPE_ID, 0};
+    }
+    this->throwTypeErrorFromTernaryOperator(ternaryOperator);
+}
+
 compiler::Type compiler::SemanticAnalyser::processBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& leftType, const Type& rightType) {
     switch (binaryOperatorInfo.binaryOperator) {
         case BinaryOperator::ADD: return this->processAddition(binaryOperatorInfo, leftType, rightType);
@@ -1367,7 +1418,20 @@ std::string compiler::SemanticAnalyser::assignmentOperatorToString(const Assignm
     }
 }
 
-void compiler::SemanticAnalyser::throwTypeErrorFromUnaryOperator(const ast::ExprUnaryOperator& unaryOperator, const Type& type) const {
+void compiler::SemanticAnalyser::throwTypeErrorFromTernaryOperator(const ast::ExprTernary &ternaryOperator) {
+    throw TypeError(
+        *this->path,
+        ternaryOperator.line,
+        ternaryOperator.column,
+        "cannot use types '" +
+            typeToString(ternaryOperator.trueExpr->resultingType) +
+            "' and '" +
+            typeToString(ternaryOperator.falseExpr->resultingType) +
+            "' in a ternary operator"
+    );
+}
+
+void compiler::SemanticAnalyser::throwTypeErrorFromUnaryOperator(const ast::ExprUnary& unaryOperator, const Type& type) const {
     throw TypeError(
             *this->path,
             unaryOperator.line,

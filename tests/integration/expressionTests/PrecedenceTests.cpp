@@ -3,6 +3,21 @@
 
 using namespace integrationTests;
 
+
+TEST(EXPR_PRECEDENCE, LOGICAL_OR_BEFORE_TERNARY_ONE) {
+    ASSERT_OUTPUT_EQ(
+        "print(true || false ? 1 : 2);",
+        "1"
+    );
+}
+
+TEST(EXPR_PRECEDENCE, LOGICAL_OR_BEFORE_TERNARY_TWO) {
+    ASSERT_OUTPUT_EQ(
+        "print(true? false || false : true);",
+        "false"
+    );
+}
+
 TEST(EXPR_PRECEDENCE, LOGICAL_AND_BEFORE_LOGICAL_OR_ONE) {
     ASSERT_OUTPUT_EQ(
         "print(false && false || true);",

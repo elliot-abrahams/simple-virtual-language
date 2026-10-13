@@ -38,13 +38,14 @@
   - [5.5 Invalid Range Type](#55-invalid-range-type)
   - [5.6 Incompatible Range Type](#56-incompatible-range-type)
   - [5.7 Invalid Iterable Type](#57-invalid-iterable-type)
-  - [5.8 Incompatible Loop Variable Type](#58-incompatible-loop-variable-type)
-  - [5.9 Invalid Binary Operator](#59-invalid-binary-operator)
-  - [5.10 Invalid Unary Operator](#510-invalid-unary-operator)
-  - [5.11 Invalid Array Index Type](#511-invalid-array-index-type)
-  - [5.12 Invalid Array Indexing](#512-invalid-array-indexing)
-  - [5.13 Invalid Array Initialiser Element](#513-invalid-array-initialiser-element)
-  - [5.14 Invalid Cast](#514-invalid-cast)
+  - [5.8 Invalid Loop Variable Type](#58-invalid-loop-variable-type)
+  - [5.9 Invalid Ternary Operator]
+  - [5.10 Invalid Binary Operator](#510-invalid-binary-operator)
+  - [5.11 Invalid Unary Operator](#511-invalid-unary-operator)
+  - [5.12 Invalid Array Index Type](#512-invalid-array-index-type)
+  - [5.13 Invalid Array Indexing](#513-invalid-array-indexing)
+  - [5.14 Invalid Array Initialiser Element](#514-invalid-array-initialiser-element)
+  - [5.15 Invalid Cast](#515-invalid-cast)
    
 ## 1. Overview
 
@@ -752,7 +753,7 @@ Iterable must be an array.
 
 ---
 
-### 5.8 Incompatible Loop Variable Type
+### 5.8 Invalid Loop Variable Type
 
 **Message:**
 ```
@@ -773,7 +774,25 @@ elements of iterable must be implicitly convertible to the variable type of the 
 
 ---
 
-### 5.9 Invalid Binary Operator
+### 5.9 Invalid Ternary Operator
+
+**Message:**
+```
+cannot use types '<type>' and '<type>' in a ternary operator
+```
+
+**Example:**
+```
+int x = true ? 1 : false;
+```
+
+```
+TypeError: cannot use types 'int' and 'bool' in a ternary operator
+```
+
+The resulting types of the expressions in a ternary operator must be compatible.
+
+### 5.10 Invalid Binary Operator
 
 **Message:**
 ```
@@ -793,7 +812,7 @@ The binary operator cannot be applied to the types of its operands.
 
 ---
 
-### 5.10 Invalid Unary Operator
+### 5.11 Invalid Unary Operator
 
 **Message:**
 ```
@@ -813,7 +832,7 @@ The unary operator cannot be applied to the operand's type.
 
 ---
 
-### 5.11 Invalid Array Index Type
+### 5.12 Invalid Array Index Type
 
 **Message:**
 ```
@@ -834,7 +853,7 @@ The array index must have a valid index type.
 
 ---
 
-### 5.12 Invalid Array Indexing
+### 5.13 Invalid Array Indexing
 
 **Message:**
 ```
@@ -855,7 +874,7 @@ Indexing can only be applied to an array.
 
 ---
 
-### 5.13 Invalid Array Initialiser Element
+### 5.14 Invalid Array Initialiser Element
 
 **Message:**
 ```
@@ -875,7 +894,7 @@ The value used to initialise an array element is not compatible with the array's
 
 ---
 
-### 5.14 Invalid Cast
+### 5.15 Invalid Cast
 
 **Message:**
 ```

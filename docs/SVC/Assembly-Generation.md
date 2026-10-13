@@ -45,13 +45,14 @@
     - [5.9.1 Array Access](#591-array-access)
     - [3.9.2 Field Access](#592-field-access)
     - [5.9.3 Increment and Decrement](#593-increment-and-decrement)
-  - [5.10 Function Calls](#510-function-calls)
-  - [5.11 Cast Expressions](#511-cast-expressions)
-  - [5.12 New Expressions](#512-new-expressions)
-    - [5.12.1 Array Dimension](#5121-array-dimension)
-    - [5.12.2 One Dimensional Array Allocation](#5122-one-dimensional-array-allocation)
-    - [5.12.3 Multidimensional Array Allocation](#5123-multidimensional-array-allocation)
-    - [5.12.4 Array Initialiser](#5124-array-initialiser)
+  - [5.10 Ternary Expressions](#510-ternary-expressions)
+  - [5.11 Function Calls](#511-function-calls)
+  - [5.12 Cast Expressions](#512-cast-expressions)
+  - [5.13 New Expressions](#513-new-expressions)
+    - [5.13.1 Array Dimension](#5131-array-dimension)
+    - [5.13.2 One Dimensional Array Allocation](#5132-one-dimensional-array-allocation)
+    - [5.13.3 Multidimensional Array Allocation](#5133-multidimensional-array-allocation)
+    - [5.13.4 Array Initialiser](#5134-array-initialiser)
 - [6. Statements](#6-statements)
   - [6.1 Variable Declaration](#61-variable-declaration)
     - [6.1.1 Global Variable Declaration](#611-global-variable-declaration)
@@ -1023,7 +1024,35 @@ The old value remains on the operand stack because postfix increment and decreme
 
 ---
 
-### 5.10 Function Calls
+### 5.10 Ternary Expressions
+
+Ternary expressions are generated as:
+
+```
+    {{Condition Expression}}
+    ; Stack: <condition: ui32>
+    
+    jnz $ternary_true_[N0]
+    ; Stack: <>
+    
+    {{False (third) Expression}}
+    {{Implicit Conversion}}
+    ; Stack: <result: result_type>
+    
+    jmp $ternary_end_[N1]
+    
+$ternary_true_[N0]:
+    ; Stack: <>
+    
+    {{False (second) Expression}}
+    {{Implicit Conversion}}
+    ; Stack: <result: result_type>
+    
+$ternary_end_[N1]:
+    ; Stack: <result: result_type>
+```
+
+### 5.11 Function Calls
 
 Function arguments are evaluated from left to right.
 
@@ -1050,7 +1079,7 @@ Where:
 
 ---
 
-### 5.11 Cast Expressions
+### 5.12 Cast Expressions
 
 A cast expression uses `conv` to explicitly convert the result of the expression to the specified type.
 
@@ -1067,7 +1096,7 @@ If the result of the expression already has the target type, no instruction is g
 
 ---
 
-### 5.12 New Expressions
+### 5.13 New Expressions
 
 A `new` expression allocates an array on the heap and leaves a pointer to the resulting array on the operand stack.
 
@@ -1094,7 +1123,7 @@ A `new` expression is generated in two stages:
 
 The array pointer produced by the allocation stage remains as the result of the `new` expression.
 
-#### 5.12.1 Array Dimension
+#### 5.13.1 Array Dimension
 
 Each dimension expression is evaluated from right to left.
 
@@ -1127,7 +1156,7 @@ Where:
 
 The conversion to `ui32` occurs only after the negative value check. This prevents a negative signed value from being converted into a large unsigned value before its validity has been checked.
 
-#### 5.12.2 One Dimensional Array Allocation
+#### 5.13.2 One Dimensional Array Allocation
 
 A one-dimensional array is allocated by:
 
@@ -1165,7 +1194,7 @@ The result of the operation is therefore:
 <array_ptr: ptr>
 ```
 
-#### 5.12.3 Multidimensional Array Allocation
+#### 5.13.3 Multidimensional Array Allocation
 
 A multidimensional array is constructed recursively.
 
@@ -1445,9 +1474,9 @@ $nested_array_alloc_end_[N1]:
     ; Stack: <root_array_ptr: ptr>
 ```
 
-See [5.12.2 One Dimensional Array Allocation](#5122-one-dimensional-array-allocation) for the assembly generated for `[One Dimensional Array Allocation]`.
+See [5.13.2 One Dimensional Array Allocation](#5132-one-dimensional-array-allocation) for the assembly generated for `[One Dimensional Array Allocation]`.
 
-#### 5.12.4 Array Initialiser
+#### 5.13.4 Array Initialiser
 
 An array initialiser is generated separately from array allocation.
 

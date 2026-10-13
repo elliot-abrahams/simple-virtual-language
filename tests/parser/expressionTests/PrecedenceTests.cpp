@@ -325,3 +325,28 @@ TEST(EXPR_PRECEDENCE, LOGICAL_AND_BEFORE_LOGICAL_OR) {
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);
 }
+
+TEST(EXPR_PRECEDENCE, LOGICAL_OR_BEFORE_TERNARY) {
+    const auto testCode = R"(
+        int x = true || false ? 1  : 2;
+    )";
+    const auto program = PARSE(testCode);
+    std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
+    expectedStatements.push_back(
+        std::make_unique<ExpectedVarDecl>(
+            std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
+            "x",
+            std::make_unique<ExpectedTernaryExpr>(
+                std::make_unique<ExpectedBinaryExpr>(
+                    compiler::BinaryOperator::LOGICAL_OR,
+                    std::make_unique<ExpectedBoolLiteral>(true),
+                    std::make_unique<ExpectedBoolLiteral>(false)
+                ),
+                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedIntegerLiteral>(2)
+            )
+        )
+    );
+    const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
+    ASSERT_PROGRAM_EQ(*expectedProgram, *program);
+}

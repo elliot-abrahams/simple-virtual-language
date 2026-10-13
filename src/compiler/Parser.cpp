@@ -453,10 +453,28 @@ std::unique_ptr<ast::StmExpr> compiler::Parser::parseExpressionStatement() const
 }
 
 /*
- *  expression          = logical_or_expression ;
+ *  expression                  = logical_or_expression, { QUESTION_MARK, expression, COLON, expression } ;
  */
 std::unique_ptr<ast::Expr> compiler::Parser::parseExpr() const {
-    return this->parseLogicalOrExpression();
+    auto expr = this->parseLogicalOrExpression();
+
+    if (this->tokeniser->tok().kind != TokenKind::QUESTION_MARK) {
+        return expr;
+    }
+
+    // parse ternary operator
+    this->tokeniser->eat(TokenKind::QUESTION_MARK);
+    auto trueExpr = this->parseExpr();
+    this->tokeniser->eat(TokenKind::COLON);
+    auto falseExpr = this->parseExpr();
+
+    return std::make_unique<ast::ExprTernary>(
+        expr->line,
+        expr->column,
+        std::move(expr),
+        std::move(trueExpr),
+        std::move(falseExpr)
+    );
 }
 
 /*

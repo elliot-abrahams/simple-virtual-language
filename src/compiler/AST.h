@@ -248,8 +248,21 @@ namespace ast {
             right(std::move(right)) {}
     };
 
-    struct ExpressionStatement final : Stm {
-        const std::unique_ptr<Expr> expression;
+    struct ExprTernary final : Expr {
+        const std::unique_ptr<Expr> condition;
+        const std::unique_ptr<Expr> trueExpr;
+        const std::unique_ptr<Expr> falseExpr;
+
+        ExprTernary(const uint32_t line,
+                const uint16_t column,
+                std::unique_ptr<Expr> condition,
+                std::unique_ptr<Expr> trueExpr,
+                std::unique_ptr<Expr> falseExpr) :
+            Expr(line, column),
+            condition(std::move(condition)),
+            trueExpr(std::move(trueExpr)),
+            falseExpr(std::move(falseExpr)) {}
+    };
 
     struct StmExpr final : Stm {
         const std::unique_ptr<Expr> expr;

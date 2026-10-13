@@ -97,6 +97,11 @@ Token compiler::Tokeniser::readToken() {
                 this->advance();
                 return token;
             }
+            case '?': {
+                const Token token = Token{TokenKind::QUESTION_MARK, "?", this->line, this->column};
+                this->advance();
+                return token;
+            }
             case ',': {
                 const Token token = Token{TokenKind::COMMA, ",", this->line, this->column};
                 this->advance();

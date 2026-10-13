@@ -1130,8 +1130,9 @@ void compiler::AssemblyGenerator::compileExpr(Scope* scope, const ast::Expr& exp
     else if (auto* exprPostfix = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
         this->compileExprPostfix(scope, *exprPostfix, exprResult);
     }
-    else if (auto* castExpr = dynamic_cast<const ast::ExprCast*>(&expr)) {
-        this->compileCastExpr(scope, *castExpr);
+    if (auto* exprTernary = dynamic_cast<const ast::ExprTernary*>(&expr)) {
+        this->compileExprTernary(scope, *exprTernary, exprResult);
+    }
     else if (auto* exprCast = dynamic_cast<const ast::ExprCast*>(&expr)) {
         this->compileExprCast(scope, *exprCast);
     }
@@ -1593,8 +1594,44 @@ void compiler::AssemblyGenerator::compileExprPostfix(Scope* scope, const ast::Ex
     }
 }
 
-void compiler::AssemblyGenerator::compileCastExpr(Scope* scope, const ast::ExprCast& castExpr) {
-    this->compileExpr(scope, *castExpr.expr, ExprResult::VALUE);
+void compiler::AssemblyGenerator::compileExprTernary(Scope* scope, const ast::ExprTernary& exprTernary, const ExprResult exprResult) {
+    const auto ternarySourceLocation = SourceLocation{0, exprTernary.line, exprTernary.column};
+
+    const auto ternaryTrueLabel = this->generateLabel("ternary_true");
+    const auto ternaryEndLabel = this->generateLabel("ternary_end");
+
+    this->compileExpr(scope, *exprTernary.condition, exprResult);
+    // [condition]
+
+    this->emit(Instruction{Opcode::JNZ,
+        {LabelRef{ternaryTrueLabel}},
+        ternarySourceLocation
+    });
+
+    // ================================================
+    // compile falseExpr
+    // ================================================
+
+    this->compileExpr(scope, *exprTernary.falseExpr, exprResult);
+    this->compileTypeConversionIfRequired(exprTernary.falseExpr->resultingType, exprTernary.resultingType, SourceLocation{0, exprTernary.falseExpr->line, exprTernary.falseExpr->column});
+
+    this->emit(Instruction{Opcode::JMP,
+        {LabelRef{ternaryEndLabel}},
+        ternarySourceLocation
+    });
+
+    // ================================================
+    // compile trueExpr
+    // ================================================
+
+    this->emit(LabelDef{ternaryTrueLabel});
+
+    this->compileExpr(scope, *exprTernary.trueExpr, exprResult);
+    this->compileTypeConversionIfRequired(exprTernary.trueExpr->resultingType, exprTernary.resultingType, SourceLocation{0, exprTernary.trueExpr->line, exprTernary.trueExpr->column});
+
+    this->emit(LabelDef{ternaryEndLabel});
+}
+
 void compiler::AssemblyGenerator::compileExprCast(Scope* scope, const ast::ExprCast& exprCast) {
     this->compileExpr(scope, *exprCast.expr, ExprResult::VALUE);
 

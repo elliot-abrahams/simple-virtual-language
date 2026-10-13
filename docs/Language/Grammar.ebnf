@@ -58,7 +58,7 @@ return_statement            = RETURN, [ expression ], SEMI ;
 
 expression_statement        = expression ;
 
-expression                  = logical_or_expression ;
+expression                  = logical_or_expression, { QUESTION_MARK, expression, COLON, expression } ;
 
 logical_or_expression       = logical_and_expression, { LOGICAL_OR, logical_and_expression } ;
 
@@ -147,6 +147,7 @@ TOKENS
 
 SEMI                        = ";"
 COLON                       = ":"
+QUESTION_MARK              = "?"
 COMMA                       = ","
 DOT                         = "."
 DOT_DOT                     = ".."

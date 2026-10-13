@@ -158,6 +158,19 @@ namespace parserTest {
         expectedRightExpr(std::move(expectedRightExpr)) {}
     };
 
+    struct ExpectedTernaryExpr final : ExpectedExpr {
+        const std::unique_ptr<ExpectedExpr> expectedCondition;
+        const std::unique_ptr<ExpectedExpr> expectedTrueExpr;
+        const std::unique_ptr<ExpectedExpr> expectedFalseExpr;
+
+        ExpectedTernaryExpr(std::unique_ptr<ExpectedExpr> expectedCondition,
+            std::unique_ptr<ExpectedExpr> expectedTrueExpr,
+            std::unique_ptr<ExpectedExpr> expectedFalseExpr) :
+        expectedCondition(std::move(expectedCondition)),
+        expectedTrueExpr(std::move(expectedTrueExpr)),
+        expectedFalseExpr(std::move(expectedFalseExpr)) {}
+    };
+
     struct ExpectedReturnStm final : ExpectedStm {
         const std::unique_ptr<ExpectedExpr> expectedReturnExpr;
 
@@ -386,6 +399,13 @@ namespace parserTest {
             auto* actualVarAccess = dynamic_cast<const ast::ExprIdentifier*>(&actualExpr);
             ASSERT_NE(actualVarAccess, nullptr);
             ASSERT_EQ(expectedIdentifier->identifier->name, actualVarAccess->identifier->name);
+
+        } else if (auto* expectedTernaryExpr = dynamic_cast<const ExpectedTernaryExpr*>(&expectedExpr)) {
+            auto* actualTernaryExpr = dynamic_cast<const ast::ExprTernary*>(&actualExpr);
+            ASSERT_NE(actualTernaryExpr, nullptr);
+            ASSERT_EXPR_EQ(*expectedTernaryExpr->expectedCondition, *actualTernaryExpr->condition);
+            ASSERT_EXPR_EQ(*expectedTernaryExpr->expectedTrueExpr, *actualTernaryExpr->trueExpr);
+            ASSERT_EXPR_EQ(*expectedTernaryExpr->expectedFalseExpr, *actualTernaryExpr->falseExpr);
 
         } else if (auto* expectedBinaryExpr = dynamic_cast<const ExpectedBinaryExpr*>(&expectedExpr)) {
             auto* actualBinaryExpr = dynamic_cast<const ast::ExprBinary*>(&actualExpr);

@@ -151,6 +151,7 @@ set(Parser_Sources
         parser/statementTests/ExpressionStatementTests.cpp
 
         parser/expressionTests/PrecedenceTests.cpp
+        parser/expressionTests/TernaryExpressionTests.cpp
         parser/expressionTests/BinaryExpressionTests.cpp
         parser/expressionTests/UnaryExpressionTests.cpp
         parser/expressionTests/CastExpressionTests.cpp
@@ -193,16 +194,18 @@ set(Semantic_Sources
         semantic/statementTests/AssignmentTests.cpp
         semantic/statementTests/VarDeclTests.cpp
 
+        semantic/statementTests/ExpressionStatementTests.cpp
+
         semantic/expressionTests/BinaryExpressionTests.cpp
         semantic/expressionTests/UnaryExpressionTests.cpp
+        semantic/expressionTests/PostfixExpressionTests.cpp
+        semantic/expressionTests/TernaryExpressionTests.cpp
         semantic/expressionTests/CastExpressionTests.cpp
         semantic/expressionTests/FunctionCallExpressionTests.cpp
         semantic/expressionTests/NewExpressionTests.cpp
-        semantic/expressionTests/PostfixExpressionTests.cpp
 
         semantic/SemanticTestUtils.h
         semantic/SemanticTests.cpp
-        semantic/statementTests/ExpressionStatementTests.cpp
 )
 
 add_executable(${SEMANTIC_TESTS} ${Semantic_Sources})
@@ -212,7 +215,10 @@ target_link_libraries(${SEMANTIC_TESTS} PRIVATE
         sv_lib
 )
 
-gtest_discover_tests(${SEMANTIC_TESTS})
+gtest_discover_tests(
+        ${SEMANTIC_TESTS}
+        DISCOVERY_TIMEOUT 30
+)
 
 # INTEGRATION TESTS
 
@@ -243,6 +249,7 @@ set(Integration_Sources
         integration/expressionTests/BinaryExpressionTests.cpp
         integration/expressionTests/UnaryExpressionTests.cpp
         integration/expressionTests/PostfixExpressionTests.cpp
+        integration/expressionTests/TernaryExpressionTests.cpp
         integration/expressionTests/CastExpressionTests.cpp
 
         integration/CommentTests.cpp

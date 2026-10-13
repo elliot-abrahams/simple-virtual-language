@@ -66,6 +66,7 @@ The contents of a comment are not interpreted as SV source code.
 SV provides the following delimiters:
 - `;`
 - `:`
+- `?`
 - `,`
 - `.`
 - `..`
