@@ -16,8 +16,8 @@ namespace compiler {
     };
 
     using ScopeFunctionBody = std::variant<
-        const ast::Block*,
-        const ast::ForStm*
+        const ast::StmBlock*,
+        const ast::StmFor*
     >;
 
     class AssemblyGenerator {
@@ -37,37 +37,33 @@ namespace compiler {
         void compileArrayIndex(Scope* scope, const ast::Index& index, Type& typeAtDepth);
 
         void compileStm(Scope* scope, const ast::Stm& stm);
-        void compileBlock(const ast::Block& block);
-        void compileStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl);
-        void compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment);
-        void compileIfStatement(Scope* scope, const ast::IfStm& ifStm);
-        void compileWhileStatement(Scope* scope, const ast::WhileStm& whileStm);
-        void compileForStatement(Scope* scope, const ast::ForStm& forStm);
-        void compileContinueStatement(Scope* scope, const ast::ContinueStm& continueStm);
-        void compileBreakStatement(Scope* scope, const ast::BreakStm& breakStm);
-        void compileReturnStatement(Scope* scope, const ast::ReturnStm& returnStm);
-        void compileExpressionStatement(Scope* scope, const ast::ExpressionStatement& expressionStm);
+        void compileBlock(const ast::StmBlock& stmBlock);
+        void compileStmVarDecl(Scope* scope, const ast::StmVarDecl& stmVarDecl);
+        void compileStmAssignment(Scope* scope, const ast::StmAssignment& stmAssignment);
+        void compileStmIf(Scope* scope, const ast::StmIf& stmIf);
+        void compileStmWhile(Scope* scope, const ast::StmWhile& stmWhile);
+        void compileStmFor(Scope* scope, const ast::StmFor& stmFor);
+        void compileStmContinue(const Scope* scope, const ast::StmContinue& stmContinue);
+        void compileStmBreak(const Scope* scope, const ast::StmBreak& stmBreak);
+        void compileStmReturn(Scope* scope, const ast::StmReturn& stmReturn);
+        void compileStmExpr(Scope* scope, const ast::StmExpr& stmExpr);
 
         void compileExpr(Scope* scope, const ast::Expr& expr, const ExprResult exprResult);
-        void compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator& expr);
-        void compileBinaryExpr(Scope* scope, const Type& exprResultingType, const ast::ExprBinaryOperator& expr);
-        void compileBinaryExprWithLeftExprOnStack(Scope* scope, const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& exprResultingType, const uint32_t exprLine, const uint16_t exprColumn, const Type& leftType, const uint32_t leftLine, const uint16_t leftColumn, const ast::Expr& right);
+        void compileExprBinary(Scope* scope, const ast::ExprBinary& exprBinary);
+        void compileExprBinaryWithLeftExprOnStack(Scope* scope, const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& exprResultingType, const uint32_t exprLine, const uint16_t exprColumn, const Type& leftType, const uint32_t leftLine, const uint16_t leftColumn, const ast::Expr& right);
         void compileBinaryOperator(const ast::BinaryOperatorInfo& binaryOperatorInfo);
-        void compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr, const ExprResult exprResult);
-        void compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr, const ExprResult exprResult);
-        void compileCastExpr(Scope* scope, const ast::ExprCast& castExpr);
-        void compileNewExpr(Scope* scope, const ast::ExprNew& newExpr);
-
-        void compileArrayAlloc(Scope* scope, const ast::ExprNew& newExpr, unsigned int depth, Type& typeAtDepth);
+        void compileExprUnary(Scope* scope, const ast::ExprUnary& exprUnary, const ExprResult exprResult);
+        void compileExprPostfix(Scope* scope, const ast::ExprPostfix& exprPostfix, const ExprResult exprResult);
+        void compileExprCast(Scope* scope, const ast::ExprCast& exprCast);
+        void compileExprNew(Scope* scope, const ast::ExprNew& exprNew);
+        void compileArrayAlloc(Scope* scope, const ast::ExprNew& exprNew, unsigned int depth, Type& typeAtDepth);
         void compileArrayInitialiser(Scope* scope, const ast::ArrayInitialiser& arrayInitialiser, const SourceLocation& optionalInitialiserSource, const Type& typeOfDeepestElement);
-
-        void compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall);
+        void compileExprFunctionCall(Scope* scope, const ast::ExprFunctionCall& exprFunctionCall);
         void compileExprIdentifier(Scope* scope, const ast::ExprIdentifier& exprIdentifier, const ExprResult exprResult);
-
-        void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& literal);
-        void compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral);
-        void compileExprBoolLiteral(const ast::ExprBoolLiteral& boolLiteral);
-        void compilerExprCharLiteral(const ast::ExprCharLiteral& charLiteral);
+        void compileExprIntegerLiteral(const ast::ExprIntegerLiteral& exprIntegerLiteral);
+        void compileExprFloatLiteral(const ast::ExprFloatLiteral& exprFloatLiteral);
+        void compileExprBoolLiteral(const ast::ExprBoolLiteral& exprBoolLiteral);
+        void compilerExprCharLiteral(const ast::ExprCharLiteral& exprCharLiteral);
 
         void compileTypeConversionIfRequired(const Type& currentType, const Type& newType, const SourceLocation& sourceLocation);
         void compileTypeConversionIfRequired(const AssemblyType currentType, const AssemblyType newType, const SourceLocation& sourceLocation);

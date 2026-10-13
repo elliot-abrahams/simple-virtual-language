@@ -388,14 +388,14 @@ namespace parserTest {
             ASSERT_EQ(expectedIdentifier->identifier->name, actualVarAccess->identifier->name);
 
         } else if (auto* expectedBinaryExpr = dynamic_cast<const ExpectedBinaryExpr*>(&expectedExpr)) {
-            auto* actualBinaryExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&actualExpr);
+            auto* actualBinaryExpr = dynamic_cast<const ast::ExprBinary*>(&actualExpr);
             ASSERT_NE(actualBinaryExpr, nullptr);
             ASSERT_EQ(expectedBinaryExpr->binaryOperator, actualBinaryExpr->binaryOperatorInfo->binaryOperator);
             ASSERT_EXPR_EQ(*expectedBinaryExpr->expectedLeftExpr, *actualBinaryExpr->left);
             ASSERT_EXPR_EQ(*expectedBinaryExpr->expectedRightExpr, *actualBinaryExpr->right);
 
         } else if (auto* expectedUnaryExpr = dynamic_cast<const ExpectedUnaryExpr*>(&expectedExpr)) {
-            auto* actualUnaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&actualExpr);
+            auto* actualUnaryExpr = dynamic_cast<const ast::ExprUnary*>(&actualExpr);
             ASSERT_NE(actualUnaryExpr, nullptr);
             ASSERT_EQ(expectedUnaryExpr->unaryOperator, actualUnaryExpr->unaryOperatorInfo->unaryOperator);
             ASSERT_EXPR_EQ(*expectedUnaryExpr->expectedExpr, *actualUnaryExpr->expr);
@@ -403,7 +403,7 @@ namespace parserTest {
         } else if (auto* expectedExprPostfix = dynamic_cast<const ExpectedExprPostfix*>(&expectedExpr)) {
             auto* actualExprPostfix = dynamic_cast<const ast::ExprPostfix*>(&actualExpr);
             ASSERT_NE(actualExprPostfix, nullptr);
-            ASSERT_EXPR_EQ(*expectedExprPostfix->expectedExpression, *actualExprPostfix->expression);
+            ASSERT_EXPR_EQ(*expectedExprPostfix->expectedExpression, *actualExprPostfix->expr);
 
             ASSERT_EQ(expectedExprPostfix->expectedPostfixOperators.size(), actualExprPostfix->postfixOperators.size());
 
@@ -432,7 +432,7 @@ namespace parserTest {
             ASSERT_EXPR_EQ(*expectedCastExpression->expectedExpr, *actualCastExpr->expr);
 
         } else if (auto* expectedFunctionCallExpr = dynamic_cast<const ExpectedFunctionCallExpr*>(&expectedExpr)) {
-            auto* actualFunctionCallExpr = dynamic_cast<const ast::FunctionCall*>(&actualExpr);
+            auto* actualFunctionCallExpr = dynamic_cast<const ast::ExprFunctionCall*>(&actualExpr);
             ASSERT_NE(actualFunctionCallExpr, nullptr);
             ASSERT_EQ(expectedFunctionCallExpr->functionName, actualFunctionCallExpr->identifier->name);
             ASSERT_EQ(expectedFunctionCallExpr->expectedArguments.size(), actualFunctionCallExpr->arguments.size());
@@ -474,7 +474,7 @@ namespace parserTest {
 
     inline void ASSERT_STATEMENT_EQ(const ExpectedStm& expectedStm, const ast::Stm& actualStm) {
         if (auto* expectedBlock = dynamic_cast<const ExpectedBlock*>(&expectedStm)) {
-            auto* actualBlock = dynamic_cast<const ast::Block*>(&actualStm);
+            auto* actualBlock = dynamic_cast<const ast::StmBlock*>(&actualStm);
             ASSERT_NE(actualBlock, nullptr);
             ASSERT_EQ(expectedBlock->statements.size(), actualBlock->statements.size());
             for (size_t i = 0; i < expectedBlock->statements.size(); ++i) {
@@ -498,10 +498,10 @@ namespace parserTest {
             }
 
             ASSERT_EQ(expectedAssignment->assignmentOperator, actualAssignment->assignmentOperatorInfo->assignmentOperator);
-            ASSERT_EXPR_EQ(*expectedAssignment->expectedExpr, *actualAssignment->expression);
+            ASSERT_EXPR_EQ(*expectedAssignment->expectedExpr, *actualAssignment->expr);
 
         } else if (auto* expectedIfStm = dynamic_cast<const ExpectedIfStm*>(&expectedStm)) {
-            auto* actualIfStm = dynamic_cast<const ast::IfStm*>(&actualStm);
+            auto* actualIfStm = dynamic_cast<const ast::StmIf*>(&actualStm);
             ASSERT_NE(actualIfStm, nullptr);
             ASSERT_EXPR_EQ(*expectedIfStm->expectedCondition, *actualIfStm->condition);
             ASSERT_EQ(expectedIfStm->ifBlock->statements.size(), actualIfStm->ifBlock->statements.size());
@@ -513,39 +513,39 @@ namespace parserTest {
             }
 
         } else if (auto* expectedWhileStm = dynamic_cast<const ExpectedWhileStm*>(&expectedStm)) {
-            auto* actualWhileStm = dynamic_cast<const ast::WhileStm*>(&actualStm);
+            auto* actualWhileStm = dynamic_cast<const ast::StmWhile*>(&actualStm);
             ASSERT_NE(actualWhileStm, nullptr);
             ASSERT_EXPR_EQ(*expectedWhileStm->expectedCondition, *actualWhileStm->condition);
             ASSERT_EQ(expectedWhileStm->expectedBody->statements.size(), actualWhileStm->body->statements.size());
             ASSERT_STATEMENT_EQ(*expectedWhileStm->expectedBody, *actualWhileStm->body);
 
         } else if (auto* expectedForStm = dynamic_cast<const ExpectedForStm*>(&expectedStm)) {
-            auto* actualForStm = dynamic_cast<const ast::ForStm*>(&actualStm);
+            auto* actualForStm = dynamic_cast<const ast::StmFor*>(&actualStm);
             ASSERT_NE(actualForStm, nullptr);
             ASSERT_FOR_VARIABLE_EQ(expectedForStm->expectedVariable, actualForStm->variable);
             ASSERT_FOR_ITERABLE_EQ(expectedForStm->expectedIterable, actualForStm->iterable);
             ASSERT_STATEMENT_EQ(*expectedForStm->expectedBody, *actualForStm->body);
 
         } else if (auto* expectedContinueStm = dynamic_cast<const ExpectedContinueStm*>(&expectedStm)) {
-            auto* actualContinueStm = dynamic_cast<const ast::ContinueStm*>(&actualStm);
+            auto* actualContinueStm = dynamic_cast<const ast::StmContinue*>(&actualStm);
             ASSERT_NE(actualContinueStm, nullptr);
 
         } else if (auto* expectedBreakStm = dynamic_cast<const ExpectedBreakStm*>(&expectedStm)) {
-            auto* actualBreakStm = dynamic_cast<const ast::BreakStm*>(&actualStm);
+            auto* actualBreakStm = dynamic_cast<const ast::StmBreak*>(&actualStm);
             ASSERT_NE(actualBreakStm, nullptr);
 
         } else if (auto* expectedExpressionStatement = dynamic_cast<const ExpectedExpressionStatement*>(&expectedStm)) {
-            auto* actualExpressionStatement = dynamic_cast<const ast::ExpressionStatement*>(&actualStm);
+            auto* actualExpressionStatement = dynamic_cast<const ast::StmExpr*>(&actualStm);
             ASSERT_NE(actualExpressionStatement, nullptr);
-            ASSERT_EXPR_EQ(*expectedExpressionStatement->expectedExpr, *actualExpressionStatement->expression);
+            ASSERT_EXPR_EQ(*expectedExpressionStatement->expectedExpr, *actualExpressionStatement->expr);
 
         } else if (auto* expectedReturnStm = dynamic_cast<const ExpectedReturnStm*>(&expectedStm)) {
-            auto* actualReturnStm = dynamic_cast<const ast::ReturnStm*>(&actualStm);
+            auto* actualReturnStm = dynamic_cast<const ast::StmReturn*>(&actualStm);
             ASSERT_NE(actualReturnStm, nullptr);
             if (expectedReturnStm->expectedReturnExpr == nullptr) {
-                ASSERT_EQ(actualReturnStm->returnExpression, nullptr);
+                ASSERT_EQ(actualReturnStm->returnExpr, nullptr);
             } else {
-                ASSERT_EXPR_EQ(*expectedReturnStm->expectedReturnExpr, *actualReturnStm->returnExpression);
+                ASSERT_EXPR_EQ(*expectedReturnStm->expectedReturnExpr, *actualReturnStm->returnExpr);
             }
 
 

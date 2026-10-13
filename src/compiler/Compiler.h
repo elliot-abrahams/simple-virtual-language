@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "AST.h"
+#include "semantic/TypeRegistry.h"
 
 
 namespace compiler {

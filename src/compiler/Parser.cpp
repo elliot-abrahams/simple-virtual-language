@@ -70,7 +70,7 @@ std::unique_ptr<ast::FunctionDecl> compiler::Parser::parseFunctionDecl(std::uniq
     }
 
     this->tokeniser->eat(TokenKind::RBR);
-    std::unique_ptr<ast::Block> block = this->parseBlock();
+    std::unique_ptr<ast::StmBlock> block = this->parseBlock();
 
     return std::make_unique<ast::FunctionDecl>(
         returnType->line,
@@ -182,7 +182,7 @@ std::unique_ptr<ast::Stm> compiler::Parser::parseIdentifierStm() const {
 /*
  *  block                       = LCBR, { statement }, RCBR ;
  */
-std::unique_ptr<ast::Block> compiler::Parser::parseBlock() const {
+std::unique_ptr<ast::StmBlock> compiler::Parser::parseBlock() const {
     const auto LCBR_Token = this->tokeniser->tok();
     this->tokeniser->eat(TokenKind::LCBR);
 
@@ -196,7 +196,7 @@ std::unique_ptr<ast::Block> compiler::Parser::parseBlock() const {
 
     const auto RCBR_Token = this->tokeniser->tok();
     this->tokeniser->eat(TokenKind::RCBR);
-    return std::make_unique<ast::Block>(
+    return std::make_unique<ast::StmBlock>(
         LCBR_Token.line,
         LCBR_Token.column,
         RCBR_Token.line,
@@ -266,13 +266,13 @@ std::unique_ptr<ast::StmAssignment> compiler::Parser::parseAssignment() const {
 /*
  *  if_statement                = IF, LBR, expression, RBR, block, [ ELSE, ( block | if_statement ) ] ;
  */
-std::unique_ptr<ast::IfStm> compiler::Parser::parseIfStatement() const {
+std::unique_ptr<ast::StmIf> compiler::Parser::parseIfStatement() const {
     const auto token = this->tokeniser->tok();
     this->tokeniser->next();
     this->tokeniser->eat(TokenKind::LBR);
     std::unique_ptr<ast::Expr> condition = this->parseExpr();
     this->tokeniser->eat(TokenKind::RBR);
-    std::unique_ptr<ast::Block> ifBlock = this->parseBlock();
+    std::unique_ptr<ast::StmBlock> ifBlock = this->parseBlock();
 
     std::unique_ptr<ast::Stm> elseStm = nullptr;
     if (this->tokeniser->tok().kind == TokenKind::ELSE) {
@@ -284,7 +284,7 @@ std::unique_ptr<ast::IfStm> compiler::Parser::parseIfStatement() const {
             elseStm = this->parseBlock();
         }
     }
-    return std::make_unique<ast::IfStm>(
+    return std::make_unique<ast::StmIf>(
         token.line,
         token.column,
         std::move(condition),
@@ -296,15 +296,15 @@ std::unique_ptr<ast::IfStm> compiler::Parser::parseIfStatement() const {
 /*
  *  while_statement             = WHILE, LBR, expression, RBR, block ;
  */
-std::unique_ptr<ast::WhileStm> compiler::Parser::parseWhileStatement() const {
+std::unique_ptr<ast::StmWhile> compiler::Parser::parseWhileStatement() const {
     const auto token = this->tokeniser->tok();
     this->tokeniser->next();
     this->tokeniser->eat(TokenKind::LBR);
     std::unique_ptr<ast::Expr> condition = this->parseExpr();
     this->tokeniser->eat(TokenKind::RBR);
-    std::unique_ptr<ast::Block> block = this->parseBlock();
+    std::unique_ptr<ast::StmBlock> block = this->parseBlock();
 
-    return std::make_unique<ast::WhileStm>(
+    return std::make_unique<ast::StmWhile>(
         token.line,
         token.column,
         std::move(condition),
@@ -315,7 +315,7 @@ std::unique_ptr<ast::WhileStm> compiler::Parser::parseWhileStatement() const {
 /*
  *  for_statement               = FOR, LBR, for_variable, COLON, for_iterable, RBR, block ;
  */
-std::unique_ptr<ast::ForStm> compiler::Parser::parseForStatement() const {
+std::unique_ptr<ast::StmFor> compiler::Parser::parseForStatement() const {
     const auto tokenFOR = this->tokeniser->tok();
     this->tokeniser->next();
     this->tokeniser->eat(TokenKind::LBR);
@@ -325,7 +325,7 @@ std::unique_ptr<ast::ForStm> compiler::Parser::parseForStatement() const {
     this->tokeniser->eat(TokenKind::RBR);
     auto body = this->parseBlock();
 
-    return std::make_unique<ast::ForStm>(
+    return std::make_unique<ast::StmFor>(
         tokenFOR.line,
         tokenFOR.column,
         variable,
@@ -394,12 +394,12 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseForStep() const {
 /*
  *  continue_statement          = CONTINUE, SEMI ;
  */
-std::unique_ptr<ast::ContinueStm> compiler::Parser::parseContinueStatement() const {
+std::unique_ptr<ast::StmContinue> compiler::Parser::parseContinueStatement() const {
     const Token token = this->tokeniser->tok();
     this->tokeniser->next();
     this->tokeniser->eat(TokenKind::SEMI);
 
-    return std::make_unique<ast::ContinueStm>(
+    return std::make_unique<ast::StmContinue>(
         token.line,
         token.column
     );
@@ -408,12 +408,12 @@ std::unique_ptr<ast::ContinueStm> compiler::Parser::parseContinueStatement() con
 /*
  *  break_statement             = BREAK, SEMI ;
  */
-std::unique_ptr<ast::BreakStm> compiler::Parser::parseBreakStatement() const {
+std::unique_ptr<ast::StmBreak> compiler::Parser::parseBreakStatement() const {
     const Token token = this->tokeniser->tok();
     this->tokeniser->next();
     this->tokeniser->eat(TokenKind::SEMI);
 
-    return std::make_unique<ast::BreakStm>(
+    return std::make_unique<ast::StmBreak>(
         token.line,
         token.column
     );
@@ -422,7 +422,7 @@ std::unique_ptr<ast::BreakStm> compiler::Parser::parseBreakStatement() const {
 /*
  *  return_statement            = RETURN, [ expression ], SEMI ;
  */
-std::unique_ptr<ast::ReturnStm> compiler::Parser::parseReturnStatement() const {
+std::unique_ptr<ast::StmReturn> compiler::Parser::parseReturnStatement() const {
     const Token token = this->tokeniser->tok();
     this->tokeniser->next();
     std::unique_ptr<ast::Expr> returnExpression = nullptr;
@@ -431,7 +431,7 @@ std::unique_ptr<ast::ReturnStm> compiler::Parser::parseReturnStatement() const {
     }
     this->tokeniser->eat(TokenKind::SEMI);
 
-    return std::make_unique<ast::ReturnStm>(
+    return std::make_unique<ast::StmReturn>(
         token.line,
         token.column,
         std::move(returnExpression)
@@ -441,11 +441,11 @@ std::unique_ptr<ast::ReturnStm> compiler::Parser::parseReturnStatement() const {
 /*
  *  expression_statement        = expression ;
  */
-std::unique_ptr<ast::ExpressionStatement> compiler::Parser::parseExpressionStatement() const {
+std::unique_ptr<ast::StmExpr> compiler::Parser::parseExpressionStatement() const {
     auto expr = this->parseExpr();
     this->tokeniser->eat(TokenKind::SEMI);
 
-    return std::make_unique<ast::ExpressionStatement>(
+    return std::make_unique<ast::StmExpr>(
         expr->line,
         expr->column,
         std::move(expr)
@@ -476,7 +476,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLogicalOrExpression() const {
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseLogicalAndExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -509,7 +509,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseLogicalAndExpression() const {
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseBitwiseOrExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -543,7 +543,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseBitwiseOrExpression() const {
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseBitwiseXorExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -577,7 +577,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseBitwiseXorExpression() const {
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseBitwiseAndExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -611,7 +611,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseBitwiseAndExpression() const {
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseEqualityExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -645,7 +645,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseEqualityExpression() const {
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseComparisonExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -683,7 +683,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseComparisonExpression() const {
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseShiftExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -720,7 +720,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseShiftExpression() const {
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseAdditiveExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -754,7 +754,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseAdditiveExpression() const {
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseMultiplicativeExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -787,7 +787,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseMultiplicativeExpression() con
         // parse right expression
         std::unique_ptr<ast::Expr> right = this->parseUnaryExpression();
 
-        left = std::make_unique<ast::ExprBinaryOperator>(
+        left = std::make_unique<ast::ExprBinary>(
             line,
             column,
             std::move(left),
@@ -820,7 +820,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
         this->tokeniser->next();
         auto expr = this->parseUnaryExpression();
 
-        return std::make_unique<ast::ExprUnaryOperator>(
+        return std::make_unique<ast::ExprUnary>(
             expr->line,
             expr->column,
             std::make_unique<ast::UnaryOperatorInfo>(
@@ -840,7 +840,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parseUnaryExpression() const {
         this->tokeniser->next();
         auto expr = this->parseExprPostfix();
 
-        return std::make_unique<ast::ExprUnaryOperator>(
+        return std::make_unique<ast::ExprUnary>(
             expr->line,
             expr->column,
             std::make_unique<ast::UnaryOperatorInfo>(
@@ -982,7 +982,7 @@ std::unique_ptr<ast::Expr> compiler::Parser::parsePrimaryExpression() const {
 /*
  *  function_call               = IDENTIFIER, LBR, [ argument_list ], RBR ;
  */
-std::unique_ptr<ast::FunctionCall> compiler::Parser::parseFunctionCall(std::unique_ptr<ast::Identifier> identifier) const {
+std::unique_ptr<ast::ExprFunctionCall> compiler::Parser::parseFunctionCall(std::unique_ptr<ast::Identifier> identifier) const {
     this->tokeniser->eat(TokenKind::LBR);
 
     std::vector<std::unique_ptr<ast::Expr>> argumentList;
@@ -992,7 +992,7 @@ std::unique_ptr<ast::FunctionCall> compiler::Parser::parseFunctionCall(std::uniq
 
     this->tokeniser->eat(TokenKind::RBR);
 
-    return std::make_unique<ast::FunctionCall>(
+    return std::make_unique<ast::ExprFunctionCall>(
         identifier->line,
         identifier->column,
         std::move(identifier),

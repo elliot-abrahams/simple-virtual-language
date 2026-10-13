@@ -8,7 +8,6 @@
 
 #include "semantic/SymbolTable.h"
 #include "LanguageTypes.h"
-#include "semantic/TypeRegistry.h"
 
 namespace compiler {
     struct Scope;
@@ -18,7 +17,7 @@ namespace ast {
     struct StmVarDecl;
     struct Index;
     struct ArrayInitialiser;
-    struct Block;
+    struct StmBlock;
 
     struct ASTNode {
         const uint32_t line;
@@ -152,12 +151,12 @@ namespace ast {
             optionalInitialiser(std::move(optionalInitialiser)) {}
     };
 
-    struct FunctionCall final : Expr {
+    struct ExprFunctionCall final : Expr {
         const std::unique_ptr<Identifier> identifier;
         const std::vector<std::unique_ptr<Expr>> arguments;
         mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
-        FunctionCall(const uint32_t line,
+        ExprFunctionCall(const uint32_t line,
                     const uint16_t column,
                     std::unique_ptr<Identifier> identifier,
                     std::vector<std::unique_ptr<Expr>> arguments) :
@@ -205,26 +204,26 @@ namespace ast {
     >;
 
     struct ExprPostfix final : Expr {
-        const std::unique_ptr<Expr> expression;
+        const std::unique_ptr<Expr> expr;
         const std::vector<PostfixOperator> postfixOperators;
         const std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo;
 
         ExprPostfix(const uint32_t line,
                     const uint16_t column,
-                    std::unique_ptr<Expr> expression,
+                    std::unique_ptr<Expr> expr,
                     std::vector<PostfixOperator>& postfixOperator,
                     std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo) :
             Expr(line, column),
-            expression(std::move(expression)),
+            expr(std::move(expr)),
             postfixOperators(std::move(postfixOperator)),
             unaryOperatorInfo(std::move(unaryOperatorInfo)) {}
     };
 
-    struct ExprUnaryOperator final : Expr {
+    struct ExprUnary final : Expr {
         const std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo;
         const std::unique_ptr<Expr> expr;
 
-        ExprUnaryOperator(const uint32_t line,
+        ExprUnary(const uint32_t line,
                     const uint16_t column,
                     std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo,
                     std::unique_ptr<Expr> expr) :
@@ -233,12 +232,12 @@ namespace ast {
             expr(std::move(expr)) {}
     };
 
-    struct ExprBinaryOperator final : Expr {
+    struct ExprBinary final : Expr {
         const std::unique_ptr<Expr> left;
         const std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo;
         const std::unique_ptr<Expr> right;
 
-        ExprBinaryOperator(const uint32_t line,
+        ExprBinary(const uint32_t line,
                     const uint16_t column,
                     std::unique_ptr<Expr> left,
                     std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo,
@@ -252,32 +251,35 @@ namespace ast {
     struct ExpressionStatement final : Stm {
         const std::unique_ptr<Expr> expression;
 
-        ExpressionStatement(const uint32_t line,
+    struct StmExpr final : Stm {
+        const std::unique_ptr<Expr> expr;
+
+        StmExpr(const uint32_t line,
                     const uint16_t column,
-                    std::unique_ptr<Expr> expression) :
+                    std::unique_ptr<Expr> expr) :
             Stm(line, column),
-            expression(std::move(expression)) {}
+            expr(std::move(expr)) {}
     };
 
-    struct ReturnStm final : Stm {
-        const std::unique_ptr<Expr> returnExpression;
+    struct StmReturn final : Stm {
+        const std::unique_ptr<Expr> returnExpr;
         mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
-        ReturnStm(const uint32_t line,
+        StmReturn(const uint32_t line,
                 const uint16_t column,
-                std::unique_ptr<Expr> returnExpression) :
+                std::unique_ptr<Expr> returnExpr) :
             Stm(line, column),
-            returnExpression(std::move(returnExpression)) {}
+            returnExpr(std::move(returnExpr)) {}
     };
 
-    struct BreakStm final : Stm {
-        BreakStm(const uint32_t line,
+    struct StmBreak final : Stm {
+        StmBreak(const uint32_t line,
                 const uint16_t column) :
             Stm(line, column) {}
     };
 
-    struct ContinueStm final : Stm {
-        ContinueStm(const uint32_t line,
+    struct StmContinue final : Stm {
+        StmContinue(const uint32_t line,
                     const uint16_t column) :
             Stm(line, column) {}
     };
@@ -308,44 +310,44 @@ namespace ast {
         std::unique_ptr<ForRange>
     >;
 
-    struct ForStm final : Stm {
+    struct StmFor final : Stm {
         const ForVariable variable;
         const ForIterable iterable;
-        const std::unique_ptr<Block> body;
+        const std::unique_ptr<StmBlock> body;
 
-        ForStm(const uint32_t line,
+        StmFor(const uint32_t line,
                 const uint16_t column,
                 ForVariable& variable,
                 ForIterable& iterable,
-                std::unique_ptr<Block> body) :
+                std::unique_ptr<StmBlock> body) :
             Stm(line, column),
             variable(std::move(variable)),
             iterable(std::move(iterable)),
             body(std::move(body)) {}
     };
 
-    struct WhileStm final : Stm {
+    struct StmWhile final : Stm {
         const std::unique_ptr<Expr> condition;
-        const std::unique_ptr<Block> body;
+        const std::unique_ptr<StmBlock> body;
 
-        WhileStm(const uint32_t line,
+        StmWhile(const uint32_t line,
                 const uint16_t column,
                 std::unique_ptr<Expr> condition,
-                std::unique_ptr<Block> body) :
+                std::unique_ptr<StmBlock> body) :
             Stm(line, column),
             condition(std::move(condition)),
             body(std::move(body)) {}
     };
 
-    struct IfStm final : Stm {
+    struct StmIf final : Stm {
         const std::unique_ptr<Expr> condition;
-        const std::unique_ptr<Block> ifBlock;
+        const std::unique_ptr<StmBlock> ifBlock;
         const std::unique_ptr<Stm> elseStm;
 
-        IfStm(const uint32_t line,
+        StmIf(const uint32_t line,
                 const uint16_t column,
                 std::unique_ptr<Expr> condition,
-                std::unique_ptr<Block> ifBlock,
+                std::unique_ptr<StmBlock> ifBlock,
                 std::unique_ptr<Stm> elseStm) :
             Stm(line, column),
             condition(std::move(condition)),
@@ -357,7 +359,7 @@ namespace ast {
         const std::unique_ptr<Identifier> identifier;
         const std::vector<std::unique_ptr<Index>> indices;
         const std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo;
-        const std::unique_ptr<Expr> expression;
+        const std::unique_ptr<Expr> expr;
         mutable compiler::Type assignmentResultingType;
 
         StmAssignment(const uint32_t line,
@@ -365,12 +367,12 @@ namespace ast {
                     std::unique_ptr<Identifier> identifier,
                     std::vector<std::unique_ptr<Index>>& indices,
                     std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo,
-                    std::unique_ptr<Expr> expression) :
+                    std::unique_ptr<Expr> expr) :
             Stm(line, column),
             identifier(std::move(identifier)),
             indices(std::move(indices)),
             assignmentOperatorInfo(std::move(assignmentOperatorInfo)),
-            expression(std::move(expression)) {}
+            expr(std::move(expr)) {}
     };
 
     struct StmVarDecl final : Stm {
@@ -389,13 +391,13 @@ namespace ast {
             optionalInitialiser(std::move(optionalInitialiser)) {}
     };
 
-    struct Block : Stm {
+    struct StmBlock final : Stm {
         const std::vector<std::unique_ptr<Stm>> statements;
         mutable compiler::Scope* scope;
         const uint32_t blockEndLine;
         const uint16_t blockEndColumn;
 
-        Block(const uint32_t line,
+        StmBlock(const uint32_t line,
                     const uint16_t column,
                     const uint32_t blockEndLine,
                     const uint16_t blockEndColumn,
@@ -425,7 +427,7 @@ namespace ast {
         const std::unique_ptr<TypeInfo> returnTypeInfo;
         const std::unique_ptr<Identifier> identifier;
         const std::vector<std::unique_ptr<Parameter>> parameters;
-        const std::unique_ptr<Block> body;
+        const std::unique_ptr<StmBlock> body;
         mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
         FunctionDecl(const uint32_t line,
@@ -433,7 +435,7 @@ namespace ast {
                     std::unique_ptr<TypeInfo> returnTypeInfo,
                     std::unique_ptr<Identifier> identifier,
                     std::vector<std::unique_ptr<Parameter>> parameters,
-                    std::unique_ptr<Block> block) :
+                    std::unique_ptr<StmBlock> block) :
             ASTNode(line, column),
             returnTypeInfo(std::move(returnTypeInfo)),
             identifier(std::move(identifier)),

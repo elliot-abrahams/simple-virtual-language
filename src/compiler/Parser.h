@@ -21,19 +21,19 @@ namespace compiler {
 
         std::unique_ptr<ast::Stm> parseStm() const;
         std::unique_ptr<ast::Stm> parseIdentifierStm() const;
-        std::unique_ptr<ast::Block> parseBlock() const;
+        std::unique_ptr<ast::StmBlock> parseBlock() const;
         std::unique_ptr<ast::StmVarDecl> parseVarDecl(std::unique_ptr<ast::TypeInfo> type) const;
         std::unique_ptr<ast::StmAssignment> parseAssignment() const;
-        std::unique_ptr<ast::IfStm> parseIfStatement() const;
-        std::unique_ptr<ast::WhileStm> parseWhileStatement() const;
-        std::unique_ptr<ast::ForStm> parseForStatement() const;
+        std::unique_ptr<ast::StmIf> parseIfStatement() const;
+        std::unique_ptr<ast::StmWhile> parseWhileStatement() const;
+        std::unique_ptr<ast::StmFor> parseForStatement() const;
         ast::ForVariable parseForVariable() const;
         ast::ForIterable parseForIterable() const;
         std::unique_ptr<ast::Expr> parseForStep() const;
-        std::unique_ptr<ast::ContinueStm> parseContinueStatement() const;
-        std::unique_ptr<ast::BreakStm> parseBreakStatement() const;
-        std::unique_ptr<ast::ReturnStm> parseReturnStatement() const;
-        std::unique_ptr<ast::ExpressionStatement> parseExpressionStatement() const;
+        std::unique_ptr<ast::StmContinue> parseContinueStatement() const;
+        std::unique_ptr<ast::StmBreak> parseBreakStatement() const;
+        std::unique_ptr<ast::StmReturn> parseReturnStatement() const;
+        std::unique_ptr<ast::StmExpr> parseExpressionStatement() const;
 
         std::unique_ptr<ast::Expr> parseExpr() const;
         std::unique_ptr<ast::Expr> parseLogicalOrExpression() const;
@@ -52,7 +52,7 @@ namespace compiler {
         std::unique_ptr<ast::FieldAccess> parseFieldAccess() const;
         std::unique_ptr<ast::Expr> parseExprPostfix() const;
         std::unique_ptr<ast::Expr> parsePrimaryExpression() const;
-        std::unique_ptr<ast::FunctionCall> parseFunctionCall(std::unique_ptr<ast::Identifier> identifier) const;
+        std::unique_ptr<ast::ExprFunctionCall> parseFunctionCall(std::unique_ptr<ast::Identifier> identifier) const;
         std::vector<std::unique_ptr<ast::Expr>> parseArgumentList() const;
         std::unique_ptr<ast::ExprIdentifier> parseExprIdentifier() const;
         std::unique_ptr<ast::ExprNew> parseExprNew() const;

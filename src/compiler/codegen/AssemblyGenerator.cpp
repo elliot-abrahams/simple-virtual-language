@@ -1,6 +1,5 @@
 #include "AssemblyGenerator.h"
 
-#include <stdexcept>
 #include <bits/fs_fwd.h>
 
 compiler::AssemblyGenerator::AssemblyGenerator(SymbolTable* symbolTable) :
@@ -71,13 +70,13 @@ void compiler::AssemblyGenerator::compileFunctionDeclaration(
     });
 
     // compile body
-    if (auto* block = dynamic_cast<const ast::Block*>(&body)) {
+    if (auto* block = dynamic_cast<const ast::StmBlock*>(&body)) {
         for (const auto& stm : block->statements) {
             this->compileStm(block->scope, *stm);
         }
     } else {
-        auto* forStm = dynamic_cast<const ast::ForStm*>(&body);
-        this->compileForStatement(forStm->body->scope, *forStm);
+        auto* forStm = dynamic_cast<const ast::StmFor*>(&body);
+        this->compileStmFor(forStm->body->scope, *forStm);
     }
 
     if (includeDefaultReturn) {
@@ -96,8 +95,8 @@ void compiler::AssemblyGenerator::compileFunctionDeclaration(
 void compiler::AssemblyGenerator::compilePendingScopeFunctions() {
     this->isCompilingScopeFunctions = true;
     for (int scopeCounter = 0; scopeCounter < this->pendingScopeFunctions.size(); scopeCounter++) {
-        if (std::holds_alternative<const ast::Block*>(this->pendingScopeFunctions.at(scopeCounter))) {
-            const auto* block = std::get<const ast::Block*>(this->pendingScopeFunctions.at(scopeCounter));
+        if (std::holds_alternative<const ast::StmBlock*>(this->pendingScopeFunctions.at(scopeCounter))) {
+            const auto* block = std::get<const ast::StmBlock*>(this->pendingScopeFunctions.at(scopeCounter));
 
             // compile a function declaration for this scope
             this->compileFunctionDeclaration(
@@ -114,7 +113,7 @@ void compiler::AssemblyGenerator::compilePendingScopeFunctions() {
             );
         } else {
             // forStm
-            const auto* forStm = std::get<const ast::ForStm*>(this->pendingScopeFunctions.at(scopeCounter));
+            const auto* forStm = std::get<const ast::StmFor*>(this->pendingScopeFunctions.at(scopeCounter));
 
             // compile a function declaration for this scope
             this->compileFunctionDeclaration(
@@ -290,99 +289,99 @@ void compiler::AssemblyGenerator::compileArrayIndex(Scope *scope, const ast::Ind
 }
 
 void compiler::AssemblyGenerator::compileStm(Scope* scope, const ast::Stm& stm) {
-    if (auto* varDecl = dynamic_cast<const ast::StmVarDecl*>(&stm)) {
-        this->compileStmVarDecl(scope, *varDecl);
+    if (auto* stmVarDecl = dynamic_cast<const ast::StmVarDecl*>(&stm)) {
+        this->compileStmVarDecl(scope, *stmVarDecl);
     }
-    else if (auto* assignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
-        this->compileStmAssignment(scope, *assignment);
+    else if (auto* stmAssignment = dynamic_cast<const ast::StmAssignment*>(&stm)) {
+        this->compileStmAssignment(scope, *stmAssignment);
     }
-    else if (auto* block = dynamic_cast<const ast::Block*>(&stm)) {
-        this->compileBlock(*block);
+    else if (auto* stmBlock = dynamic_cast<const ast::StmBlock*>(&stm)) {
+        this->compileBlock(*stmBlock);
     }
-    else if (auto* ifStm = dynamic_cast<const ast::IfStm*>(&stm)) {
-        this->compileIfStatement(scope, *ifStm);
+    else if (auto* stmIf = dynamic_cast<const ast::StmIf*>(&stm)) {
+        this->compileStmIf(scope, *stmIf);
     }
-    else if (auto* whileStm = dynamic_cast<const ast::WhileStm*>(&stm)) {
-        this->compileWhileStatement(scope, *whileStm);
+    else if (auto* stmWhile = dynamic_cast<const ast::StmWhile*>(&stm)) {
+        this->compileStmWhile(scope, *stmWhile);
     }
-    else if (auto* forStm = dynamic_cast<const ast::ForStm*>(&stm)) {
-        this->compileForStatement(scope, *forStm);
+    else if (auto* stmFor = dynamic_cast<const ast::StmFor*>(&stm)) {
+        this->compileStmFor(scope, *stmFor);
     }
-    else if (auto* continueStm = dynamic_cast<const ast::ContinueStm*>(&stm)) {
-        this->compileContinueStatement(scope, *continueStm);
+    else if (auto* stmContinue = dynamic_cast<const ast::StmContinue*>(&stm)) {
+        this->compileStmContinue(scope, *stmContinue);
     }
-    else if (auto* breakStm = dynamic_cast<const ast::BreakStm*>(&stm)) {
-        this->compileBreakStatement(scope, *breakStm);
+    else if (auto* stmBreak = dynamic_cast<const ast::StmBreak*>(&stm)) {
+        this->compileStmBreak(scope, *stmBreak);
     }
-    else if (auto* returnStm = dynamic_cast<const ast::ReturnStm*>(&stm)) {
-        this->compileReturnStatement(scope, *returnStm);
+    else if (auto* stmReturn = dynamic_cast<const ast::StmReturn*>(&stm)) {
+        this->compileStmReturn(scope, *stmReturn);
     }
-    else if (auto* expressionStatement = dynamic_cast<const ast::ExpressionStatement*>(&stm)) {
-        this->compileExpressionStatement(scope, *expressionStatement);
+    else if (auto* stmExpr = dynamic_cast<const ast::StmExpr*>(&stm)) {
+        this->compileStmExpr(scope, *stmExpr);
     }
 }
 
-void compiler::AssemblyGenerator::compileBlock(const ast::Block& block) {
+void compiler::AssemblyGenerator::compileBlock(const ast::StmBlock& stmBlock) {
     // if scope declared in global scope and not a scope within a function
-    if (block.scope->parent->isGlobalScope()) {
-        this->registerScopeFunction(&block, block.blockEndLine, block.blockEndColumn);
+    if (stmBlock.scope->parent->isGlobalScope()) {
+        this->registerScopeFunction(&stmBlock, stmBlock.blockEndLine, stmBlock.blockEndColumn);
     } else {
-        for (auto& stm : block.statements) {
-            this->compileStm(block.scope, *stm);
+        for (auto& stm : stmBlock.statements) {
+            this->compileStm(stmBlock.scope, *stm);
         }
     }
 }
 
-void compiler::AssemblyGenerator::compileStmVarDecl(Scope* scope, const ast::StmVarDecl& varDecl) {
-    if (varDecl.optionalInitialiser != nullptr) {
-        this->compileExpr(scope, *varDecl.optionalInitialiser, ExprResult::VALUE);
+void compiler::AssemblyGenerator::compileStmVarDecl(Scope* scope, const ast::StmVarDecl& stmVarDecl) {
+    if (stmVarDecl.optionalInitialiser != nullptr) {
+        this->compileExpr(scope, *stmVarDecl.optionalInitialiser, ExprResult::VALUE);
 
-        const auto symbol = scope->lookup(varDecl.identifier->name).value();
+        const auto symbol = scope->lookup(stmVarDecl.identifier->name).value();
 
         // convert expr to variable type
-        this->compileTypeConversionIfRequired(varDecl.optionalInitialiser->resultingType, symbol->type, SourceLocation{0, varDecl.optionalInitialiser->line, varDecl.optionalInitialiser->column});
+        this->compileTypeConversionIfRequired(stmVarDecl.optionalInitialiser->resultingType, symbol->type, SourceLocation{0, stmVarDecl.optionalInitialiser->line, stmVarDecl.optionalInitialiser->column});
 
         if (symbol->isGlobal()) {
             // store optional initialiser in global variable
             this->emit(Instruction{Opcode::STOREG,
-                {LabelRef{varDecl.identifier->name}},
-                SourceLocation{0, varDecl.line, varDecl.column}
+                {LabelRef{stmVarDecl.identifier->name}},
+                SourceLocation{0, stmVarDecl.line, stmVarDecl.column}
             });
         } else {
             // store optional initialiser in local variable
             this->emit(Instruction{Opcode::STOREL,
                 {Immediate{Number{symbol->localSlot}}},
-                SourceLocation{0, varDecl.line, varDecl.column}
+                SourceLocation{0, stmVarDecl.line, stmVarDecl.column}
             });
         }
     }
 }
 
-void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::StmAssignment& assignment) {
+void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::StmAssignment& stmAssignment) {
 
-    const auto symbol = scope->lookup(assignment.identifier->name).value();
+    const auto symbol = scope->lookup(stmAssignment.identifier->name).value();
 
     std::unique_ptr<ast::ExprIdentifier> identifierExpr = nullptr;
 
     Type typeAtDepth;
 
-    if (assignment.indices.size() == 0) {
-        if (assignment.assignmentOperatorInfo->assignmentOperator == AssignmentOperator::EQUAL) {
-            this->compileExpr(scope, *assignment.expression, ExprResult::VALUE);
+    if (stmAssignment.indices.empty()) {
+        if (stmAssignment.assignmentOperatorInfo->assignmentOperator == AssignmentOperator::EQUAL) {
+            this->compileExpr(scope, *stmAssignment.expr, ExprResult::VALUE);
             // convert expr to variable type
-            this->compileTypeConversionIfRequired(assignment.expression->resultingType, symbol->type, SourceLocation{0, assignment.expression->line, assignment.expression->column});
+            this->compileTypeConversionIfRequired(stmAssignment.expr->resultingType, symbol->type, SourceLocation{0, stmAssignment.expr->line, stmAssignment.expr->column});
 
             if (symbol->isGlobal()) {
                 // store result of expression in global variable
                 this->emit(Instruction{Opcode::STOREG,
-                    {LabelRef{assignment.identifier->name}},
-                    SourceLocation{0, assignment.line, assignment.column}
+                    {LabelRef{stmAssignment.identifier->name}},
+                    SourceLocation{0, stmAssignment.line, stmAssignment.column}
                 });
             } else {
                 // store result of expression in local variable
                 this->emit(Instruction{Opcode::STOREL,
                     {Immediate{Number{symbol->localSlot}}},
-                    SourceLocation{0, assignment.line, assignment.column}
+                    SourceLocation{0, stmAssignment.line, stmAssignment.column}
                 });
             }
             return;
@@ -391,12 +390,12 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
 
         // generate exprIdentifier
         identifierExpr = std::make_unique<ast::ExprIdentifier>(
-            assignment.identifier->line,
-            assignment.identifier->column,
+            stmAssignment.identifier->line,
+            stmAssignment.identifier->column,
             std::make_unique<ast::Identifier>(
-                assignment.identifier->line,
-                assignment.identifier->column,
-                assignment.identifier->name
+                stmAssignment.identifier->line,
+                stmAssignment.identifier->column,
+                stmAssignment.identifier->name
             )
         );
         this->compileExprIdentifier(scope, *identifierExpr, ExprResult::PTR);
@@ -404,8 +403,8 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
         if (symbol->isGlobal()) {
             // store result of expression in global variable
             this->emit(Instruction{Opcode::LOADG,
-                {LabelRef{assignment.identifier->name}},
-                SourceLocation{0, assignment.line, assignment.column}
+                {LabelRef{stmAssignment.identifier->name}},
+                SourceLocation{0, stmAssignment.line, stmAssignment.column}
             });
         } else {
             // store result of expression in local variable
@@ -414,19 +413,19 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
                      AssemblyType::PTR,
                     Immediate{Number{symbol->localSlot}}
                 },
-                SourceLocation{0, assignment.line, assignment.column}
+                SourceLocation{0, stmAssignment.line, stmAssignment.column}
             });
         }
 
         typeAtDepth = symbol->type;
 
-        for (int index = 0; index < assignment.indices.size(); ++index) {
+        for (int index = 0; index < stmAssignment.indices.size(); ++index) {
 
             typeAtDepth.dimension--;
 
-            this->compileArrayIndex(scope, *assignment.indices[index], typeAtDepth);
+            this->compileArrayIndex(scope, *stmAssignment.indices[index], typeAtDepth);
 
-            if (index < assignment.indices.size() - 1) {
+            if (index < stmAssignment.indices.size() - 1) {
 
                 // =============================================================
                 // load array element if not the deepest index
@@ -434,7 +433,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
 
                 this->emit(Instruction{Opcode::LOAD,
                     {AssemblyType::PTR},
-                    SourceLocation{0, assignment.indices[index]->line, assignment.indices[index]->column}
+                    SourceLocation{0, stmAssignment.indices[index]->line, stmAssignment.indices[index]->column}
                 });
             }
         }
@@ -444,10 +443,10 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
     // store expression
     // =============================================================
 
-    const Type targetType = assignment.indices.size() > 0? typeAtDepth : symbol->type;
+    const Type targetType = !stmAssignment.indices.empty()? typeAtDepth : symbol->type;
 
-    if (assignment.assignmentOperatorInfo->assignmentOperator == AssignmentOperator::EQUAL) {
-        this->compileExpr(scope, *assignment.expression, ExprResult::VALUE);
+    if (stmAssignment.assignmentOperatorInfo->assignmentOperator == AssignmentOperator::EQUAL) {
+        this->compileExpr(scope, *stmAssignment.expr, ExprResult::VALUE);
 
     } else {
         // assignment operator is not 'EQUAL'
@@ -455,13 +454,13 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
         // [ptr]
         this->emit(Instruction{Opcode::DUP,
             {Immediate{Number{static_cast<uint32_t>(0)}}},
-            SourceLocation{0, assignment.identifier->line, assignment.identifier->column}
+            SourceLocation{0, stmAssignment.identifier->line, stmAssignment.identifier->column}
         });
         // [ptr, ptr]
 
         this->emit(Instruction{Opcode::LOAD,
             {toAssemblyType(symbol->type)},
-            SourceLocation{0, assignment.identifier->line, assignment.identifier->column}
+            SourceLocation{0, stmAssignment.identifier->line, stmAssignment.identifier->column}
         });
         // [ptr, val]
 
@@ -471,47 +470,47 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
 
         // generate binaryOp
         const auto* binaryOperatorInfo = new ast::BinaryOperatorInfo(
-            assignment.line,
-            assignment.column,
-            assignmentOperatorToBinaryOperator(assignment.assignmentOperatorInfo->assignmentOperator)
+            stmAssignment.line,
+            stmAssignment.column,
+            assignmentOperatorToBinaryOperator(stmAssignment.assignmentOperatorInfo->assignmentOperator)
         );
 
-        this->compileBinaryExprWithLeftExprOnStack(
+        this->compileExprBinaryWithLeftExprOnStack(
             scope,
             *binaryOperatorInfo,
-            assignment.assignmentResultingType,
-            assignment.line,
-            assignment.column,
+            stmAssignment.assignmentResultingType,
+            stmAssignment.line,
+            stmAssignment.column,
             targetType,
-            assignment.line,
-            assignment.column,
-            *assignment.expression
+            stmAssignment.line,
+            stmAssignment.column,
+            *stmAssignment.expr
         );
     }
     // convert expr to variable type
-    this->compileTypeConversionIfRequired(assignment.assignmentResultingType, targetType, SourceLocation{0, assignment.expression->line, assignment.expression->column});
+    this->compileTypeConversionIfRequired(stmAssignment.assignmentResultingType, targetType, SourceLocation{0, stmAssignment.expr->line, stmAssignment.expr->column});
 
     // [ptr, resulting_val]
 
     this->emit(Instruction{Opcode::STORE,
         {},
-        SourceLocation{0, assignment.line, assignment.column}
+        SourceLocation{0, stmAssignment.line, stmAssignment.column}
     });
 }
 
-void compiler::AssemblyGenerator::compileIfStatement(Scope* scope, const ast::IfStm& ifStm) {
-    this->compileExpr(scope, *ifStm.condition, ExprResult::VALUE);
+void compiler::AssemblyGenerator::compileStmIf(Scope* scope, const ast::StmIf& stmIf) {
+    this->compileExpr(scope, *stmIf.condition, ExprResult::VALUE);
 
     const std::string endIfLabel = generateLabel("if_end");
 
-    if (ifStm.elseStm == nullptr) { // if statement without else
+    if (stmIf.elseStm == nullptr) { // if statement without else
         // skip if block when condition is false
         this->emit(Instruction{Opcode::JEZ,
             {LabelRef{endIfLabel}},
-            SourceLocation{0, ifStm.line, ifStm.column}
+            SourceLocation{0, stmIf.line, stmIf.column}
         });
 
-        this->compileBlock(*ifStm.ifBlock); // compile if block
+        this->compileBlock(*stmIf.ifBlock); // compile if block
 
         this->emit(LabelDef{endIfLabel});
 
@@ -521,65 +520,65 @@ void compiler::AssemblyGenerator::compileIfStatement(Scope* scope, const ast::If
         // jump to else block when condition is false
         this->emit(Instruction{Opcode::JEZ,
             {LabelRef{elseLabel}},
-            SourceLocation{0, ifStm.line, ifStm.column}
+            SourceLocation{0, stmIf.line, stmIf.column}
         });
 
-        this->compileBlock(*ifStm.ifBlock); // compile if block
+        this->compileBlock(*stmIf.ifBlock); // compile if block
 
         // jump to end of else block
         this->emit(Instruction{Opcode::JMP,
             {LabelRef{endIfLabel}},
-            SourceLocation{0, ifStm.line, ifStm.column}
+            SourceLocation{0, stmIf.line, stmIf.column}
         });
 
         this->emit(LabelDef{elseLabel});
 
-        this->compileStm(scope, *ifStm.elseStm); // compile else block
+        this->compileStm(scope, *stmIf.elseStm); // compile else block
 
         this->emit(LabelDef{endIfLabel});
     }
 }
 
-void compiler::AssemblyGenerator::compileWhileStatement(Scope* scope, const ast::WhileStm &whileStm) {
-    const std::string startWhileLabel = this->generateLabel("while_start");
-    const std::string endWhileLabel = this->generateLabel("while_end");
+void compiler::AssemblyGenerator::compileStmWhile(Scope* scope, const ast::StmWhile& stmWhile) {
+    const std::string whileStartLabel = this->generateLabel("while_start");
+    const std::string whileEndLabel = this->generateLabel("while_end");
 
-    whileStm.body->scope->loopContext = new LoopContext{startWhileLabel, endWhileLabel};
+    stmWhile.body->scope->loopContext = new LoopContext{whileStartLabel, whileEndLabel};
 
-    this->emit(LabelDef{startWhileLabel});
+    this->emit(LabelDef{whileStartLabel});
 
-    this->compileExpr(scope, *whileStm.condition, ExprResult::VALUE);
+    this->compileExpr(scope, *stmWhile.condition, ExprResult::VALUE);
 
     // skip block if condition is false
     this->emit(Instruction{Opcode::JEZ,
-        {LabelRef{endWhileLabel}},
-        SourceLocation{0, whileStm.line, whileStm.column}
+        {LabelRef{whileEndLabel}},
+        SourceLocation{0, stmWhile.line, stmWhile.column}
     });
 
-    this->compileBlock(*whileStm.body); // compile while block
+    this->compileBlock(*stmWhile.body); // compile while block
 
     // jump to start of while (evaluate condition again)
     this->emit(Instruction{Opcode::JMP,
-        {LabelRef{startWhileLabel}},
-        SourceLocation{0, whileStm.line, whileStm.column}
+        {LabelRef{whileStartLabel}},
+        SourceLocation{0, stmWhile.line, stmWhile.column}
     });
 
-    this->emit(LabelDef{endWhileLabel});
+    this->emit(LabelDef{whileEndLabel});
 }
 
-void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::ForStm& forStm) {
+void compiler::AssemblyGenerator::compileStmFor(Scope* scope, const ast::StmFor& stmFor) {
     if (!isCompilingScopeFunctions) {
         // to prevent a forVariable that gets declared within the nested scope from being accessed from a global scope context
         // -> add forStm to pendingScopeFunctions
-        this->registerScopeFunction(&forStm, forStm.body->blockEndLine, forStm.body->blockEndColumn);
+        this->registerScopeFunction(&stmFor, stmFor.body->blockEndLine, stmFor.body->blockEndColumn);
         return;
     }
 
-    const auto forSourceLocation = SourceLocation{0, forStm.line, forStm.column};
+    const auto forSourceLocation = SourceLocation{0, stmFor.line, stmFor.column};
 
-    const bool forHasVarDecl = std::holds_alternative<std::unique_ptr<ast::StmVarDecl>>(forStm.variable);
+    const bool forHasVarDecl = std::holds_alternative<std::unique_ptr<ast::StmVarDecl>>(stmFor.variable);
     Type* forVariableType;
-    const bool forHasRange = std::holds_alternative<std::unique_ptr<ast::ForRange>>(forStm.iterable);
+    const bool forHasRange = std::holds_alternative<std::unique_ptr<ast::ForRange>>(stmFor.iterable);
     bool rangeHasStep = false;
 
     const std::unique_ptr<ast::StmVarDecl>* forVarDecl;
@@ -588,40 +587,40 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
     const std::unique_ptr<ast::Expr>* forIterable;
 
     if (forHasVarDecl) {
-        forVarDecl = &std::get<std::unique_ptr<ast::StmVarDecl>>(forStm.variable);
+        forVarDecl = &std::get<std::unique_ptr<ast::StmVarDecl>>(stmFor.variable);
         forVariableType = &forVarDecl->get()->typeInfo->type;
     } else {
-        forVariable = &std::get<std::unique_ptr<ast::ExprIdentifier>>(forStm.variable);
+        forVariable = &std::get<std::unique_ptr<ast::ExprIdentifier>>(stmFor.variable);
         forVariableType = &forVariable->get()->resultingType;
     }
 
     if (forHasRange) {
-        forRange = &std::get<std::unique_ptr<ast::ForRange>>(forStm.iterable);
+        forRange = &std::get<std::unique_ptr<ast::ForRange>>(stmFor.iterable);
     } else {
-        forIterable = &std::get<std::unique_ptr<ast::Expr>>(forStm.iterable);
+        forIterable = &std::get<std::unique_ptr<ast::Expr>>(stmFor.iterable);
     }
 
     if (forHasRange) {
         rangeHasStep = forRange->get()->step != nullptr;
     }
 
-    std::string forLoopStepValidLabel;
+    std::string forStepValidLabel;
     if (rangeHasStep) {
-        forLoopStepValidLabel = this->generateLabel("for_step_valid");
+        forStepValidLabel = this->generateLabel("for_step_valid");
     }
 
-    const auto forLoopStartLabel = this->generateLabel("for_start");
+    const auto forStartLabel = this->generateLabel("for_start");
 
-    std::string forLoopNegativeStepCondition;
-    std::string forLoopConditionJoinLabel;
+    std::string forNegativeStepCondition;
+    std::string forConditionJoinLabel;
     if (rangeHasStep) {
-        forLoopNegativeStepCondition = this->generateLabel("for_negative_step_condition");
-        forLoopConditionJoinLabel = this->generateLabel("for_condition_join");
+        forNegativeStepCondition = this->generateLabel("for_negative_step_condition");
+        forConditionJoinLabel = this->generateLabel("for_condition_join");
     }
-    const auto forLoopContinueLabel = this->generateLabel("for_continue");
-    const auto forLoopEndLabel = this->generateLabel("for_end");
+    const auto forContinueLabel = this->generateLabel("for_continue");
+    const auto forEndLabel = this->generateLabel("for_end");
 
-    forStm.body->scope->parent->loopContext = new LoopContext{forLoopContinueLabel, forLoopEndLabel};
+    stmFor.body->scope->parent->loopContext = new LoopContext{forContinueLabel, forEndLabel};
 
     // ====================================================
     // compile step
@@ -644,7 +643,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
             // [range_step, range_step]
 
             this->emit(Instruction{Opcode::JNZ,
-                {LabelRef{forLoopStepValidLabel}},
+                {LabelRef{forStepValidLabel}},
                 SourceLocation{0, forRange->get()->step->line, forRange->get()->step->column}
             });
             // [range_step]
@@ -654,7 +653,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
                 SourceLocation{0, forRange->get()->step->line, forRange->get()->step->column}
             });
 
-            this->emit(LabelDef{forLoopStepValidLabel});
+            this->emit(LabelDef{forStepValidLabel});
             // [range_step]
 
             // ====================================================
@@ -789,7 +788,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
                 forVarDecl->get()->identifier->name
             )
         );
-        this->compileExprIdentifier(forStm.body->scope, *identifierExpr, ExprResult::PTR);
+        this->compileExprIdentifier(stmFor.body->scope, *identifierExpr, ExprResult::PTR);
 
     } else {
         // compile identifierExpr
@@ -822,7 +821,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
     // start for loop
     // ====================================================
 
-    this->emit(LabelDef{forLoopStartLabel});
+    this->emit(LabelDef{forStartLabel});
 
     // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current]
     // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ]
@@ -858,7 +857,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
         // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current, range_end, range_current, is_range_step_positive]
 
         this->emit(Instruction{Opcode::JEZ,
-            {LabelRef{forLoopNegativeStepCondition}},
+            {LabelRef{forNegativeStepCondition}},
             forSourceLocation
         });
         // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current, range_end, range_current]
@@ -879,7 +878,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
     // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ,                           ]
 
     this->emit(Instruction{Opcode::JNZ,
-        {LabelRef{forLoopEndLabel}},
+        {LabelRef{forEndLabel}},
         forSourceLocation
     });
     // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current]
@@ -888,7 +887,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
     if (rangeHasStep) {
         // step is positive -> jump to end of condition
         this->emit(Instruction{Opcode::JMP,
-            {LabelRef{forLoopConditionJoinLabel}},
+            {LabelRef{forConditionJoinLabel}},
             forSourceLocation
         });
 
@@ -896,7 +895,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
         // compile condition with negative step
         // ====================================================
 
-        this->emit(LabelDef{forLoopNegativeStepCondition});
+        this->emit(LabelDef{forNegativeStepCondition});
 
         // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current, range_end, range_current]
 
@@ -907,12 +906,12 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
         // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current, range_end >= range_current]
 
         this->emit(Instruction{Opcode::JNZ,
-            {LabelRef{forLoopEndLabel}},
+            {LabelRef{forEndLabel}},
             forSourceLocation
         });
         // [is_range_step_positive, range_step, range_end, for_variable_ptr, range_current]
 
-        this->emit(LabelDef{forLoopConditionJoinLabel});
+        this->emit(LabelDef{forConditionJoinLabel});
     }
     // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current]
     // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ]
@@ -1013,9 +1012,9 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
     // compile body
     // ====================================================
 
-    this->compileBlock(*forStm.body);
+    this->compileBlock(*stmFor.body);
 
-    this->emit(LabelDef{forLoopContinueLabel});
+    this->emit(LabelDef{forContinueLabel});
 
     // ====================================================
     // add range_step to range_current
@@ -1040,7 +1039,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
     // ====================================================
 
     this->emit(Instruction{Opcode::JMP,
-        {LabelRef{forLoopStartLabel}},
+        {LabelRef{forStartLabel}},
         forSourceLocation
     });
 
@@ -1048,7 +1047,7 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
     // remove items on stack relating to forStm
     // ====================================================
 
-    this->emit(LabelDef{forLoopEndLabel});
+    this->emit(LabelDef{forEndLabel});
     // [is_range_step_positive           , iterable_element_ptr    , range_step, range_end, for_variable_ptr, range_current]
     // [if for loop has user defined step, if for loop has iterable,           ,          ,                 ,              ]
 
@@ -1063,92 +1062,94 @@ void compiler::AssemblyGenerator::compileForStatement(Scope* scope, const ast::F
     // []
 }
 
-void compiler::AssemblyGenerator::compileContinueStatement(Scope* scope, const ast::ContinueStm &continueStm) {
+void compiler::AssemblyGenerator::compileStmContinue(const Scope* scope, const ast::StmContinue& stmContinue) {
     const auto loopContext = scope->lookupLoopScope()->loopContext;
     // jump to start of while block (evaluate condition again)
     this->emit(Instruction{Opcode::JMP,
         {LabelRef{loopContext->continueLabel}},
-        SourceLocation{0, continueStm.line, continueStm.column}
+        SourceLocation{0, stmContinue.line, stmContinue.column}
     });
 }
 
-void compiler::AssemblyGenerator::compileBreakStatement(Scope* scope, const ast::BreakStm &breakStm) {
+void compiler::AssemblyGenerator::compileStmBreak(const Scope* scope, const ast::StmBreak& stmBreak) {
     const auto loopContext = scope->lookupLoopScope()->loopContext;
     // jump to end of while block
     this->emit(Instruction{Opcode::JMP,
         {LabelRef{loopContext->breakLabel}},
-        SourceLocation{0, breakStm.line, breakStm.column}
+        SourceLocation{0, stmBreak.line, stmBreak.column}
     });
 }
 
-void compiler::AssemblyGenerator::compileReturnStatement(Scope* scope, const ast::ReturnStm &returnStm) {
-    if (returnStm.returnExpression != nullptr) {
-        this->compileExpr(scope, *returnStm.returnExpression, ExprResult::VALUE);
-        this->compileTypeConversionIfRequired(returnStm.returnExpression->resultingType, returnStm.functionSymbol->returnType, SourceLocation{0, returnStm.returnExpression->line, returnStm.returnExpression->column});
+void compiler::AssemblyGenerator::compileStmReturn(Scope* scope, const ast::StmReturn& stmReturn) {
+    if (stmReturn.returnExpr != nullptr) {
+        this->compileExpr(scope, *stmReturn.returnExpr, ExprResult::VALUE);
+        this->compileTypeConversionIfRequired(stmReturn.returnExpr->resultingType, stmReturn.functionSymbol->returnType, SourceLocation{0, stmReturn.returnExpr->line, stmReturn.returnExpr->column});
     }
     // return execution to caller
     this->emit(Instruction{Opcode::RET,
         {},
-        SourceLocation{0, returnStm.line, returnStm.column}
+        SourceLocation{0, stmReturn.line, stmReturn.column}
     });
 }
 
-void compiler::AssemblyGenerator::compileExpressionStatement(Scope *scope, const ast::ExpressionStatement &expressionStm) {
-    if (auto* functionCallExpr = dynamic_cast<const ast::FunctionCall*>(expressionStm.expression.get())) {
-        this->compileFunctionCall(scope, *functionCallExpr);
+void compiler::AssemblyGenerator::compileStmExpr(Scope *scope, const ast::StmExpr& stmExpr) {
+    if (auto* functionCallExpr = dynamic_cast<const ast::ExprFunctionCall*>(stmExpr.expr.get())) {
+        this->compileExprFunctionCall(scope, *functionCallExpr);
 
-    } else if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(expressionStm.expression.get())) {
-        this->compileUnaryExpr(scope, *unaryExpr, ExprResult::DISCARD);
+    } else if (auto* unaryExpr = dynamic_cast<const ast::ExprUnary*>(stmExpr.expr.get())) {
+        this->compileExprUnary(scope, *unaryExpr, ExprResult::DISCARD);
 
     } else { // POSTFIX EXPR
-        auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(expressionStm.expression.get());
-        this->compilePostfixExpr(scope, *postfixExpr, ExprResult::DISCARD);
+        auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(stmExpr.expr.get());
+        this->compileExprPostfix(scope, *postfixExpr, ExprResult::DISCARD);
     }
 }
 
 void compiler::AssemblyGenerator::compileExpr(Scope* scope, const ast::Expr& expr, const ExprResult exprResult) {
-    if (auto* integerLiteral = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
-        this->compileExprIntegerLiteral(*integerLiteral);
+    if (auto* exprIntegerLiteral = dynamic_cast<const ast::ExprIntegerLiteral*>(&expr)) {
+        this->compileExprIntegerLiteral(*exprIntegerLiteral);
     }
-    else if (auto* floatLiteral = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
-        this->compileExprFloatLiteral(*floatLiteral);
+    else if (auto* exprFloatLiteral = dynamic_cast<const ast::ExprFloatLiteral*>(&expr)) {
+        this->compileExprFloatLiteral(*exprFloatLiteral);
     }
-    else if (auto* boolLiteral = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
-        this->compileExprBoolLiteral(*boolLiteral);
+    else if (auto* exprBoolLiteral = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
+        this->compileExprBoolLiteral(*exprBoolLiteral);
     }
-    else if (auto* charLiteral = dynamic_cast<const ast::ExprCharLiteral*>(&expr)) {
-        this->compilerExprCharLiteral(*charLiteral);
+    else if (auto* exprCharLiteral = dynamic_cast<const ast::ExprCharLiteral*>(&expr)) {
+        this->compilerExprCharLiteral(*exprCharLiteral);
     }
-    else if (auto* identifier = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
-        this->compileExprIdentifier(scope, *identifier, exprResult);
+    else if (auto* exprIdentifier = dynamic_cast<const ast::ExprIdentifier*>(&expr)) {
+        this->compileExprIdentifier(scope, *exprIdentifier, exprResult);
     }
-    else if (auto* binaryExpr = dynamic_cast<const ast::ExprBinaryOperator*>(&expr)) {
-        this->compileBinaryExpr(scope, *binaryExpr);
+    else if (auto* exprBinary = dynamic_cast<const ast::ExprBinary*>(&expr)) {
+        this->compileExprBinary(scope, *exprBinary);
     }
-    else if (auto* unaryExpr = dynamic_cast<const ast::ExprUnaryOperator*>(&expr)) {
-        this->compileUnaryExpr(scope, *unaryExpr, ExprResult::VALUE);
+    else if (auto* exprUnary = dynamic_cast<const ast::ExprUnary*>(&expr)) {
+        this->compileExprUnary(scope, *exprUnary, ExprResult::VALUE);
     }
-    else if (auto* postfixExpr = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
-        this->compilePostfixExpr(scope, *postfixExpr, exprResult);
+    else if (auto* exprPostfix = dynamic_cast<const ast::ExprPostfix*>(&expr)) {
+        this->compileExprPostfix(scope, *exprPostfix, exprResult);
     }
     else if (auto* castExpr = dynamic_cast<const ast::ExprCast*>(&expr)) {
         this->compileCastExpr(scope, *castExpr);
+    else if (auto* exprCast = dynamic_cast<const ast::ExprCast*>(&expr)) {
+        this->compileExprCast(scope, *exprCast);
     }
-    else if (auto* functionCall = dynamic_cast<const ast::FunctionCall*>(&expr)) {
-        this->compileFunctionCall(scope, *functionCall);
+    else if (auto* exprFunctionCall = dynamic_cast<const ast::ExprFunctionCall*>(&expr)) {
+        this->compileExprFunctionCall(scope, *exprFunctionCall);
     }
-    else if (auto* newExpr = dynamic_cast<const ast::ExprNew*>(&expr)) {
-        this->compileNewExpr(scope, *newExpr);
+    else if (auto* exprNew = dynamic_cast<const ast::ExprNew*>(&expr)) {
+        this->compileExprNew(scope, *exprNew);
     }
 }
 
-void compiler::AssemblyGenerator::compileBinaryExpr(Scope* scope, const ast::ExprBinaryOperator &expr) {
-    this->compileExpr(scope, *expr.left, ExprResult::VALUE);
+void compiler::AssemblyGenerator::compileExprBinary(Scope* scope, const ast::ExprBinary& exprBinary) {
+    this->compileExpr(scope, *exprBinary.left, ExprResult::VALUE);
 
-    this->compileBinaryExprWithLeftExprOnStack(scope, *expr.binaryOperatorInfo, expr.resultingType, expr.line, expr.column, expr.left->resultingType, expr.left->line, expr.left->column, *expr.right);
+    this->compileExprBinaryWithLeftExprOnStack(scope, *exprBinary.binaryOperatorInfo, exprBinary.resultingType, exprBinary.line, exprBinary.column, exprBinary.left->resultingType, exprBinary.left->line, exprBinary.left->column, *exprBinary.right);
 }
 
-void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *scope, const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& exprResultingType, const uint32_t exprLine, const uint16_t exprColumn, const Type& leftType, const uint32_t leftLine, const uint16_t leftColumn, const ast::Expr& right) {
+void compiler::AssemblyGenerator::compileExprBinaryWithLeftExprOnStack(Scope *scope, const ast::BinaryOperatorInfo& binaryOperatorInfo, const Type& exprResultingType, const uint32_t exprLine, const uint16_t exprColumn, const Type& leftType, const uint32_t leftLine, const uint16_t leftColumn, const ast::Expr& right) {
     switch (binaryOperatorInfo.binaryOperator) {
         case BinaryOperator::ADD:
         case BinaryOperator::SUBTRACT:
@@ -1173,13 +1174,13 @@ void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *sc
         }
 
         case BinaryOperator::LOGICAL_OR: {
-            const std::string evaluateToTrueLabel = this->generateLabel("logical_or_true");
-            const std::string endOrLabel = this->generateLabel("logical_or_end");
+            const std::string logicalOrTrueLabel = this->generateLabel("logical_or_true");
+            const std::string logicalOrEndLabel = this->generateLabel("logical_or_end");
 
             // skip right expression if left expression results to true
             // evaluate to true if left expression is true
             this->emit(Instruction{Opcode::JNZ,
-                {LabelRef{evaluateToTrueLabel}},
+                {LabelRef{logicalOrTrueLabel}},
                 SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
@@ -1187,7 +1188,7 @@ void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *sc
 
             // evaluate to true if right expression is true
             this->emit(Instruction{Opcode::JNZ,
-                {LabelRef{evaluateToTrueLabel}},
+                {LabelRef{logicalOrTrueLabel}},
                 SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
             // push 'false' onto stack
@@ -1201,11 +1202,11 @@ void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *sc
 
             // jump to end of logical OR
             this->emit(Instruction{Opcode::JMP,
-                {LabelRef{endOrLabel}},
+                {LabelRef{logicalOrEndLabel}},
                 SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
-            this->emit(LabelDef{evaluateToTrueLabel});
+            this->emit(LabelDef{logicalOrTrueLabel});
 
             // push 'true' onto stack
             this->emit(Instruction{Opcode::PUSH,
@@ -1216,17 +1217,17 @@ void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *sc
                 SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
-            this->emit(LabelDef{endOrLabel});
+            this->emit(LabelDef{logicalOrEndLabel});
             break;
         }
         case BinaryOperator::LOGICAL_AND: {
-            const std::string evaluateToFalseLabel = this->generateLabel("logical_and_false");
-            const std::string endAndLabel = this->generateLabel("logical_and_end");
+            const std::string logicalAndFalseLabel = this->generateLabel("logical_and_false");
+            const std::string logicalAndEndLabel = this->generateLabel("logical_and_end");
 
             // skip right expression if left expression results to false
             // evaluate to false if left expression is false
             this->emit(Instruction{Opcode::JEZ,
-                {LabelRef{evaluateToFalseLabel}},
+                {LabelRef{logicalAndFalseLabel}},
                 SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
@@ -1234,7 +1235,7 @@ void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *sc
 
             // evaluate to false if right expression is false
             this->emit(Instruction{Opcode::JEZ,
-                {LabelRef{evaluateToFalseLabel}},
+                {LabelRef{logicalAndFalseLabel}},
                 SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
@@ -1249,11 +1250,11 @@ void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *sc
 
             // jump to end of logical AND
             this->emit(Instruction{Opcode::JMP,
-                {LabelRef{endAndLabel}},
+                {LabelRef{logicalAndEndLabel}},
                 SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
-            this->emit(LabelDef{evaluateToFalseLabel});
+            this->emit(LabelDef{logicalAndFalseLabel});
 
             // push 'false' onto stack
             this->emit(Instruction{Opcode::PUSH,
@@ -1264,7 +1265,7 @@ void compiler::AssemblyGenerator::compileBinaryExprWithLeftExprOnStack(Scope *sc
                 SourceLocation{0, binaryOperatorInfo.line, binaryOperatorInfo.column}
             });
 
-            this->emit(LabelDef{endAndLabel});
+            this->emit(LabelDef{logicalAndEndLabel});
             break;
         }
 
@@ -1354,50 +1355,50 @@ void compiler::AssemblyGenerator::compileBinaryOperator(const ast::BinaryOperato
     }
 }
 
-void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::ExprUnaryOperator& expr, const ExprResult exprResult) {
-    switch (expr.unaryOperatorInfo->unaryOperator) {
+void compiler::AssemblyGenerator::compileExprUnary(Scope* scope, const ast::ExprUnary& exprUnary, const ExprResult exprResult) {
+    switch (exprUnary.unaryOperatorInfo->unaryOperator) {
         case UnaryOperator::PLUS: {
-            this->compileExpr(scope, *expr.expr, ExprResult::VALUE);
+            this->compileExpr(scope, *exprUnary.expr, ExprResult::VALUE);
             break;
         }
         case UnaryOperator::MINUS: {
             // push 0 onto stack
              this->emit(Instruction{Opcode::PUSH,
                 {
-                    toAssemblyType(expr.expr->resultingType),
-                    Immediate{getNumber(expr.expr->resultingType, 0)}
+                    toAssemblyType(exprUnary.expr->resultingType),
+                    Immediate{getNumber(exprUnary.expr->resultingType, 0)}
                 },
-                 SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                 SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
              });
 
-            this->compileExpr(scope, *expr.expr, ExprResult::VALUE);
+            this->compileExpr(scope, *exprUnary.expr, ExprResult::VALUE);
 
             // subtract value of expression from 0
             this->emit(Instruction{Opcode::SUB,
                 {},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
             break;
         }
         case UnaryOperator::BITWISE_NOT: {
-            this->compileExpr(scope, *expr.expr, ExprResult::VALUE);
-            this->compileTypeConversionIfRequired(expr.expr->resultingType, expr.resultingType, SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column});
+            this->compileExpr(scope, *exprUnary.expr, ExprResult::VALUE);
+            this->compileTypeConversionIfRequired(exprUnary.expr->resultingType, exprUnary.resultingType, SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column});
             this->emit(Instruction{Opcode::NOT,
                 {},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
             break;
         }
         case UnaryOperator::LOGICAL_NOT: {
-            const std::string evaluateToTrueLabel = this->generateLabel("logical_not_true");
-            const std::string endNotLabel = this->generateLabel("logical_not_end");
+            const std::string logicalNotTrueLabel = this->generateLabel("logical_not_true");
+            const std::string logicalNotEndLabel = this->generateLabel("logical_not_end");
 
-            this->compileExpr(scope, *expr.expr, ExprResult::VALUE);
+            this->compileExpr(scope, *exprUnary.expr, ExprResult::VALUE);
 
             // evaluate to true if value of expression is false
             this->emit(Instruction{Opcode::JEZ,
-                {LabelRef{evaluateToTrueLabel}},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                {LabelRef{logicalNotTrueLabel}},
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
 
             // push 'false' onto stack
@@ -1406,16 +1407,16 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
                     AssemblyType::UI32,
                     Immediate{Number{static_cast<uint32_t>(0)}},
                 },
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
              });
 
             // jump to end of logical NOT
             this->emit(Instruction{Opcode::JMP,
-                {LabelRef{endNotLabel}},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                {LabelRef{logicalNotEndLabel}},
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
 
-            this->emit(LabelDef{evaluateToTrueLabel});
+            this->emit(LabelDef{logicalNotTrueLabel});
 
             // push `true` onto stack
             this->emit(Instruction{Opcode::PUSH,
@@ -1423,51 +1424,51 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
                     AssemblyType::UI32,
                     Immediate{Number{static_cast<uint32_t>(1)}}
                 },
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
 
-            this->emit(LabelDef{endNotLabel});
+            this->emit(LabelDef{logicalNotEndLabel});
             break;
         }
         case UnaryOperator::INCREMENT:
         case UnaryOperator::DECREMENT: {
-            this->compileExpr(scope, *expr.expr, ExprResult::PTR);
+            this->compileExpr(scope, *exprUnary.expr, ExprResult::PTR);
 
             // [ptr]
 
             this->emit(Instruction{Opcode::DUP,
                 {Immediate{Number{static_cast<uint32_t>(0)}}},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
             // [ptr, ptr]
 
             this->emit(Instruction{Opcode::LOAD,
-                {toAssemblyType(expr.expr->resultingType)},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                {toAssemblyType(exprUnary.expr->resultingType)},
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
             // [ptr, val]
 
             this->emit(Instruction{Opcode::PUSH,
                 {
-                    toAssemblyType(expr.expr->resultingType),
-                    Immediate{getNumber(expr.expr->resultingType, 1)}
+                    toAssemblyType(exprUnary.expr->resultingType),
+                    Immediate{getNumber(exprUnary.expr->resultingType, 1)}
                 },
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
             // [ptr, val, 1]
 
-            const auto arithmeticOpcode = expr.unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ? Opcode::ADD : Opcode::SUB;
+            const auto arithmeticOpcode = exprUnary.unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ? Opcode::ADD : Opcode::SUB;
 
             this->emit(Instruction{arithmeticOpcode,
                 {},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
             // [ptr, val +/- 1]
 
             if (exprResult != ExprResult::DISCARD) {
                 this->emit(Instruction{Opcode::DUP,
                     {Immediate{Number{static_cast<uint32_t>(0)}}},
-                    SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                    SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
                 });
                 // [ptr, val +/- 1, val +/- 1]
 
@@ -1481,7 +1482,7 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
 
             this->emit(Instruction{Opcode::STORE,
                 {},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprUnary.unaryOperatorInfo->line, exprUnary.unaryOperatorInfo->column}
             });
             // if exprResult != DISCARD [val +/- 1]
             // if exprResult == DISCARD []
@@ -1489,27 +1490,27 @@ void compiler::AssemblyGenerator::compileUnaryExpr(Scope* scope, const ast::Expr
     }
 }
 
-void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::ExprPostfix& expr, const ExprResult exprResult) {
-    this->compileExpr(scope, *expr.expression, expr.unaryOperatorInfo != nullptr ? ExprResult::PTR : exprResult);
+void compiler::AssemblyGenerator::compileExprPostfix(Scope* scope, const ast::ExprPostfix& exprPostfix, const ExprResult exprResult) {
+    this->compileExpr(scope, *exprPostfix.expr, exprPostfix.unaryOperatorInfo != nullptr ? ExprResult::PTR : exprResult);
 
-    for (int idx = 0; idx < expr.postfixOperators.size(); idx++) {
+    for (int idx = 0; idx < exprPostfix.postfixOperators.size(); idx++) {
 
-        if (std::holds_alternative<std::unique_ptr<ast::Index>>(expr.postfixOperators[idx])) {
+        if (std::holds_alternative<std::unique_ptr<ast::Index>>(exprPostfix.postfixOperators[idx])) {
 
-            auto& index = std::get<std::unique_ptr<ast::Index>>(expr.postfixOperators[idx]);
+            auto& index = std::get<std::unique_ptr<ast::Index>>(exprPostfix.postfixOperators[idx]);
 
-            this->compileArrayIndex(scope, *index, expr.resultingType);
+            this->compileArrayIndex(scope, *index, exprPostfix.resultingType);
 
             // load ptr if not last postfix operator
-            if (idx < expr.postfixOperators.size() - 1) {
+            if (idx < exprPostfix.postfixOperators.size() - 1) {
                 this->emit(Instruction{Opcode::LOAD,
                     {AssemblyType::PTR},
-                    SourceLocation{0, expr.expression->line, expr.expression->column}
+                    SourceLocation{0, exprPostfix.expr->line, exprPostfix.expr->column}
                 });
             }
         } else {
             // compile field access
-            auto& fieldAccess = std::get<std::unique_ptr<ast::FieldAccess>>(expr.postfixOperators[idx]);
+            auto& fieldAccess = std::get<std::unique_ptr<ast::FieldAccess>>(exprPostfix.postfixOperators[idx]);
 
             if (fieldAccess->fieldInfo->addressOffset != 0) {
                 this->emit(Instruction{Opcode::PUSH,
@@ -1528,36 +1529,36 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
         }
     }
 
-    if (expr.unaryOperatorInfo == nullptr && exprResult == ExprResult::VALUE) {
+    if (exprPostfix.unaryOperatorInfo == nullptr && exprResult == ExprResult::VALUE) {
         this->emit(Instruction{Opcode::LOAD,
-            {toAssemblyType(expr.resultingType)},
-            SourceLocation{0, expr.expression->line, expr.expression->column}
+            {toAssemblyType(exprPostfix.resultingType)},
+            SourceLocation{0, exprPostfix.expr->line, exprPostfix.expr->column}
         });
-    } else if (expr.unaryOperatorInfo != nullptr) {
+    } else if (exprPostfix.unaryOperatorInfo != nullptr) {
         // [ptr]
 
         this->emit(Instruction{Opcode::DUP,
             {Immediate{Number{static_cast<uint32_t>(0)}}},
-            SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+            SourceLocation{0, exprPostfix.unaryOperatorInfo->line, exprPostfix.unaryOperatorInfo->column}
         });
         // [ptr, ptr]
 
         this->emit(Instruction{Opcode::LOAD,
-            {toAssemblyType(expr.resultingType)},
-            SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+            {toAssemblyType(exprPostfix.resultingType)},
+            SourceLocation{0, exprPostfix.unaryOperatorInfo->line, exprPostfix.unaryOperatorInfo->column}
         });
         // [ptr, val]
 
         if (exprResult != ExprResult::DISCARD) {
             this->emit(Instruction{Opcode::SWAP,
                 {},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprPostfix.unaryOperatorInfo->line, exprPostfix.unaryOperatorInfo->column}
             });
             // [val, ptr]
 
             this->emit(Instruction{Opcode::DUP,
                 {Immediate{Number{static_cast<uint32_t>(1)}}},
-                SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+                SourceLocation{0, exprPostfix.unaryOperatorInfo->line, exprPostfix.unaryOperatorInfo->column}
             });
             // [val, ptr, val]
         }
@@ -1566,26 +1567,26 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
 
         this->emit(Instruction{Opcode::PUSH,
             {
-                toAssemblyType(expr.resultingType),
-                Immediate{getNumber(expr.resultingType, 1)}
+                toAssemblyType(exprPostfix.resultingType),
+                Immediate{getNumber(exprPostfix.resultingType, 1)}
             },
-            SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+            SourceLocation{0, exprPostfix.unaryOperatorInfo->line, exprPostfix.unaryOperatorInfo->column}
         });
         // if exprResult != DISCARD [val, ptr, val, 1]
         // if exprResult == DISCARD [ptr, val, 1]
 
-        const auto arithmeticOpcode = expr.unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ? Opcode::ADD : Opcode::SUB;
+        const auto arithmeticOpcode = exprPostfix.unaryOperatorInfo->unaryOperator == UnaryOperator::INCREMENT ? Opcode::ADD : Opcode::SUB;
 
         this->emit(Instruction{arithmeticOpcode,
             {},
-            SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+            SourceLocation{0, exprPostfix.unaryOperatorInfo->line, exprPostfix.unaryOperatorInfo->column}
         });
         // if exprResult != DISCARD [val, ptr, val +/- 1]
         // if exprResult == DISCARD [ptr, val +/- 1]
 
         this->emit(Instruction{Opcode::STORE,
             {},
-            SourceLocation{0, expr.unaryOperatorInfo->line, expr.unaryOperatorInfo->column}
+            SourceLocation{0, exprPostfix.unaryOperatorInfo->line, exprPostfix.unaryOperatorInfo->column}
         });
         // if exprResult != DISCARD [val]
         // if exprResult == DISCARD []
@@ -1594,20 +1595,22 @@ void compiler::AssemblyGenerator::compilePostfixExpr(Scope* scope, const ast::Ex
 
 void compiler::AssemblyGenerator::compileCastExpr(Scope* scope, const ast::ExprCast& castExpr) {
     this->compileExpr(scope, *castExpr.expr, ExprResult::VALUE);
+void compiler::AssemblyGenerator::compileExprCast(Scope* scope, const ast::ExprCast& exprCast) {
+    this->compileExpr(scope, *exprCast.expr, ExprResult::VALUE);
 
     // convert to result of expression to the cast type
-    this->compileTypeConversionIfRequired(castExpr.expr->resultingType, castExpr.resultingType, SourceLocation{0, castExpr.line, castExpr.column});
+    this->compileTypeConversionIfRequired(exprCast.expr->resultingType, exprCast.resultingType, SourceLocation{0, exprCast.line, exprCast.column});
 }
 
-void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNew& newExpr) {
+void compiler::AssemblyGenerator::compileExprNew(Scope* scope, const ast::ExprNew& exprNew) {
     // allocate space in heap
-    const unsigned int dimension = newExpr.typeInfo->type.dimension - 1;
+    const unsigned int dimension = exprNew.typeInfo->type.dimension - 1;
 
     // compile index expressions
-    for (int index = newExpr.arrayDimensions.size() - 1; index >= 0; index--) {
-        const auto arraySizeNotNegativeLabel = this->generateLabel("array_length_valid");
+    for (int index = exprNew.arrayDimensions.size() - 1; index >= 0; index--) {
+        const auto arrayLengthValidLabel = this->generateLabel("array_length_valid");
 
-        this->compileExpr(scope, *newExpr.arrayDimensions[index]->index, ExprResult::VALUE);
+        this->compileExpr(scope, *exprNew.arrayDimensions[index]->index, ExprResult::VALUE);
 
         // =======================================================
         // check index expr is greater than or equal to zero
@@ -1615,96 +1618,96 @@ void compiler::AssemblyGenerator::compileNewExpr(Scope* scope, const ast::ExprNe
 
         this->emit(Instruction{Opcode::DUP,
             {Immediate{Number{static_cast<uint32_t>(0)}}},
-            SourceLocation{0, newExpr.line, newExpr.column}
+            SourceLocation{0, exprNew.line, exprNew.column}
         });
 
         this->emit(Instruction{Opcode::PUSH,
             {
-                toAssemblyType(newExpr.arrayDimensions[index]->index->resultingType),
+                toAssemblyType(exprNew.arrayDimensions[index]->index->resultingType),
                 Immediate{Number{static_cast<uint32_t>(0)}}
             },
-            SourceLocation{0, newExpr.line, newExpr.column}
+            SourceLocation{0, exprNew.line, exprNew.column}
         });
 
         this->emit(Instruction{Opcode::CLT,
             {},
-            SourceLocation{0, newExpr.line, newExpr.column}
+            SourceLocation{0, exprNew.line, exprNew.column}
         });
 
         this->emit(Instruction{Opcode::JEZ,
-            {LabelRef{arraySizeNotNegativeLabel}},
-            SourceLocation{0, newExpr.line, newExpr.column}
+            {LabelRef{arrayLengthValidLabel}},
+            SourceLocation{0, exprNew.line, exprNew.column}
         });
 
         this->emit(Instruction{Opcode::THROW,
             {ErrorRef::NEGATIVE_ARRAY_SIZE},
-            SourceLocation{0, newExpr.arrayDimensions[index]->index->line, newExpr.arrayDimensions[index]->index->column}
+            SourceLocation{0, exprNew.arrayDimensions[index]->index->line, exprNew.arrayDimensions[index]->index->column}
         });
 
-        this->emit(LabelDef{arraySizeNotNegativeLabel});
+        this->emit(LabelDef{arrayLengthValidLabel});
 
         // =======================================================
         // convert index expr to type ui32
         // =======================================================
 
         this->compileTypeConversionIfRequired(
-            toAssemblyType(newExpr.arrayDimensions[index]->index->resultingType),
+            toAssemblyType(exprNew.arrayDimensions[index]->index->resultingType),
             AssemblyType::UI32,
-            SourceLocation{0, newExpr.arrayDimensions[index]->index->line, newExpr.arrayDimensions[index]->index->column}
+            SourceLocation{0, exprNew.arrayDimensions[index]->index->line, exprNew.arrayDimensions[index]->index->column}
         );
     }
 
-    auto* nestedType = new Type{newExpr.typeInfo->type.typeId, dimension};
-    this->compileArrayAlloc(scope, newExpr, 0, *nestedType);
+    auto* nestedType = new Type{exprNew.typeInfo->type.typeId, dimension};
+    this->compileArrayAlloc(scope, exprNew, 0, *nestedType);
     delete nestedType;
 
     // =======================================================
     // pop remaining index expressions
     // =======================================================
 
-    if (newExpr.arrayDimensions.size() == 2) {
+    if (exprNew.arrayDimensions.size() == 2) {
         // [nested_array_length, root_array_ptr]]
 
         this->emit(Instruction{Opcode::SWAP,
             {},
-            SourceLocation{0, newExpr.line, newExpr.column}
+            SourceLocation{0, exprNew.line, exprNew.column}
         });
         // [root_array_ptr, nested_array_length]
 
-    } else if (newExpr.arrayDimensions.size() > 2) {
+    } else if (exprNew.arrayDimensions.size() > 2) {
         // [..., nested_2_array_length, nested_array_length, root_array_ptr]
 
         this->emit(Instruction{Opcode::ROTU,
-            {Immediate{Number{newExpr.arrayDimensions.size()}}},
-            SourceLocation{0, newExpr.line, newExpr.column}
+            {Immediate{Number{exprNew.arrayDimensions.size()}}},
+            SourceLocation{0, exprNew.line, exprNew.column}
         });
         // [root_array_ptr, ..., nested_2_array_length, nested_array_length]
     }
 
-    for (int i = 0; i < newExpr.arrayDimensions.size() - 1; i++) {
+    for (int i = 0; i < exprNew.arrayDimensions.size() - 1; i++) {
         this->emit(Instruction{Opcode::POP,
             {},
-            SourceLocation{0, newExpr.line, newExpr.column}
+            SourceLocation{0, exprNew.line, exprNew.column}
         });
     }
 
     // [root_array_ptr]
 
-    if (newExpr.optionalInitialiser != nullptr && newExpr.optionalInitialiser->elements.size() > 0) {
+    if (exprNew.optionalInitialiser != nullptr && exprNew.optionalInitialiser->elements.size() > 0) {
         // initialise array
         this->emit(Instruction{Opcode::DUP,
             {Immediate{Number{static_cast<uint32_t>(0)}}},
-            SourceLocation{0, newExpr.line, newExpr.column}
+            SourceLocation{0, exprNew.line, exprNew.column}
         });
         // [root_array_ptr, root_array_ptr]
 
-        this->compileArrayInitialiser(scope, *newExpr.optionalInitialiser, SourceLocation{0, newExpr.optionalInitialiser->line, newExpr.optionalInitialiser->column}, Type{newExpr.typeInfo->type.typeId, 0});
+        this->compileArrayInitialiser(scope, *exprNew.optionalInitialiser, SourceLocation{0, exprNew.optionalInitialiser->line, exprNew.optionalInitialiser->column}, Type{exprNew.typeInfo->type.typeId, 0});
         // [root_array_ptr]
     }
 }
 
-void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::ExprNew& newExpr, unsigned int depth, Type& typeAtDepth) {
-    const auto newExprSourceLocation = new SourceLocation{0, newExpr.line, newExpr.column};
+void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::ExprNew& exprNew, unsigned int depth, Type& typeAtDepth) {
+    const auto newExprSourceLocation = new SourceLocation{0, exprNew.line, exprNew.column};
 
     // [root_array_length]
     // [ui32             ]
@@ -1814,10 +1817,10 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
     // [root_array_ptr, root_array_length]
     // [ptr           , ui32             ]
 
-    const auto nestedArrayAllocLoopLabel = this->generateLabel("nested_array_alloc_start");
-    const auto endNestedArrayAllocLoopLabel = this->generateLabel("nested_array_alloc_end");
+    const auto nestedArrayAllocStartLabel = this->generateLabel("nested_array_alloc_start");
+    const auto nestedArrayAllocEndLabel = this->generateLabel("nested_array_alloc_end");
 
-    this->emit(LabelDef{nestedArrayAllocLoopLabel});
+    this->emit(LabelDef{nestedArrayAllocStartLabel});
 
     // =======================================================
     // loop condition (number_of_nested_arrays_left_to_alloc > 0)
@@ -1834,7 +1837,7 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
     // [ptr           , ui32                       , ui32                       ]
 
     this->emit(Instruction{Opcode::JEZ,
-        {LabelRef{endNestedArrayAllocLoopLabel}},
+        {LabelRef{nestedArrayAllocEndLabel}},
         *newExprSourceLocation
     });
     // [root_array_ptr, nested_arrays_left_to_alloc]
@@ -1940,7 +1943,7 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
     // =======================================================
 
     typeAtDepth.dimension--;
-    this->compileArrayAlloc(scope, newExpr, depth, typeAtDepth);
+    this->compileArrayAlloc(scope, exprNew, depth, typeAtDepth);
     // [root_array_ptr, nested_arrays_left_to_alloc, ptr_to_store_nested_array, nested_array_ptr]
     // [ptr           , ui32                       , ptr                      , ptr             ]
 
@@ -1981,11 +1984,11 @@ void compiler::AssemblyGenerator::compileArrayAlloc(Scope *scope, const ast::Exp
     // =======================================================
 
     this->emit(Instruction{Opcode::JMP,
-        {LabelRef{nestedArrayAllocLoopLabel}},
+        {LabelRef{nestedArrayAllocStartLabel}},
         *newExprSourceLocation
     });
 
-    this->emit(LabelDef{endNestedArrayAllocLoopLabel});
+    this->emit(LabelDef{nestedArrayAllocEndLabel});
 
     this->emit(Instruction{Opcode::POP,
         {},
@@ -2005,7 +2008,7 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
         return;
     }
 
-    const auto validArrayInitialiserSize = this->generateLabel("array_initialiser_length_valid");
+    const auto arrayInitialiserLengthValidLabel = this->generateLabel("array_initialiser_length_valid");
 
     // [root_array_ptr]
     // [ptr           ]
@@ -2047,7 +2050,7 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
     // [ptr           , ui32                                             ]
 
     this->emit(Instruction{Opcode::JEZ,
-        {LabelRef{validArrayInitialiserSize}},
+        {LabelRef{arrayInitialiserLengthValidLabel}},
         optionalInitialiserSource
     });
     // [root_array_ptr]
@@ -2068,7 +2071,7 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
     // []
 
 
-    this->emit(LabelDef{validArrayInitialiserSize});
+    this->emit(LabelDef{arrayInitialiserLengthValidLabel});
     // [root_array_ptr]
     // [ptr           ]
 
@@ -2212,28 +2215,28 @@ void compiler::AssemblyGenerator::compileArrayInitialiser(Scope *scope, const as
     }
 }
 
-void compiler::AssemblyGenerator::compileFunctionCall(Scope* scope, const ast::FunctionCall& functionCall) {
+void compiler::AssemblyGenerator::compileExprFunctionCall(Scope* scope, const ast::ExprFunctionCall& exprFunctionCall) {
     // compile arguments
-    for (size_t argIndex = 0; argIndex < functionCall.arguments.size(); argIndex++) {
-        this->compileExpr(scope, *functionCall.arguments[argIndex], ExprResult::VALUE);
+    for (size_t argIndex = 0; argIndex < exprFunctionCall.arguments.size(); argIndex++) {
+        this->compileExpr(scope, *exprFunctionCall.arguments[argIndex], ExprResult::VALUE);
 
         // convert any arguments that require implicit conversion
-        this->compileTypeConversionIfRequired(functionCall.arguments[argIndex]->resultingType, functionCall.functionSymbol->parameterTypes[argIndex], SourceLocation{0, functionCall.arguments[argIndex]->line, functionCall.arguments[argIndex]->column});
+        this->compileTypeConversionIfRequired(exprFunctionCall.arguments[argIndex]->resultingType, exprFunctionCall.functionSymbol->parameterTypes[argIndex], SourceLocation{0, exprFunctionCall.arguments[argIndex]->line, exprFunctionCall.arguments[argIndex]->column});
     }
-    if (functionCall.functionSymbol->builtinId == BuiltinFunctionId::NONE) { // function is user-defined
+    if (exprFunctionCall.functionSymbol->builtinId == BuiltinFunctionId::NONE) { // function is user-defined
         // call user-defined function
         this->emit(Instruction{Opcode::CALL,
-            {LabelRef{functionCall.functionSymbol->label}},
-            SourceLocation{0, functionCall.line, functionCall.column}
+            {LabelRef{exprFunctionCall.functionSymbol->label}},
+            SourceLocation{0, exprFunctionCall.line, exprFunctionCall.column}
         });
     } else { // function is builtin
         // call builtin function
         this->emit(Instruction{Opcode::CALL,
-            {LabelRef{Builtins::getBuiltinFunctionLabel(functionCall.functionSymbol->builtinId)}},
-            SourceLocation{0, functionCall.line, functionCall.column}
+            {LabelRef{Builtins::getBuiltinFunctionLabel(exprFunctionCall.functionSymbol->builtinId)}},
+            SourceLocation{0, exprFunctionCall.line, exprFunctionCall.column}
         });
-        this->requiredBuiltinFunctions.insert(functionCall.functionSymbol->builtinId);
-        for (const BuiltinFunctionId requiredFunctionId : Builtins::getBuiltinFunction(functionCall.functionSymbol->builtinId)->requiredBuiltinFunctions) {
+        this->requiredBuiltinFunctions.insert(exprFunctionCall.functionSymbol->builtinId);
+        for (const BuiltinFunctionId requiredFunctionId : Builtins::getBuiltinFunction(exprFunctionCall.functionSymbol->builtinId)->requiredBuiltinFunctions) {
             this->requiredBuiltinFunctions.insert(requiredFunctionId);
         }
     }
@@ -2279,45 +2282,45 @@ void compiler::AssemblyGenerator::compileExprIdentifier(Scope* scope, const ast:
     }
 }
 
-void compiler::AssemblyGenerator::compileExprIntegerLiteral(const ast::ExprIntegerLiteral& integerLiteral) {
+void compiler::AssemblyGenerator::compileExprIntegerLiteral(const ast::ExprIntegerLiteral& exprIntegerLiteral) {
     // push integer value onto stack
     this->emit(Instruction{Opcode::PUSH,
         {
             AssemblyType::I32,
-            Immediate{Number{integerLiteral.value}}
+            Immediate{Number{exprIntegerLiteral.value}}
         },
-        SourceLocation{0, integerLiteral.line, integerLiteral.column}
+        SourceLocation{0, exprIntegerLiteral.line, exprIntegerLiteral.column}
     });
 }
 
-void compiler::AssemblyGenerator::compileExprFloatLiteral(const ast::ExprFloatLiteral& floatLiteral) {
+void compiler::AssemblyGenerator::compileExprFloatLiteral(const ast::ExprFloatLiteral& exprFloatLiteral) {
     // push float value onto stack
     this->emit(Instruction{Opcode::PUSH,
         {
             AssemblyType::F32,
-            Immediate{Number{static_cast<float>(floatLiteral.value)}}
+            Immediate{Number{static_cast<float>(exprFloatLiteral.value)}}
         },
-        SourceLocation{0, floatLiteral.line, floatLiteral.column}
+        SourceLocation{0, exprFloatLiteral.line, exprFloatLiteral.column}
     });
 }
 
-void compiler::AssemblyGenerator::compileExprBoolLiteral(const ast::ExprBoolLiteral& boolLiteral) {
+void compiler::AssemblyGenerator::compileExprBoolLiteral(const ast::ExprBoolLiteral& exprBoolLiteral) {
     // push bool value onto stack
     this->emit(Instruction{Opcode::PUSH,
         {
             AssemblyType::UI32,
-            Immediate{Number{boolLiteral.value ? 1 : 0}} // push 1 if 'true', push 0 if 'false'
+            Immediate{Number{exprBoolLiteral.value ? 1 : 0}} // push 1 if 'true', push 0 if 'false'
         },
-        SourceLocation{0, boolLiteral.line, boolLiteral.column}
+        SourceLocation{0, exprBoolLiteral.line, exprBoolLiteral.column}
     });
 }
 
-void compiler::AssemblyGenerator::compilerExprCharLiteral(const ast::ExprCharLiteral &charLiteral) {
+void compiler::AssemblyGenerator::compilerExprCharLiteral(const ast::ExprCharLiteral& exprCharLiteral) {
     // push char value onto stack
     this->emit(Instruction{Opcode::PUSH,
         {
             AssemblyType::UI32,
-            Immediate{getNumber(charLiteral.resultingType, charLiteral.value)}
+            Immediate{getNumber(exprCharLiteral.resultingType, exprCharLiteral.value)}
         }
     });
 }

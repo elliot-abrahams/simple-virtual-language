@@ -2513,7 +2513,7 @@ def $__builtin__println(int):
         locals 0
 
         loadL i32 #1
-        call $__Builtin__print(int)
+        call $__builtin__print(int)
         push ui32 #10
         native print_char
         ret
@@ -2531,7 +2531,7 @@ def $__builtin__println(float):
         locals 0
 
         loadL f32 #1
-        call $__Builtin__print(float)
+        call $__builtin__print(float)
         push ui32 #10
         native print_char
         ret
@@ -2549,7 +2549,7 @@ def $__builtin__println(bool):
         locals 0
 
         loadL i32 #1
-        call $__Builtin__print(bool)
+        call $__builtin__print(bool)
         push ui32 #10
         native print_char
         ret
@@ -2567,7 +2567,7 @@ def $__builtin__println(char):
         locals 0
 
         loadL i32 #1
-        call $__Builtin__print(char)
+        call $__builtin__print(char)
         push ui32 #10
         native print_char
         ret
