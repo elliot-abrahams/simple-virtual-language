@@ -16,7 +16,7 @@ compiler::AssemblyEmitter::AssemblyEmitter(const std::string& filepath) {
 
 std::vector<std::string> compiler::AssemblyEmitter::emitAssembly(const std::vector<AssemblyItem>& assemblyIR, const std::unordered_set<BuiltinFunctionId>& requiredBuiltinFunctions, const std::unordered_set<BuiltinDataId>& requiredBuiltinData) {
     this->emitProgram(assemblyIR, requiredBuiltinFunctions, requiredBuiltinData);
-    this->emitMetadataSection();
+    if (!this->lineTableMetadata.empty()) this->emitMetadataSection();
     return this->assembly;
 }
 
