@@ -9,12 +9,11 @@ TEST(STM_WHILE, WHILE) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> expectedWhileBlock;
     expectedStatements.push_back(
-        std::make_unique<ExpectedWhileStm>(
-            std::make_unique<ExpectedBoolLiteral>(true),
-            std::make_unique<ExpectedBlock>(
-                expectedWhileBlock
+        std::make_unique<ExpectedStmWhile>(
+            std::make_unique<ExpectedExprBoolLiteral>(true),
+            std::make_unique<ExpectedStmBlock>(
+                noExpectedStms
             )
         )
     );
@@ -29,19 +28,18 @@ TEST(STM_WHILE, WHILE_BINARY_EXPR) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> expectedWhileBlock;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedWhileStm>(
-            std::make_unique<ExpectedBinaryExpr>(
+        std::make_unique<ExpectedStmWhile>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::GREATER_THAN,
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(5)
+                std::make_unique<ExpectedExprIntegerLiteral>(5)
             ),
-            std::make_unique<ExpectedBlock>(
-                expectedWhileBlock
+            std::make_unique<ExpectedStmBlock>(
+                noExpectedStms
             )
         )
     );
@@ -60,16 +58,16 @@ TEST(STM_WHILE, WHILE_BODY) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedStm>> expectedWhileBody;
     expectedWhileBody.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             nullptr
         )
     );
     expectedStatements.push_back(
-        std::make_unique<ExpectedWhileStm>(
-            std::make_unique<ExpectedBoolLiteral>(true),
-            std::make_unique<ExpectedBlock>(
+        std::make_unique<ExpectedStmWhile>(
+            std::make_unique<ExpectedExprBoolLiteral>(true),
+            std::make_unique<ExpectedStmBlock>(
                 expectedWhileBody
             )
         )

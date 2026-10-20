@@ -272,6 +272,8 @@ compiler::SemanticAnalysisResult compiler::SemanticAnalyser::processStmAssignmen
         assignment.assignmentResultingType = assignmentResultingType;
     }
 
+    assignment.symbol = identifierSymbol;
+
     // update isInitialised of identifier in symbol table
     if (!identifierSymbol->isInitialised) identifierSymbol->isInitialised = true;
     return SemanticAnalysisResult{false};
@@ -591,7 +593,7 @@ compiler::ExpressionInfo compiler::SemanticAnalyser::processExpr(Scope* scope, c
     if (auto* exprBoolLiteral = dynamic_cast<const ast::ExprBoolLiteral*>(&expr)) {
         return this->processExprBoolLiteral(*exprBoolLiteral);
     }
-    if (auto exprCharLiteral = dynamic_cast<const ast::ExprCharLiteral*>(&expr)) {
+    if (auto* exprCharLiteral = dynamic_cast<const ast::ExprCharLiteral*>(&expr)) {
         return this->processExprCharLiteral(*exprCharLiteral);
     }
 }

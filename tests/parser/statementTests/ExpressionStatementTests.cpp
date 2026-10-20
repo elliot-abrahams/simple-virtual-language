@@ -11,11 +11,11 @@ TEST(EXPR_STM, BINARY_EXPR) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedBinaryExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::ADD,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -31,8 +31,8 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_PLUS_SIGN) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedUnaryExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprUnary>(
                 compiler::UnaryOperator::PLUS,
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
@@ -52,8 +52,8 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_MINUS_SIGN) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedUnaryExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprUnary>(
                 compiler::UnaryOperator::MINUS,
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
@@ -73,8 +73,8 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_LOGICAL_NOT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedUnaryExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprUnary>(
                 compiler::UnaryOperator::LOGICAL_NOT,
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
@@ -94,8 +94,8 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_INCREMENT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedUnaryExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprUnary>(
                 compiler::UnaryOperator::INCREMENT,
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
@@ -115,8 +115,8 @@ TEST(EXPR_STM, UNARY_EXPR_VARIABLE_DECREMENT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedUnaryExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprUnary>(
                 compiler::UnaryOperator::DECREMENT,
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
@@ -136,7 +136,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_INCREMENT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
@@ -158,7 +158,7 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_DECREMENT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
@@ -182,12 +182,12 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_INCREMENT_INDEX) {
 
     postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
@@ -211,12 +211,12 @@ TEST(EXPR_STM, POSTFIX_EXPR_VARIABLE_DECREMENT_INDEX) {
 
     postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprPostfix>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
@@ -241,14 +241,14 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX) {
 
     postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedFunctionCallExpr>(
+                std::make_unique<ExpectedExprFunctionCall>(
                     "foo",
                     std::move(expectedArguments)
                 ),
@@ -272,14 +272,14 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX) {
 
     postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedFunctionCallExpr>(
+                std::make_unique<ExpectedExprFunctionCall>(
                     "foo",
                     std::move(expectedArguments)
                 ),
@@ -304,12 +304,12 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX_WITH_INDEXED_ARGUMENT)
 
     postfixOperators2.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(0)
+            std::make_unique<ExpectedExprIntegerLiteral>(0)
         )
     );
     postfixOperators2.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(0)
+            std::make_unique<ExpectedExprIntegerLiteral>(0)
         )
     );
 
@@ -325,19 +325,19 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_INCREMENT_INDEX_WITH_INDEXED_ARGUMENT)
 
     postfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
     postfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedFunctionCallExpr>(
+                std::make_unique<ExpectedExprFunctionCall>(
                     "foo",
                     std::move(expectedArguments)
                 ),
@@ -362,12 +362,12 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX_WITH_INDEXED_ARGUMENT)
 
     postfixOperators2.emplace_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(0)
+            std::make_unique<ExpectedExprIntegerLiteral>(0)
         )
     );
     postfixOperators2.emplace_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(0)
+            std::make_unique<ExpectedExprIntegerLiteral>(0)
         )
     );
 
@@ -383,19 +383,19 @@ TEST(EXPR_STM, POSTFIX_EXPR_FUNCTION_CALL_DECREMENT_INDEX_WITH_INDEXED_ARGUMENT)
 
     postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
     postfixOperators.emplace_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedFunctionCallExpr>(
+                std::make_unique<ExpectedExprFunctionCall>(
                     "foo",
                     std::move(expectedArguments)
                 ),
@@ -417,8 +417,8 @@ TEST(EXPR_STM, PRIMARY_EXPR_FUNCTION_CALL) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedFunctionCallExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprFunctionCall>(
                 "foo",
                 std::move(expectedArguments)
             )
@@ -437,8 +437,8 @@ TEST(EXPR_STM, PRIMARY_EXPR_PAREN_FUNCTION_CALL) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedFunctionCallExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprFunctionCall>(
                 "foo",
                 std::move(expectedArguments)
             )
@@ -457,12 +457,12 @@ TEST(EXPR_STM, PRIMARY_EXPR_FUNCTION_CALL_WITH_ONE_ARGUMENT) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedArguments.push_back(
-        std::make_unique<ExpectedIntegerLiteral>(5)
+        std::make_unique<ExpectedExprIntegerLiteral>(5)
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedFunctionCallExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprFunctionCall>(
                 "foo",
                 std::move(expectedArguments)
             )
@@ -480,7 +480,7 @@ TEST(EXPR_STM, PRIMARY_EXPR_PAREN) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("x")
             )
@@ -498,8 +498,8 @@ TEST(EXPR_STM, PRIMARY_EXPR_INT_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedIntegerLiteral>(5)
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprIntegerLiteral>(5)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -514,8 +514,8 @@ TEST(EXPR_STM, PRIMARY_EXPR_FLOAT_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedFloatLiteral>(5.5f)
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprFloatLiteral>(5.5f)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -530,8 +530,8 @@ TEST(EXPR_STM, PRIMARY_EXPR_BOOL_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedBoolLiteral>(true)
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprBoolLiteral>(true)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -546,8 +546,8 @@ TEST(EXPR_STM, PRIMARY_EXPR_CHAR_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedCharLiteral>('a')
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprCharLiteral>('a')
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -564,12 +564,12 @@ TEST(EXPR_STM, PRIMARY_EXPR_NEW) {
 
     arrayDimensions.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
+        std::make_unique<ExpectedStmExpr>(
             std::make_unique<ExpectedExprNew>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
                 std::move(arrayDimensions),
@@ -589,10 +589,10 @@ TEST(EXPR_STM, CAST_EXPR) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedExpressionStatement>(
-            std::make_unique<ExpectedCastExpr>(
+        std::make_unique<ExpectedStmExpr>(
+            std::make_unique<ExpectedExprCast>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
-                std::make_unique<ExpectedFloatLiteral>(5.5f)
+                std::make_unique<ExpectedExprFloatLiteral>(5.5f)
             )
         )
     );

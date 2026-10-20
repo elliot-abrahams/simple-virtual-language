@@ -8,9 +8,10 @@
   - [3.1 Tokenisation and Parsing](#31-tokenisation-and-parsing)
   - [3.2 Built-in Function Registration](#32-built-in-function-registration)
   - [3.3 Semantic Analysis](#33-semantic-analysis)
-  - [3.4 Local Slot Assignment](#34-local-slot-assignment)
-  - [3.5 Assembly Generation](#35-assembly-generation)
-  - [3.6 Assembly Emission](#36-assembly-emission)
+  - [3.4 Optimisation](#34-optimisation)
+  - [3.5 Local Slot Assignment](#35-local-slot-assignment)
+  - [3.6 Assembly Generation](#36-assembly-generation)
+  - [3.7 Assembly Emission](#37-assembly-emission)
 
 ---
 
@@ -44,9 +45,10 @@ The compilation process consists of:
 1. Tokenisation and parsing
 2. Built-in function registration
 3. Semantic analysis
-4. Local slot assignment
-5. Assembly generation
-6. Assembly emission
+4. Optimisation
+5. Local slot assignment
+6. Assembly generation
+7. Assembly emission
 
 Each stage must complete successfully before the next stage can proceed.
 
@@ -98,13 +100,25 @@ This allows:
 - Global statements to access only variables declared earlier in the source code
 - Function bodies to access global variables regardless of where those variables are declared
 
-### 3.4 Local Slot Assignment
+### 3.4 Optimisation
+
+After semantic analysis, the compiler optionally optimises the AST before assembly geneartion.
+
+The optimiser performs constant folding, evaluating constant expressions at compile time and replacing them with their resulting literal values.
+
+By default, optimisations are enabled.
+
+Optimisation can be disabled using the `-O0` command-line option.
+
+For details of the optimisation process, see `Optimisation/`
+
+### 3.5 Local Slot Assignment
 
 Local variables and function parameters are assigned slots within their containing function.
 
 These slots are used by the generated assembly to access local variables during execution.
 
-### 3.5 Assembly Generation
+### 3.6 Assembly Generation
 
 The assembly generator converts the validated AST and symbol table into an intermediate representation (IR) of the SVMA assembly according to the rules defined in `SVA/Assembly-Language.md`.
 
@@ -120,7 +134,7 @@ The assembly generator also records the source location associated with each gen
 
 Built-in functions and built-in data are not inserted into the assembly during this stage. The required Built-in functions and built-in data are tracked by the assembly generator and inserted during assembly emission.
 
-### 3.6 Assembly Emission
+### 3.7 Assembly Emission
 
 The assembler emitter converts the IR produced by the assembly generator into textual SVMA assembly.
 

@@ -10,12 +10,12 @@ TEST(EXPR_CAST, FLOAT_TO_INT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedCastExpr>(
+            std::make_unique<ExpectedExprCast>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
-                std::make_unique<ExpectedFloatLiteral>(5.5f)
+                std::make_unique<ExpectedExprFloatLiteral>(5.5f)
             )
         )
     );
@@ -30,12 +30,12 @@ TEST(EXPR_CAST, INT_TO_FLOAT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedCastExpr>(
+            std::make_unique<ExpectedExprCast>(
                 std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 0),
-                std::make_unique<ExpectedIntegerLiteral>(5)
+                std::make_unique<ExpectedExprIntegerLiteral>(5)
             )
         )
     );
@@ -50,12 +50,12 @@ TEST(EXPR_CAST, BOOL_TO_CHAR) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedCastExpr>(
+            std::make_unique<ExpectedExprCast>(
                 std::make_unique<Type>(compiler::CHAR_TYPE_ID, 0),
-                std::make_unique<ExpectedBoolLiteral>(true)
+                std::make_unique<ExpectedExprBoolLiteral>(true)
             )
         )
     );
@@ -70,12 +70,12 @@ TEST(EXPR_CAST, CHAR_TO_BOOL) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedCastExpr>(
+            std::make_unique<ExpectedExprCast>(
                 std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
-                std::make_unique<ExpectedCharLiteral>('a')
+                std::make_unique<ExpectedExprCharLiteral>('a')
             )
         )
     );

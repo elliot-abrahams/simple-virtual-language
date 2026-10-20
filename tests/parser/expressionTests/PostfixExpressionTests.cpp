@@ -11,7 +11,7 @@ TEST(EXPR_POSTFIX, IDENTIFIER) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprIdentifier>(
@@ -33,12 +33,12 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX) {
 
     expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
@@ -64,17 +64,17 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_TWO_INDICES) {
 
     expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
     expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(5)
+            std::make_unique<ExpectedExprIntegerLiteral>(5)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
@@ -101,16 +101,16 @@ TEST(EXPR_POSTFIX, FUNCTION_CALL_EXPR_WITH_ONE_INDEX) {
 
     expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedFunctionCallExpr>(
+                std::make_unique<ExpectedExprFunctionCall>(
                     "foo",
                     std::move(expectedArguments)
                 ),
@@ -136,18 +136,18 @@ TEST(EXPR_POSTFIX, NEW_EXPRESSION_WITH_ONE_INDEX) {
 
     expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     arrayDimension.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(3)
+            std::make_unique<ExpectedExprIntegerLiteral>(3)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
@@ -175,16 +175,16 @@ TEST(EXPR_POSTFIX, PAREN_WITH_ONE_INDEX) {
 
     expectedPostfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
-                std::make_unique<ExpectedIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
                 expectedPostfixOperators,
                 std::nullopt
             )
@@ -202,7 +202,7 @@ TEST(EXPR_POSTFIX, INCREMENT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "y",
             std::make_unique<ExpectedExprPostfix>(
@@ -227,7 +227,7 @@ TEST(EXPR_POSTFIX, DECREMENT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "y",
             std::make_unique<ExpectedExprPostfix>(
@@ -254,12 +254,12 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_ONE_INDEX_INCREMENT) {
 
     postfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
@@ -290,7 +290,7 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_FIELD_ACCESS) {
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(
@@ -317,7 +317,7 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_MULTIPLE_INDICES_AND_FIELD_ACCESS_AND_INCREME
 
     postfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(1)
+            std::make_unique<ExpectedExprIntegerLiteral>(1)
         )
     );
 
@@ -329,7 +329,7 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_MULTIPLE_INDICES_AND_FIELD_ACCESS_AND_INCREME
 
     postfixOperators.push_back(
         std::make_unique<ExpectedIndex>(
-            std::make_unique<ExpectedIntegerLiteral>(2)
+            std::make_unique<ExpectedExprIntegerLiteral>(2)
         )
     );
 
@@ -340,7 +340,7 @@ TEST(EXPR_POSTFIX, IDENTIFIER_WITH_MULTIPLE_INDICES_AND_FIELD_ACCESS_AND_INCREME
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             std::make_unique<ExpectedExprPostfix>(

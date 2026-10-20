@@ -24,6 +24,11 @@ enum class RuntimeErrorType {
     INTERNAL
 };
 
+enum class SemanticErrorType {
+    DEFAULT,
+    DIVISION_BY_ZERO
+};
+
 struct SVLError : std::runtime_error {
     const std::string message;
 
@@ -136,11 +141,23 @@ struct SyntaxError final : SourceError {
 };
 
 struct SemanticError final : SourceError {
+    const SemanticErrorType type;
+
     SemanticError(const std::filesystem::path& path, const uint32_t line, const uint16_t column, const std::string& message) :
-        SourceError(path, line, column, message) {}
+        SourceError(path, line, column, message),
+        type(SemanticErrorType::DEFAULT) {}
+
+    SemanticError(const std::filesystem::path& path, const uint32_t line, const uint16_t column, const SemanticErrorType type, const std::string& message) :
+        SourceError(path, line, column, message),
+        type(type) {}
 
     std::string generateMessage() const override {
-        return SourceError::generateMessage("SemanticError");
+        std::string errorType;
+        switch (this->type) {
+            case SemanticErrorType::DEFAULT: errorType = "SemanticError"; break;
+            case SemanticErrorType::DIVISION_BY_ZERO: errorType = "DivisionByZeroError"; break;
+        }
+        return SourceError::generateMessage(errorType);
     }
 };
 

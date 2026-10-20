@@ -10,7 +10,7 @@ TEST(STM_CONTINUE, CONTINUE) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedContinueStm>()
+        std::make_unique<ExpectedStmContinue>()
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
     ASSERT_PROGRAM_EQ(*expectedProgram, *program);

@@ -359,8 +359,6 @@ void compiler::AssemblyGenerator::compileStmVarDecl(Scope* scope, const ast::Stm
 
 void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::StmAssignment& stmAssignment) {
 
-    const auto symbol = scope->lookup(stmAssignment.identifier->name).value();
-
     std::unique_ptr<ast::ExprIdentifier> identifierExpr = nullptr;
 
     Type typeAtDepth;
@@ -369,9 +367,9 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
         if (stmAssignment.assignmentOperatorInfo->assignmentOperator == AssignmentOperator::EQUAL) {
             this->compileExpr(scope, *stmAssignment.expr, ExprResult::VALUE);
             // convert expr to variable type
-            this->compileTypeConversionIfRequired(stmAssignment.expr->resultingType, symbol->type, SourceLocation{0, stmAssignment.expr->line, stmAssignment.expr->column});
+            this->compileTypeConversionIfRequired(stmAssignment.expr->resultingType, stmAssignment.symbol->type, SourceLocation{0, stmAssignment.expr->line, stmAssignment.expr->column});
 
-            if (symbol->isGlobal()) {
+            if (stmAssignment.symbol->isGlobal()) {
                 // store result of expression in global variable
                 this->emit(Instruction{Opcode::STOREG,
                     {LabelRef{stmAssignment.identifier->name}},
@@ -380,7 +378,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
             } else {
                 // store result of expression in local variable
                 this->emit(Instruction{Opcode::STOREL,
-                    {Immediate{Number{symbol->localSlot}}},
+                    {Immediate{Number{stmAssignment.symbol->localSlot}}},
                     SourceLocation{0, stmAssignment.line, stmAssignment.column}
                 });
             }
@@ -400,7 +398,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
         );
         this->compileExprIdentifier(scope, *identifierExpr, ExprResult::PTR);
     } else {
-        if (symbol->isGlobal()) {
+        if (stmAssignment.symbol->isGlobal()) {
             // store result of expression in global variable
             this->emit(Instruction{Opcode::LOADG,
                 {LabelRef{stmAssignment.identifier->name}},
@@ -411,13 +409,13 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
             this->emit(Instruction{Opcode::LOADL,
                 {
                      AssemblyType::PTR,
-                    Immediate{Number{symbol->localSlot}}
+                    Immediate{Number{stmAssignment.symbol->localSlot}}
                 },
                 SourceLocation{0, stmAssignment.line, stmAssignment.column}
             });
         }
 
-        typeAtDepth = symbol->type;
+        typeAtDepth = stmAssignment.symbol->type;
 
         for (int index = 0; index < stmAssignment.indices.size(); ++index) {
 
@@ -443,7 +441,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
     // store expression
     // =============================================================
 
-    const Type targetType = !stmAssignment.indices.empty()? typeAtDepth : symbol->type;
+    const Type targetType = !stmAssignment.indices.empty()? typeAtDepth : stmAssignment.symbol->type;
 
     if (stmAssignment.assignmentOperatorInfo->assignmentOperator == AssignmentOperator::EQUAL) {
         this->compileExpr(scope, *stmAssignment.expr, ExprResult::VALUE);
@@ -459,7 +457,7 @@ void compiler::AssemblyGenerator::compileStmAssignment(Scope* scope, const ast::
         // [ptr, ptr]
 
         this->emit(Instruction{Opcode::LOAD,
-            {toAssemblyType(symbol->type)},
+            {toAssemblyType(stmAssignment.symbol->type)},
             SourceLocation{0, stmAssignment.identifier->line, stmAssignment.identifier->column}
         });
         // [ptr, val]

@@ -9,13 +9,13 @@ TEST(TERNARY_EXPR, VALID) {
     )");
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-    std::make_unique<ExpectedVarDecl>(
+    std::make_unique<ExpectedStmVarDecl>(
         std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedTernaryExpr>(
-                std::make_unique<ExpectedBoolLiteral>(true),
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+            std::make_unique<ExpectedExprTernary>(
+                std::make_unique<ExpectedExprBoolLiteral>(true),
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -29,17 +29,17 @@ TEST(TERNARY_EXPR, ASSOCIATIVE) {
     )");
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-    std::make_unique<ExpectedVarDecl>(
+    std::make_unique<ExpectedStmVarDecl>(
         std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedTernaryExpr>(
-                std::make_unique<ExpectedBoolLiteral>(true),
-                std::make_unique<ExpectedTernaryExpr>(
-                    std::make_unique<ExpectedBoolLiteral>(true),
-                    std::make_unique<ExpectedIntegerLiteral>(1),
-                    std::make_unique<ExpectedIntegerLiteral>(2)
+            std::make_unique<ExpectedExprTernary>(
+                std::make_unique<ExpectedExprBoolLiteral>(true),
+                std::make_unique<ExpectedExprTernary>(
+                    std::make_unique<ExpectedExprBoolLiteral>(true),
+                    std::make_unique<ExpectedExprIntegerLiteral>(1),
+                    std::make_unique<ExpectedExprIntegerLiteral>(2)
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(3)
+                std::make_unique<ExpectedExprIntegerLiteral>(3)
             )
         )
     );

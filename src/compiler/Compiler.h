@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "AST.h"
+#include "../Driver.h"
 #include "semantic/TypeRegistry.h"
 
 
@@ -14,7 +15,7 @@ namespace compiler {
     public:
         Compiler();
 
-        static std::vector<std::string> compile(const std::string& sourceCode, const std::filesystem::path& path);
+        static std::vector<std::string> compile(const std::string& sourceCode, const std::filesystem::path& path, const driver::OptimisationLevel optimisationLevel);
         static void compile(const std::filesystem::path& path);
         static std::unique_ptr<ast::Program> testParsing(const std::string& sourceCode);
 

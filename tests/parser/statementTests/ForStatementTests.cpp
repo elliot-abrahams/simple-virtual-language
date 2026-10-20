@@ -8,10 +8,9 @@ TEST(IF, DECL_ITERABLE) {
         for (int i : iterable) {}
     )");
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> expectedForBody;
     expectedStatements.push_back(
-        std::make_unique<ExpectedForStm>(
-            std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmFor>(
+            std::make_unique<ExpectedStmVarDecl>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "i",
                 nullptr
@@ -19,7 +18,7 @@ TEST(IF, DECL_ITERABLE) {
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("iterable")
             ),
-            std::make_unique<ExpectedBlock>(expectedForBody)
+            std::make_unique<ExpectedStmBlock>(noExpectedStms)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -35,15 +34,15 @@ TEST(IF, DECL_ITERABLE_BODY) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedStm>> expectedForBody;
     expectedForBody.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             nullptr
         )
     );
     expectedStatements.push_back(
-        std::make_unique<ExpectedForStm>(
-            std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmFor>(
+            std::make_unique<ExpectedStmVarDecl>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "i",
                 nullptr
@@ -51,7 +50,7 @@ TEST(IF, DECL_ITERABLE_BODY) {
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("iterable")
             ),
-            std::make_unique<ExpectedBlock>(expectedForBody)
+            std::make_unique<ExpectedStmBlock>(expectedForBody)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -63,20 +62,19 @@ TEST(IF, DECL_RANGE_NO_STEP) {
         for (int i: 0..10) {}
     )");
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> expectedForBody;
     expectedStatements.push_back(
-        std::make_unique<ExpectedForStm>(
-            std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmFor>(
+            std::make_unique<ExpectedStmVarDecl>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "i",
                 nullptr
             ),
             std::make_unique<ExpectedForRange>(
-                std::make_unique<ExpectedIntegerLiteral>(0),
-                std::make_unique<ExpectedIntegerLiteral>(10),
+                std::make_unique<ExpectedExprIntegerLiteral>(0),
+                std::make_unique<ExpectedExprIntegerLiteral>(10),
                 nullptr
             ),
-            std::make_unique<ExpectedBlock>(expectedForBody)
+            std::make_unique<ExpectedStmBlock>(noExpectedStms)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -88,20 +86,19 @@ TEST(IF, DECL_RANGE_STEP) {
         for (int i: 0..10 : 2) {}
     )");
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> expectedForBody;
     expectedStatements.push_back(
-        std::make_unique<ExpectedForStm>(
-            std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmFor>(
+            std::make_unique<ExpectedStmVarDecl>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "i",
                 nullptr
             ),
             std::make_unique<ExpectedForRange>(
-                std::make_unique<ExpectedIntegerLiteral>(0),
-                std::make_unique<ExpectedIntegerLiteral>(10),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(0),
+                std::make_unique<ExpectedExprIntegerLiteral>(10),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             ),
-            std::make_unique<ExpectedBlock>(expectedForBody)
+            std::make_unique<ExpectedStmBlock>(noExpectedStms)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -113,16 +110,15 @@ TEST(IF, NO_DECL_ITERABLE) {
         for (i : iterable) {}
     )");
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> expectedForBody;
     expectedStatements.push_back(
-        std::make_unique<ExpectedForStm>(
+        std::make_unique<ExpectedStmFor>(
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("i")
             ),
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("iterable")
             ),
-            std::make_unique<ExpectedBlock>(expectedForBody)
+            std::make_unique<ExpectedStmBlock>(noExpectedStms)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));

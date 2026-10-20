@@ -2,6 +2,23 @@
 
 The SVC documentation describes the design and operation of the SV compiler.
 
+## Assembly Generation
+
+`Assembly-Generation.md`
+
+Describes how the semantically analysed AST is translated into SVMA assembly.
+
+- Program Generation
+- Types
+- Expressions
+- Statements
+- Functions
+- Built-in Functions
+- Built-in Data
+- Metadata
+
+---
+
 ## Compiler
 
 `Compiler.md`
@@ -33,19 +50,10 @@ Describes how SV source code is converted into tokens.
 - Identifiers
 - Literals
 
----
+## Optimisation
 
-## Assembly Generation
+`optimisation/`
 
-`Assembly-Generation.md`
+Describes the optimisation passes performed on the AST before assembly generation.
 
-Describes how the semantically analysed AST is translated into SVMA assembly.
-
-- Program Generation
-- Types
-- Expressions
-- Statements
-- Functions
-- Built-in Functions
-- Built-in Data
-- Metadata
+- `Constant-Folder.md`

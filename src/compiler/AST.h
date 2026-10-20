@@ -122,14 +122,14 @@ namespace ast {
     >;
 
     struct ArrayInitialiser final : ASTNode {
-        const std::vector<ArrayInitialiserElement> elements;
+        mutable std::vector<ArrayInitialiserElement> elements;
 
         ArrayInitialiser(const uint32_t line, const uint16_t column, std::vector<ArrayInitialiserElement> elements) :
             ASTNode(line, column), elements(std::move(elements)) {}
     };
 
     struct Index final : ASTNode {
-        const std::unique_ptr<Expr> index;
+        mutable std::unique_ptr<Expr> index;
 
         Index(const uint32_t line, const uint16_t column, std::unique_ptr<Expr> index) :
             ASTNode(line, column), index(std::move(index)) {}
@@ -153,7 +153,7 @@ namespace ast {
 
     struct ExprFunctionCall final : Expr {
         const std::unique_ptr<Identifier> identifier;
-        const std::vector<std::unique_ptr<Expr>> arguments;
+        mutable std::vector<std::unique_ptr<Expr>> arguments;
         mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
         ExprFunctionCall(const uint32_t line,
@@ -178,7 +178,7 @@ namespace ast {
 
     struct ExprCast final : Expr {
         const std::unique_ptr<TypeInfo> typeInfo;
-        const std::unique_ptr<Expr> expr;
+        mutable std::unique_ptr<Expr> expr;
 
         ExprCast(const uint32_t line,
                 const uint16_t column,
@@ -221,7 +221,7 @@ namespace ast {
 
     struct ExprUnary final : Expr {
         const std::unique_ptr<UnaryOperatorInfo> unaryOperatorInfo;
-        const std::unique_ptr<Expr> expr;
+        mutable std::unique_ptr<Expr> expr;
 
         ExprUnary(const uint32_t line,
                     const uint16_t column,
@@ -233,9 +233,9 @@ namespace ast {
     };
 
     struct ExprBinary final : Expr {
-        const std::unique_ptr<Expr> left;
+        mutable std::unique_ptr<Expr> left;
         const std::unique_ptr<BinaryOperatorInfo> binaryOperatorInfo;
-        const std::unique_ptr<Expr> right;
+        mutable std::unique_ptr<Expr> right;
 
         ExprBinary(const uint32_t line,
                     const uint16_t column,
@@ -249,9 +249,9 @@ namespace ast {
     };
 
     struct ExprTernary final : Expr {
-        const std::unique_ptr<Expr> condition;
-        const std::unique_ptr<Expr> trueExpr;
-        const std::unique_ptr<Expr> falseExpr;
+        mutable std::unique_ptr<Expr> condition;
+        mutable std::unique_ptr<Expr> trueExpr;
+        mutable std::unique_ptr<Expr> falseExpr;
 
         ExprTernary(const uint32_t line,
                 const uint16_t column,
@@ -265,7 +265,7 @@ namespace ast {
     };
 
     struct StmExpr final : Stm {
-        const std::unique_ptr<Expr> expr;
+        mutable std::unique_ptr<Expr> expr;
 
         StmExpr(const uint32_t line,
                     const uint16_t column,
@@ -275,7 +275,7 @@ namespace ast {
     };
 
     struct StmReturn final : Stm {
-        const std::unique_ptr<Expr> returnExpr;
+        mutable std::unique_ptr<Expr> returnExpr;
         mutable compiler::FunctionSymbol* functionSymbol = nullptr;
 
         StmReturn(const uint32_t line,
@@ -303,9 +303,9 @@ namespace ast {
     >;
 
     struct ForRange final : ASTNode {
-        const std::unique_ptr<Expr> start;
-        const std::unique_ptr<Expr> end;
-        const std::unique_ptr<Expr> step;
+        mutable std::unique_ptr<Expr> start;
+        mutable std::unique_ptr<Expr> end;
+        mutable std::unique_ptr<Expr> step;
 
         ForRange(const uint32_t line,
                 const uint16_t column,
@@ -340,7 +340,7 @@ namespace ast {
     };
 
     struct StmWhile final : Stm {
-        const std::unique_ptr<Expr> condition;
+        mutable std::unique_ptr<Expr> condition;
         const std::unique_ptr<StmBlock> body;
 
         StmWhile(const uint32_t line,
@@ -353,7 +353,7 @@ namespace ast {
     };
 
     struct StmIf final : Stm {
-        const std::unique_ptr<Expr> condition;
+        mutable std::unique_ptr<Expr> condition;
         const std::unique_ptr<StmBlock> ifBlock;
         const std::unique_ptr<Stm> elseStm;
 
@@ -372,7 +372,8 @@ namespace ast {
         const std::unique_ptr<Identifier> identifier;
         const std::vector<std::unique_ptr<Index>> indices;
         const std::unique_ptr<AssignmentOperatorInfo> assignmentOperatorInfo;
-        const std::unique_ptr<Expr> expr;
+        mutable compiler::Symbol* symbol = nullptr;
+        mutable std::unique_ptr<Expr> expr;
         mutable compiler::Type assignmentResultingType;
 
         StmAssignment(const uint32_t line,
@@ -391,7 +392,7 @@ namespace ast {
     struct StmVarDecl final : Stm {
         const std::unique_ptr<TypeInfo> typeInfo;
         const std::unique_ptr<Identifier> identifier;
-        const std::unique_ptr<Expr> optionalInitialiser;
+        mutable std::unique_ptr<Expr> optionalInitialiser;
 
         StmVarDecl(const uint32_t line,
                     const uint16_t column,

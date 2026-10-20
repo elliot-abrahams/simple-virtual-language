@@ -9,12 +9,11 @@ TEST(STM_IF, IF) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedBoolLiteral>(true),
-            std::make_unique<ExpectedBlock>(
-                ifBlockExpectedStatements
+        std::make_unique<ExpectedStmIf>(
+            std::make_unique<ExpectedExprBoolLiteral>(true),
+            std::make_unique<ExpectedStmBlock>(
+                noExpectedStms
             ),
             nullptr
         )
@@ -29,19 +28,18 @@ TEST(STM_IF, IF_BINARY_EXPR) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedBinaryExpr>(
+        std::make_unique<ExpectedStmIf>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::GREATER_THAN,
                     std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(5)
+                std::make_unique<ExpectedExprIntegerLiteral>(5)
             ),
-            std::make_unique<ExpectedBlock>(
-                ifBlockExpectedStatements
+            std::make_unique<ExpectedStmBlock>(
+                noExpectedStms
             ),
             nullptr
         )
@@ -60,16 +58,16 @@ TEST(STM_IF, IF_BODY) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
     ifBlockExpectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "x",
             nullptr
         )
     );
     expectedStatements.push_back(
-        std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedBoolLiteral>(true),
-            std::make_unique<ExpectedBlock>(
+        std::make_unique<ExpectedStmIf>(
+            std::make_unique<ExpectedExprBoolLiteral>(true),
+            std::make_unique<ExpectedStmBlock>(
                 ifBlockExpectedStatements
             ),
             nullptr
@@ -86,22 +84,21 @@ TEST(STM_IF, ELSE) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> emptyListOfStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedBinaryExpr>(
+        std::make_unique<ExpectedStmIf>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::GREATER_THAN,
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(5)
+                std::make_unique<ExpectedExprIntegerLiteral>(5)
             ),
-            std::make_unique<ExpectedBlock>(
-                emptyListOfStatements
+            std::make_unique<ExpectedStmBlock>(
+                noExpectedStms
             ),
-            std::make_unique<ExpectedBlock>(
-                emptyListOfStatements
+            std::make_unique<ExpectedStmBlock>(
+                noExpectedStms
             )
         )
     );
@@ -118,29 +115,28 @@ TEST(STM_IF, ELSE_BODY) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
     std::vector<std::unique_ptr<ExpectedStm>> elseBlockExpectedStatements;
 
     elseBlockExpectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "x",
             nullptr
         )
     );
     expectedStatements.push_back(
-        std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedBinaryExpr>(
+        std::make_unique<ExpectedStmIf>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::GREATER_THAN,
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("x")
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(5)
+                std::make_unique<ExpectedExprIntegerLiteral>(5)
             ),
-            std::make_unique<ExpectedBlock>(
-                ifBlockExpectedStatements
+            std::make_unique<ExpectedStmBlock>(
+                noExpectedStms
             ),
-            std::make_unique<ExpectedBlock>(
+            std::make_unique<ExpectedStmBlock>(
                 elseBlockExpectedStatements
             )
         )
@@ -156,20 +152,19 @@ TEST(STM_IF, ELSE_IF) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
     std::vector<std::unique_ptr<ExpectedStm>> elseBlockExpectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedBoolLiteral>(false),
-            std::make_unique<ExpectedBlock>(
-                ifBlockExpectedStatements
+        std::make_unique<ExpectedStmIf>(
+            std::make_unique<ExpectedExprBoolLiteral>(false),
+            std::make_unique<ExpectedStmBlock>(
+                noExpectedStms
             ),
-            std::make_unique<ExpectedIfStm>(
+            std::make_unique<ExpectedStmIf>(
             std::make_unique<ExpectedExprIdentifier>(
                 std::make_unique<ExpectedIdentifier>("b")
             ),
-            std::make_unique<ExpectedBlock>(
+            std::make_unique<ExpectedStmBlock>(
                 elseBlockExpectedStatements
             ),
             nullptr
@@ -190,29 +185,28 @@ TEST(STM_IF, ELSE_IF_BODY) {
     )";
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
-    std::vector<std::unique_ptr<ExpectedStm>> ifBlockExpectedStatements;
     std::vector<std::unique_ptr<ExpectedStm>> elseIfBlockExpectedStatements;
 
     elseIfBlockExpectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "x",
             nullptr
         )
     );
     expectedStatements.push_back(
-        std::make_unique<ExpectedIfStm>(
-            std::make_unique<ExpectedBoolLiteral>(
+        std::make_unique<ExpectedStmIf>(
+            std::make_unique<ExpectedExprBoolLiteral>(
                 false
             ),
-            std::make_unique<ExpectedBlock>(
-                ifBlockExpectedStatements
+            std::make_unique<ExpectedStmBlock>(
+                noExpectedStms
             ),
-            std::make_unique<ExpectedIfStm>(
+            std::make_unique<ExpectedStmIf>(
                 std::make_unique<ExpectedExprIdentifier>(
                     std::make_unique<ExpectedIdentifier>("b")
                 ),
-                std::make_unique<ExpectedBlock>(
+                std::make_unique<ExpectedStmBlock>(
                     elseIfBlockExpectedStatements
                 ),
                 nullptr

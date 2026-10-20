@@ -487,7 +487,7 @@ The following table defines the valid operand types for equality operators.
 | Left \ Right | `int`   | `float` | `bool`  | `char`  |
 |--------------|---------|---------|---------|---------|
 | `int`        | `bool`  | `bool`  | invalid | `bool`  |
-| `float`      | `bool`  | `bool`  | invalid | `char`  |
+| `float`      | `bool`  | `bool`  | invalid | `bool`  |
 | `bool`       | invalid | invalid | `bool`  | invalid |
 | `char`       | `bool`  | `bool`  | invalid | `bool`  |
 

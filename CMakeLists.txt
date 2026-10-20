@@ -49,6 +49,8 @@ set(Headers
     src/compiler/codegen/AssemblyEmitter.h
     src/vm/RuntimeErrorHandler.h
     src/compiler/semantic/TypeRegistry.h
+        src/compiler/optimiser/Optimiser.h
+        src/compiler/optimiser/ConstantFolder.h
 )
 
 set(Sources
@@ -73,6 +75,8 @@ set(Sources
     src/compiler/codegen/AssemblyEmitter.cpp
     src/vm/RuntimeErrorHandler.cpp
     src/compiler/semantic/TypeRegistry.cpp
+        src/compiler/optimiser/Optimiser.cpp
+        src/compiler/optimiser/ConstantFolder.cpp
 )
 
 add_library(${This} STATIC ${Sources} ${Headers})

@@ -12,10 +12,10 @@ TEST(EXPR_FUNCTION_CALL, FUNCTION_CALL) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedFunctionCallExpr>(
+            std::make_unique<ExpectedExprFunctionCall>(
                 "foo",
                 std::move(expectedArguments)
             )
@@ -34,14 +34,14 @@ TEST(EXPR_FUNCTION_CALL, ONE_ARGUMENT) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedArguments.push_back(
-        std::make_unique<ExpectedIntegerLiteral>(5)
+        std::make_unique<ExpectedExprIntegerLiteral>(5)
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedFunctionCallExpr>(
+            std::make_unique<ExpectedExprFunctionCall>(
                 "foo",
                 std::move(expectedArguments)
             )
@@ -61,17 +61,17 @@ TEST(EXPR_FUNCTION_CALL, NESTED_CALL) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArgumentsBar;
 
     expectedArgumentsFoo.push_back(
-        std::make_unique<ExpectedFunctionCallExpr>(
+        std::make_unique<ExpectedExprFunctionCall>(
             "bar",
             std::move(expectedArgumentsBar)
         )
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedFunctionCallExpr>(
+            std::make_unique<ExpectedExprFunctionCall>(
                 "foo",
                 std::move(expectedArgumentsFoo)
             )
@@ -90,17 +90,17 @@ TEST(EXPR_FUNCTION_CALL, TWO_ARGUMENTS) {
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
 
     expectedArguments.push_back(
-        std::make_unique<ExpectedIntegerLiteral>(5)
+        std::make_unique<ExpectedExprIntegerLiteral>(5)
     );
     expectedArguments.push_back(
-        std::make_unique<ExpectedBoolLiteral>(true)
+        std::make_unique<ExpectedExprBoolLiteral>(true)
     );
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedFunctionCallExpr>(
+            std::make_unique<ExpectedExprFunctionCall>(
                 "foo",
                 std::move(expectedArguments)
             )

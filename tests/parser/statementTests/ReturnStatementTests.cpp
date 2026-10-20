@@ -11,7 +11,7 @@ TEST(STM_RETURN, RETURN_WITHOUT_EXPRESSION) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedReturnStm>(
+        std::make_unique<ExpectedStmReturn>(
             nullptr
         )
     );
@@ -27,8 +27,8 @@ TEST(STM_RETURN, RETURN_WITH_EXPRESSION) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedReturnStm>(
-            std::make_unique<ExpectedIntegerLiteral>(5)
+        std::make_unique<ExpectedStmReturn>(
+            std::make_unique<ExpectedExprIntegerLiteral>(5)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));

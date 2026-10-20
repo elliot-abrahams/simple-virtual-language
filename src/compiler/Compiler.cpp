@@ -7,14 +7,14 @@
 #include "Parser.h"
 #include "semantic/SemanticAnalyser.h"
 #include "codegen/AssemblyGenerator.h"
-#include "../Driver.h"
 #include "codegen/Builtins.h"
 #include "codegen/AssemblyEmitter.h"
+#include "optimiser/Optimiser.h"
 
 
 compiler::Compiler::Compiler() {}
 
-std::vector<std::string> compiler::Compiler::compile(const std::string& sourceCode, const std::filesystem::path& path) {
+std::vector<std::string> compiler::Compiler::compile(const std::string& sourceCode, const std::filesystem::path& path, const driver::OptimisationLevel optimisationLevel) {
     try {
         auto* tokeniser = new Tokeniser(sourceCode, &path);
         const auto parser = new Parser(tokeniser, &path);
@@ -39,6 +39,10 @@ std::vector<std::string> compiler::Compiler::compile(const std::string& sourceCo
         // build symbol table and type check the program
         auto semanticAnalyser = SemanticAnalyser(symbolTable, typeRegistry, &path);
         semanticAnalyser.processProgram(*program);
+
+        // optimise AST
+        auto optimiser = Optimiser(path, optimisationLevel);
+        optimiser.optimiseProgram(*program);
 
         // assign slots to local symbols
         symbolTable->assignSlotsToLocalSymbols();

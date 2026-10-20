@@ -10,7 +10,7 @@ TEST(STM_VAR_DECL, INT_NOT_INITIALISED) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             nullptr
@@ -27,7 +27,7 @@ TEST(STM_VAR_DECL, INT_ARRAY_NOT_INITIALISED) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 1),
             "x",
             nullptr
@@ -44,7 +44,7 @@ TEST(STM_VAR_DECL, INT_MULTIDIMENSIONAL_ARRAY_NOT_INITIALISED) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 2),
             "x",
             nullptr
@@ -61,7 +61,7 @@ TEST(STM_VAR_DECL, FLOAT_NOT_INITIALISED) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 0),
             "x",
             nullptr
@@ -78,7 +78,7 @@ TEST(STM_VAR_DECL, FLOAT_ARRAY_NOT_INITIALISED) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 1),
             "x",
             nullptr
@@ -95,7 +95,7 @@ TEST(STM_VAR_DECL, BOOL_NOT_INITIALISED) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
             "x",
             nullptr
@@ -112,7 +112,7 @@ TEST(STM_VAR_DECL, BOOL_ARRAY_NOT_INITIALISED) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::BOOL_TYPE_ID, 1),
             "x",
             nullptr
@@ -129,7 +129,7 @@ TEST(STM_VAR_DECL, CHAR_NOT_INITIALISED) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::CHAR_TYPE_ID, 0),
             "x",
             nullptr
@@ -146,7 +146,7 @@ TEST(STM_VAR_DECL, CHAR_ARRAY_NOT_INITIALISED) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::CHAR_TYPE_ID, 1),
             "x",
             nullptr
@@ -163,10 +163,10 @@ TEST(STM_VAR_DECL, INT_LIT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedIntegerLiteral>(5)
+            std::make_unique<ExpectedExprIntegerLiteral>(5)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -180,10 +180,10 @@ TEST(STM_VAR_DECL, INT_FLOAT_LIT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedFloatLiteral>(5.5f)
+            std::make_unique<ExpectedExprFloatLiteral>(5.5f)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -197,10 +197,10 @@ TEST(STM_VAR_DECL, FLOAT_LIT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::FLOAT_TYPE_ID, 0),
             "f",
-            std::make_unique<ExpectedFloatLiteral>(5.5f)
+            std::make_unique<ExpectedExprFloatLiteral>(5.5f)
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -214,10 +214,10 @@ TEST(STM_VAR_DECL, BOOL_LIT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::BOOL_TYPE_ID, 0),
             "b",
-            std::make_unique<ExpectedBoolLiteral>(
+            std::make_unique<ExpectedExprBoolLiteral>(
                 true
             )
         )
@@ -233,10 +233,10 @@ TEST(STM_VAR_DECL, CHAR_LIT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::CHAR_TYPE_ID, 0),
             "c",
-            std::make_unique<ExpectedCharLiteral>('a')
+            std::make_unique<ExpectedExprCharLiteral>('a')
         )
     );
     const auto expectedProgram = std::make_unique<ExpectedProgram>(std::move(expectedStatements), std::move(noExpectedFunctionDecls));
@@ -251,7 +251,7 @@ TEST(STM_VAR_DECL, INT_IDENTIFIER_EXPR) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
 
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
             std::make_unique<ExpectedExprIdentifier>(
@@ -270,12 +270,12 @@ TEST(STM_VAR_DECL, INT_UNARY_EXPR) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
-            std::make_unique<ExpectedUnaryExpr>(
+            std::make_unique<ExpectedExprUnary>(
                 compiler::UnaryOperator::MINUS,
-                std::make_unique<ExpectedIntegerLiteral>(
+                std::make_unique<ExpectedExprIntegerLiteral>(
                     5
                 )
             )
@@ -293,15 +293,15 @@ TEST(STM_VAR_DECL, INT_BINARY_EXPR) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::ADD,
-                std::make_unique<ExpectedIntegerLiteral>(
+                std::make_unique<ExpectedExprIntegerLiteral>(
                     1
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(
+                std::make_unique<ExpectedExprIntegerLiteral>(
                     2
                 )
             )
@@ -319,10 +319,10 @@ TEST(STM_VAR_DECL, INT_FUNCTION_CALL_EXPR) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
-            std::make_unique<ExpectedFunctionCallExpr>(
+            std::make_unique<ExpectedExprFunctionCall>(
                 "foo",
                 std::move(expectedArguments)
             )
@@ -340,10 +340,10 @@ TEST(STM_VAR_DECL, INT_PAREN_INT_LIT) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedExpr>> expectedArguments;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "b",
-            std::make_unique<ExpectedIntegerLiteral>(
+            std::make_unique<ExpectedExprIntegerLiteral>(
                 5
             )
         )

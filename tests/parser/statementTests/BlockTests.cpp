@@ -11,7 +11,7 @@ TEST(STM_BLOCK, EMPTY) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatementsInBlock;
     expectedStatements.push_back(
-        std::make_unique<ExpectedBlock>(
+        std::make_unique<ExpectedStmBlock>(
             expectedStatementsInBlock
         )
     );
@@ -29,14 +29,14 @@ TEST(STM_BLOCK, VAR_DECL) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatementsInBlock;
     expectedStatementsInBlock.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
                 std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
                 "x",
             nullptr
         )
     );
     expectedStatements.push_back(
-        std::make_unique<ExpectedBlock>(
+        std::make_unique<ExpectedStmBlock>(
             expectedStatementsInBlock
         )
     );
@@ -57,19 +57,19 @@ TEST(STM_BLOCK, NESTED_VAR_DECL) {
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatementsInBlock1;
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatementsInBlock2;
     expectedStatementsInBlock2.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
             nullptr
         )
     );
     expectedStatementsInBlock1.push_back(
-        std::make_unique<ExpectedBlock>(
+        std::make_unique<ExpectedStmBlock>(
             expectedStatementsInBlock2
         )
     );
     expectedStatements.push_back(
-        std::make_unique<ExpectedBlock>(
+        std::make_unique<ExpectedStmBlock>(
             expectedStatementsInBlock1
         )
     );

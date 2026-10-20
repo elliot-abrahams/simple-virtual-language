@@ -159,6 +159,7 @@ set(Parser_Sources
         parser/expressionTests/NewExpressionTests.cpp
         parser/expressionTests/PostfixExpressionTests.cpp
 
+        ASTTestUtils.h
         parser/ParserTestUtils.h
         parser/ParserTests.cpp
 )
@@ -220,6 +221,35 @@ gtest_discover_tests(
         DISCOVERY_TIMEOUT 30
 )
 
+
+# OPTIMISER TESTS
+
+set(OPTIMISER_TESTS optimiser_tests)
+
+set(Optimiser_Sources
+        optimiser/constantFolderTests/ExprBinaryTests.cpp
+        optimiser/constantFolderTests/ExprUnaryTests.cpp
+        optimiser/constantFolderTests/ExprTernaryTests.cpp
+        optimiser/constantFolderTests/ExprCastTests.cpp
+        optimiser/constantFolderTests/ExprLiteralTests.cpp
+
+        optimiser/constantFolderTests/ExprContextTests.cpp
+
+        ASTTestUtils.h
+        optimiser/OptimiserTestUtils.h
+        optimiser/OptimiserTests.cpp
+)
+
+add_executable(${OPTIMISER_TESTS} ${Optimiser_Sources})
+
+target_link_libraries(${OPTIMISER_TESTS} PRIVATE
+        gtest_main
+        sv_lib
+)
+
+gtest_discover_tests(${OPTIMISER_TESTS})
+
+
 # INTEGRATION TESTS
 
 set(INTEGRATION_TESTS integration_tests)
@@ -256,7 +286,6 @@ set(Integration_Sources
 
         integration/IntegrationTestUtils.h
         integration/IntegrationTests.cpp
-        assembler/AssemblerTestsUtils.h
 )
 
 add_executable(${INTEGRATION_TESTS} ${Integration_Sources})

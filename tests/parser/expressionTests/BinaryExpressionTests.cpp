@@ -10,13 +10,13 @@ TEST(EXPR_BINARY, ADD) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::ADD,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -31,13 +31,13 @@ TEST(EXPR_BINARY, SUBTRACT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::SUBTRACT,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -52,13 +52,13 @@ TEST(EXPR_BINARY, MULTIPLY) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::MULTIPLY,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -73,13 +73,13 @@ TEST(EXPR_BINARY, DIVIDE) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::DIVIDE,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -94,13 +94,13 @@ TEST(EXPR_BINARY, INTEGER_DIVIDE) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::INTEGER_DIVIDE,
-                std::make_unique<ExpectedIntegerLiteral>(5),
-                std::make_unique<ExpectedIntegerLiteral>(6)
+                std::make_unique<ExpectedExprIntegerLiteral>(5),
+                std::make_unique<ExpectedExprIntegerLiteral>(6)
             )
         )
     );
@@ -115,13 +115,13 @@ TEST(EXPR_BINARY, MODULO) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::MODULO,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -136,13 +136,13 @@ TEST(EXPR_BINARY, BITWISE_OR) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::BITWISE_OR,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -157,13 +157,13 @@ TEST(EXPR_BINARY, BITWISE_XOR) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::BITWISE_XOR,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -178,13 +178,13 @@ TEST(EXPR_BINARY, BITWISE_AND) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::BITWISE_AND,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -199,13 +199,13 @@ TEST(EXPR_BINARY, LEFT_SHIFT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::LEFT_SHIFT,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -220,13 +220,13 @@ TEST(EXPR_BINARY, ARITHMETIC_RIGHT_SHIFT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::ARITHMETIC_RIGHT_SHIFT,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -241,13 +241,13 @@ TEST(EXPR_BINARY, LOGICAL_RIGHT_SHIFT) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::LOGICAL_RIGHT_SHIFT,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -262,13 +262,13 @@ TEST(EXPR_BINARY, LOGICAL_OR) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::LOGICAL_OR,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -283,13 +283,13 @@ TEST(EXPR_BINARY, LOGICAL_AND) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::LOGICAL_AND,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -304,13 +304,13 @@ TEST(EXPR_BINARY, EQUAL) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::EQUAL_EQUAL,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -325,13 +325,13 @@ TEST(EXPR_BINARY, NOT_EQUAL) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::NOT_EQUAL,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -346,13 +346,13 @@ TEST(EXPR_BINARY, LESS_THAN) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::LESS_THAN,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -367,13 +367,13 @@ TEST(EXPR_BINARY, LESS_THAN_OR_EQUAL) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::LESS_THAN_OR_EQUAL,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -388,13 +388,13 @@ TEST(EXPR_BINARY, GREATER_THAN) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::GREATER_THAN,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -409,13 +409,13 @@ TEST(EXPR_BINARY, GREATER_THAN_OR_EQUAL) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::GREATER_THAN_OR_EQUAL,
-                std::make_unique<ExpectedIntegerLiteral>(1),
-                std::make_unique<ExpectedIntegerLiteral>(2)
+                std::make_unique<ExpectedExprIntegerLiteral>(1),
+                std::make_unique<ExpectedExprIntegerLiteral>(2)
             )
         )
     );
@@ -430,17 +430,17 @@ TEST(EXPR_BINARY, ASSOCIATIVE_ADD) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::ADD,
-                std::make_unique<ExpectedBinaryExpr>(
+                std::make_unique<ExpectedExprBinary>(
                     compiler::BinaryOperator::ADD,
-                    std::make_unique<ExpectedIntegerLiteral>(1),
-                    std::make_unique<ExpectedIntegerLiteral>(2)
+                    std::make_unique<ExpectedExprIntegerLiteral>(1),
+                    std::make_unique<ExpectedExprIntegerLiteral>(2)
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(3)
+                std::make_unique<ExpectedExprIntegerLiteral>(3)
             )
         )
     );
@@ -455,17 +455,17 @@ TEST(EXPR_BINARY, ASSOCIATIVE_LOGICAL_AND) {
     const auto program = PARSE(testCode);
     std::vector<std::unique_ptr<ExpectedStm>> expectedStatements;
     expectedStatements.push_back(
-        std::make_unique<ExpectedVarDecl>(
+        std::make_unique<ExpectedStmVarDecl>(
             std::make_unique<Type>(compiler::INT_TYPE_ID, 0),
             "x",
-            std::make_unique<ExpectedBinaryExpr>(
+            std::make_unique<ExpectedExprBinary>(
                 compiler::BinaryOperator::LOGICAL_AND,
-                std::make_unique<ExpectedBinaryExpr>(
+                std::make_unique<ExpectedExprBinary>(
                     compiler::BinaryOperator::LOGICAL_AND,
-                    std::make_unique<ExpectedIntegerLiteral>(1),
-                    std::make_unique<ExpectedIntegerLiteral>(2)
+                    std::make_unique<ExpectedExprIntegerLiteral>(1),
+                    std::make_unique<ExpectedExprIntegerLiteral>(2)
                 ),
-                std::make_unique<ExpectedIntegerLiteral>(3)
+                std::make_unique<ExpectedExprIntegerLiteral>(3)
             )
         )
     );
